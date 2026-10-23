@@ -1,4 +1,5 @@
  
+
 "use client";
 
 import Link from "next/link";
@@ -21,7 +22,7 @@ import { StarField } from "./StarField";
 import {
   ASTROLOGER_IMAGE,
   ASTROLOGER_ALT,
-} from "@/lib/astrologer";
+} from "./astrologer";
 
 export function TrialChip() {
   const { me, t } = useApp();
@@ -43,7 +44,7 @@ export function TrialChip() {
       ? new Date(ent.trialStartedAt).getTime()
       : null;
 
-    if (!started || Number.isNaN(started)) {
+    if (started === null || Number.isNaN(started)) {
       setLeft(null);
       return;
     }
