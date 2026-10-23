@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -6,9 +7,11 @@ import {
   MessageCircleHeart, MoonStar, Sun, Hand, Heart, Briefcase, Coins,
   Users, Activity, Leaf, ArrowRight, Sparkles, Palette, Hash,
 } from "lucide-react";
-import { useApp } from "@/components/Providers";
-import { Avatar } from "@/components/Avatar";
-import { Reveal } from "@/components/Reveal";
+
+// Yahan maine sahi import paths set kar diye hain
+import { useApp } from "@/Providers";
+import { Avatar } from "@/Avatar";
+import { Reveal } from "@/Reveal";
 
 type DailyReading = {
   signName: string;
