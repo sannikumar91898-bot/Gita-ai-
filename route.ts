@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, desc, and } from "drizzle-orm";
-// Yahan maine import paths ko badal kar sahi kar diya hai
+
 import { db } from "@/index";
 import { remedies } from "@/schema";
-import { getUser } from "@/lib/auth";
+// Is line ko maine poori tarah sahi kar diya hai jisse ab error nahi aayega
+import { getUser } from "@/auth";
 
 const createSchema = z.object({
   title: z.string().trim().min(1).max(120),
