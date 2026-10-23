@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { eq, desc, and } from "drizzle-orm";
-import { db } from "@/db";
-import { remedies } from "@/db/schema";
+// Yahan maine import paths ko badal kar sahi kar diya hai
+import { db } from "@/index";
+import { remedies } from "@/schema";
 import { getUser } from "@/lib/auth";
 
 const createSchema = z.object({
