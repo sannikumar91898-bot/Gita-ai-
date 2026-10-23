@@ -1,4 +1,4 @@
-
+ 
 "use client";
 
 import Link from "next/link";
@@ -16,9 +16,8 @@ import {
   MoonStar,
 } from "lucide-react";
 
-// Providers.tsx is inside the app folder
 import { useApp } from "./app/Providers";
-import { StarField } from "@/components/StarField";
+import { StarField } from "./StarField";
 import {
   ASTROLOGER_IMAGE,
   ASTROLOGER_ALT,
@@ -44,7 +43,7 @@ export function TrialChip() {
       ? new Date(ent.trialStartedAt).getTime()
       : null;
 
-    if (!started) {
+    if (!started || Number.isNaN(started)) {
       setLeft(null);
       return;
     }
@@ -154,7 +153,11 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2">
             <TrialChip />
 
-            <Link href="/chat" aria-label={t("chatCta")} className="relative">
+            <Link
+              href="/chat"
+              aria-label={t("chatCta")}
+              className="relative"
+            >
               <Image
                 src={ASTROLOGER_IMAGE}
                 alt={ASTROLOGER_ALT}
@@ -169,7 +172,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       </header>
 
       {me?.sessionError && (
-        <div role="alert" className="relative z-30 mx-auto mt-4 max-w-5xl px-4">
+        <div
+          role="alert"
+          className="relative z-30 mx-auto mt-4 max-w-5xl px-4"
+        >
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-400/40 bg-red-500/15 px-4 py-3 text-sm text-red-100">
             <span>{t("errSession")}</span>
 
