@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import {
@@ -10,8 +11,9 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { translate, type Lang } from "@/lib/i18n";
-import type { Entitlement } from "@/lib/entitlement";
+
+import { translate, type Lang } from "../i18n";
+import type { Entitlement } from "../entitlement";
 
 export type MeUser = {
   id: string;
@@ -61,6 +63,7 @@ export function AppProvider({
   useEffect(() => {
     try {
       const saved = localStorage.getItem("gita_lang");
+
       if (
         saved === "en" ||
         saved === "hi" ||
@@ -68,7 +71,9 @@ export function AppProvider({
       ) {
         setLocalLang(saved);
       }
-    } catch {}
+    } catch {
+      // Local storage may be unavailable.
+    }
   }, []);
 
   const refresh = useCallback(async () => {
@@ -76,15 +81,18 @@ export function AppProvider({
       let res = await fetch("/api/me", {
         cache: "no-store",
       });
+
       let data = await res.json();
 
       if (!data.user) {
         await fetch("/api/auth/guest", {
           method: "POST",
         });
+
         res = await fetch("/api/me", {
           cache: "no-store",
         });
+
         data = await res.json();
       }
 
@@ -127,13 +135,18 @@ export function AppProvider({
 
     try {
       localStorage.setItem("gita_lang", l);
-    } catch {}
+    } catch {
+      // Local storage may be unavailable.
+    }
 
     setMe((m) =>
       m?.user
         ? {
             ...m,
-            user: { ...m.user, language: l },
+            user: {
+              ...m.user,
+              language: l,
+            },
           }
         : m
     );
