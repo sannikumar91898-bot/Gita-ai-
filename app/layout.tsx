@@ -1,7 +1,7 @@
 
 import type { ReactNode } from "react";
 import "./globals.css";
-import Providers from "./providers";
+import { AppProvider } from "./Providers";
 
 export default function RootLayout({
   children,
@@ -11,7 +11,7 @@ export default function RootLayout({
   return (
     <html lang="hi">
       <body>
-        <Providers>{children}</Providers>
+        <AppProvider>{children}</AppProvider>
       </body>
     </html>
   );
