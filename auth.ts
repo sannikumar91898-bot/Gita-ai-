@@ -1,10 +1,9 @@
-
 import { cookies, headers } from "next/headers";
 import { randomBytes } from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 
-import { db } from "@/db";
-import { users, sessions } from "@/db/schema";
+import { db } from "./index";
+import { users, sessions } from "./schema";
 
 export const SESSION_COOKIE = "gita_session";
 const SESSION_DAYS = 30;
@@ -38,7 +37,7 @@ export async function getUser(): Promise<User | null> {
 }
 
 /**
- * Create a new session for an existing user.
+ * Create a session for an existing user.
  */
 export async function createSession(
   userId: string
