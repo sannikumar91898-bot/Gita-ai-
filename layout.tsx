@@ -1,5 +1,4 @@
 
-
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import {
@@ -9,8 +8,9 @@ import {
 } from "next/font/google";
 
 import "./globals.css";
-import { AppProvider } from "@/components/Providers";
-import { AppShell } from "@/components/AppShell";
+// Yahan se maine components/ hata kar sahi path kar diya hai
+import { AppProvider } from "@/Providers";
+import { AppShell } from "@/AppShell";
 
 const marcellus = Marcellus({
   weight: "400",
