@@ -1,5 +1,7 @@
-import type { Lang } from "@/lib/i18n";
-import { RASHIS, RASHIS_HI } from "@/lib/vedic";
+
+
+import type { Lang } from "./i18n";
+import { RASHIS, RASHIS_HI } from "./vedic";
 
 const COLOURS = [
   { hex: "#F5C542", en: "Gold", hi: "सुनहरा", hinglish: "Golden" },
@@ -94,7 +96,10 @@ const AFFIRMATIONS: Record<Lang, string[]> = {
   ],
 };
 
-export const REMEDY_LIBRARY: Record<Lang, { title: string; description: string }[]> = {
+export const REMEDY_LIBRARY: Record<
+  Lang,
+  { title: string; description: string }[]
+> = {
   en: [
     { title: "Morning Surya Namaskar", description: "Offer water to the rising sun and take 5 slow breaths. A gentle ritual for confidence and vitality." },
     { title: "Chandra Shanti", description: "On a calm evening, sip warm milk mindfully and write one gratitude. Supports emotional balance." },
@@ -129,10 +134,12 @@ export const REMEDY_LIBRARY: Record<Lang, { title: string; description: string }
 
 function seedFrom(str: string): number {
   let h = 2166136261;
+
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
+
   return Math.abs(h);
 }
 
@@ -155,19 +162,38 @@ export function buildDaily(
   lang: Lang,
   dateStr: string
 ): DailyReading {
-  const seed = seedFrom(`${dateStr}:${signIndex}`);
+  const safeSignIndex =
+    ((Math.trunc(signIndex) % 12) + 12) % 12;
+
+  const safeMoonIndex =
+    ((Math.trunc(transitMoon.rashi) % 12) + 12) % 12;
+
+  const seed = seedFrom(`${dateStr}:${safeSignIndex}`);
   const colour = COLOURS[seed % COLOURS.length];
   const remedyList = REMEDY_LIBRARY[lang] ?? REMEDY_LIBRARY.en;
+  const focusList = FOCUS[lang] ?? FOCUS.en;
+  const affirmationList = AFFIRMATIONS[lang] ?? AFFIRMATIONS.en;
+
   return {
     date: dateStr,
-    signIndex,
-    signName: lang === "hi" ? RASHIS_HI[signIndex] : RASHIS[signIndex],
-    transitMoonSign: lang === "hi" ? RASHIS_HI[transitMoon.rashi] : transitMoon.rashiName,
-    transitMoonHouse: ((transitMoon.rashi - signIndex + 12) % 12) + 1,
-    focus: (FOCUS[lang] ?? FOCUS.en)[signIndex],
-    luckyColour: { name: colour[lang], hex: colour.hex },
+    signIndex: safeSignIndex,
+    signName:
+      lang === "hi"
+        ? RASHIS_HI[safeSignIndex]
+        : RASHIS[safeSignIndex],
+    transitMoonSign:
+      lang === "hi"
+        ? RASHIS_HI[safeMoonIndex]
+        : transitMoon.rashiName,
+    transitMoonHouse:
+      ((safeMoonIndex - safeSignIndex + 12) % 12) + 1,
+    focus: focusList[safeSignIndex],
+    luckyColour: {
+      name: colour[lang] ?? colour.en,
+      hex: colour.hex,
+    },
     luckyNumber: (seed % 9) + 1,
-    affirmation: (AFFIRMATIONS[lang] ?? AFFIRMATIONS.en)[seed % 9],
+    affirmation: affirmationList[seed % affirmationList.length],
     remedy: remedyList[seed % remedyList.length],
   };
 }
