@@ -1,0 +1,119 @@
+@import "tailwindcss";
+
+@theme {
+  --color-night-950: #0a0517;
+  --color-night-900: #130a26;
+  --color-night-800: #1d1136;
+  --color-night-700: #2b1a4d;
+  --color-night-600: #3b2566;
+  --color-gold-200: #f7e3ae;
+  --color-gold-300: #f0d187;
+  --color-gold-400: #e5ba58;
+  --color-gold-500: #d19e2f;
+  --color-gold-600: #a87b1d;
+  --font-display: var(--font-marcellus), var(--font-devanagari), serif;
+  --font-body: var(--font-mulish), var(--font-devanagari), sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-night-950);
+  color: #efe9fb;
+  min-height: 100dvh;
+}
+
+.bg-celestial {
+  background:
+    radial-gradient(1100px 520px at 85% -10%, rgba(124, 58, 237, 0.28), transparent 60%),
+    radial-gradient(900px 480px at -10% 30%, rgba(88, 28, 135, 0.35), transparent 55%),
+    radial-gradient(700px 420px at 50% 110%, rgba(209, 158, 47, 0.12), transparent 60%),
+    linear-gradient(180deg, #0a0517 0%, #130a26 55%, #0a0517 100%);
+}
+
+.card {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025));
+  border: 1px solid rgba(240, 209, 135, 0.14);
+  border-radius: 1rem;
+  backdrop-filter: blur(8px);
+}
+
+.card-hover {
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: translateY(-3px);
+  border-color: rgba(240, 209, 135, 0.45);
+  box-shadow: 0 12px 40px -12px rgba(124, 58, 237, 0.5);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #f0d187 0%, #d19e2f 55%, #b8860b 100%);
+  color: #241303;
+  font-weight: 800;
+  border-radius: 9999px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  box-shadow: 0 8px 28px -8px rgba(209, 158, 47, 0.65);
+}
+.btn-gold:hover { transform: translateY(-1px); filter: brightness(1.06); box-shadow: 0 12px 34px -8px rgba(209, 158, 47, 0.8); }
+.btn-gold:active { transform: translateY(0); }
+.btn-gold:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  border: 1px solid rgba(240, 209, 135, 0.3);
+  border-radius: 9999px;
+  color: #f0d187;
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+.btn-ghost:hover { background: rgba(240, 209, 135, 0.1); border-color: rgba(240, 209, 135, 0.6); }
+
+.gold-text {
+  background: linear-gradient(120deg, #f7e3ae, #e5ba58 45%, #f0d187);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.15; transform: scale(0.85); }
+  50% { opacity: 0.9; transform: scale(1.1); }
+}
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes slowspin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes glowpulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229, 186, 88, 0.35), 0 0 34px 4px rgba(124, 58, 237, 0.35); }
+  50% { box-shadow: 0 0 0 6px rgba(229, 186, 88, 0.08), 0 0 54px 10px rgba(124, 58, 237, 0.5); }
+}
+
+.anim-fade-up { animation: fadeUp 0.6s ease both; }
+.anim-floaty { animation: floaty 6s ease-in-out infinite; }
+.avatar-glow { animation: glowpulse 4.5s ease-in-out infinite; }
+.star { position: absolute; border-radius: 9999px; background: #fff; animation: twinkle var(--dur, 4s) ease-in-out infinite; animation-delay: var(--delay, 0s); }
+
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s ease, transform 0.7s ease; }
+.reveal.revealed { opacity: 1; transform: translateY(0); }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(240, 209, 135, 0.25); border-radius: 8px; }
+
+input, textarea, select {
+  color-scheme: dark;
+}
+
+.typing-dot { animation: twinkle 1.2s ease-in-out infinite; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
