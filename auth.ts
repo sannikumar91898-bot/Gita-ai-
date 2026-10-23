@@ -1,10 +1,10 @@
-
 import { cookies, headers } from "next/headers";
 import { randomBytes } from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 
-import { db } from "./index";
-import { users, sessions } from "./schema";
+// Yahan maine path badal kar sahi kar diya hai
+import { db } from "@/index";
+import { users, sessions } from "@/schema";
 
 export const SESSION_COOKIE = "gita_session";
 const SESSION_DAYS = 30;
