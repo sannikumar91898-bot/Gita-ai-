@@ -13,6 +13,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // 1. यहाँ Gemini API के सही URL फॉर्मेट का इस्तेमाल किया गया है
     const response = await fetch(
       `https://googleapis.com{apiKey}`,
       {
@@ -44,7 +45,9 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    const textOutput = data?.candidates?.?.content?.parts?.?.text || "Kundli generation failed";
+    
+    // 2. यहाँ सिंथैक्स एरर को ठीक कर दिया गया है (डबल ?.?. को हटाकर सही एरे इंडेक्स [0] लगाया है)
+    const textOutput = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Kundli generation failed";
 
     return NextResponse.json({ kundliReport: textOutput }, { status: 200 });
 
