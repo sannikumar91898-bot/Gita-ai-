@@ -1,3 +1,4 @@
+
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import {
@@ -7,7 +8,6 @@ import {
 } from "next/font/google";
 
 import "./globals.css";
-// Path sahi kiya: Kyunki files app folder ke andar hi hain
 import { AppProvider } from "./Providers";
 import { AppShell } from "../AppShell";
 
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#130a26",
+  themeColor: "#100b1d",
   width: "device-width",
   initialScale: 1,
 };
@@ -59,7 +59,7 @@ export default function RootLayout({
       lang="en"
       className={`${marcellus.variable} ${mulish.variable} ${devanagari.variable}`}
     >
-      <body className="bg-celestial antialiased">
+      <body className="min-h-screen bg-[#100b1d] text-[#f5efff] antialiased">
         <AppProvider>
           <AppShell>{children}</AppShell>
         </AppProvider>
