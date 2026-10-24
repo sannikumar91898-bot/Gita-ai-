@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Image from "next/image";
@@ -19,7 +20,9 @@ export function Avatar({
 }) {
   return (
     <div
-      className={`relative inline-block ${float ? "anim-floaty" : ""}`}
+      className={`relative inline-block ${
+        float ? "anim-floaty" : ""
+      }`}
       style={{ width: size, height: size }}
     >
       <Image
