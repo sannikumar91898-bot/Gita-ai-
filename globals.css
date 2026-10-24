@@ -117,3 +117,68 @@ input, textarea, select {
 .typing-dot { animation: twinkle 1.2s ease-in-out infinite; }
 .typing-dot:nth-child(2) { animation-delay: 0.2s; }
 .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+
+/* Responsive layout fix for Gita AI */
+html {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+body {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
+  margin: 0;
+}
+
+/* Prevent images and media from overflowing */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+}
+
+/* Allow grid and flex children to shrink */
+main,
+section,
+article,
+header,
+footer,
+nav,
+.grid,
+.flex {
+  min-width: 0;
+}
+
+/* Mobile-friendly text wrapping */
+h1,
+h2,
+h3,
+p,
+a,
+button {
+  overflow-wrap: anywhere;
+}
+
+/* Keep form controls within the screen */
+input,
+textarea,
+select {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Small-screen adjustments */
+@media (max-width: 640px) {
+  .card {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .card-hover:hover {
+    transform: none;
+  }
+}
