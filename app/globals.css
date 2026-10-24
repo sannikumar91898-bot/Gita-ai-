@@ -1,8 +1,13 @@
 
+
 @import "tailwindcss";
 
 * {
   box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
 }
 
 html,
@@ -16,16 +21,33 @@ body {
 
 html {
   overflow-x: clip;
+  background: #100b1d;
 }
 
 body {
   font-family: Arial, Helvetica, sans-serif;
-  color: #29213a;
-  background: #ffffff;
+  color: #f5efff;
+  background: #100b1d;
   overflow-x: clip;
 }
 
 img {
   max-width: 100%;
   height: auto;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  color: #ffffff;
+  background: #7043a8;
+}
+
+a {
+  -webkit-tap-highlight-color: transparent;
 }
