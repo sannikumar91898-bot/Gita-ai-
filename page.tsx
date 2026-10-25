@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -8,7 +7,6 @@ import {
   Users, Activity, Leaf, ArrowRight, Sparkles, Palette, Hash,
 } from "lucide-react";
 
-// Yahan maine sahi import paths set kar diye hain
 import { useApp } from "@/Providers";
 import { Avatar } from "@/Avatar";
 import { Reveal } from "@/Reveal";
@@ -33,15 +31,16 @@ export default function HomePage() {
       .catch(() => {});
   }, [me?.hasChart]);
 
+  // यहाँ लिंक्स को सही कर दिया गया है
   const features = [
     { href: "/kundli", icon: MoonStar, title: t("kundli"), desc: t("kundliDesc"), big: true },
     { href: "/daily", icon: Sun, title: t("daily"), desc: t("dailyDesc"), big: true },
     { href: "/palm", icon: Hand, title: t("palm"), desc: t("palmDesc"), big: false },
-    { href: "/topics/love", icon: Heart, title: t("love"), desc: t("loveDesc"), big: false },
-    { href: "/topics/career", icon: Briefcase, title: t("career"), desc: t("careerDesc"), big: false },
-    { href: "/topics/money", icon: Coins, title: t("money"), desc: t("moneyDesc"), big: false },
-    { href: "/topics/family", icon: Users, title: t("family"), desc: t("familyDesc"), big: false },
-    { href: "/topics/health", icon: Activity, title: t("health"), desc: t("healthDesc"), big: false },
+    { href: "/love", icon: Heart, title: t("love"), desc: t("loveDesc"), big: false },
+    { href: "/career", icon: Briefcase, title: t("career"), desc: t("careerDesc"), big: false },
+    { href: "/money", icon: Coins, title: t("money"), desc: t("moneyDesc"), big: false },
+    { href: "/family", icon: Users, title: t("family"), desc: t("familyDesc"), big: false },
+    { href: "/health", icon: Activity, title: t("health"), desc: t("healthDesc"), big: false },
     { href: "/remedies", icon: Leaf, title: t("remedies"), desc: t("remediesDesc"), big: false },
   ];
 
@@ -83,7 +82,10 @@ export default function HomePage() {
               <span className="absolute -top-1.5 left-1/2 text-gold-300">✦</span>
               <span className="absolute -bottom-1.5 left-1/4 text-violet-300">✧</span>
             </div>
-            <Avatar size={220} float />
+            {/* यहाँ फोटो का साइज मोबाइल के लिए सही कर दिया गया है */}
+            <div className="w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] md:w-[220px] md:h-[220px] mx-auto flex items-center justify-center">
+              <Avatar size={200} float />
+            </div>
             <div className="card absolute -bottom-4 left-1/2 w-max -translate-x-1/2 px-4 py-2 text-center">
               <p className="font-display text-sm text-gold-300">Gita</p>
               <p className="text-[10px] uppercase tracking-widest text-violet-300/80">{t("tagline")}</p>
