@@ -1,4 +1,3 @@
- 
 
 "use client";
 
@@ -28,7 +27,10 @@ import { Reveal } from "../Reveal";
 type DailyReading = {
   signName: string;
   focus: string;
-  luckyColour: { name: string; hex: string };
+  luckyColour: {
+    name: string;
+    hex: string;
+  };
   luckyNumber: number;
   affirmation: string;
 };
@@ -37,37 +39,66 @@ export default function HomePage() {
   const { t, me, loading } = useApp();
   const [daily, setDaily] = useState<DailyReading | null>(null);
 
+  // Load the daily reading only when the user has a birth chart.
   useEffect(() => {
+    if (loading) return;
+
     if (!me?.hasChart) {
       setDaily(null);
       return;
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
-    fetch("/api/daily")
-      .then((response) => {
+    async function loadDailyReading() {
+      try {
+        const response = await fetch("/api/daily", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+          },
+          cache: "no-store",
+          signal: controller.signal,
+        });
+
         if (!response.ok) {
-          throw new Error("Daily reading unavailable");
+          throw new Error(`Daily reading failed: ${response.status}`);
         }
-        return response.json();
-      })
-      .then((data) => {
-        if (!cancelled) {
-          setDaily(data.reading ?? null);
+
+        const data: unknown = await response.json();
+
+        if (
+          typeof data !== "object" ||
+          data === null ||
+          !("reading" in data)
+        ) {
+          throw new Error("Invalid daily reading response");
         }
-      })
-      .catch(() => {
+
+        const reading = data.reading as DailyReading | null;
+
         if (!cancelled) {
+          setDaily(reading);
+        }
+      } catch (error) {
+        if (!cancelled && !controller.signal.aborted) {
+          console.error("Could not load daily reading:", error);
           setDaily(null);
         }
-      });
+      }
+    }
+
+    void loadDailyReading();
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
-  }, [me?.hasChart]);
+  }, [me?.hasChart, loading]);
 
+  // Use only routes that are reported to exist in this project.
+  // Topic pages that are missing open chat instead of a 404 page.
   const features = [
     {
       href: "/kundli",
@@ -84,55 +115,65 @@ export default function HomePage() {
       big: true,
     },
     {
-      href: "/palm",
+      href: "/chat?topic=palm",
       icon: Hand,
       title: t("palm"),
       desc: t("palmDesc"),
       big: false,
     },
     {
-      href: "/topics/love",
+      href: "/chat?topic=love",
       icon: Heart,
       title: t("love"),
       desc: t("loveDesc"),
       big: false,
     },
     {
-      href: "/topics/career",
+      href: "/career",
       icon: Briefcase,
       title: t("career"),
       desc: t("careerDesc"),
       big: false,
     },
     {
-      href: "/topics/money",
+      href: "/chat?topic=money",
       icon: Coins,
       title: t("money"),
       desc: t("moneyDesc"),
       big: false,
     },
     {
-      href: "/topics/family",
+      href: "/family",
       icon: Users,
       title: t("family"),
       desc: t("familyDesc"),
       big: false,
     },
     {
-      href: "/topics/health",
+      href: "/health",
       icon: Activity,
       title: t("health"),
       desc: t("healthDesc"),
       big: false,
     },
     {
-      href: "/remedies",
+      href: "/chat?topic=remedies",
       icon: Leaf,
       title: t("remedies"),
       desc: t("remediesDesc"),
       big: false,
     },
   ];
+
+  // Keep the hero title readable even when a translation has few words.
+  const heroTitle = t("heroTitle") || "";
+  const heroWords = heroTitle.trim().split(/\s+/).filter(Boolean);
+  const heroMain =
+    heroWords.length > 3 ? heroWords.slice(0, -3).join(" ") : "";
+  const heroHighlight =
+    heroWords.length > 3
+      ? heroWords.slice(-3).join(" ")
+      : heroTitle;
 
   return (
     <div className="w-full min-w-0 max-w-full space-y-12 overflow-x-clip">
@@ -145,10 +186,8 @@ export default function HomePage() {
           </p>
 
           <h1 className="break-words font-display text-4xl leading-[1.12] text-violet-50 sm:text-5xl lg:text-6xl">
-            {t("heroTitle")?.split(" ").slice(0, -3).join(" ") || ""}{" "}
-            <span className="gold-text">
-              {t("heroTitle")?.split(" ").slice(-3).join(" ") || ""}
-            </span>
+            {heroMain ? `${heroMain} ` : ""}
+            <span className="gold-text">{heroHighlight}</span>
           </h1>
 
           <p className="mt-4 max-w-xl text-base leading-relaxed text-violet-200/85 sm:text-lg">
@@ -166,7 +205,7 @@ export default function HomePage() {
 
             {!me?.hasChart && (
               <Link
-                href="/onboarding"
+                href="/kundli"
                 className="btn-ghost inline-flex min-w-0 max-w-full items-center justify-center gap-2 px-5 py-3.5 text-sm font-bold"
               >
                 <span>{t("buildKundli")}</span>
@@ -212,7 +251,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Daily reading or onboarding */}
+      {/* Daily reading or Kundli setup */}
       <Reveal>
         {daily ? (
           <Link
@@ -224,9 +263,11 @@ export default function HomePage() {
                 <p className="break-words text-xs font-bold uppercase tracking-[0.15em] text-gold-300 sm:tracking-[0.2em]">
                   {t("daily")} · {daily.signName}
                 </p>
+
                 <p className="mt-2 break-words text-sm leading-relaxed text-violet-100/90">
                   {daily.focus}
                 </p>
+
                 <p className="mt-2 break-words text-sm italic text-violet-300/80">
                   “{daily.affirmation}”
                 </p>
@@ -236,10 +277,11 @@ export default function HomePage() {
                 <div className="min-w-0 text-center">
                   <span
                     className="mx-auto flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-white/20"
-                    style={{ background: daily.luckyColour.hex }}
+                    style={{ backgroundColor: daily.luckyColour.hex }}
                   >
                     <Palette size={16} className="text-black/60" />
                   </span>
+
                   <p className="mt-1 max-w-24 break-words text-[10px] text-violet-300/80">
                     {daily.luckyColour.name}
                   </p>
@@ -249,6 +291,7 @@ export default function HomePage() {
                   <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/25 font-display text-lg text-gold-300 ring-1 ring-gold-400/40">
                     {daily.luckyNumber}
                   </span>
+
                   <p className="mt-1 flex items-center gap-1 text-[10px] text-violet-300/80">
                     <Hash size={10} />
                     {t("luckyNumber")}
@@ -259,13 +302,14 @@ export default function HomePage() {
           </Link>
         ) : (
           <Link
-            href="/onboarding"
+            href="/kundli"
             className="card card-hover flex min-w-0 max-w-full flex-col items-start justify-between gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-center sm:p-6"
           >
             <div className="min-w-0">
               <p className="break-words font-display text-xl text-violet-50">
                 {t("onbTitle")} ✦
               </p>
+
               <p className="mt-1 break-words text-sm text-violet-300/85">
                 {t("kundliDesc")}
               </p>
@@ -292,7 +336,11 @@ export default function HomePage() {
             <Reveal
               key={feature.href}
               delay={index * 60}
-              className={`min-w-0 ${feature.big ? "col-span-2 sm:col-span-1 lg:col-span-2" : ""}`}
+              className={`min-w-0 ${
+                feature.big
+                  ? "col-span-2 sm:col-span-1 lg:col-span-2"
+                  : ""
+              }`}
             >
               <Link
                 href={feature.href}
@@ -306,6 +354,7 @@ export default function HomePage() {
                   <h3 className="break-words font-display text-base leading-snug text-violet-50 sm:text-lg">
                     {feature.title}
                   </h3>
+
                   <p className="mt-1 break-words text-xs leading-relaxed text-violet-300/80">
                     {feature.desc}
                   </p>
@@ -330,17 +379,9 @@ export default function HomePage() {
             {t("disclaimerShort")}
           </p>
 
-          <div className="mt-3 flex flex-wrap justify-center gap-x-5 gap-y-3 text-xs font-bold text-violet-300/80">
-            <Link href="/privacy" className="hover:text-gold-300">
-              {t("privacy")}
-            </Link>
-            <Link href="/terms" className="hover:text-gold-300">
-              {t("terms")}
-            </Link>
-            <Link href="/download" className="hover:text-gold-300">
-              {t("downloadApk")}
-            </Link>
-          </div>
+          <p className="mt-3 text-xs text-violet-300/60">
+            Gita AI
+          </p>
         </footer>
       </Reveal>
     </div>
