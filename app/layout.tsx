@@ -1,6 +1,6 @@
 import React from "react";
 import "./globals.css";
-import Providers from "./Providers";
+import { Providers } from "./Providers";
 
 export const metadata = {
   title: "Gita AI",
