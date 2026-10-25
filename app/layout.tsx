@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import {
@@ -8,8 +7,8 @@ import {
 } from "next/font/google";
 
 import "./globals.css";
-import { AppProvider } from "./Providers";
-import { AppShell } from "../AppShell";
+import { AppProvider } from "@/Providers";
+import { AppShell } from "@/AppShell";
 
 const marcellus = Marcellus({
   weight: "400",
@@ -32,9 +31,11 @@ export const metadata: Metadata = {
   description:
     "Meet Gita, your warm AI astrologer. Personalised Vedic kundli, daily horoscope, palm reading and heartfelt guidance in Hindi, Hinglish and English.",
   manifest: "/manifest.webmanifest",
+  // यहाँ पर लोगो के इमेज पाथ को बिल्कुल पक्का फिक्स कर दिया गया है
   icons: {
-    icon: "/icons/icon-512.png",
-    apple: "/icons/icon-512.png",
+    icon: "/icon-512.png",
+    apple: "/icon-512.png",
+    shortcut: "/icon-192.png",
   },
   appleWebApp: {
     capable: true,
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#100b1d",
+  themeColor: "#130a26",
   width: "device-width",
   initialScale: 1,
 };
@@ -59,7 +60,7 @@ export default function RootLayout({
       lang="en"
       className={`${marcellus.variable} ${mulish.variable} ${devanagari.variable}`}
     >
-      <body className="min-h-screen bg-[#100b1d] text-[#f5efff] antialiased">
+      <body className="bg-celestial antialiased">
         <AppProvider>
           <AppShell>{children}</AppShell>
         </AppProvider>
