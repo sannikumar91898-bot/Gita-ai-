@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Image from "next/image";
@@ -31,7 +30,7 @@ export function Avatar({
         width={size}
         height={size}
         priority={size >= 96}
-        className={`h-full w-full rounded-full object-cover ring-2 ring-gold-400/70 ${
+        className={`h-full w-full rounded-full object-contain ring-2 ring-gold-400/70 ${
           glow ? "avatar-glow" : ""
         }`}
       />
