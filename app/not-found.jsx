@@ -1,19 +1,16 @@
-"use client";
-
-import Link from "next/link";
 import React from "react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen bg-[#0f081d] text-white p-6 flex flex-col items-center justify-center text-center">
-      <h1 className="text-6xl font-bold text-purple-400 mb-2 font-display">404</h1>
-      <h2 className="text-xl font-semibold text-violet-100 mb-4">Page Not Found</h2>
-      <p className="text-gray-400 text-sm max-w-sm mb-8">
+    <div style={{ minHeight: "100vh", backgroundColor: "#0f081d", color: "white", display: "flex", flexDirection: "column", alignItems: "center", justifyInbound: "center", justifyContent: "center", textAlign: "center", padding: "24px", fontFamily: "sans-serif" }}>
+      <h1 style={{ fontSize: "6rem", fontWeight: "bold", color: "#c084fc", margin: "0 0 8px 0" }}>404</h1>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: "600", color: "#f3f4f6", margin: "0 0 16px 0" }}>Page Not Found</h2>
+      <p style={{ color: "#9ca3af", fontSize: "0.875rem", maxWidth: "384px", margin: "0 0 32px 0", lineHeight: "1.5" }}>
         The page you are looking for does not exist or has been moved.
       </p>
-      <Link href="/" className="px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 rounded-xl text-black font-bold text-sm shadow-lg hover:from-amber-400 hover:to-amber-500 transition-all">
+      <a href="/" style={{ padding: "12px 24px", background: "linear-gradient(to right, #f59e0b, #d97706)", color: "black", borderRadius: "12px", fontWeight: "bold", fontSize: "0.875rem", textDecoration: "none", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.3)" }}>
         Go Back Home
-      </Link>
+      </a>
     </div>
   );
 }
