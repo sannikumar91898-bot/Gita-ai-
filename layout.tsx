@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 import type { Metadata, Viewport } from "next";
 import {
@@ -8,7 +7,6 @@ import {
 } from "next/font/google";
 
 import "./globals.css";
-// Yahan se maine components/ hata kar sahi path kar diya hai
 import { AppProvider } from "@/Providers";
 import { AppShell } from "@/AppShell";
 
@@ -33,9 +31,10 @@ export const metadata: Metadata = {
   description:
     "Meet Gita, your warm AI astrologer. Personalised Vedic kundli, daily horoscope, palm reading and heartfelt guidance in Hindi, Hinglish and English.",
   manifest: "/manifest.webmanifest",
+  // यहाँ पर लोगो के इमेज पाथ को बिल्कुल सही कर दिया गया है
   icons: {
-    icon: "/icons/icon-512.png",
-    apple: "/icons/icon-512.png",
+    icon: "/icon-512.png",
+    apple: "/icon-512.png",
   },
   appleWebApp: {
     capable: true,
