@@ -4,7 +4,8 @@ import { NextResponse } from "next/server";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 25_000;
+const MAX_ATTEMPTS = 2;
 
 function jsonError(message: string, status: number) {
   return NextResponse.json(
@@ -16,203 +17,285 @@ function jsonError(message: string, status: number) {
   );
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function validCalendarDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  return (
+    year >= 1900 &&
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
+}
+
+function validTime(value: string): boolean {
+  if (!/^\d{2}:\d{2}$/.test(value)) return false;
+
+  const [hour, minute] = value.split(":").map(Number);
+
+  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+}
+
+function getReport(data: unknown): string {
+  if (!isRecord(data) || !Array.isArray(data.candidates)) {
+    return "";
+  }
+
+  const candidate = data.candidates[0];
+
+  if (!isRecord(candidate) || !isRecord(candidate.content)) {
+    return "";
+  }
+
+  const parts = candidate.content.parts;
+
+  if (!Array.isArray(parts)) return "";
+
+  return parts
+    .filter(
+      (part): part is Record<string, unknown> =>
+        isRecord(part) && typeof part.text === "string"
+    )
+    .map((part) => part.text as string)
+    .join("")
+    .trim();
+}
+
 export async function POST(req: Request) {
+  let body: unknown;
+
   try {
-    // 1. Parse and validate the request body
-    let body: unknown;
+    body = await req.json();
+  } catch {
+    return jsonError("Invalid request. Please try again.", 400);
+  }
 
-    try {
-      body = await req.json();
-    } catch {
-      return jsonError("Invalid JSON request.", 400);
-    }
+  if (!isRecord(body)) {
+    return jsonError("Please provide valid birth details.", 400);
+  }
 
-    if (typeof body !== "object" || body === null) {
-      return jsonError("Invalid request body.", 400);
-    }
+  const name =
+    typeof body.name === "string" ? body.name.trim() : "";
+  const dateOfBirth =
+    typeof body.dateOfBirth === "string"
+      ? body.dateOfBirth.trim()
+      : "";
+  const timeOfBirth =
+    typeof body.timeOfBirth === "string"
+      ? body.timeOfBirth.trim()
+      : "";
+  const placeOfBirth =
+    typeof body.placeOfBirth === "string"
+      ? body.placeOfBirth.trim()
+      : "";
 
-    const input = body as Record<string, unknown>;
+  if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
+    return jsonError("Please fill in all birth details.", 400);
+  }
 
-    const name =
-      typeof input.name === "string" ? input.name.trim() : "";
-    const dateOfBirth =
-      typeof input.dateOfBirth === "string"
-        ? input.dateOfBirth.trim()
-        : "";
-    const timeOfBirth =
-      typeof input.timeOfBirth === "string"
-        ? input.timeOfBirth.trim()
-        : "";
-    const placeOfBirth =
-      typeof input.placeOfBirth === "string"
-        ? input.placeOfBirth.trim()
-        : "";
+  if (
+    name.length > 100 ||
+    placeOfBirth.length > 200 ||
+    !validCalendarDate(dateOfBirth) ||
+    !validTime(timeOfBirth)
+  ) {
+    return jsonError(
+      "Please check your name, birth date, birth time and birthplace.",
+      400
+    );
+  }
 
-    if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
-      return jsonError(
-        "Name, date of birth, time of birth and birthplace are required.",
-        400
-      );
-    }
+  const today = new Date().toISOString().slice(0, 10);
 
-    if (
-      name.length > 100 ||
-      placeOfBirth.length > 200 ||
-      !/^\d{4}-\d{2}-\d{2}$/.test(dateOfBirth) ||
-      !/^\d{2}:\d{2}$/.test(timeOfBirth)
-    ) {
-      return jsonError(
-        "Please check the name, date, time and birthplace.",
-        400
-      );
-    }
+  if (dateOfBirth > today) {
+    return jsonError("Birth date cannot be in the future.", 400);
+  }
 
-    // Check that the date is a real calendar date.
-    const [year, month, day] = dateOfBirth.split("-").map(Number);
-    const parsedDate = new Date(Date.UTC(year, month - 1, day));
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
 
-    if (
-      parsedDate.getUTCFullYear() !== year ||
-      parsedDate.getUTCMonth() !== month - 1 ||
-      parsedDate.getUTCDate() !== day
-    ) {
-      return jsonError("Date of birth is invalid.", 400);
-    }
+  if (!apiKey) {
+    console.error("GEMINI_API_KEY is missing");
+    return jsonError("Kundli service is temporarily unavailable.", 503);
+  }
 
-    const [hour, minute] = timeOfBirth.split(":").map(Number);
+  const model =
+    process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 
-    if (hour > 23 || minute > 59) {
-      return jsonError("Time of birth is invalid.", 400);
-    }
+  if (
+    !/^[a-zA-Z0-9._-]+$/.test(model) ||
+    model.startsWith("models/")
+  ) {
+    console.error("GEMINI_MODEL configuration is invalid");
+    return jsonError("Kundli service is temporarily unavailable.", 503);
+  }
 
-    // 2. Read the API key only on the server.
-    const apiKey = process.env.GEMINI_API_KEY;
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    `${encodeURIComponent(model)}:generateContent`;
 
-    if (!apiKey) {
-      console.error("GEMINI_API_KEY is missing");
-      return jsonError("Kundli service is not configured.", 503);
-    }
-
-    // 3. Select a model configured for this API key.
-    const model =
-      process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
-
-    const endpoint =
-      "https://generativelanguage.googleapis.com/v1beta/models/" +
-      `${encodeURIComponent(model)}:generateContent`;
-
-    // 4. Ask Gemini for a clearly qualified interpretive report.
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text:
-                "You are Gita AI, a respectful Vedic astrology assistant. " +
-                "Respond in clear Hindi using Devanagari script. " +
-                "Do not invent planetary longitudes, ascendant, houses, " +
-                "Nakshatra, Vimshottari Dasha dates or chart calculations. " +
-                "If exact calculated chart data is not provided, clearly " +
-                "state that this is a general interpretive overview and " +
-                "that exact placements and Dasha require a verified " +
-                "astrological calculation engine. Do not claim certainty " +
-                "about future events. Keep spiritual guidance respectful.",
-            },
-          ],
+  const requestBody = {
+    systemInstruction: {
+      parts: [
+        {
+          text:
+            "You are Gita AI, a professional and respectful Vedic astrology " +
+            "guide. Respond in natural, polished Hindi using Devanagari. " +
+            "Create a useful, well-structured personal astrology guidance " +
+            "report based on the birth details supplied. Include traditional " +
+            "Vedic astrology concepts, personality reflection, career, " +
+            "relationships and practical spiritual guidance where relevant. " +
+            "Do not invent planetary positions, ascendant, houses, Nakshatra " +
+            "or Dasha dates as calculated facts when no verified chart data " +
+            "is supplied. Do not promise guaranteed future outcomes. Use " +
+            "clear headings and a warm, premium, respectful tone.",
         },
-        contents: [
+      ],
+    },
+    contents: [
+      {
+        role: "user",
+        parts: [
           {
-            role: "user",
-            parts: [
-              {
-                text:
-                  "Prepare a Vedic astrology overview using these birth details:\n" +
-                  `Name: ${name}\n` +
-                  `Date of birth: ${dateOfBirth}\n` +
-                  `Time of birth: ${timeOfBirth}\n` +
-                  `Place of birth: ${placeOfBirth}\n\n` +
-                  "Explain general Vedic astrology concepts and spiritual " +
-                  "reflection in Hindi. Do not state uncalculated planetary " +
-                  "positions or Dasha periods as facts. Clearly identify " +
-                  "any information that cannot be calculated from the " +
-                  "provided data alone.",
-              },
-            ],
+            text:
+              "Prepare a personalized Vedic astrology guidance report " +
+              "in Hindi using these birth details:\n" +
+              `Name: ${name}\n` +
+              `Date of birth: ${dateOfBirth}\n` +
+              `Time of birth: ${timeOfBirth}\n` +
+              `Place of birth: ${placeOfBirth}\n\n` +
+              "Organize the report with clear headings and practical, " +
+              "respectful guidance. Do not present uncalculated planetary " +
+              "placements or Dasha periods as facts.",
           },
         ],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 2048,
-        },
-      }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      cache: "no-store",
-    });
+      },
+    ],
+    generationConfig: {
+      temperature: 0.4,
+      maxOutputTokens: 2048,
+    },
+  };
 
-    // 5. Handle provider errors without exposing provider details to users.
-    if (!response.ok) {
-      const details = await response.text().catch(() => "");
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
+    );
+
+    let response: Response;
+
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        body: JSON.stringify(requestBody),
+        signal: controller.signal,
+        cache: "no-store",
+      });
+    } catch (error: unknown) {
+      clearTimeout(timeoutId);
+
+      const timedOut =
+        error instanceof Error &&
+        (error.name === "AbortError" || error.name === "TimeoutError");
 
       console.error("Gemini Kundli request failed:", {
-        status: response.status,
-        details: details.slice(0, 1000),
+        attempt,
+        reason: timedOut ? "timeout" : "network_error",
       });
+
+      if (attempt < MAX_ATTEMPTS && !timedOut) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        continue;
+      }
+
+      return jsonError(
+        timedOut
+          ? "The request took too long. Please try again."
+          : "Kundli service is temporarily unavailable. Please try again.",
+        timedOut ? 504 : 502
+      );
+    } finally {
+      clearTimeout(timeoutId);
+    }
+
+    if (!response.ok) {
+      console.error("Gemini Kundli provider error:", {
+        status: response.status,
+        attempt,
+      });
+
+      if (
+        (response.status === 429 || response.status === 503) &&
+        attempt < MAX_ATTEMPTS
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 800));
+        continue;
+      }
 
       if (response.status === 429) {
         return jsonError(
-          "AI service is busy. Please try again later.",
+          "The AI service is busy. Please try again shortly.",
           429
+        );
+      }
+
+      if (response.status === 503) {
+        return jsonError(
+          "The AI service is temporarily busy. Please try again shortly.",
+          503
         );
       }
 
       if (response.status === 401 || response.status === 403) {
         return jsonError(
-          "AI service authentication failed. Check server configuration.",
+          "Kundli service is temporarily unavailable.",
           502
         );
       }
 
       if (response.status === 404) {
         return jsonError(
-          "Gemini model not found. Check GEMINI_MODEL.",
+          "Kundli service configuration needs attention.",
           502
         );
       }
 
-      return jsonError("Kundli report could not be generated.", 502);
+      return jsonError(
+        "Could not generate the report. Please try again.",
+        502
+      );
     }
 
-    // 6. Extract the generated text safely.
-    const data: unknown = await response.json();
+    let data: unknown;
 
-    if (typeof data !== "object" || data === null) {
-      return jsonError("Invalid response from AI service.", 502);
+    try {
+      data = await response.json();
+    } catch {
+      return jsonError("The AI returned an invalid response.", 502);
     }
 
-    const candidates = (data as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{ text?: string }>;
-        };
-      }>;
-    }).candidates;
-
-    const kundliReport = candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
+    const kundliReport = getReport(data);
 
     if (!kundliReport) {
-      console.error("Gemini returned no Kundli report text.");
-      return jsonError("No Kundli report was generated.", 502);
+      console.error("Gemini Kundli response contained no report text.");
+      return jsonError(
+        "Could not generate the report. Please try again.",
+        502
+      );
     }
 
-    // 7. Preserve the existing frontend response contract.
     return NextResponse.json(
       { kundliReport },
       {
@@ -220,19 +303,10 @@ export async function POST(req: Request) {
         headers: { "Cache-Control": "no-store" },
       }
     );
-  } catch (error: unknown) {
-    if (error instanceof Error && error.name === "TimeoutError") {
-      return jsonError(
-        "Kundli request timed out. Please try again.",
-        504
-      );
-    }
-
-    console.error(
-      "Kundli API system error:",
-      error instanceof Error ? error.message : "Unknown error"
-    );
-
-    return jsonError("Internal server error.", 500);
   }
+
+  return jsonError(
+    "The AI service is temporarily busy. Please try again shortly.",
+    503
+  );
 }
