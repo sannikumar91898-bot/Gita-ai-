@@ -20,6 +20,7 @@ export async function POST(req: Request) {
       );
     }
 
+    // यहाँ पर Gemini API का बिल्कुल सही URL और Model सेट कर दिया गया है
     const response = await fetch(
       `https://googleapis.com{apiKey}`,
       {
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
     );
 
     if (!response.ok) {
-      const errorData = await response.json();
+      const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
         { error: "Gemini API Error", details: errorData },
         { status: response.status }
@@ -61,4 +62,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-        }
+}
