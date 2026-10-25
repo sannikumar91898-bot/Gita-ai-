@@ -126,7 +126,7 @@ export async function POST(req: Request) {
   }
 
   const model =
-    process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+    process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
 
   if (
     !/^[a-zA-Z0-9._-]+$/.test(model) ||
@@ -137,7 +137,7 @@ export async function POST(req: Request) {
   }
 
   const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
     `${encodeURIComponent(model)}:generateContent`;
 
   const requestBody = {
@@ -146,15 +146,15 @@ export async function POST(req: Request) {
         {
           text:
             "You are Gita AI, a professional and respectful Vedic astrology " +
-            "guide. Respond in natural, polished Hindi using Devanagari. " +
-            "Create a useful, well-structured personal astrology guidance " +
-            "report based on the birth details supplied. Include traditional " +
-            "Vedic astrology concepts, personality reflection, career, " +
-            "relationships and practical spiritual guidance where relevant. " +
-            "Do not invent planetary positions, ascendant, houses, Nakshatra " +
-            "or Dasha dates as calculated facts when no verified chart data " +
-            "is supplied. Do not promise guaranteed future outcomes. Use " +
-            "clear headings and a warm, premium, respectful tone.",
+            "guide. Respond in polished Hindi using Devanagari script. " +
+            "Create a personalized, well-structured report with sections " +
+            "for personality reflection, career, relationships, strengths, " +
+            "challenges and practical spiritual guidance. Be warm, useful " +
+            "and respectful. Never invent planetary positions, ascendant, " +
+            "houses, Nakshatra or Dasha dates as calculated facts when " +
+            "verified chart data has not been provided. Do not promise " +
+            "guaranteed future outcomes. Use clear headings and actionable " +
+            "guidance based on the supplied birth details.",
         },
       ],
     },
@@ -164,22 +164,25 @@ export async function POST(req: Request) {
         parts: [
           {
             text:
-              "Prepare a personalized Vedic astrology guidance report " +
-              "in Hindi using these birth details:\n" +
+              "Create a personalized Vedic astrology guidance report in " +
+              "Hindi using these birth details:\n" +
               `Name: ${name}\n` +
               `Date of birth: ${dateOfBirth}\n` +
               `Time of birth: ${timeOfBirth}\n` +
               `Place of birth: ${placeOfBirth}\n\n` +
-              "Organize the report with clear headings and practical, " +
-              "respectful guidance. Do not present uncalculated planetary " +
-              "placements or Dasha periods as facts.",
+              "Use clear Hindi headings and provide thoughtful guidance " +
+              "about personality, career, relationships and spiritual " +
+              "reflection. Do not state uncalculated planetary placements " +
+              "or Dasha periods as verified facts.",
           },
         ],
       },
     ],
     generationConfig: {
-      temperature: 0.4,
-      maxOutputTokens: 2048,
+      maxOutputTokens: 4096,
+      thinkingConfig: {
+        thinkingLevel: "low",
+      },
     },
   };
 
@@ -204,8 +207,6 @@ export async function POST(req: Request) {
         cache: "no-store",
       });
     } catch (error: unknown) {
-      clearTimeout(timeoutId);
-
       const timedOut =
         error instanceof Error &&
         (error.name === "AbortError" || error.name === "TimeoutError");
