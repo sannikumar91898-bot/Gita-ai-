@@ -1,6 +1,6 @@
 import React from "react";
 import "./globals.css";
-import { Providers } from "./Providers";
+import { AppProvider } from "./Providers";
 
 export const metadata = {
   title: "Gita AI",
@@ -15,9 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
+        <AppProvider>
           {children}
-        </Providers>
+        </AppProvider>
       </body>
     </html>
   );
