@@ -2,13 +2,26 @@
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const MAX_MESSAGE_LENGTH = 10_000;
-const REQUEST_TIMEOUT_MS = 30_000;
+const REQUEST_TIMEOUT_MS = 12_000;
+const MAX_ATTEMPTS = 2;
+
+type GeminiResponse = {
+  candidates?: Array<{
+    content?: {
+      parts?: Array<{ text?: string }>;
+    };
+  }>;
+};
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 export async function POST(req: Request) {
   try {
-    // 1. Validate incoming request
     let body: unknown;
 
     try {
@@ -48,8 +61,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // 2. Read secrets only from server environment variables
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
 
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing");
@@ -60,124 +72,177 @@ export async function POST(req: Request) {
       );
     }
 
-    // Use the model ID only, without the "models/" prefix.
     const model =
       process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
 
-    // 3. Build the correct Gemini API endpoint
+    if (
+      model.startsWith("models/") ||
+      !/^[a-zA-Z0-9._-]+$/.test(model)
+    ) {
+      console.error("GEMINI_MODEL has an invalid format");
+
+      return NextResponse.json(
+        { error: "AI model configuration is invalid" },
+        { status: 500 }
+      );
+    }
+
     const endpoint =
       `https://generativelanguage.googleapis.com/v1beta/models/` +
       `${encodeURIComponent(model)}:generateContent`;
 
-    // 4. Call Gemini securely
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [
-            {
-              text:
-                "You are Gita AI, a warm, respectful and empathetic " +
-                "Vedic astrology assistant. Respond clearly and kindly. " +
-                "Respect the user's chosen language when provided. " +
-                "Offer astrology as spiritual guidance, not as guaranteed " +
-                "predictions. Never present medical, legal or financial " +
-                "outcomes as certain.",
-            },
-          ],
-        },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: message }],
+    for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+      let response: Response;
+
+      try {
+        response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": apiKey,
           },
-        ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 2048,
-        },
-      }),
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      cache: "no-store",
-    });
+          body: JSON.stringify({
+            systemInstruction: {
+              parts: [
+                {
+                  text:
+                    "You are Gita AI, a warm, respectful and empathetic " +
+                    "Vedic astrology assistant. Respond clearly and kindly. " +
+                    "Use the language of the user's message. If asked for " +
+                    "Hindi, use Devanagari; for Hinglish, use Roman Hindi. " +
+                    "Offer astrology as spiritual guidance, not guaranteed " +
+                    "predictions. Never present medical, legal or financial " +
+                    "outcomes as certain.",
+                },
+              ],
+            },
+            contents: [
+              {
+                role: "user",
+                parts: [{ text: message }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2048,
+            },
+          }),
+          signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+          cache: "no-store",
+        });
+      } catch (error) {
+        const timedOut =
+          error instanceof Error &&
+          error.name === "TimeoutError";
 
-    // 5. Handle provider errors without exposing secrets
-    if (!response.ok) {
-      const providerError = await response.text().catch(() => "");
+        console.error("Gemini request transport failed:", {
+          attempt,
+          timedOut,
+          message:
+            error instanceof Error ? error.message : "Unknown error",
+        });
 
-      console.error("Gemini API request failed:", {
-        status: response.status,
-        error: providerError.slice(0, 1500),
-      });
+        if (attempt < MAX_ATTEMPTS) {
+          await wait(500);
+          continue;
+        }
 
-      return NextResponse.json(
-        {
-          error:
-            response.status === 429
-              ? "AI service is busy. Please try again later."
-              : response.status === 401 ||
-                  response.status === 403
-                ? "AI service authentication failed. Check server configuration."
-                : response.status === 404
-                  ? "Configured AI model was not found. Check GEMINI_MODEL."
-                  : "AI service request failed. Please try again later.",
-        },
-        { status: response.status === 429 ? 429 : 502 }
-      );
-    }
-
-    // 6. Safely parse the Gemini response
-    const data: unknown = await response.json();
-
-    if (typeof data !== "object" || data === null) {
-      throw new Error("Invalid Gemini response");
-    }
-
-    const candidates = (data as {
-      candidates?: Array<{
-        content?: {
-          parts?: Array<{ text?: string }>;
-        };
-      }>;
-    }).candidates;
-
-    const reply = candidates?.[0]?.content?.parts
-      ?.map((part) => part.text ?? "")
-      .join("")
-      .trim();
-
-    if (!reply) {
-      console.error("Gemini returned no text response");
-
-      return NextResponse.json(
-        { error: "No response generated. Please try again." },
-        { status: 502 }
-      );
-    }
-
-    // 7. Preserve the existing frontend response format
-    return NextResponse.json(
-      { reply },
-      {
-        status: 200,
-        headers: { "Cache-Control": "no-store" },
+        return NextResponse.json(
+          {
+            error: timedOut
+              ? "AI request timed out. Please try again."
+              : "Unable to reach the AI service. Please try again.",
+          },
+          { status: timedOut ? 504 : 502 }
+        );
       }
-    );
-  } catch (error: unknown) {
-    if (
-      error instanceof Error &&
-      error.name === "TimeoutError"
-    ) {
+
+      if (!response.ok) {
+        const providerError = await response.text().catch(() => "");
+
+        // Log status only: do not log API keys or provider response bodies.
+        console.error("Gemini API request failed:", {
+          status: response.status,
+          attempt,
+        });
+
+        if (
+          (response.status === 429 || response.status === 503) &&
+          attempt < MAX_ATTEMPTS
+        ) {
+          await wait(800);
+          continue;
+        }
+
+        if (response.status === 401 || response.status === 403) {
+          return NextResponse.json(
+            { error: "AI service authentication failed. Check server configuration." },
+            { status: 502 }
+          );
+        }
+
+        if (response.status === 404) {
+          return NextResponse.json(
+            { error: "Configured AI model was not found. Check GEMINI_MODEL." },
+            { status: 502 }
+          );
+        }
+
+        if (response.status === 429 || response.status === 503) {
+          return NextResponse.json(
+            { error: "AI service is temporarily busy. Please try again shortly." },
+            { status: response.status === 429 ? 429 : 503 }
+          );
+        }
+
+        // Keep the provider response out of client-visible errors.
+        void providerError;
+
+        return NextResponse.json(
+          { error: "AI service request failed. Please try again later." },
+          { status: 502 }
+        );
+      }
+
+      let data: GeminiResponse;
+
+      try {
+        data = (await response.json()) as GeminiResponse;
+      } catch {
+        return NextResponse.json(
+          { error: "Invalid response from AI service." },
+          { status: 502 }
+        );
+      }
+
+      const reply = data.candidates?.[0]?.content?.parts
+        ?.map((part) => part.text ?? "")
+        .join("")
+        .trim();
+
+      if (!reply) {
+        console.error("Gemini returned no text response");
+
+        return NextResponse.json(
+          { error: "No response generated. Please try again." },
+          { status: 502 }
+        );
+      }
+
       return NextResponse.json(
-        { error: "AI request timed out. Please try again." },
-        { status: 504 }
+        { reply },
+        {
+          status: 200,
+          headers: { "Cache-Control": "no-store" },
+        }
       );
     }
 
+    return NextResponse.json(
+      { error: "AI service is temporarily unavailable." },
+      { status: 503 }
+    );
+  } catch (error) {
     console.error(
       "Chat API system error:",
       error instanceof Error ? error.message : "Unknown error"
