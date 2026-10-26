@@ -6,7 +6,7 @@ import { aiResponseCache } from "@/schema";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUEST_TIMEOUT_MS = 25_000;
+const REQUEST_TIMEOUT_MS = 20_000;
 const MAX_ATTEMPTS = 2;
 
 function jsonError(message: string, status: number) {
@@ -23,41 +23,34 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function validCalendarDate(value: string): boolean {
+function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
+  const [y, m, d] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
 
   return (
-    year >= 1900 &&
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
+    y >= 1900 &&
+    date.getUTCFullYear() === y &&
+    date.getUTCMonth() === m - 1 &&
+    date.getUTCDate() === d
   );
 }
 
 function validTime(value: string): boolean {
   if (!/^\d{2}:\d{2}$/.test(value)) return false;
 
-  const [hour, minute] = value.split(":").map(Number);
-
-  return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+  const [h, m] = value.split(":").map(Number);
+  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
-function getReport(data: unknown): string {
-  if (!isRecord(data) || !Array.isArray(data.candidates)) {
-    return "";
-  }
+function extractText(data: unknown): string {
+  if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
 
   const candidate = data.candidates[0];
-
-  if (!isRecord(candidate) || !isRecord(candidate.content)) {
-    return "";
-  }
+  if (!isRecord(candidate) || !isRecord(candidate.content)) return "";
 
   const parts = candidate.content.parts;
-
   if (!Array.isArray(parts)) return "";
 
   return parts
@@ -84,9 +77,12 @@ export async function POST(req: Request) {
   }
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
-  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
-  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+  const dateOfBirth =
+    typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+  const timeOfBirth =
+    typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
+  const placeOfBirth =
+    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
 
   if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
     return jsonError("Please fill in all birth details.", 400);
@@ -95,10 +91,10 @@ export async function POST(req: Request) {
   if (
     name.length > 100 ||
     placeOfBirth.length > 200 ||
-    !validCalendarDate(dateOfBirth) ||
+    !validDate(dateOfBirth) ||
     !validTime(timeOfBirth)
   ) {
-    return jsonError("Please check your name, birth date, birth time and birthplace.", 400);
+    return jsonError("Please check your birth details.", 400);
   }
 
   const today = new Date().toISOString().slice(0, 10);
@@ -106,58 +102,62 @@ export async function POST(req: Request) {
     return jsonError("Birth date cannot be in the future.", 400);
   }
 
-  // डेटाbereich कैशे सर्च की (Key)
-  const kundliKey = `kundli_${dateOfBirth}_${timeOfBirth}_${placeOfBirth.trim().toLowerCase().replace(/\s+/g, "")}`;
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim();
+
+  if (!apiKey || !model) {
+    console.error("Kundli API configuration is incomplete.", {
+      missingApiKey: !apiKey,
+      missingModel: !model,
+    });
+    return jsonError("Kundli service is not configured.", 503);
+  }
+
+  if (!/^[a-zA-Z0-9._-]+$/.test(model)) {
+    console.error("Kundli API: Invalid GEMINI_MODEL configuration.");
+    return jsonError("Kundli service is not configured.", 503);
+  }
+
+  const cacheKey =
+    `kundli_${dateOfBirth}_${timeOfBirth}_` +
+    placeOfBirth.toLowerCase().replace(/\s+/g, "");
 
   try {
-    const cachedKundli = await db
+    const cached = await db
       .select()
       .from(aiResponseCache)
-      .where(eq(aiResponseCache.questionKey, kundliKey))
+      .where(eq(aiResponseCache.questionKey, cacheKey))
       .limit(1);
 
-    if (cachedKundli.length > 0) {
+    if (cached.length > 0 && cached[0].aiAnswer?.trim()) {
       return NextResponse.json(
-        { kundliReport: cachedKundli[0].aiAnswer },
-        { status: 200, headers: { "Cache-Control": "no-store" } }
+        { kundliReport: cached[0].aiAnswer },
+        { headers: { "Cache-Control": "no-store" } }
       );
     }
-  } catch (dbError) {
-    console.error("Database cache check failed, moving to API:", dbError);
+  } catch (error) {
+    console.error(
+      "Kundli cache lookup failed:",
+      error instanceof Error ? error.message : "Unknown database error"
+    );
   }
 
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  if (!apiKey) {
-    console.error("GEMINI_API_KEY is missing");
-    return jsonError("Kundli service is temporarily unavailable.", 503);
-  }
-
-  // सही वर्किंग मॉडल सेट किया
-  const model = process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash";
-
-  if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
-    console.error("GEMINI_MODEL configuration is invalid");
-    return jsonError("Kundli service is temporarily unavailable.", 503);
-  }
-
-  // ✅ फ़िक्स: सही गूगल जेमिनी एपीआई यूआरएल एंडपॉइंट (Google API Key को URL पैरामीटर के तौर पर लेता है या हेडर में)
-  const endpoint = `https://googleapis.com{model}:generateContent?key=${apiKey}`;
+  const endpoint =
+    `https://generativelanguage.googleapis.com/v1beta/models/` +
+    `${encodeURIComponent(model)}:generateContent`;
 
   const requestBody = {
     systemInstruction: {
       parts: [
         {
           text:
-            "You are Gita AI, a professional and respectful Vedic astrology " +
-            "guide. Respond in polished Hindi using Devanagari script. " +
-            "Create a personalized, well-structured report with sections " +
-            "for personality reflection, career, relationships, strengths, " +
-            "challenges and practical spiritual guidance. Be warm, useful " +
-            "and respectful. Never invent planetary positions, ascendant, " +
-            "houses, Nakshatra or Dasha dates as calculated facts when " +
-            "verified chart data has not been provided. Do not promise " +
-            "guaranteed future outcomes. Use clear headings and actionable " +
-            "guidance based on the supplied birth details.",
+            "You are Gita AI, a respectful Hindi astrology guide. " +
+            "Write a personalized report in Hindi using Devanagari script. " +
+            "Cover personality reflection, career, relationships, strengths, " +
+            "challenges and practical spiritual guidance. Do not invent " +
+            "calculated planetary positions, ascendant, houses, Nakshatra " +
+            "or Dasha dates. Be clear that this is general interpretive " +
+            "guidance unless verified chart data is provided.",
         },
       ],
     },
@@ -167,28 +167,30 @@ export async function POST(req: Request) {
         parts: [
           {
             text:
-              "Create a personalized Vedic astrology guidance report in " +
-              "Hindi using these birth details:\n" +
+              "Create a personalized Vedic astrology guidance report in Hindi.\n" +
               `Name: ${name}\n` +
               `Date of birth: ${dateOfBirth}\n` +
               `Time of birth: ${timeOfBirth}\n` +
               `Place of birth: ${placeOfBirth}\n\n` +
-              "Use clear Hindi headings and provide thoughtful guidance " +
-              "about personality, career, relationships and spiritual " +
-              "reflection. Do not state uncalculated planetary placements " +
-              "or Dasha periods as verified facts.",
+              "Use clear headings for personality, career, relationships " +
+              "and spiritual reflection. Do not claim uncalculated " +
+              "planetary placements or Dasha periods as facts.",
           },
         ],
       },
     ],
     generationConfig: {
-      maxOutputTokens: 4096,
+      maxOutputTokens: 2048,
+      thinkingConfig: { thinkingLevel: "low" },
     },
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      REQUEST_TIMEOUT_MS
+    );
 
     let response: Response;
 
@@ -197,84 +199,110 @@ export async function POST(req: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal,
         cache: "no-store",
       });
-    } catch (error: unknown) {
+    } catch (error) {
       const timedOut =
-        error instanceof Error &&
-        (error.name === "AbortError" || error.name === "TimeoutError");
+        error instanceof Error && error.name === "AbortError";
 
-      console.error("Gemini Kundli request failed:", {
+      console.error("Kundli Gemini request failed.", {
         attempt,
         reason: timedOut ? "timeout" : "network_error",
       });
 
       if (attempt < MAX_ATTEMPTS && !timedOut) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((resolve) => setTimeout(resolve, 1000));
         continue;
       }
 
       return jsonError(
         timedOut
-          ? "The request took too long. Please try again."
-          : "Kundli service is temporarily unavailable. Please try again.",
+          ? "The AI request timed out. Please try again."
+          : "Could not connect to the AI service. Please try again.",
         timedOut ? 504 : 502
       );
     } finally {
-      clearTimeout(timeoutId);
+      clearTimeout(timeout);
     }
 
     if (!response.ok) {
-      console.error("Gemini Kundli provider error:", {
+      const retryable =
+        response.status === 429 || response.status === 503;
+
+      console.error("Kundli Gemini provider error.", {
         status: response.status,
         attempt,
+        model,
       });
 
-      if ((response.status === 429 || response.status === 503) && attempt < MAX_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, 800));
+      if (retryable && attempt < MAX_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
         continue;
       }
 
-      return jsonError("The AI service is busy. Please try again shortly.", response.status);
+      if (response.status === 429) {
+        return jsonError(
+          "AI service is busy. Please try again shortly.",
+          429
+        );
+      }
+
+      if (response.status === 503) {
+        return jsonError("AI service is temporarily unavailable.", 503);
+      }
+
+      if (response.status === 401 || response.status === 403) {
+        return jsonError("AI service authentication failed.", 503);
+      }
+
+      if (response.status === 404) {
+        return jsonError("Configured AI model was not found.", 503);
+      }
+
+      return jsonError("Could not generate the Kundli report.", 502);
     }
 
     let data: unknown;
+
     try {
       data = await response.json();
     } catch {
       return jsonError("The AI returned an invalid response.", 502);
     }
 
-    const kundliReport = getReport(data);
+    const kundliReport = extractText(data);
 
     if (!kundliReport) {
-      console.error("Gemini Kundli response contained no report text.");
-      return jsonError("Could not generate the report. Please try again.", 502);
+      console.error("Kundli Gemini response contained no report text.");
+      return jsonError("The AI returned an empty report.", 502);
     }
 
-    // कैशे टेबल में सुरक्षित रूप से सेव करें
     try {
-      await db.insert(aiResponseCache).values({
-        id: crypto.randomUUID(),
-        questionKey: kundliKey,
-        originalQuestion: `Kundli report for ${name} (${dateOfBirth})`,
-        aiAnswer: kundliReport,
-      }).onConflictDoNothing();
-    } catch (saveError) {
-      console.error("Failed to save kundli cache:", saveError);
+      await db
+        .insert(aiResponseCache)
+        .values({
+          id: crypto.randomUUID(),
+          questionKey: cacheKey,
+          originalQuestion: `Kundli report for ${name} (${dateOfBirth})`,
+          aiAnswer: kundliReport,
+        })
+        .onConflictDoNothing();
+    } catch (error) {
+      console.error(
+        "Kundli cache save failed:",
+        error instanceof Error ? error.message : "Unknown database error"
+      );
     }
 
     return NextResponse.json(
       { kundliReport },
-      {
-        status: 200,
-        headers: { "Cache-Control": "no-store" },
-      }
+      { headers: { "Cache-Control": "no-store" } }
     );
   }
 
-  return jsonError("The AI service is temporarily busy. Please try again shortly.", 503);
+  return jsonError("AI service is temporarily unavailable.", 503);
 }
