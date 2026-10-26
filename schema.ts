@@ -8,6 +8,7 @@ import {
   jsonb,
   doublePrecision,
   date,
+  index,
 } from "drizzle-orm/pg-core";
 
 export const users = pgTable("users", {
@@ -118,3 +119,24 @@ export const palmReadings = pgTable("palm_readings", {
   interpretation: text("interpretation").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const aiResponseCache = pgTable("ai_response_cache", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  questionKey: text("question_key").notNull().unique(),
+  originalQuestion: text("original_question").notNull(),
+  aiAnswer: text("ai_answer").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("question_key_idx").on(table.questionKey),
+]);
+
+export const astrologyKnowledgeBase = pgTable("astrology_knowledge_base", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  category: text("category").notNull(),
+  searchKey: text("search_key").notNull().unique(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("search_key_idx").on(table.searchKey),
+]);
