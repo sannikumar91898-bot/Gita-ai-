@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { eq, and } from "drizzle-orm";
-import { GoogleGenAI } from "@google/genai";
+import { eq } from "drizzle-orm";
+// पुराने पैकेज का इस्तेमाल ताकि इंस्टॉल न करना पड़े
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 import { db } from "@/index";
-import { messages, conversations, aiResponseCache } from "@/schema";
+import { messages, aiResponseCache } from "@/schema";
 import { getUser } from "@/auth";
 
 const aiKey = process.env.GEMINI_API_KEY;
-const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
-const ai = aiKey ? new GoogleGenAI({ apiKey: aiKey }) : null;
+const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash"; // पुराना पैकेज 1.5-flash को बेस्ट सपोर्ट करता है
+const genAI = aiKey ? new GoogleGenerativeAI(aiKey) : null;
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,7 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
 
-    // सुधार: यह लाइन हिंदी और इंग्लिश दोनों अक्षरों को बिना स्पेस के साफ करेगी ताकि डेटाबेस में सही मैच मिले
+    // हिंदी और इंग्लिश दोनों को साफ करने का लॉजिक
     const questionKey = content.trim().toLowerCase().replace(/[^a-zA-Z0-9\u0900-\u097F]/g, "");
 
     // 1. पहले डेटाबेस कैशे में चेक करें
@@ -35,34 +36,33 @@ export async function POST(req: NextRequest) {
     let aiAnswer = "";
 
     if (cachedResult.length > 0) {
-      // अगर पहले किसी ने इंग्लिश या हिंदी में यह पूछा था, तो सीधे डेटाबेस से जवाब मिलेगा
+      // फिक्स: एरे में से पहला ऑब्जेक्ट निकालने का सही तरीका
       aiAnswer = cachedResult[0].aiAnswer;
     } else {
-      // 2. अगर डेटाबेस में नहीं है, तब असली जेमिनी API को कॉल करें
-      if (!ai) {
+      // 2. डेटाबेस में नहीं मिलने पर पुराना जेमिनी क्लाइंट कॉल
+      if (!genAI) {
         return NextResponse.json(
           { error: "AI service is temporarily offline." },
           { status: 503 }
         );
       }
 
-      const response = await ai.models.generateContent({
-        model: modelName,
-        contents: content, // जेमिनी यूजर की भाषा (English/Hindi) समझकर उसी भाषा में जवाब देगा
-      });
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const response = await model.generateContent(content);
+      const responseText = await response.response.text();
 
-      aiAnswer = response.text || "Sorry, I couldn't process that request right now.";
+      aiAnswer = responseText || "Sorry, I couldn't process that request right now.";
 
-      // 3. भविष्य के लिए इसे डेटाबेस में सेव कर लें
+      // 3. भविष्य के लिए कैशे में सेव करें
       await db.insert(aiResponseCache).values({
-        id: crypto.randomUUID(), // आपकी आईडी कन्वेंशन के अनुसार UUID जनरेशन
+        id: crypto.randomUUID(),
         questionKey: questionKey,
         originalQuestion: content,
         aiAnswer: aiAnswer,
       }).onConflictDoNothing();
     }
 
-    // 4. यूजर का मैसेज सेव करें
+    // 4. यूजर का मैसेज हिस्ट्री में सेव करें
     await db.insert(messages).values({
       id: crypto.randomUUID(),
       conversationId,
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       content,
     });
 
-    // 5. एआई का जवाब सेव करें
+    // 5. एआई का जवाब हिस्ट्री में सेव करें
     const [assistantMsg] = await db.insert(messages).values({
       id: crypto.randomUUID(),
       conversationId,
