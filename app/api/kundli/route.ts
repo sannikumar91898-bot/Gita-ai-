@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     return jsonError("Birth date cannot be in the future.", 400);
   }
 
-  // डेटाबेस कैशे सर्च की (Key)
+  // डेटाbereich कैशे सर्च की (Key)
   const kundliKey = `kundli_${dateOfBirth}_${timeOfBirth}_${placeOfBirth.trim().toLowerCase().replace(/\s+/g, "")}`;
 
   try {
@@ -140,9 +140,8 @@ export async function POST(req: Request) {
     return jsonError("Kundli service is temporarily unavailable.", 503);
   }
 
-  const endpoint =
-    "https://googleapis.com" +
-    `${encodeURIComponent(model)}:generateContent`;
+  // ✅ फ़िक्स: सही गूगल जेमिनी एपीआई यूआरएल एंडपॉइंट (Google API Key को URL पैरामीटर के तौर पर लेता है या हेडर में)
+  const endpoint = `https://googleapis.com{model}:generateContent?key=${apiKey}`;
 
   const requestBody = {
     systemInstruction: {
@@ -198,7 +197,6 @@ export async function POST(req: Request) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
         },
         body: JSON.stringify(requestBody),
         signal: controller.signal,
@@ -226,7 +224,6 @@ export async function POST(req: Request) {
         timedOut ? 504 : 502
       );
     } finally {
-      // फिक्स: स्पेलिंग बिल्कुल सही कर दी गई है
       clearTimeout(timeoutId);
     }
 
