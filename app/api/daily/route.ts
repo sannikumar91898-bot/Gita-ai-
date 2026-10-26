@@ -1,9 +1,11 @@
+
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const REQUEST_TIMEOUT_MS = 30_000;
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 type DailyReading = {
   signName: string;
@@ -17,112 +19,115 @@ type DailyReading = {
 };
 
 function errorResponse(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status });
-}
-
-function isValidReading(value: unknown): value is DailyReading {
-  if (!value || typeof value !== "object") {
-    return false;
-  }
-
-  const reading = value as Record<string, unknown>;
-  const colour = reading.luckyColour;
-
-  if (!colour || typeof colour !== "object") {
-    return false;
-  }
-
-  const luckyColour = colour as Record<string, unknown>;
-
-  return (
-    typeof reading.signName === "string" &&
-    reading.signName.trim().length > 0 &&
-    typeof reading.focus === "string" &&
-    reading.focus.trim().length > 0 &&
-    typeof luckyColour.name === "string" &&
-    luckyColour.name.trim().length > 0 &&
-    typeof luckyColour.hex === "string" &&
-    /^#[0-9A-Fa-f]{6}$/.test(luckyColour.hex) &&
-    typeof reading.luckyNumber === "number" &&
-    Number.isInteger(reading.luckyNumber) &&
-    reading.luckyNumber >= 1 &&
-    reading.luckyNumber <= 99 &&
-    typeof reading.affirmation === "string" &&
-    reading.affirmation.trim().length > 0
+  return NextResponse.json(
+    { error: message },
+    {
+      status,
+      headers: { "Cache-Control": "no-store" },
+    }
   );
 }
 
-async function generateDailyReading(
-  sign: string
-): Promise<NextResponse> {
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function isValidReading(value: unknown): value is DailyReading {
+  if (!isRecord(value) || !isRecord(value.luckyColour)) {
+    return false;
+  }
+
+  const colour = value.luckyColour;
+
+  return (
+    typeof value.signName === "string" &&
+    value.signName.trim().length > 0 &&
+    typeof value.focus === "string" &&
+    value.focus.trim().length > 0 &&
+    typeof colour.name === "string" &&
+    colour.name.trim().length > 0 &&
+    typeof colour.hex === "string" &&
+    /^#[0-9a-fA-F]{6}$/.test(colour.hex) &&
+    typeof value.luckyNumber === "number" &&
+    Number.isInteger(value.luckyNumber) &&
+    value.luckyNumber >= 1 &&
+    value.luckyNumber <= 99 &&
+    typeof value.affirmation === "string" &&
+    value.affirmation.trim().length > 0
+  );
+}
+
+async function generateDailyReading(sign: string) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 
   if (!apiKey) {
     console.error("Daily API: GEMINI_API_KEY is missing.");
-    return errorResponse(
-      "सेवा अभी उपलब्ध नहीं है। कृपया कुछ देर बाद प्रयास करें।",
-      503
-    );
+    return errorResponse("AI सेवा अभी कॉन्फ़िगर नहीं है।", 503);
   }
-
-  // ✅ फ़िक्स 1: Sahi fallback model variable set kiya (gemini-1.5-flash) taaki 404 error na aaye
-  const model = process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash";
 
   if (
     !/^[a-zA-Z0-9._-]+$/.test(model) ||
     model.startsWith("models/")
   ) {
-    console.error("Daily API: Invalid GEMINI_MODEL configuration.");
-    return errorResponse(
-      "सेवा का कॉन्फ़िगरेशन जाँचने की आवश्यकता है।",
-      503
-    );
+    console.error("Daily API: Invalid GEMINI_MODEL.");
+    return errorResponse("AI मॉडल कॉन्फ़िगरेशन गलत है।", 503);
   }
 
-  const url = `https://googleapis.com{model}:generateContent?key=${apiKey}`;
+  // Correct Gemini generateContent endpoint.
+  const url =
+    "https://generativelanguage.googleapis.com/v1beta/models/" +
+    `${encodeURIComponent(model)}:generateContent`;
 
   const prompt = `
-Create a concise, warm daily astrology-style reading.
+Create a concise daily astrology-style reading in natural Hindi.
 
 Requested sign or category: ${sign}
 
-Return ONLY a valid JSON object with exactly these fields:
+Return only a valid JSON object with these fields:
 {
-  "signName": "${sign}",
-  "focus": "Provide daily horoscope and focus in Hindi",
+  "signName": "Name of sign or category",
+  "focus": "Daily guidance in Hindi",
   "luckyColour": {
     "name": "Colour name in Hindi",
     "hex": "#RRGGBB"
   },
   "luckyNumber": 7,
-  "affirmation": "Positive affirmation statement in Hindi"
+  "affirmation": "Positive affirmation in Hindi"
 }
 
-Requirements:
-- Write all user-facing text in natural Hindi.
-- Keep the reading positive, practical, respectful and concise.
-- Do not claim certainty about future events.
-- Do not provide medical, legal or financial guarantees.
-- luckyNumber must be an integer from 1 to 99.
-- luckyColour.hex must be a valid six-digit hexadecimal colour.
-- Do not include Markdown, code fences or text outside the JSON object.
+Rules:
+- Write user-facing text in natural Hindi.
+- Keep guidance positive, practical and respectful.
+- Do not claim future events are certain.
+- Do not give medical, legal or financial guarantees.
+- luckyNumber must be an integer between 1 and 99.
+- luckyColour.hex must be a six-digit hexadecimal colour.
+- Do not include Markdown or code fences.
 `.trim();
 
-  let response: Response;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    REQUEST_TIMEOUT_MS
+  );
+
+  let response: Response;
 
   try {
     response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
       },
       body: JSON.stringify({
         systemInstruction: {
           parts: [
             {
-              text: "You are Gita AI, a calm, wise and respectful Hindi astrology guide. Follow the requested JSON format exactly. Always output strictly valid JSON structure.",
+              text:
+                "You are Gita AI, a calm and respectful Hindi astrology " +
+                "guide. Return only valid JSON matching the requested format.",
             },
           ],
         },
@@ -133,134 +138,110 @@ Requirements:
           },
         ],
         generationConfig: {
+          temperature: 0.7,
           maxOutputTokens: 1024,
           responseMimeType: "application/json",
-          // ✅ फ़िक्स 2: Unsupported critical parameter 'thinkingConfig' hataya jo crash kar raha tha
         },
       }),
       signal: controller.signal,
       cache: "no-store",
     });
   } catch (error) {
-    if (error instanceof Error && error.name === "AbortError") {
-      console.error("Daily API: Gemini request timed out.");
-      return errorResponse(
-        "जवाब आने में अधिक समय lag raha hai। कृपया दोबारा प्रयास करें।",
-        504
-      );
-    }
+    const timedOut =
+      error instanceof Error && error.name === "AbortError";
 
-    console.error(
-      "Daily API: Gemini request failed.",
-      error instanceof Error ? error.message : "Unknown network error"
-    );
+    console.error("Daily API request failed:", {
+      reason: timedOut ? "timeout" : "network_error",
+    });
 
     return errorResponse(
-      "सेवा से कनेक्शन नहीं हो पाया। कृपया दोबारा प्रयास करें।",
-      502
+      timedOut
+        ? "जवाब आने में अधिक समय लगा। दोबारा प्रयास करें।"
+        : "AI सेवा से कनेक्शन नहीं हो पाया। दोबारा प्रयास करें।",
+      timedOut ? 504 : 502
     );
   } finally {
     clearTimeout(timeoutId);
   }
 
   if (!response.ok) {
-    const providerDetails = await response.text().catch(() => "");
-    console.error(
-      "Daily API: Gemini returned HTTP",
-      response.status,
-      providerDetails.slice(0, 500)
-    );
+    // Never log the API key or request URL containing secrets.
+    console.error("Gemini Daily API error:", {
+      status: response.status,
+      model,
+    });
 
     if (response.status === 401 || response.status === 403) {
-      return errorResponse(
-        "AI सेवा का प्रमाणीकरण जाँचने की आवश्यकता है।",
-        503
-      );
+      return errorResponse("AI सेवा का authentication विफल हुआ।", 503);
     }
 
     if (response.status === 404) {
       return errorResponse(
-        "AI मॉडल उपलब्ध नहीं है। GEMINI_MODEL कॉन्फ़िगरेशन जाँचें।",
+        "AI मॉडल उपलब्ध नहीं है। GEMINI_MODEL जाँचें।",
         503
       );
     }
 
     if (response.status === 429 || response.status === 503) {
       return errorResponse(
-        "अभी बहुत अधिक अनुरोध हैं। कृपया थोड़ी देर बाद प्रयास करें।",
+        "AI सेवा व्यस्त है। थोड़ी देर बाद प्रयास करें।",
         503
       );
     }
 
-    return errorResponse(
-      "आज का मार्गदर्शन तैयार नहीं हो पाया। कृपया दोबारा प्रयास करें।",
-      502
-    );
+    return errorResponse("आज का राशिफल तैयार नहीं हो पाया।", 502);
   }
 
-  let providerData: any;
+  let providerData: unknown;
 
   try {
     providerData = await response.json();
   } catch {
-    console.error("Daily API: Gemini returned invalid response JSON.");
-    return errorResponse(
-      "AI सेवा से अमान्य जवाब मिला। कृपया दोबारा प्रयास करें।",
-      502
-    );
+    return errorResponse("AI सेवा से अमान्य जवाब मिला।", 502);
   }
 
-  const generatedText = providerData.candidates?.[0]?.content?.parts
-    ?.map((part: any) => part.text ?? "")
+  if (!isRecord(providerData) || !Array.isArray(providerData.candidates)) {
+    console.error("Daily API: Invalid Gemini response structure.");
+    return errorResponse("AI का जवाब सही प्रारूप में नहीं है।", 502);
+  }
+
+  const candidate = providerData.candidates[0];
+
+  if (!isRecord(candidate) || !isRecord(candidate.content)) {
+    return errorResponse("AI ने कोई उपयोगी जवाब नहीं दिया।", 502);
+  }
+
+  const parts = candidate.content.parts;
+
+  if (!Array.isArray(parts)) {
+    return errorResponse("AI का जवाब खाली है।", 502);
+  }
+
+  const generatedText = parts
+    .filter(
+      (part): part is Record<string, unknown> =>
+        isRecord(part) && typeof part.text === "string"
+    )
+    .map((part) => part.text as string)
     .join("")
     .trim();
 
   if (!generatedText) {
-    console.error("Daily API: Gemini returned empty content.");
-    return errorResponse(
-      "आज का मार्गदर्शन तैयार नहीं हो पाया। कृपया दोबारा प्रयास करें।",
-      502
-    );
+    return errorResponse("AI का जवाब खाली है।", 502);
   }
 
   let parsed: unknown;
 
   try {
-    const cleanedText = generatedText
-      .replace(/^```(?:json)?\s*/i, "")
-      .replace(/\s*```$/, "")
-      .trim();
-
-    parsed = JSON.parse(cleanedText);
+    parsed = JSON.parse(generatedText);
   } catch {
-    console.error("Daily API: Gemini returned invalid reading JSON.");
-    return errorResponse(
-      "जवाब को समझने में समस्या हुई। कृपया दोबारा प्रयास करें।",
-      502
-    );
+    console.error("Daily API: Gemini returned invalid JSON.");
+    return errorResponse("AI के जवाब को पढ़ने में समस्या हुई।", 502);
   }
 
   if (!isValidReading(parsed)) {
-    console.error("Daily API: Gemini response failed validation.");
-    // ✅ फ़िक्स 3: Safe backup parser logic, agar hex strict control break ho tab bhi frontend load karega
-    const fallbackReading = parsed as any;
-    if (fallbackReading && fallbackReading.focus) {
-      return NextResponse.json({
-        reading: {
-          signName: fallbackReading.signName || sign,
-          focus: fallbackReading.focus,
-          luckyColour: fallbackReading.luckyColour || { name: "लाल", hex: "#FF0000" },
-          luckyNumber: fallbackReading.luckyNumber || 7,
-          affirmation: fallbackReading.affirmation || "आज का दिन शुभ हो।"
-        },
-        prediction: fallbackReading.focus
-      }, { headers: { "Cache-Control": "no-store" } });
-    }
-
-    return errorResponse(
-      "जवाब का प्रारूप सही नहीं है। कृपया दोबारा प्रयास करें।",
-      502
-    );
+    console.error("Daily API: Response validation failed.");
+    return errorResponse("AI के जवाब का प्रारूप गलत है।", 502);
   }
 
   return NextResponse.json(
@@ -269,9 +250,7 @@ Requirements:
       prediction: parsed.focus,
     },
     {
-      headers: {
-        "Cache-Control": "no-store, max-age=0",
-      },
+      headers: { "Cache-Control": "no-store, max-age=0" },
     }
   );
 }
@@ -280,7 +259,11 @@ export async function GET(request: NextRequest) {
   const sign =
     request.nextUrl.searchParams.get("sign")?.trim() || "General";
 
-  return generateDailyReading(sign.slice(0, 60));
+  if (sign.length > 60) {
+    return errorResponse("राशि या श्रेणी का नाम बहुत लंबा है।", 400);
+  }
+
+  return generateDailyReading(sign);
 }
 
 export async function POST(request: NextRequest) {
@@ -292,11 +275,11 @@ export async function POST(request: NextRequest) {
     return errorResponse("अनुरोध का JSON सही नहीं है।", 400);
   }
 
-  if (!body || typeof body !== "object") {
+  if (!isRecord(body)) {
     return errorResponse("अनुरोध का प्रारूप सही नहीं है।", 400);
   }
 
-  const signValue = (body as Record<string, unknown>).sign;
+  const signValue = body.sign;
 
   if (signValue !== undefined && typeof signValue !== "string") {
     return errorResponse("राशि या श्रेणी का नाम सही नहीं है।", 400);
@@ -307,5 +290,9 @@ export async function POST(request: NextRequest) {
       ? signValue.trim()
       : "General";
 
-  return generateDailyReading(sign.slice(0, 60));
+  if (sign.length > 60) {
+    return errorResponse("राशि या श्रेणी का नाम बहुत लंबा है।", 400);
+  }
+
+  return generateDailyReading(sign);
 }
