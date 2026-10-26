@@ -6,99 +6,146 @@ import { db } from "@/index";
 import { messages, aiResponseCache, birthDetails } from "@/schema";
 import { getUser } from "@/auth";
 
-const aiKey = process.env.GEMINI_API_KEY;
-const modelName = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const aiKey = process.env.GEMINI_API_KEY?.trim();
+const modelName = process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash";
 const genAI = aiKey ? new GoogleGenerativeAI(aiKey) : null;
 
 export async function POST(req: NextRequest) {
   try {
+    // ✦ यूजर ऑथेंटिकेशन चेक
     const user = await getUser();
     if (!user) {
       return NextResponse.json({ error: "Not signed in" }, { status: 401 });
     }
 
-    const body = await req.json().catch(() => ({}));
-    const content = body.message || body.content || "";
+    let body: any = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+
+    const content = (body.message || body.content || "").toString().trim();
     const conversationId = body.conversationId || crypto.randomUUID();
 
-    if (!content || typeof content !== "string") {
+    if (!content) {
       return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
     }
 
-    // ✦ स्टेप ए: डेटाबेस से इस लॉग-इन यूज़र की कुंडली डिटेल्स खोजें
-    const userBirthData = await db
-      .select()
-      .from(birthDetails)
-      .where(eq(birthDetails.userId, user.id))
-      .limit(1);
+    // ✦ स्टेप ए: डेटाबेस से लॉग-इन यूज़र की कुंडली डिटेल्स खोजें
+    let userBirthData: any[] = [];
+    try {
+      userBirthData = await db
+        .select()
+        .from(birthDetails)
+        .where(eq(birthDetails.userId, user.id))
+        .limit(1);
+    } catch (dbErr) {
+      console.error("Failed to fetch birth details:", dbErr);
+    }
 
     let contextPrompt = "";
-    let questionKey = content.trim().toLowerCase().replace(/[^a-zA-Z0-9\u0900-\u097F]/g, "");
+    let questionKey = content.toLowerCase().replace(/[^a-zA-Z0-9\u0900-\u097F]/g, "");
 
-    if (userBirthData.length > 0) {
+    if (userBirthData && userBirthData.length > 0) {
       const u = userBirthData[0];
-      // जेमिनी को बैकएंड में बताने के लिए उसकी कुंडली का डेटा तैयार करें
       contextPrompt = `User Birth Details -> Name: ${u.name}, Date of Birth: ${u.dob}, Time of Birth: ${u.birthTime}, Place of Birth: ${u.birthPlace}. `;
-      // कैशे की (Key) को यूज़र आईडी के साथ जोड़ें ताकि हर व्यक्ति को उसकी कुंडली के अनुसार ही कैशे जवाब मिले
       questionKey = `u_${user.id}_${questionKey}`;
     }
 
-    // ✦ स्टेप बी: पहले डेटाबेस कैशे में चेक करें (जेमिनी का खर्च बचाने के लिए)
-    const cachedResult = await db
-      .select()
-      .from(aiResponseCache)
-      .where(eq(aiResponseCache.questionKey, questionKey))
-      .limit(1);
-
+    // ✦ स्टेप बी: डेटाबेस कैशे में चेक करें
     let aiAnswer = "";
+    let isCached = false;
 
-    if (cachedResult.length > 0) {
-      aiAnswer = cachedResult[0].aiAnswer;
-    } else {
-      // ✦ स्टेप सी: अगर डेटाबेस में नहीं है, तब असली जेमिनी API को कॉल करें
+    try {
+      const cachedResult = await db
+        .select()
+        .from(aiResponseCache)
+        .where(eq(aiResponseCache.questionKey, questionKey))
+        .limit(1);
+
+      if (cachedResult && cachedResult.length > 0) {
+        aiAnswer = cachedResult[0].aiAnswer;
+        isCached = true;
+      }
+    } catch (cacheErr) {
+      console.error("Cache query failed:", cacheErr);
+    }
+
+    // ✦ स्टेप सी: अगर कैशे में नहीं है, तब जेमिनी API को कॉल करें
+    if (!isCached) {
       if (!genAI) {
         return NextResponse.json({ error: "AI service offline" }, { status: 503 });
       }
 
       const model = genAI.getGenerativeModel({ 
         model: modelName,
-        // एआई को असली ज्योतिषी बनाने के लिए कड़क सिस्टम इंस्ट्रक्शन
         systemInstruction: "You are Gita AI, a professional, warm, and highly respectful Vedic astrologer. Use the provided user birth details context (Name, DOB, Time, Place) to answer their query accurately in their language (Hindi/English). Address them by their name respectfully (e.g., Sanni ji) and behave like a real premium astrology app."
       });
 
-      // जेमिनी को यूज़र का सवाल भेजने के साथ बैकएंड में उसकी जन्म डिटेल्स भी भेज रहे हैं
       const finalPrompt = `${contextPrompt}User Question: ${content}`;
       
       const response = await model.generateContent(finalPrompt);
       aiAnswer = response.response.text() || "Sorry, I couldn't process that.";
 
-      // ✦ स्टेप डी: भविष्य के लिए इसे डेटाबेस कैशे में सेव कर लें
-      await db.insert(aiResponseCache).values({
-        id: crypto.randomUUID(),
-        questionKey: questionKey,
-        originalQuestion: content,
-        aiAnswer: aiAnswer,
-      }).onConflictDoNothing();
+      // ✦ स्टेप डी: डेटाबेस कैशे में सेव करें
+      try {
+        await db.insert(aiResponseCache).values({
+          id: crypto.randomUUID(),
+          questionKey: questionKey,
+          originalQuestion: content,
+          aiAnswer: aiAnswer,
+        }).onConflictDoNothing();
+      } catch (saveCacheErr) {
+        console.error("Failed to save to cache table:", saveCacheErr);
+      }
     }
 
     // ✦ स्टेप ई: यूजर और एआई दोनों के मैसेज को हिस्ट्री (Messages Table) में सेव करें
-    await db.insert(messages).values({
-      id: crypto.randomUUID(),
-      conversationId,
-      userId: user.id,
-      role: "user",
-      content,
-    });
+    try {
+      await db.insert(messages).values({
+        id: crypto.randomUUID(),
+        conversationId,
+        userId: user.id,
+        role: "user",
+        content,
+      });
+    } catch (msgErr) {
+      console.error("Failed to log user message:", msgErr);
+    }
 
-    const [assistantMsg] = await db.insert(messages).values({
+    let assistantMsg: any = {
       id: crypto.randomUUID(),
       conversationId,
       userId: user.id,
       role: "assistant",
       content: aiAnswer,
-    }).returning();
+    };
 
-    return NextResponse.json({ message: assistantMsg });
+    try {
+      const inserted = await db.insert(messages).values({
+        id: assistantMsg.id,
+        conversationId,
+        userId: user.id,
+        role: "assistant",
+        content: aiAnswer,
+      }).returning();
+      
+      if (inserted && inserted.length > 0) {
+        assistantMsg = inserted[0];
+      }
+    } catch (insertErr) {
+      console.error("Failed to insert assistant message history:", insertErr);
+    }
+
+    // ✅ फ़िक्स: Frontend object mapping payload alignment support (Balkal exact match format)
+    return NextResponse.json({ 
+      message: assistantMsg,
+      reply: aiAnswer // Dono structure provide kar diya hai taaki component crash na kare
+    }, { status: 200 });
 
   } catch (error) {
     console.error("Chat API Error:", error);
