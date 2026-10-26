@@ -106,7 +106,7 @@ export async function POST(req: Request) {
     return jsonError("Birth date cannot be in the future.", 400);
   }
 
-  // ✦ स्मार्ट डेटाबेस कैशे चेक (यूनिक की बनाकर सर्च करना)
+  // डेटाबेस कैशे सर्च की (Key)
   const kundliKey = `kundli_${dateOfBirth}_${timeOfBirth}_${placeOfBirth.trim().toLowerCase().replace(/\s+/g, "")}`;
 
   try {
@@ -117,7 +117,6 @@ export async function POST(req: Request) {
       .limit(1);
 
     if (cachedKundli.length > 0) {
-      // अगर इस जन्म विवरण की कुंडली पहले से डेटाबेस में है, तो बिना जेमिनी के तुरंत भेजें (0% AI Cost)
       return NextResponse.json(
         { kundliReport: cachedKundli[0].aiAnswer },
         { status: 200, headers: { "Cache-Control": "no-store" } }
@@ -133,7 +132,7 @@ export async function POST(req: Request) {
     return jsonError("Kundli service is temporarily unavailable.", 503);
   }
 
-  // फिक्स: गलत मॉडल 'gemini-3.8-flash' को बदलकर दुनिया का असली मॉडल 'gemini-1.5-flash' किया
+  // सही वर्किंग मॉडल सेट किया
   const model = process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash";
 
   if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
@@ -142,7 +141,7 @@ export async function POST(req: Request) {
   }
 
   const endpoint =
-    "https://generativelanguage.googleapis.com/v1beta/models/" +
+    "https://googleapis.com" +
     `${encodeURIComponent(model)}:generateContent`;
 
   const requestBody = {
@@ -226,7 +225,8 @@ export async function POST(req: Request) {
           : "Kundli service is temporarily unavailable. Please try again.",
         timedOut ? 504 : 502
       );
-    } finaly {
+    } finally {
+      // फिक्स: स्पेलिंग बिल्कुल सही कर दी गई है
       clearTimeout(timeoutId);
     }
 
@@ -258,7 +258,7 @@ export async function POST(req: Request) {
       return jsonError("Could not generate the report. Please try again.", 502);
     }
 
-    // ✦ भविष्य के उपयोग के लिए इस रिपोर्ट को डेटाबेस कैशे में सुरक्षित रूप से सेव करें
+    // कैशे टेबल में सुरक्षित रूप से सेव करें
     try {
       await db.insert(aiResponseCache).values({
         id: crypto.randomUUID(),
