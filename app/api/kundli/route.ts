@@ -1,5 +1,7 @@
-
 import { NextResponse } from "next/server";
+import { eq } from "drizzle-orm";
+import { db } from "@/index";
+import { aiResponseCache } from "@/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -81,20 +83,10 @@ export async function POST(req: Request) {
     return jsonError("Please provide valid birth details.", 400);
   }
 
-  const name =
-    typeof body.name === "string" ? body.name.trim() : "";
-  const dateOfBirth =
-    typeof body.dateOfBirth === "string"
-      ? body.dateOfBirth.trim()
-      : "";
-  const timeOfBirth =
-    typeof body.timeOfBirth === "string"
-      ? body.timeOfBirth.trim()
-      : "";
-  const placeOfBirth =
-    typeof body.placeOfBirth === "string"
-      ? body.placeOfBirth.trim()
-      : "";
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
+  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
 
   if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
     return jsonError("Please fill in all birth details.", 400);
@@ -106,32 +98,45 @@ export async function POST(req: Request) {
     !validCalendarDate(dateOfBirth) ||
     !validTime(timeOfBirth)
   ) {
-    return jsonError(
-      "Please check your name, birth date, birth time and birthplace.",
-      400
-    );
+    return jsonError("Please check your name, birth date, birth time and birthplace.", 400);
   }
 
   const today = new Date().toISOString().slice(0, 10);
-
   if (dateOfBirth > today) {
     return jsonError("Birth date cannot be in the future.", 400);
   }
 
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  // ✦ स्मार्ट डेटाबेस कैशे चेक (यूनिक की बनाकर सर्च करना)
+  const kundliKey = `kundli_${dateOfBirth}_${timeOfBirth}_${placeOfBirth.trim().toLowerCase().replace(/\s+/g, "")}`;
 
+  try {
+    const cachedKundli = await db
+      .select()
+      .from(aiResponseCache)
+      .where(eq(aiResponseCache.questionKey, kundliKey))
+      .limit(1);
+
+    if (cachedKundli.length > 0) {
+      // अगर इस जन्म विवरण की कुंडली पहले से डेटाबेस में है, तो बिना जेमिनी के तुरंत भेजें (0% AI Cost)
+      return NextResponse.json(
+        { kundliReport: cachedKundli[0].aiAnswer },
+        { status: 200, headers: { "Cache-Control": "no-store" } }
+      );
+    }
+  } catch (dbError) {
+    console.error("Database cache check failed, moving to API:", dbError);
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     console.error("GEMINI_API_KEY is missing");
     return jsonError("Kundli service is temporarily unavailable.", 503);
   }
 
-  const model =
-    process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
+  // फिक्स: गलत मॉडल 'gemini-3.8-flash' को बदलकर दुनिया का असली मॉडल 'gemini-1.5-flash' किया
+  const model = process.env.GEMINI_MODEL?.trim() || "gemini-1.5-flash";
 
-  if (
-    !/^[a-zA-Z0-9._-]+$/.test(model) ||
-    model.startsWith("models/")
-  ) {
+  if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
     console.error("GEMINI_MODEL configuration is invalid");
     return jsonError("Kundli service is temporarily unavailable.", 503);
   }
@@ -180,18 +185,12 @@ export async function POST(req: Request) {
     ],
     generationConfig: {
       maxOutputTokens: 4096,
-      thinkingConfig: {
-        thinkingLevel: "low",
-      },
     },
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     const controller = new AbortController();
-    const timeoutId = setTimeout(
-      () => controller.abort(),
-      REQUEST_TIMEOUT_MS
-    );
+    const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
     let response: Response;
 
@@ -227,7 +226,7 @@ export async function POST(req: Request) {
           : "Kundli service is temporarily unavailable. Please try again.",
         timedOut ? 504 : 502
       );
-    } finally {
+    } finaly {
       clearTimeout(timeoutId);
     }
 
@@ -237,50 +236,15 @@ export async function POST(req: Request) {
         attempt,
       });
 
-      if (
-        (response.status === 429 || response.status === 503) &&
-        attempt < MAX_ATTEMPTS
-      ) {
+      if ((response.status === 429 || response.status === 503) && attempt < MAX_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, 800));
         continue;
       }
 
-      if (response.status === 429) {
-        return jsonError(
-          "The AI service is busy. Please try again shortly.",
-          429
-        );
-      }
-
-      if (response.status === 503) {
-        return jsonError(
-          "The AI service is temporarily busy. Please try again shortly.",
-          503
-        );
-      }
-
-      if (response.status === 401 || response.status === 403) {
-        return jsonError(
-          "Kundli service is temporarily unavailable.",
-          502
-        );
-      }
-
-      if (response.status === 404) {
-        return jsonError(
-          "Kundli service configuration needs attention.",
-          502
-        );
-      }
-
-      return jsonError(
-        "Could not generate the report. Please try again.",
-        502
-      );
+      return jsonError("The AI service is busy. Please try again shortly.", response.status);
     }
 
     let data: unknown;
-
     try {
       data = await response.json();
     } catch {
@@ -291,10 +255,19 @@ export async function POST(req: Request) {
 
     if (!kundliReport) {
       console.error("Gemini Kundli response contained no report text.");
-      return jsonError(
-        "Could not generate the report. Please try again.",
-        502
-      );
+      return jsonError("Could not generate the report. Please try again.", 502);
+    }
+
+    // ✦ भविष्य के उपयोग के लिए इस रिपोर्ट को डेटाबेस कैशे में सुरक्षित रूप से सेव करें
+    try {
+      await db.insert(aiResponseCache).values({
+        id: crypto.randomUUID(),
+        questionKey: kundliKey,
+        originalQuestion: `Kundli report for ${name} (${dateOfBirth})`,
+        aiAnswer: kundliReport,
+      }).onConflictDoNothing();
+    } catch (saveError) {
+      console.error("Failed to save kundli cache:", saveError);
     }
 
     return NextResponse.json(
@@ -306,8 +279,5 @@ export async function POST(req: Request) {
     );
   }
 
-  return jsonError(
-    "The AI service is temporarily busy. Please try again shortly.",
-    503
-  );
+  return jsonError("The AI service is temporarily busy. Please try again shortly.", 503);
 }
