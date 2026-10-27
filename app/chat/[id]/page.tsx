@@ -24,7 +24,7 @@ const INTENT_CHIPS = [
 export default function AstrologerChatPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const id = (params?.id as string) || "";
   const astrologer = getAstrologerById(id);
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -38,8 +38,9 @@ export default function AstrologerChatPage() {
       router.replace("/");
       return;
     }
-    // Load existing conversation if any (reuses existing /api/chat GET)
-    fetch(`/api/chat?topic=${id}`)
+
+    // Load latest conversation (API uses conversationId, not topic for GET)
+    fetch("/api/chat")
       .then((r) => r.json())
       .then((data) => {
         if (data.conversationId) setConversationId(data.conversationId);
@@ -78,26 +79,25 @@ export default function AstrologerChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           message: text.trim(),
-          topic: id, // reuse existing topic field for astrologer context
-          conversationId,
-          // The existing API already injects system context + kundli.
-          // We prepend persona in the message for now so Gemini follows the correct voice.
-          systemHint: astrologer.systemPrompt,
+          topic: astrologer.topic, // only valid topics
+          conversationId: conversationId || undefined,
+          persona: astrologer.id, // safe server-side mapping
         }),
       });
 
       const data = await res.json();
 
-      if (data.conversationId) setConversationId(data.conversationId);
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
+      }
 
-      if (data.reply || data.message || data.content) {
-        const reply = data.reply || data.message || data.content;
+      if (data.reply) {
         setMessages((prev) => [
           ...prev,
           {
-            id: crypto.randomUUID(),
+            id: data.message?.id || crypto.randomUUID(),
             role: "assistant",
-            content: reply,
+            content: data.reply,
           },
         ]);
       } else if (data.error) {
@@ -106,7 +106,16 @@ export default function AstrologerChatPage() {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            content: data.error || "क्षमा करें, कुछ गड़बड़ हो गई। कृपया फिर कोशिश करें।",
+            content: data.error,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: crypto.randomUUID(),
+            role: "assistant",
+            content: "क्षमा करें, उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
           },
         ]);
       }
@@ -127,7 +136,7 @@ export default function AstrologerChatPage() {
   if (!astrologer) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FFF9E6]">
-        <p>Loading...</p>
+        <p className="text-gray-600">Loading...</p>
       </div>
     );
   }
@@ -136,10 +145,10 @@ export default function AstrologerChatPage() {
     <div className="flex flex-col h-screen bg-[#FFF9E6]">
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-orange-100 px-3 py-3 flex items-center gap-3">
-        <Link href="/" className="text-2xl">
+        <Link href="/" className="text-2xl leading-none">
           ←
         </Link>
-        <div className="w-10 h-10 rounded-full overflow-hidden border border-orange-200">
+        <div className="w-10 h-10 rounded-full overflow-hidden border border-orange-200 flex-shrink-0">
           <Image
             src={astrologer.photo}
             alt={astrologer.name}
@@ -159,10 +168,12 @@ export default function AstrologerChatPage() {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 py-4 space-y-3">
         {messages.length === 0 && (
-          <div className="text-center text-sm text-gray-500 mt-8">
-            <p className="font-medium text-gray-700">{astrologer.name}</p>
-            <p className="mt-1">{astrologer.shortBio}</p>
-            <p className="mt-4 text-xs">नीचे से सवाल चुनें या टाइप करें</p>
+          <div className="text-center text-sm text-gray-500 mt-10 px-4">
+            <p className="font-medium text-gray-800 text-base">{astrologer.name}</p>
+            <p className="mt-2">{astrologer.shortBio}</p>
+            <p className="mt-6 text-xs text-gray-400">
+              नीचे से सवाल चुनें या अपना सवाल टाइप करें
+            </p>
           </div>
         )}
 
@@ -172,7 +183,7 @@ export default function AstrologerChatPage() {
             className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[80%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+              className={`max-w-[82%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
                 m.role === "user"
                   ? "bg-orange-500 text-white rounded-br-md"
                   : "bg-white text-gray-800 border border-orange-100 rounded-bl-md"
@@ -195,12 +206,12 @@ export default function AstrologerChatPage() {
 
       {/* Intent Chips */}
       {messages.length === 0 && (
-        <div className="px-3 pb-2 flex gap-2 overflow-x-auto">
+        <div className="px-3 pb-2 flex gap-2 overflow-x-auto no-scrollbar">
           {INTENT_CHIPS.map((chip) => (
             <button
               key={chip}
               onClick={() => sendMessage(chip)}
-              className="flex-shrink-0 bg-white border border-orange-200 text-orange-700 text-xs px-3 py-1.5 rounded-full"
+              className="flex-shrink-0 bg-white border border-orange-200 text-orange-700 text-xs px-3 py-1.5 rounded-full whitespace-nowrap"
             >
               {chip}
             </button>
@@ -213,7 +224,12 @@ export default function AstrologerChatPage() {
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              sendMessage(input);
+            }
+          }}
           placeholder="अपना सवाल लिखें..."
           className="flex-1 bg-[#FFF9E6] border border-orange-100 rounded-full px-4 py-2.5 text-sm outline-none focus:border-orange-400"
           disabled={loading}
@@ -221,7 +237,7 @@ export default function AstrologerChatPage() {
         <button
           onClick={() => sendMessage(input)}
           disabled={loading || !input.trim()}
-          className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center disabled:opacity-50"
+          className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center disabled:opacity-50 active:scale-95 transition"
         >
           →
         </button>
