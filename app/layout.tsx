@@ -5,6 +5,7 @@ import { AppProvider } from "./Providers";
 export const metadata = {
   title: "Gita AI",
   description: "Your AI Companion",
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
