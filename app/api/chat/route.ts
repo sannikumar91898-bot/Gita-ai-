@@ -1,7 +1,10 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import {
+  GoogleGenerativeAI,
+  GoogleGenerativeAIAbortError,
+  GoogleGenerativeAIFetchError,
+} from "@google/generative-ai";
 
 import { db } from "@/index";
 import { messages, aiResponseCache, birthDetails } from "@/schema";
@@ -10,28 +13,94 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const apiKey = process.env.GEMINI_API_KEY?.trim();
-const modelName =
-  process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
-
-const genAI = apiKey ? new GoogleGenerativeAI(apiKey) : null;
-
+const REQUEST_TIMEOUT_MS = 25_000;
+const DEFAULT_MODEL = "gemini-2.5-flash";
 const MAX_MESSAGE_LENGTH = 8000;
 
-function jsonError(error: string, status: number) {
+type ChatFailure = {
+  status: number;
+  code:
+    | "not_configured"
+    | "invalid_model"
+    | "invalid_credentials"
+    | "model_not_found"
+    | "quota"
+    | "unavailable"
+    | "timeout"
+    | "empty"
+    | "provider"
+    | "network";
+  error: string;
+};
+
+function jsonError(error: string, status: number, code?: string) {
   return NextResponse.json(
-    { error },
-    {
-      status,
-      headers: { "Cache-Control": "no-store" },
-    }
+    code ? { error, code } : { error },
+    { status, headers: { "Cache-Control": "no-store" } }
   );
 }
 
-/**
- * Detect requests that genuinely need personal birth information.
- * Ordinary questions must not be blocked by this check.
- */
+function resolveModel(): { ok: true; model: string } | { ok: false } {
+  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+  if (!/^[A-Za-z0-9._-]+$/.test(model) || model.startsWith("models/")) {
+    return { ok: false };
+  }
+  return { ok: true, model };
+}
+
+function classifyGeminiError(error: unknown): ChatFailure {
+  if (error instanceof GoogleGenerativeAIAbortError) {
+    return {
+      status: 504,
+      code: "timeout",
+      error: "The AI request timed out. Please try again.",
+    };
+  }
+
+  if (error instanceof GoogleGenerativeAIFetchError) {
+    const status = error.status;
+    if (status === 401 || status === 403) {
+      return {
+        status: 503,
+        code: "invalid_credentials",
+        error: "The AI service rejected its credentials.",
+      };
+    }
+    if (status === 404) {
+      return {
+        status: 503,
+        code: "model_not_found",
+        error: "The configured AI model was not found.",
+      };
+    }
+    if (status === 429) {
+      return {
+        status: 429,
+        code: "quota",
+        error: "The AI service is rate-limited. Please try again shortly.",
+      };
+    }
+    if (status === 503) {
+      return {
+        status: 503,
+        code: "unavailable",
+        error: "The AI service is temporarily unavailable.",
+      };
+    }
+    return {
+      status: 502,
+      code: "provider",
+      error: "The AI service returned an unexpected error.",
+    };
+  }
+
+  return {
+    status: 502,
+    code: "network",
+    error: "Could not reach the AI service. Please try again.",
+  };
+}
+
 function requiresBirthDetails(message: string): boolean {
   return /कुंडली|कुण्डली|जन्मपत्री|जन्म कुंडली|राशिफल|मेरी राशि|मेरी शादी कब|शादी कब होगी|विवाह कब|मेरा भविष्य|मेरे भविष्य|मेरी किस्मत|मेरी लव लाइफ|मेरा करियर कैसा|भविष्यवाणी|kundli|janam kundli|horoscope|birth chart|my future|my marriage|when will i marry|my love life|my career prediction|personal prediction|meri kundli|meri shaadi kab|mera bhavishya|meri kismat/i.test(
     message
@@ -48,12 +117,7 @@ function normalizeQuestion(message: string): string {
 
 function hasCompleteBirthDetails(
   birth:
-    | {
-        name: string;
-        dob: string;
-        birthTime: string;
-        birthPlace: string;
-      }
+    | { name: string; dob: string; birthTime: string; birthPlace: string }
     | undefined
 ): boolean {
   return Boolean(
@@ -116,17 +180,9 @@ through sincerity, insight and clear guidance.
 export async function POST(req: NextRequest) {
   try {
     const user = await getUser();
+    if (!user) return jsonError("Please sign in to continue.", 401);
 
-    if (!user) {
-      return jsonError("Please sign in to continue.", 401);
-    }
-
-    let body: {
-      message?: unknown;
-      content?: unknown;
-      conversationId?: unknown;
-    };
-
+    let body: { message?: unknown; content?: unknown; conversationId?: unknown };
     try {
       body = await req.json();
     } catch {
@@ -134,59 +190,36 @@ export async function POST(req: NextRequest) {
     }
 
     const rawContent = body.message ?? body.content;
-    const content =
-      typeof rawContent === "string" ? rawContent.trim() : "";
-
-    if (
-      !content ||
-      content.length > MAX_MESSAGE_LENGTH
-    ) {
+    const content = typeof rawContent === "string" ? rawContent.trim() : "";
+    if (!content || content.length > MAX_MESSAGE_LENGTH) {
       return jsonError(
         `Message must contain between 1 and ${MAX_MESSAGE_LENGTH} characters.`,
         400
       );
     }
 
-    /*
-     * Only use a conversation ID supplied by the client if it is a
-     * non-empty string. Existing database foreign-key requirements
-     * still apply; this route does not create conversation records.
-     */
     const conversationId =
-      typeof body.conversationId === "string" &&
-      body.conversationId.trim()
+      typeof body.conversationId === "string" && body.conversationId.trim()
         ? body.conversationId.trim()
         : crypto.randomUUID();
 
-    // Fetch birth details belonging to the authenticated user only.
-    let birth:
-      | (typeof birthDetails.$inferSelect)
-      | undefined;
-
+    let birth: (typeof birthDetails.$inferSelect) | undefined;
     try {
       const rows = await db
         .select()
         .from(birthDetails)
         .where(eq(birthDetails.userId, user.id))
         .limit(1);
-
       birth = rows[0];
     } catch (error) {
       console.error("Birth details lookup failed:", error);
     }
 
-    const hasBirthDetails = hasCompleteBirthDetails(
-      birth as
-        | {
-            name: string;
-            dob: string;
-            birthTime: string;
-            birthPlace: string;
-          }
-        | undefined
-    );
+    const birthRecord = birth as
+      | { name: string; dob: string; birthTime: string; birthPlace: string }
+      | undefined;
+    const hasBirthDetails = hasCompleteBirthDetails(birthRecord);
 
-    // Ask for missing details only when the question needs them.
     if (requiresBirthDetails(content) && !hasBirthDetails) {
       const reply =
         "आपकी बात को सही तरह समझने के लिए आपकी जन्म-संबंधी जानकारी चाहिए। 🙏\n\n" +
@@ -196,62 +229,47 @@ export async function POST(req: NextRequest) {
         "3. जन्म का सही समय (AM/PM सहित)\n" +
         "4. जन्मस्थान (गाँव/शहर, जिला और राज्य)\n\n" +
         "आप एक ही संदेश में सभी जानकारियाँ भेज सकते हैं।";
-
       return NextResponse.json(
         {
           reply,
           requiresBirthDetails: true,
-          missingFields: [
-            "name",
-            "dob",
-            "birthTime",
-            "birthPlace",
-          ],
+          missingFields: ["name", "dob", "birthTime", "birthPlace"],
         },
-        {
-          status: 200,
-          headers: { "Cache-Control": "no-store" },
-        }
+        { status: 200, headers: { "Cache-Control": "no-store" } }
       );
     }
 
-    /*
-     * User-specific cache keys prevent responses from being shared
-     * across accounts. Include the birth context version so that
-     * changing a user's birth details does not reuse old answers.
-     */
-    const birthVersion = hasBirthDetails && birth
-      ? normalizeQuestion(
-          `${birth.name}|${birth.dob}|${birth.birthTime}|${birth.birthPlace}`
-        )
-      : "no-birth-data";
-
-    const questionKey =
-      `u_${user.id}_${birthVersion}_${normalizeQuestion(content)}`;
+    const birthVersion =
+      hasBirthDetails && birth
+        ? normalizeQuestion(
+            `\( {birth.name}| \){birth.dob}|\( {birth.birthTime}| \){birth.birthPlace}`
+          )
+        : "no-birth-data";
+    const questionKey = `u_\( {user.id}_ \){birthVersion}_${normalizeQuestion(content)}`;
 
     let aiAnswer = "";
-
-    // Cache is optional. If it fails, continue to the AI provider.
     try {
       const cached = await db
         .select()
         .from(aiResponseCache)
         .where(eq(aiResponseCache.questionKey, questionKey))
         .limit(1);
-
-      if (cached[0]?.aiAnswer) {
-        aiAnswer = cached[0].aiAnswer;
-      }
+      if (cached[0]?.aiAnswer) aiAnswer = cached[0].aiAnswer;
     } catch (error) {
       console.error("AI response cache lookup failed:", error);
     }
 
     if (!aiAnswer) {
-      if (!genAI) {
-        return jsonError(
-          "Gita AI is temporarily unavailable. Please try again later.",
-          503
-        );
+      const apiKey = process.env.GEMINI_API_KEY?.trim();
+      if (!apiKey) {
+        console.error("Chat API: GEMINI_API_KEY is missing.");
+        return jsonError("Gita AI is not configured yet.", 503, "not_configured");
+      }
+
+      const resolved = resolveModel();
+      if (!resolved.ok) {
+        console.error("Chat API: GEMINI_MODEL is not a valid model id.");
+        return jsonError("The AI model setting is invalid.", 503, "invalid_model");
       }
 
       const birthContext =
@@ -267,35 +285,31 @@ export async function POST(req: NextRequest) {
             ].join("\n")
           : "No verified birth details are available. Do not invent them.";
 
-      const model = genAI.getGenerativeModel({
-        model: modelName,
-        systemInstruction: SYSTEM_INSTRUCTION,
-      });
-
-      const prompt = `
-${birthContext}
-
-User's message:
-${content}
-      `.trim();
+      const model = new GoogleGenerativeAI(apiKey).getGenerativeModel(
+        { model: resolved.model, systemInstruction: SYSTEM_INSTRUCTION },
+        { timeout: REQUEST_TIMEOUT_MS }
+      );
 
       try {
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent(
+          `\( {birthContext}\n\nUser's message:\n \){content}`.trim()
+        );
         aiAnswer = result.response.text()?.trim() ?? "";
-
         if (!aiAnswer) {
           return jsonError(
-            "I couldn't prepare a response just now. Please try again.",
-            502
+            "The AI returned an empty response. Please try again.",
+            502,
+            "empty"
           );
         }
       } catch (error) {
-        console.error("Gemini generation failed:", error);
-
-        return jsonError(
-          "Gita AI is having trouble responding right now. Please try again shortly.",
-          502
-        );
+        const failure = classifyGeminiError(error);
+        console.error("Gemini chat failed", {
+          code: failure.code,
+          status: error instanceof GoogleGenerativeAIFetchError ? error.status : undefined,
+          model: resolved.model,
+        });
+        return jsonError(failure.error, failure.status, failure.code);
       }
 
       try {
@@ -313,10 +327,6 @@ ${content}
       }
     }
 
-    /*
-     * Save history on a best-effort basis. The conversationId must
-     * still satisfy the existing messages table foreign key.
-     */
     try {
       await db.insert(messages).values({
         id: crypto.randomUUID(),
@@ -330,57 +340,30 @@ ${content}
     }
 
     const assistantId = crypto.randomUUID();
-
-    let assistantMessage: {
-      id: string;
-      conversationId: string;
-      userId: string;
-      role: "assistant";
-      content: string;
-    } = {
+    let assistantMessage = {
       id: assistantId,
       conversationId,
       userId: user.id,
-      role: "assistant",
+      role: "assistant" as const,
       content: aiAnswer,
     };
 
     try {
       const inserted = await db
         .insert(messages)
-        .values({
-          id: assistantId,
-          conversationId,
-          userId: user.id,
-          role: "assistant",
-          content: aiAnswer,
-        })
+        .values(assistantMessage)
         .returning();
-
-      if (inserted[0]) {
-        assistantMessage = inserted[0] as typeof assistantMessage;
-      }
+      if (inserted[0]) assistantMessage = inserted[0] as typeof assistantMessage;
     } catch (error) {
       console.error("Assistant message history save failed:", error);
     }
 
     return NextResponse.json(
-      {
-        message: assistantMessage,
-        reply: aiAnswer,
-        requiresBirthDetails: false,
-      },
-      {
-        status: 200,
-        headers: { "Cache-Control": "no-store" },
-      }
+      { message: assistantMessage, reply: aiAnswer, requiresBirthDetails: false },
+      { status: 200, headers: { "Cache-Control": "no-store" } }
     );
   } catch (error) {
     console.error("Chat route failed:", error);
-
-    return jsonError(
-      "Something went wrong. Please try again in a moment.",
-      500
-    );
+    return jsonError("Something went wrong. Please try again in a moment.", 500);
   }
 }
