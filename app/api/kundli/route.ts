@@ -1,22 +1,39 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
+
+import { getUser } from "@/auth";
 import { db } from "@/index";
-import { aiResponseCache } from "@/schema";
+import { aiResponseCache, birthDetails, charts, users } from "@/schema";
+import {
+  RASHIS_HI,
+  chartSummary,
+  computeChart,
+  type KundliChart,
+} from "@/vedic";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUEST_TIMEOUT_MS = 22_000;
-const MAX_ATTEMPTS = 2;
+const REQUEST_TIMEOUT_MS = 18_000;
 const DEFAULT_MODEL = "gemini-2.5-flash";
+
+type PlaceHit = {
+  lat: number;
+  lng: number;
+  timeZone: string;
+};
+
+type InterpretationStatus =
+  | "ready"
+  | "quota"
+  | "unavailable"
+  | "not_configured"
+  | "empty";
 
 function jsonError(message: string, status: number) {
   return NextResponse.json(
     { error: message },
-    {
-      status,
-      headers: { "Cache-Control": "no-store" },
-    }
+    { status, headers: { "Cache-Control": "no-store" } }
   );
 }
 
@@ -26,10 +43,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-
   const [y, m, d] = value.split("-").map(Number);
   const date = new Date(Date.UTC(y, m - 1, d));
-
   return (
     y >= 1900 &&
     date.getUTCFullYear() === y &&
@@ -40,34 +55,120 @@ function validDate(value: string): boolean {
 
 function validTime(value: string): boolean {
   if (!/^\d{2}:\d{2}$/.test(value)) return false;
-
   const [h, m] = value.split(":").map(Number);
   return h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
-function generationConfig(model: string): Record<string, unknown> {
-  const config: Record<string, unknown> = {
-    maxOutputTokens: 4096,
-    temperature: 0.7,
+function publicChart(chart: KundliChart) {
+  return {
+    lagna: {
+      rashiName: chart.lagna.rashiName,
+      rashiNameHi: RASHIS_HI[chart.lagna.rashi],
+      degreeInSign: chart.lagna.degreeInSign,
+    },
+    moonSign: {
+      rashiName: chart.moonSign.rashiName,
+      rashiNameHi: RASHIS_HI[chart.moonSign.rashi],
+    },
+    nakshatra: {
+      name: chart.nakshatra.name,
+      pada: chart.nakshatra.pada,
+    },
+    currentDasha: chart.currentDasha
+      ? {
+          maha: chart.currentDasha.maha.lord,
+          mahaUntil: chart.currentDasha.maha.end.slice(0, 10),
+          antar: chart.currentDasha.antar.lord,
+          antarUntil: chart.currentDasha.antar.end.slice(0, 10),
+        }
+      : null,
+    planets: chart.planets.map((planet) => ({
+      planet: planet.planet,
+      rashiName: planet.rashiName,
+      house: planet.house,
+      retrograde: planet.retrograde,
+    })),
   };
+}
 
-  // thinkingLevel is rejected by Gemini 2.5. thinkingBudget is rejected by some Gemini 3 models.
-  if (/gemini-2\.5/i.test(model)) {
-    config.thinkingConfig = { thinkingBudget: 0 };
+function calculatedReport(name: string, chart: KundliChart): string {
+  const view = publicChart(chart);
+  const lines = [
+    name + " की गणना की गई कुंडली",
+    "लग्न: " + view.lagna.rashiNameHi + " (" + view.lagna.rashiName + ") " + view.lagna.degreeInSign + "°",
+    "चंद्र राशि: " + view.moonSign.rashiNameHi + " (" + view.moonSign.rashiName + ")",
+    "जन्म नक्षत्र: " + view.nakshatra.name + ", पद " + view.nakshatra.pada,
+  ];
+  if (view.currentDasha) {
+    lines.push(
+      "वर्तमान महादशा: " +
+        view.currentDasha.maha +
+        " (" +
+        view.currentDasha.mahaUntil +
+        " तक), अंतरदशा: " +
+        view.currentDasha.antar
+    );
   }
+  lines.push("ग्रह स्थिति:");
+  for (const planet of view.planets) {
+    lines.push(
+      planet.planet +
+        " — " +
+        planet.rashiName +
+        ", भाव " +
+        planet.house +
+        (planet.retrograde ? " (वक्री)" : "")
+    );
+  }
+  lines.push("ये स्थितियाँ गणना से बनी हैं। ये भविष्य की गारंटी नहीं हैं।");
+  return lines.join("\n");
+}
 
-  return config;
+async function resolvePlace(place: string): Promise<PlaceHit | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(
+      "https://geocoding-api.open-meteo.com/v1/search?count=5&format=json&name=" +
+        encodeURIComponent(place),
+      { cache: "no-store", signal: controller.signal }
+    );
+    if (!response.ok) return null;
+    const data: unknown = await response.json();
+    if (!isRecord(data) || !Array.isArray(data.results)) return null;
+    for (const item of data.results) {
+      if (!isRecord(item)) continue;
+      if (
+        typeof item.latitude === "number" &&
+        typeof item.longitude === "number" &&
+        typeof item.timezone === "string" &&
+        item.timezone
+      ) {
+        return {
+          lat: item.latitude,
+          lng: item.longitude,
+          timeZone: item.timezone,
+        };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(
+      "Place lookup failed:",
+      error instanceof Error ? error.message : "unknown"
+    );
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 function extractText(data: unknown): string {
   if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
-
   const candidate = data.candidates[0];
   if (!isRecord(candidate) || !isRecord(candidate.content)) return "";
-
   const parts = candidate.content.parts;
   if (!Array.isArray(parts)) return "";
-
   return parts
     .filter(
       (part): part is Record<string, unknown> =>
@@ -78,31 +179,187 @@ function extractText(data: unknown): string {
     .trim();
 }
 
+async function writeInterpretation(params: {
+  name: string;
+  dateOfBirth: string;
+  timeOfBirth: string;
+  placeOfBirth: string;
+  chart: KundliChart;
+}): Promise<{ text: string | null; status: InterpretationStatus }> {
+  const cacheKey = [
+    "kundli",
+    params.dateOfBirth,
+    params.timeOfBirth,
+    params.placeOfBirth.toLowerCase().replace(/\s+/g, ""),
+  ].join("_");
+
+  try {
+    const cached = await db
+      .select()
+      .from(aiResponseCache)
+      .where(eq(aiResponseCache.questionKey, cacheKey))
+      .limit(1);
+    if (cached[0]?.aiAnswer?.trim()) {
+      return { text: cached[0].aiAnswer, status: "ready" };
+    }
+  } catch (error) {
+    console.error(
+      "Kundli cache lookup failed:",
+      error instanceof Error ? error.message : "unknown"
+    );
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
+  if (!apiKey) return { text: null, status: "not_configured" };
+  if (!/^[A-Za-z0-9._-]+$/.test(model) || model.startsWith("models/")) {
+    return { text: null, status: "not_configured" };
+  }
+
+  const generationConfig: Record<string, unknown> = {
+    maxOutputTokens: 900,
+    temperature: 0.7,
+  };
+  if (/gemini-2\.5/i.test(model)) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+        encodeURIComponent(model) +
+        ":generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
+        },
+        cache: "no-store",
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text:
+                  "You are Gita AI. Write warm Hindi guidance in Devanagari. Use only the calculated chart facts supplied. Do not invent planets, lagna, nakshatra or dasha. Do not guarantee marriage, money, job or health.",
+              },
+            ],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text:
+                    "Write a short personal reflection with headings for स्वभाव, करियर, संबंध और व्यावहारिक सलाह.\n\n" +
+                    chartSummary(params.chart, params.name) +
+                    "\nPlace: " +
+                    params.placeOfBirth,
+                },
+              ],
+            },
+          ],
+          generationConfig,
+        }),
+      }
+    );
+
+    if (response.status === 429) return { text: null, status: "quota" };
+    if (!response.ok) {
+      console.error("Kundli Gemini error", { status: response.status, model });
+      return { text: null, status: "unavailable" };
+    }
+
+    const text = extractText(await response.json());
+    if (!text) return { text: null, status: "empty" };
+
+    try {
+      await db
+        .insert(aiResponseCache)
+        .values({
+          id: crypto.randomUUID(),
+          questionKey: cacheKey,
+          originalQuestion: "Kundli interpretation for " + params.name,
+          aiAnswer: text,
+        })
+        .onConflictDoNothing();
+    } catch (error) {
+      console.error(
+        "Kundli cache save failed:",
+        error instanceof Error ? error.message : "unknown"
+      );
+    }
+    return { text, status: "ready" };
+  } catch (error) {
+    console.error(
+      "Kundli Gemini request failed:",
+      error instanceof Error ? error.name : "unknown"
+    );
+    return { text: null, status: "unavailable" };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function GET() {
+  const user = await getUser();
+  if (!user) {
+    return NextResponse.json(
+      { birth: null, chart: null },
+      { headers: { "Cache-Control": "no-store" } }
+    );
+  }
+
+  const [birthRows, chartRows] = await Promise.all([
+    db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
+    db
+      .select()
+      .from(charts)
+      .where(eq(charts.userId, user.id))
+      .orderBy(desc(charts.createdAt))
+      .limit(1),
+  ]);
+
+  const birth = birthRows[0]
+    ? {
+        name: birthRows[0].name,
+        dob: birthRows[0].dob,
+        birthTime: birthRows[0].birthTime,
+        birthPlace: birthRows[0].birthPlace,
+      }
+    : null;
+
+  const stored = birthRows[0] && chartRows[0] ? (chartRows[0].data as KundliChart) : null;
+  return NextResponse.json(
+    {
+      birth,
+      chart: stored && stored.lagna ? publicChart(stored) : null,
+      calculatedReport: stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
+}
+
 export async function POST(req: Request) {
   let body: unknown;
-
   try {
     body = await req.json();
   } catch {
     return jsonError("Invalid request. Please try again.", 400);
   }
-
-  if (!isRecord(body)) {
-    return jsonError("Please provide valid birth details.", 400);
-  }
+  if (!isRecord(body)) return jsonError("Please provide valid birth details.", 400);
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const dateOfBirth =
-    typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
-  const timeOfBirth =
-    typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
-  const placeOfBirth =
-    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
+  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
 
   if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
     return jsonError("Please fill in all birth details.", 400);
   }
-
   if (
     name.length > 100 ||
     placeOfBirth.length > 200 ||
@@ -111,207 +368,99 @@ export async function POST(req: Request) {
   ) {
     return jsonError("Please check your birth details.", 400);
   }
-
-  const today = new Date().toISOString().slice(0, 10);
-  if (dateOfBirth > today) {
+  if (dateOfBirth > new Date().toISOString().slice(0, 10)) {
     return jsonError("Birth date cannot be in the future.", 400);
   }
 
-  const apiKey = process.env.GEMINI_API_KEY?.trim();
-  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
-
-  if (!apiKey) {
-    console.error("Kundli API: GEMINI_API_KEY is missing.");
-    return jsonError("Kundli service is not configured.", 503);
+  const place = await resolvePlace(placeOfBirth);
+  if (!place) {
+    return jsonError(
+      "इस जन्म स्थान की लोकेशन नहीं मिली। शहर और राज्य साफ लिखें, उदाहरण: Patna, Bihar।",
+      422
+    );
   }
 
-  if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
-    console.error("Kundli API: Invalid GEMINI_MODEL configuration.");
-    return jsonError("Kundli service is not configured.", 503);
-  }
-
-  const cacheKey =
-    `kundli_\( {dateOfBirth}_ \){timeOfBirth}_` +
-    placeOfBirth.toLowerCase().replace(/\s+/g, "");
-
+  let chart: KundliChart;
   try {
-    const cached = await db
-      .select()
-      .from(aiResponseCache)
-      .where(eq(aiResponseCache.questionKey, cacheKey))
-      .limit(1);
-
-    if (cached.length > 0 && cached[0].aiAnswer?.trim()) {
-      return NextResponse.json(
-        { kundliReport: cached[0].aiAnswer },
-        { headers: { "Cache-Control": "no-store" } }
-      );
-    }
+    chart = computeChart({
+      dob: dateOfBirth,
+      time: timeOfBirth,
+      lat: place.lat,
+      lng: place.lng,
+      timeZone: place.timeZone,
+    });
   } catch (error) {
     console.error(
-      "Kundli cache lookup failed:",
-      error instanceof Error ? error.message : "Unknown database error"
+      "Chart calculation failed:",
+      error instanceof Error ? error.message : "unknown"
     );
+    return jsonError("इन जन्म विवरणों से कुंडली गणना नहीं हो सकी।", 422);
   }
 
-  const endpoint =
-    `https://generativelanguage.googleapis.com/v1beta/models/` +
-    `${encodeURIComponent(model)}:generateContent`;
-
-  const requestBody = {
-    systemInstruction: {
-      parts: [
-        {
-          text:
-            "You are Gita AI, a respectful Hindi astrology guide. " +
-            "Write a personalized report in Hindi using Devanagari script. " +
-            "Cover personality reflection, career, relationships, strengths, " +
-            "challenges and practical spiritual guidance. Do not invent " +
-            "calculated planetary positions, ascendant, houses, Nakshatra " +
-            "or Dasha dates. Be clear that this is general interpretive " +
-            "guidance unless verified chart data is provided.",
-        },
-      ],
-    },
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text:
-              "Create a personalized Vedic astrology guidance report in Hindi.\n" +
-              `Name: ${name}\n` +
-              `Date of birth: ${dateOfBirth}\n` +
-              `Time of birth: ${timeOfBirth}\n` +
-              `Place of birth: ${placeOfBirth}\n\n` +
-              "Use clear headings for personality, career, relationships " +
-              "and spiritual reflection. Do not claim uncalculated " +
-              "planetary placements or Dasha periods as facts.",
-          },
-        ],
-      },
-    ],
-    generationConfig: generationConfig(model),
-  };
-
-  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      REQUEST_TIMEOUT_MS
-    );
-
-    let response: Response;
-
-    try {
-      response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify(requestBody),
-        signal: controller.signal,
-        cache: "no-store",
-      });
-    } catch (error) {
-      const timedOut =
-        error instanceof Error && error.name === "AbortError";
-
-      console.error("Kundli Gemini request failed.", {
-        attempt,
-        reason: timedOut ? "timeout" : "network_error",
-      });
-
-      if (attempt < MAX_ATTEMPTS && !timedOut) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        continue;
-      }
-
-      return jsonError(
-        timedOut
-          ? "The AI request timed out. Please try again."
-          : "Could not connect to the AI service. Please try again.",
-        timedOut ? 504 : 502
-      );
-    } finally {
-      clearTimeout(timeout);
-    }
-
-    if (!response.ok) {
-      const retryable =
-        response.status === 429 || response.status === 503;
-
-      console.error("Kundli Gemini provider error.", {
-        status: response.status,
-        attempt,
-        model,
-      });
-
-      if (retryable && attempt < MAX_ATTEMPTS) {
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-        continue;
-      }
-
-      if (response.status === 429) {
-        return jsonError(
-          "AI service is busy. Please try again shortly.",
-          429
-        );
-      }
-
-      if (response.status === 503) {
-        return jsonError("AI service is temporarily unavailable.", 503);
-      }
-
-      if (response.status === 401 || response.status === 403) {
-        return jsonError("AI service authentication failed.", 503);
-      }
-
-      if (response.status === 404) {
-        return jsonError("Configured AI model was not found.", 503);
-      }
-
-      return jsonError("Could not generate the Kundli report.", 502);
-    }
-
-    let data: unknown;
-
-    try {
-      data = await response.json();
-    } catch {
-      return jsonError("The AI returned an invalid response.", 502);
-    }
-
-    const kundliReport = extractText(data);
-
-    if (!kundliReport) {
-      console.error("Kundli Gemini response contained no report text.");
-      return jsonError("The AI returned an empty report.", 502);
-    }
-
+  const user = await getUser();
+  let saved = false;
+  if (user) {
     try {
       await db
-        .insert(aiResponseCache)
+        .insert(birthDetails)
         .values({
-          id: crypto.randomUUID(),
-          questionKey: cacheKey,
-          originalQuestion: `Kundli report for \( {name} ( \){dateOfBirth})`,
-          aiAnswer: kundliReport,
+          userId: user.id,
+          name,
+          dob: dateOfBirth,
+          birthTime: timeOfBirth,
+          birthPlace: placeOfBirth,
+          lat: place.lat,
+          lng: place.lng,
+          timeZone: place.timeZone,
+          consent: true,
         })
-        .onConflictDoNothing();
+        .onConflictDoUpdate({
+          target: birthDetails.userId,
+          set: {
+            name,
+            dob: dateOfBirth,
+            birthTime: timeOfBirth,
+            birthPlace: placeOfBirth,
+            lat: place.lat,
+            lng: place.lng,
+            timeZone: place.timeZone,
+            consent: true,
+            updatedAt: new Date(),
+          },
+        });
+      await db.insert(charts).values({
+        userId: user.id,
+        data: chart,
+      });
+      await db.update(users).set({ name }).where(and(eq(users.id, user.id)));
+      saved = true;
     } catch (error) {
       console.error(
-        "Kundli cache save failed:",
-        error instanceof Error ? error.message : "Unknown database error"
+        "Birth details save failed:",
+        error instanceof Error ? error.message : "unknown"
       );
     }
-
-    return NextResponse.json(
-      { kundliReport },
-      { headers: { "Cache-Control": "no-store" } }
-    );
   }
 
-  return jsonError("AI service is temporarily unavailable.", 503);
+  const written = await writeInterpretation({
+    name,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    chart,
+  });
+  const facts = calculatedReport(name, chart);
+
+  return NextResponse.json(
+    {
+      ok: true,
+      saved,
+      chart: publicChart(chart),
+      calculatedReport: facts,
+      interpretation: written.text,
+      interpretationStatus: written.status,
+      kundliReport: written.text ? facts + "\n\n" + written.text : facts,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
