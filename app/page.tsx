@@ -27,12 +27,13 @@ import { Reveal } from "../Reveal";
 type DailyReading = {
   signName: string;
   focus: string;
-  luckyColour: {
+  luckyColour?: {
     name: string;
     hex: string;
   };
-  luckyNumber: number;
-  affirmation: string;
+  luckyNumber?: number;
+  affirmation?: string;
+  source?: "calculated" | "gemini";
 };
 
 export default function HomePage() {
@@ -75,6 +76,14 @@ export default function HomePage() {
         }
 
         const reading = data.reading as DailyReading | null;
+
+        if (
+          !reading ||
+          typeof reading.signName !== "string" ||
+          typeof reading.focus !== "string"
+        ) {
+          throw new Error("Invalid daily reading fields");
+        }
 
         if (!cancelled) {
           setDaily(reading);
@@ -266,36 +275,47 @@ export default function HomePage() {
                   {daily.focus}
                 </p>
 
-                <p className="mt-2 break-words text-sm italic text-violet-300/80">
-                  “{daily.affirmation}”
-                </p>
+                {daily.affirmation ? (
+                  <p className="mt-2 break-words text-sm italic text-violet-300/80">
+                    “{daily.affirmation}”
+                  </p>
+                ) : null}
               </div>
 
-              <div className="flex min-w-0 flex-wrap items-start gap-5">
-                <div className="min-w-0 text-center">
-                  <span
-                    className="mx-auto flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-white/20"
-                    style={{ backgroundColor: daily.luckyColour.hex }}
-                  >
-                    <Palette size={16} className="text-black/60" />
-                  </span>
+              {daily.luckyColour?.hex ||
+              typeof daily.luckyNumber === "number" ? (
+                <div className="flex min-w-0 flex-wrap items-start gap-5">
+                  {daily.luckyColour?.hex ? (
+                    <div className="min-w-0 text-center">
+                      <span
+                        className="mx-auto flex h-10 w-10 items-center justify-center rounded-full ring-2 ring-white/20"
+                        style={{
+                          backgroundColor: daily.luckyColour.hex,
+                        }}
+                      >
+                        <Palette size={16} className="text-black/60" />
+                      </span>
 
-                  <p className="mt-1 max-w-24 break-words text-[10px] text-violet-300/80">
-                    {daily.luckyColour.name}
-                  </p>
+                      <p className="mt-1 max-w-24 break-words text-[10px] text-violet-300/80">
+                        {daily.luckyColour.name}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {typeof daily.luckyNumber === "number" ? (
+                    <div className="min-w-0 text-center">
+                      <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/25 font-display text-lg text-gold-300 ring-1 ring-gold-400/40">
+                        {daily.luckyNumber}
+                      </span>
+
+                      <p className="mt-1 flex items-center gap-1 text-[10px] text-violet-300/80">
+                        <Hash size={10} />
+                        {t("luckyNumber")}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
-
-                <div className="min-w-0 text-center">
-                  <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/25 font-display text-lg text-gold-300 ring-1 ring-gold-400/40">
-                    {daily.luckyNumber}
-                  </span>
-
-                  <p className="mt-1 flex items-center gap-1 text-[10px] text-violet-300/80">
-                    <Hash size={10} />
-                    {t("luckyNumber")}
-                  </p>
-                </div>
-              </div>
+              ) : null}
             </div>
           </Link>
         ) : (
