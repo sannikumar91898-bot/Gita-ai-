@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -6,6 +5,8 @@ export const dynamic = "force-dynamic";
 
 const REQUEST_TIMEOUT_MS = 30_000;
 const DEFAULT_MODEL = "gemini-2.5-flash";
+
+type DailyLang = "en" | "hi" | "hinglish";
 
 type DailyReading = {
   signName: string;
@@ -30,6 +31,11 @@ function errorResponse(message: string, status: number) {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function resolveLanguage(value: unknown): DailyLang {
+  if (value === "en" || value === "hi" || value === "hinglish") return value;
+  return "hi";
 }
 
 function isValidReading(value: unknown): value is DailyReading {
@@ -57,47 +63,100 @@ function isValidReading(value: unknown): value is DailyReading {
   );
 }
 
-async function generateDailyReading(sign: string) {
+function languageRule(language: DailyLang): string {
+  if (language === "en") {
+    return "Write signName, focus, luckyColour.name and affirmation in natural English.";
+  }
+
+  if (language === "hinglish") {
+    return "Write signName, focus, luckyColour.name and affirmation in natural Hinglish, using Roman Hindi mixed with English.";
+  }
+
+  return "Write signName, focus, luckyColour.name and affirmation in natural Hindi using Devanagari.";
+}
+
+function failureMessage(language: DailyLang, kind: "config" | "model" | "auth" | "missing-model" | "busy" | "timeout" | "network" | "invalid" | "empty" | "failed"): string {
+  const hi: Record<typeof kind, string> = {
+    config: "AI सेवा अभी कॉन्फ़िगर नहीं है।",
+    model: "AI मॉडल कॉन्फ़िगरेशन गलत है।",
+    auth: "AI सेवा का authentication विफल हुआ।",
+    "missing-model": "AI मॉडल उपलब्ध नहीं है। GEMINI_MODEL जाँचें।",
+    busy: "AI सेवा व्यस्त है। थोड़ी देर बाद प्रयास करें।",
+    timeout: "जवाब आने में अधिक समय लगा। दोबारा प्रयास करें।",
+    network: "AI सेवा से कनेक्शन नहीं हो पाया। दोबारा प्रयास करें।",
+    invalid: "AI का जवाब सही प्रारूप में नहीं है।",
+    empty: "AI का जवाब खाली है।",
+    failed: "आज का राशिफल तैयार नहीं हो पाया।",
+  };
+
+  const en: Record<typeof kind, string> = {
+    config: "The AI service is not configured.",
+    model: "The AI model setting is invalid.",
+    auth: "AI service authentication failed.",
+    "missing-model": "The configured AI model was not found.",
+    busy: "The AI service is busy. Please try again shortly.",
+    timeout: "The daily reading took too long. Please try again.",
+    network: "Could not reach the AI service. Please try again.",
+    invalid: "The AI response was not in the expected format.",
+    empty: "The AI returned an empty reading.",
+    failed: "The daily reading could not be prepared.",
+  };
+
+  const hinglish: Record<typeof kind, string> = {
+    config: "AI service abhi configured nahi hai.",
+    model: "AI model setting galat hai.",
+    auth: "AI service ka authentication fail ho gaya.",
+    "missing-model": "AI model available nahi hai. GEMINI_MODEL check karein.",
+    busy: "AI service busy hai. Thodi der baad try karein.",
+    timeout: "Jawab aane mein zyada time laga. Phir try karein.",
+    network: "AI service se connection nahi ho paya. Phir try karein.",
+    invalid: "AI ka jawab sahi format mein nahi hai.",
+    empty: "AI ka jawab khali hai.",
+    failed: "Aaj ka rashifal taiyar nahi ho paya.",
+  };
+
+  if (language === "en") return en[kind];
+  if (language === "hinglish") return hinglish[kind];
+  return hi[kind];
+}
+
+async function generateDailyReading(sign: string, language: DailyLang) {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 
   if (!apiKey) {
     console.error("Daily API: GEMINI_API_KEY is missing.");
-    return errorResponse("AI सेवा अभी कॉन्फ़िगर नहीं है।", 503);
+    return errorResponse(failureMessage(language, "config"), 503);
   }
 
-  if (
-    !/^[a-zA-Z0-9._-]+$/.test(model) ||
-    model.startsWith("models/")
-  ) {
+  if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
     console.error("Daily API: Invalid GEMINI_MODEL.");
-    return errorResponse("AI मॉडल कॉन्फ़िगरेशन गलत है।", 503);
+    return errorResponse(failureMessage(language, "model"), 503);
   }
 
-  // Correct Gemini generateContent endpoint.
   const url =
     "https://generativelanguage.googleapis.com/v1beta/models/" +
     `${encodeURIComponent(model)}:generateContent`;
 
   const prompt = `
-Create a concise daily astrology-style reading in natural Hindi.
+Create a concise daily astrology-style reading.
 
 Requested sign or category: ${sign}
+${languageRule(language)}
 
 Return only a valid JSON object with these fields:
 {
   "signName": "Name of sign or category",
-  "focus": "Daily guidance in Hindi",
+  "focus": "Daily guidance",
   "luckyColour": {
-    "name": "Colour name in Hindi",
+    "name": "Colour name",
     "hex": "#RRGGBB"
   },
   "luckyNumber": 7,
-  "affirmation": "Positive affirmation in Hindi"
+  "affirmation": "Positive affirmation"
 }
 
 Rules:
-- Write user-facing text in natural Hindi.
 - Keep guidance positive, practical and respectful.
 - Do not claim future events are certain.
 - Do not give medical, legal or financial guarantees.
@@ -106,11 +165,18 @@ Rules:
 - Do not include Markdown or code fences.
 `.trim();
 
+  const generationConfig: Record<string, unknown> = {
+    temperature: 0.7,
+    maxOutputTokens: 1024,
+    responseMimeType: "application/json",
+  };
+
+  if (/gemini-2\.5/i.test(model)) {
+    generationConfig.thinkingConfig = { thinkingBudget: 0 };
+  }
+
   const controller = new AbortController();
-  const timeoutId = setTimeout(
-    () => controller.abort(),
-    REQUEST_TIMEOUT_MS
-  );
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   let response: Response;
 
@@ -126,8 +192,9 @@ Rules:
           parts: [
             {
               text:
-                "You are Gita AI, a calm and respectful Hindi astrology " +
-                "guide. Return only valid JSON matching the requested format.",
+                "You are Gita AI, a calm and respectful astrology guide. " +
+                "Return only valid JSON matching the requested format. " +
+                languageRule(language),
             },
           ],
         },
@@ -137,27 +204,20 @@ Rules:
             parts: [{ text: prompt }],
           },
         ],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024,
-          responseMimeType: "application/json",
-        },
+        generationConfig,
       }),
       signal: controller.signal,
       cache: "no-store",
     });
   } catch (error) {
-    const timedOut =
-      error instanceof Error && error.name === "AbortError";
+    const timedOut = error instanceof Error && error.name === "AbortError";
 
     console.error("Daily API request failed:", {
       reason: timedOut ? "timeout" : "network_error",
     });
 
     return errorResponse(
-      timedOut
-        ? "जवाब आने में अधिक समय लगा। दोबारा प्रयास करें।"
-        : "AI सेवा से कनेक्शन नहीं हो पाया। दोबारा प्रयास करें।",
+      failureMessage(language, timedOut ? "timeout" : "network"),
       timedOut ? 504 : 502
     );
   } finally {
@@ -165,31 +225,28 @@ Rules:
   }
 
   if (!response.ok) {
-    // Never log the API key or request URL containing secrets.
     console.error("Gemini Daily API error:", {
       status: response.status,
       model,
     });
 
     if (response.status === 401 || response.status === 403) {
-      return errorResponse("AI सेवा का authentication विफल हुआ।", 503);
+      return errorResponse(failureMessage(language, "auth"), 503);
     }
 
     if (response.status === 404) {
-      return errorResponse(
-        "AI मॉडल उपलब्ध नहीं है। GEMINI_MODEL जाँचें।",
-        503
-      );
+      return errorResponse(failureMessage(language, "missing-model"), 503);
     }
 
-    if (response.status === 429 || response.status === 503) {
-      return errorResponse(
-        "AI सेवा व्यस्त है। थोड़ी देर बाद प्रयास करें।",
-        503
-      );
+    if (response.status === 429) {
+      return errorResponse(failureMessage(language, "busy"), 429);
     }
 
-    return errorResponse("आज का राशिफल तैयार नहीं हो पाया।", 502);
+    if (response.status === 503) {
+      return errorResponse(failureMessage(language, "busy"), 503);
+    }
+
+    return errorResponse(failureMessage(language, "failed"), 502);
   }
 
   let providerData: unknown;
@@ -197,37 +254,37 @@ Rules:
   try {
     providerData = await response.json();
   } catch {
-    return errorResponse("AI सेवा से अमान्य जवाब मिला।", 502);
+    return errorResponse(failureMessage(language, "invalid"), 502);
   }
 
   if (!isRecord(providerData) || !Array.isArray(providerData.candidates)) {
     console.error("Daily API: Invalid Gemini response structure.");
-    return errorResponse("AI का जवाब सही प्रारूप में नहीं है।", 502);
+    return errorResponse(failureMessage(language, "invalid"), 502);
   }
 
   const candidate = providerData.candidates[0];
 
   if (!isRecord(candidate) || !isRecord(candidate.content)) {
-    return errorResponse("AI ने कोई उपयोगी जवाब नहीं दिया।", 502);
+    return errorResponse(failureMessage(language, "empty"), 502);
   }
 
   const parts = candidate.content.parts;
 
   if (!Array.isArray(parts)) {
-    return errorResponse("AI का जवाब खाली है।", 502);
+    return errorResponse(failureMessage(language, "empty"), 502);
   }
 
   const generatedText = parts
     .filter(
       (part): part is Record<string, unknown> =>
-        isRecord(part) && typeof part.text === "string"
+        isRecord(part) && typeof part.text === "string" && part.thought !== true
     )
     .map((part) => part.text as string)
     .join("")
     .trim();
 
   if (!generatedText) {
-    return errorResponse("AI का जवाब खाली है।", 502);
+    return errorResponse(failureMessage(language, "empty"), 502);
   }
 
   let parsed: unknown;
@@ -236,12 +293,12 @@ Rules:
     parsed = JSON.parse(generatedText);
   } catch {
     console.error("Daily API: Gemini returned invalid JSON.");
-    return errorResponse("AI के जवाब को पढ़ने में समस्या हुई।", 502);
+    return errorResponse(failureMessage(language, "invalid"), 502);
   }
 
   if (!isValidReading(parsed)) {
     console.error("Daily API: Response validation failed.");
-    return errorResponse("AI के जवाब का प्रारूप गलत है।", 502);
+    return errorResponse(failureMessage(language, "invalid"), 502);
   }
 
   return NextResponse.json(
@@ -256,14 +313,21 @@ Rules:
 }
 
 export async function GET(request: NextRequest) {
-  const sign =
-    request.nextUrl.searchParams.get("sign")?.trim() || "General";
+  const sign = request.nextUrl.searchParams.get("sign")?.trim() || "General";
+  const language = resolveLanguage(request.nextUrl.searchParams.get("lang"));
 
   if (sign.length > 60) {
-    return errorResponse("राशि या श्रेणी का नाम बहुत लंबा है।", 400);
+    return errorResponse(
+      language === "en"
+        ? "The sign name is too long."
+        : language === "hinglish"
+          ? "Rashi ka naam bahut lamba hai."
+          : "राशि या श्रेणी का नाम बहुत लंबा है।",
+      400
+    );
   }
 
-  return generateDailyReading(sign);
+  return generateDailyReading(sign, language);
 }
 
 export async function POST(request: NextRequest) {
@@ -279,10 +343,16 @@ export async function POST(request: NextRequest) {
     return errorResponse("अनुरोध का प्रारूप सही नहीं है।", 400);
   }
 
+  const language = resolveLanguage(body.lang);
   const signValue = body.sign;
 
   if (signValue !== undefined && typeof signValue !== "string") {
-    return errorResponse("राशि या श्रेणी का नाम सही नहीं है।", 400);
+    return errorResponse(
+      language === "en"
+        ? "The sign name is invalid."
+        : "राशि या श्रेणी का नाम सही नहीं है।",
+      400
+    );
   }
 
   const sign =
@@ -291,8 +361,13 @@ export async function POST(request: NextRequest) {
       : "General";
 
   if (sign.length > 60) {
-    return errorResponse("राशि या श्रेणी का नाम बहुत लंबा है।", 400);
+    return errorResponse(
+      language === "en"
+        ? "The sign name is too long."
+        : "राशि या श्रेणी का नाम बहुत लंबा है।",
+      400
+    );
   }
 
-  return generateDailyReading(sign);
+  return generateDailyReading(sign, language);
 }
