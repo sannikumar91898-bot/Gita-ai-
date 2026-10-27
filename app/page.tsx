@@ -1,14 +1,17 @@
 // app/page.tsx
 
-import Image from "next/image";
 import Link from "next/link";
 import { ASTROLOGERS } from "@/lib/astrologers";
 import AstrologerCard from "@/components/AstrologerCard";
+import BottomNav from "@/components/BottomNav";
+import FreeChatPopup from "@/components/FreeChatPopup";
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFF9E6] pb-24">
-      {/* ========== HEADER ========== */}
+      <FreeChatPopup />
+
+      {/* Header */}
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-orange-100 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
@@ -16,48 +19,33 @@ export default function HomePage() {
           </div>
           <span className="font-bold text-lg text-gray-900">GitaTalk</span>
         </div>
-
         <div className="flex items-center gap-3">
           <Link
             href="/wallet"
             className="flex items-center gap-1.5 bg-orange-50 text-orange-700 px-3 py-1.5 rounded-full text-sm font-medium"
           >
             <span>₹0</span>
-            <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full">
-              +
-            </span>
-          </Link>
-          <Link href="/profile" className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden">
-            <div className="w-full h-full flex items-center justify-center text-gray-500 text-sm">
-              👤
-            </div>
+            <span className="text-xs bg-orange-500 text-white px-1.5 py-0.5 rounded-full">+</span>
           </Link>
         </div>
       </header>
 
-      {/* ========== HERO BANNER ========== */}
+      {/* Hero */}
       <section className="px-4 pt-4">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white p-5 shadow-lg">
-          <div className="relative z-10">
-            <p className="text-sm font-medium opacity-90">Special Offer</p>
-            <h2 className="text-2xl font-bold mt-1 leading-tight">
-              First Chat FREE 🎁
-            </h2>
-            <p className="text-sm mt-1 opacity-90">
-              4 expert AI Astrologers • Instant replies
-            </p>
-            <Link
-              href="#astrologers"
-              className="inline-block mt-4 bg-white text-orange-600 font-semibold px-5 py-2.5 rounded-full text-sm shadow"
-            >
-              Start Free Chat
-            </Link>
-          </div>
-          <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full" />
+          <p className="text-sm font-medium opacity-90">Special Offer</p>
+          <h2 className="text-2xl font-bold mt-1">First Chat FREE 🎁</h2>
+          <p className="text-sm mt-1 opacity-90">4 expert AI Astrologers • Instant replies</p>
+          <Link
+            href="#astrologers"
+            className="inline-block mt-4 bg-white text-orange-600 font-semibold px-5 py-2.5 rounded-full text-sm shadow"
+          >
+            Start Free Chat
+          </Link>
         </div>
       </section>
 
-      {/* ========== FREE TOOLS GRID ========== */}
+      {/* Free Tools */}
       <section className="px-4 mt-6">
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Free Tools</h3>
         <div className="grid grid-cols-4 gap-3">
@@ -70,28 +58,21 @@ export default function HomePage() {
             <Link
               key={tool.name}
               href={tool.href}
-              className="bg-white rounded-xl p-3 flex flex-col items-center gap-1.5 shadow-sm border border-orange-50 active:scale-95 transition"
+              className="bg-white rounded-xl p-3 flex flex-col items-center gap-1.5 shadow-sm border border-orange-50"
             >
               <span className="text-2xl">{tool.emoji}</span>
-              <span className="text-[11px] font-medium text-gray-700 text-center leading-tight">
-                {tool.name}
-              </span>
+              <span className="text-[11px] font-medium text-gray-700">{tool.name}</span>
             </Link>
           ))}
         </div>
       </section>
 
-      {/* ========== ASTROLOGERS LIST ========== */}
+      {/* Astrologers */}
       <section id="astrologers" className="px-4 mt-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-bold text-gray-900">
-            Talk to Astrologers
-          </h3>
-          <span className="text-xs text-orange-600 font-medium">
-            4 Available
-          </span>
+          <h3 className="text-base font-bold text-gray-900">Talk to Astrologers</h3>
+          <span className="text-xs text-orange-600 font-medium">4 Available</span>
         </div>
-
         <div className="space-y-4">
           {ASTROLOGERS.map((astro) => (
             <AstrologerCard key={astro.id} astrologer={astro} />
@@ -99,25 +80,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ========== BOTTOM NAV ========== */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-orange-100 px-2 py-2 flex justify-around items-center safe-area-pb">
-        <Link href="/" className="flex flex-col items-center gap-0.5 text-orange-600">
-          <span className="text-xl">🏠</span>
-          <span className="text-[10px] font-medium">Home</span>
-        </Link>
-        <Link href="/#astrologers" className="flex flex-col items-center gap-0.5 text-gray-500">
-          <span className="text-xl">💬</span>
-          <span className="text-[10px] font-medium">Chat</span>
-        </Link>
-        <Link href="/daily" className="flex flex-col items-center gap-0.5 text-gray-500">
-          <span className="text-xl">🌟</span>
-          <span className="text-[10px] font-medium">Daily</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-0.5 text-gray-500">
-          <span className="text-xl">👤</span>
-          <span className="text-[10px] font-medium">Profile</span>
-        </Link>
-      </nav>
+      <BottomNav />
     </div>
   );
 }
