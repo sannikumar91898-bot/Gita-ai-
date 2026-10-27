@@ -6,8 +6,9 @@ import { aiResponseCache } from "@/schema";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REQUEST_TIMEOUT_MS = 20_000;
+const REQUEST_TIMEOUT_MS = 22_000;
 const MAX_ATTEMPTS = 2;
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 function jsonError(message: string, status: number) {
   return NextResponse.json(
@@ -44,6 +45,20 @@ function validTime(value: string): boolean {
   return h >= 0 && h <= 23 && m >= 0 && m <= 59;
 }
 
+function generationConfig(model: string): Record<string, unknown> {
+  const config: Record<string, unknown> = {
+    maxOutputTokens: 4096,
+    temperature: 0.7,
+  };
+
+  // thinkingLevel is rejected by Gemini 2.5. thinkingBudget is rejected by some Gemini 3 models.
+  if (/gemini-2\.5/i.test(model)) {
+    config.thinkingConfig = { thinkingBudget: 0 };
+  }
+
+  return config;
+}
+
 function extractText(data: unknown): string {
   if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
 
@@ -56,7 +71,7 @@ function extractText(data: unknown): string {
   return parts
     .filter(
       (part): part is Record<string, unknown> =>
-        isRecord(part) && typeof part.text === "string"
+        isRecord(part) && typeof part.text === "string" && part.thought !== true
     )
     .map((part) => part.text as string)
     .join("")
@@ -103,23 +118,20 @@ export async function POST(req: Request) {
   }
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
-  const model = process.env.GEMINI_MODEL?.trim();
+  const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 
-  if (!apiKey || !model) {
-    console.error("Kundli API configuration is incomplete.", {
-      missingApiKey: !apiKey,
-      missingModel: !model,
-    });
+  if (!apiKey) {
+    console.error("Kundli API: GEMINI_API_KEY is missing.");
     return jsonError("Kundli service is not configured.", 503);
   }
 
-  if (!/^[a-zA-Z0-9._-]+$/.test(model)) {
+  if (!/^[a-zA-Z0-9._-]+$/.test(model) || model.startsWith("models/")) {
     console.error("Kundli API: Invalid GEMINI_MODEL configuration.");
     return jsonError("Kundli service is not configured.", 503);
   }
 
   const cacheKey =
-    `kundli_${dateOfBirth}_${timeOfBirth}_` +
+    `kundli_\( {dateOfBirth}_ \){timeOfBirth}_` +
     placeOfBirth.toLowerCase().replace(/\s+/g, "");
 
   try {
@@ -179,10 +191,7 @@ export async function POST(req: Request) {
         ],
       },
     ],
-    generationConfig: {
-      maxOutputTokens: 2048,
-      thinkingConfig: { thinkingLevel: "low" },
-    },
+    generationConfig: generationConfig(model),
   };
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
@@ -287,7 +296,7 @@ export async function POST(req: Request) {
         .values({
           id: crypto.randomUUID(),
           questionKey: cacheKey,
-          originalQuestion: `Kundli report for ${name} (${dateOfBirth})`,
+          originalQuestion: `Kundli report for \( {name} ( \){dateOfBirth})`,
           aiAnswer: kundliReport,
         })
         .onConflictDoNothing();
