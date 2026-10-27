@@ -36,31 +36,29 @@ type DailyReading = {
 };
 
 export default function HomePage() {
-  const { t, me, loading } = useApp();
+  const { t, me, loading, lang } = useApp();
   const [daily, setDaily] = useState<DailyReading | null>(null);
 
-  // Load the daily reading only when the user has a birth chart.
+  // Load the daily reading using the selected language.
   useEffect(() => {
     if (loading) return;
-
-    if (!me?.hasChart) {
-      setDaily(null);
-      return;
-    }
 
     let cancelled = false;
     const controller = new AbortController();
 
     async function loadDailyReading() {
       try {
-        const response = await fetch("/api/daily", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-          },
-          cache: "no-store",
-          signal: controller.signal,
-        });
+        const response = await fetch(
+          "/api/daily?lang=" + encodeURIComponent(lang),
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            cache: "no-store",
+            signal: controller.signal,
+          }
+        );
 
         if (!response.ok) {
           throw new Error(`Daily reading failed: ${response.status}`);
@@ -95,7 +93,7 @@ export default function HomePage() {
       cancelled = true;
       controller.abort();
     };
-  }, [me?.hasChart, loading]);
+  }, [loading, lang]);
 
   // Use only routes that are reported to exist in this project.
   // Topic pages that are missing open chat instead of a 404 page.
