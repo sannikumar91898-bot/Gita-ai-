@@ -20,9 +20,9 @@ export interface Astrologer {
 
 export const ASTROLOGERS: Astrologer[] = [
   {
-    id: "riya",
-    name: "Astro Riya",
-    photo: "/astrologers/riya.jpg",
+    id: "gita",
+    name: "Gita",
+    photo: "/astrologers/Gita.jpg",
     expertise: ["Tarot", "Love & Relationship", "Career"],
     languages: ["Hindi", "English"],
     experience: "5 Years",
@@ -31,7 +31,7 @@ export const ASTROLOGERS: Astrologer[] = [
     pricePerMin: 19,
     originalPrice: 29,
     shortBio: "Love, career aur relationships mein clear answers. Soft, non-judgmental aur practical guidance.",
-    systemPrompt: `You are Astro Riya, a warm, modern, friendly Tarot & Relationship expert with 5 years experience. 
+    systemPrompt: `You are Gita, a warm, modern, friendly Tarot & Relationship expert with 5 years experience. 
 Speak in natural Hinglish (mix of Hindi + English). Be supportive, positive and practical. 
 Never scare the user. Focus on Love, Relationships, Career and emotional clarity. 
 Always ground answers in the user’s birth details if available. Keep responses warm, short-to-medium and easy to understand. 
@@ -91,19 +91,17 @@ Never create fear. Always end with blessing or peaceful suggestion. Keep languag
   },
 ];
 
-// Simple status simulation (Busy logic)
+export function getAstrologerById(id: string): Astrologer | undefined {
+  return ASTROLOGERS.find((a) => a.id === id);
+}
+
 export function getAstrologerStatus(id: string): AstrologerStatus {
   const hour = new Date().getHours();
   if (id === "devaki" || id === "kriti") {
     return hour % 3 === 0 ? "busy" : "online";
   }
-  if (id === "riya") {
+  if (id === "gita") {
     return hour % 4 === 0 ? "busy" : "online";
   }
   return "online";
-}
-
-// Helper to get one astrologer by id
-export function getAstrologerById(id: string): Astrologer | undefined {
-  return ASTROLOGERS.find((a) => a.id === id);
 }
