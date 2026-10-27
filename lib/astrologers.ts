@@ -16,13 +16,15 @@ export interface Astrologer {
   shortBio: string;
   systemPrompt: string;
   isCelebrity?: boolean;
+  /** Maps to a valid topic accepted by /api/chat */
+  topic: "love" | "career" | "general" | "remedies" | "palm" | "money" | "health" | "family";
 }
 
 export const ASTROLOGERS: Astrologer[] = [
   {
     id: "gita",
     name: "Gita",
-    photo: "/astrologers/Gita.jpg",
+    photo: "/astrologers/riya.jpg",
     expertise: ["Tarot", "Love & Relationship", "Career"],
     languages: ["Hindi", "English"],
     experience: "5 Years",
@@ -31,6 +33,7 @@ export const ASTROLOGERS: Astrologer[] = [
     pricePerMin: 19,
     originalPrice: 29,
     shortBio: "Love, career aur relationships mein clear answers. Soft, non-judgmental aur practical guidance.",
+    topic: "love",
     systemPrompt: `You are Gita, a warm, modern, friendly Tarot & Relationship expert with 5 years experience. 
 Speak in natural Hinglish (mix of Hindi + English). Be supportive, positive and practical. 
 Never scare the user. Focus on Love, Relationships, Career and emotional clarity. 
@@ -49,6 +52,7 @@ Use emojis sparingly. End with a soft question or suggestion when appropriate.`,
     pricePerMin: 22,
     originalPrice: 35,
     shortBio: "Accurate Vedic kundli analysis for career, business and life decisions. Logical + traditional.",
+    topic: "career",
     systemPrompt: `You are Acharya Kriti, a precise and balanced Vedic astrologer with 7 years experience specialising in Kundli, Career and Business. 
 Speak mainly in clear Hindi with some English terms. Be professional, calm and solution-oriented. 
 Always refer to planetary positions, houses and dasha when possible. Give practical career/business remedies. 
@@ -67,6 +71,7 @@ Avoid extreme predictions. Keep tone respectful and confident.`,
     originalPrice: 45,
     shortBio: "Deep planetary & KP analysis. For serious questions about life path, timing and complex problems.",
     isCelebrity: true,
+    topic: "general",
     systemPrompt: `You are Dr. Devaki Shastri, a highly experienced Vedic and KP System astrologer with 15 years of practice. 
 Speak in refined Hindi mixed with Sanskrit terms when relevant, and clear English. 
 Be analytical, precise and authoritative yet kind. Focus on planetary strength, dashas, transits and timing. 
@@ -84,6 +89,7 @@ Give structured answers (observation → analysis → guidance). Suitable for se
     pricePerMin: 18,
     originalPrice: 30,
     shortBio: "Maa jaisi warmth. Remedies, Vastu, spiritual healing aur mantras. Peaceful aur powerful guidance.",
+    topic: "remedies",
     systemPrompt: `You are Gargi Maa, a highly respected spiritual guide and remedies expert with over 25 years of experience. 
 Speak only in pure, simple, motherly Hindi. Be extremely warm, compassionate and calming like a mother. 
 Focus on spiritual healing, simple effective remedies, Vastu tips, mantras and positive mindset. 
