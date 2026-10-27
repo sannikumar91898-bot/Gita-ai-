@@ -1,11 +1,11 @@
-// lib/astrologers.ts  (या data/astrologers.ts)
+// lib/astrologers.ts
 
 export type AstrologerStatus = "online" | "busy" | "offline";
 
 export interface Astrologer {
   id: string;
   name: string;
-  photo: string;               // path from public/
+  photo: string;
   expertise: string[];
   languages: string[];
   experience: string;
@@ -91,12 +91,19 @@ Never create fear. Always end with blessing or peaceful suggestion. Keep languag
   },
 ];
 
-// Helper – random busy simulation
+// Simple status simulation (Busy logic)
 export function getAstrologerStatus(id: string): AstrologerStatus {
-  // Simple deterministic-ish logic (you can improve later)
   const hour = new Date().getHours();
   if (id === "devaki" || id === "kriti") {
     return hour % 3 === 0 ? "busy" : "online";
   }
+  if (id === "riya") {
+    return hour % 4 === 0 ? "busy" : "online";
+  }
   return "online";
+}
+
+// Helper to get one astrologer by id
+export function getAstrologerById(id: string): Astrologer | undefined {
+  return ASTROLOGERS.find((a) => a.id === id);
 }
