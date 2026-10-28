@@ -6,15 +6,25 @@ export type AnswerType =
   | "relationship_guidance"
   | "spiritual_guidance"
   | "financial_education"
-  | "safety_information";
+  | "safety_information"
+  | "reflective_exploration"
+  | "psychoeducation"
+  | "empathic_guidance"
+  | "practical_steps"
+  | "safety_and_referral";
 
 export type Confidence =
   | "source_supported"
   | "traditional_interpretation"
   | "general_education"
-  | "uncertain";
+  | "uncertain"
+  | "high"
+  | "medium";
 
-export type Difficulty = "beginner" | "intermediate" | "advanced";
+export type Difficulty =
+  | "beginner"
+  | "intermediate"
+  | "advanced";
 
 export type EmotionalTone =
   | "warm"
@@ -68,7 +78,7 @@ export interface MarriageRelationshipEntry {
 
   source_ids: string[];
   confidence: Confidence;
-  disclaimer: string;
+  disclaimer: string | LocalizedText;
   tags: string[];
 
   guidance_domain?: GuidanceDomain;
