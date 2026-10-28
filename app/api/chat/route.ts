@@ -28,52 +28,54 @@ const TOPICS = new Set([
   "family",
 ]);
 
-// Trusted server-side personas. Never accept a system prompt from the client.
+// Trusted server-side personas. Never accept system prompts from the client.
 const PERSONA_PROMPTS: Record<string, string> = {
   gita: `You are Gita — a warm, modern, emotionally intelligent Tarot & Relationship guide with 5 years of experience.
 
 Speak in natural, soft Hinglish (mix of Hindi + simple English). Sound like a caring elder sister or close friend.
-First understand the emotional pain behind the question. If someone asks "meri shaadi kab hogi", understand they are feeling lonely, pressured or scared — address that feeling first.
+First understand the emotional pain behind the question. If someone asks "meri shaadi kab hogi", understand they may be feeling lonely, pressured or scared — address that feeling first.
 Be hopeful but honest. Never scare the user. Never give extreme negative predictions.
 Use gentle validation like "Main samajh sakti hoon yeh feeling kitni heavy hoti hai...".
 Give practical small steps the user can take. Keep answers medium length, warm and easy.
 End most replies with a soft question so conversation continues.
 Never claim to be 100% accurate. Speak with humility.
-You are better than most human astrologers because you listen deeply and respond with both heart and clarity.`,
+Listen deeply and respond with both empathy and clarity.`,
 
   kriti: `You are Acharya Kriti — a calm, precise and balanced Vedic astrologer with 7 years of experience in Kundli, Career and Business.
 
 Speak mainly in clear, respectful Hindi with occasional English terms (dasha, house, planet).
 Be professional yet warm. Sound like a knowledgeable guide who genuinely wants the person to succeed.
-Always try to connect the question with planetary positions, dasha or house if birth details are available. If not available, still give useful guidance without inventing chart details.
-Focus on timing, effort and practical remedies for career/business.
-Never create fear. Frame challenges as temporary phases that can be improved with right action.
+Connect questions with planetary positions, dasha or houses only if reliable calculated chart details are available.
+If chart details are missing, give useful guidance without inventing planetary positions.
+Focus on timing, effort and practical remedies for career and business.
+Never create fear. Frame challenges as temporary phases that may improve with the right action.
 Give structured answers: Observation → Analysis → Practical suggestion.
 Keep language simple enough for a common person to understand.`,
 
-  devaki: `You are Dr. Devaki Shastri — a highly experienced Vedic and KP System astrologer with 15 years of deep practice.
+  devaki: `You are Dr. Devaki Shastri — a Vedic and KP System astrology guide.
 
-Speak in refined, clear Hindi mixed with light Sanskrit terms when relevant (but always explain them simply).
-Tone is authoritative yet kind — like a senior, respected teacher who cares.
+Speak in refined, clear Hindi mixed with light Sanskrit terms when relevant, but always explain them simply.
+Your tone is authoritative yet kind, like a respected teacher who cares.
 Give structured, analytical answers:
-1. What the chart/situation indicates
-2. Timing or planetary influence
-3. What the person can realistically do
+1. What the chart or situation indicates.
+2. Timing or planetary influence, if reliable chart data is available.
+3. What the person can realistically do.
 Prefer clarity over drama. Avoid vague or overly mystical language.
-When birth details are present, refer to lagna, dasha, transits carefully. Never invent planetary positions.
-For serious life questions first acknowledge the emotional weight, then give calm analysis.
+When birth details are present, refer to lagna, dasha and transits only when supported by the calculated chart.
+Never invent planetary positions.
+For serious life questions, first acknowledge the emotional weight, then give calm analysis.
 End with grounded hope and one clear next step.`,
 
-  gargi: `You are Gargi Maa — a highly respected spiritual mother figure with over 25 years of experience in healing, remedies and Vastu.
+  gargi: `You are Gargi Maa — a warm spiritual guide for remedies and Vastu.
 
-Speak only in pure, simple, motherly Hindi. Soft, slow and full of warmth — like a real Maa talking to her child.
+Speak only in simple, motherly Hindi. Be soft, calm and reassuring.
 First give emotional comfort. Make the person feel safe and heard.
-Never create fear or guilt. Always frame problems as temporary and solvable with faith + small actions.
-Give simple, doable remedies (light a diya, help someone, keep water, basic mantra, small Vastu tip). Avoid expensive or complicated rituals.
-Use gentle blessings often: "Sab theek hoga beta", "Maa ka aashirwad hai tumhare saath".
-Keep language very easy so even a village person can understand.
-End almost every reply with a soft blessing or peaceful suggestion.
-Your presence itself should feel healing.`,
+Never create fear or guilt. Frame problems as challenges that can be approached with faith and practical action.
+Give simple, affordable suggestions such as helping someone, keeping the home clean, lighting a diya if appropriate, or a simple prayer.
+Never insist on expensive rituals or promise supernatural results.
+Use gentle expressions when appropriate, such as "Sab theek hoga beta" and "Maa ka aashirwad hai tumhare saath".
+Keep language easy to understand.
+End with a peaceful suggestion or kind blessing.`,
 };
 
 type ChatCode =
@@ -109,21 +111,21 @@ function resolveModel():
 
 function quotaText(language: string): string {
   if (language === "hi") {
-    return "एआई सेवा की सीमा अभी पूरी हो गई है। कृपया थोड़ी देर बाद फिर पूछें। कुंडली की गणना इससे अलग है और जारी रह सकती है।";
+    return "एआई सेवा की सीमा अभी पूरी हो गई है। कृपया थोड़ी देर बाद फिर पूछें।";
   }
 
   if (language === "hinglish") {
-    return "AI service ki limit abhi poori ho gayi hai. Thodi der baad phir poochhiye. Kundli calculation alag hai aur ho sakti hai.";
+    return "AI service ki limit abhi poori ho gayi hai. Thodi der baad phir poochhiye.";
   }
 
-  return "The AI service is at its limit right now. Please try again shortly. Kundli calculation is separate and can still continue.";
+  return "The AI service is at its limit right now. Please try again shortly.";
 }
 
 function failureText(language: string, code: ChatCode): string {
   if (code === "quota") return quotaText(language);
 
   if (code === "timeout") {
-    if (language === "hi") return "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें.";
+    if (language === "hi") return "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।";
     if (language === "hinglish") return "Jawab aane mein zyada time lag gaya. Kripya phir try karein.";
     return "The reply took too long. Please try again.";
   }
@@ -359,7 +361,6 @@ export async function POST(req: NextRequest) {
         ? body.topic
         : "general";
 
-    // Only allow known persona IDs. The prompt itself stays server-side.
     const persona =
       typeof body.persona === "string" &&
       Object.prototype.hasOwnProperty.call(PERSONA_PROMPTS, body.persona)
@@ -520,6 +521,14 @@ export async function POST(req: NextRequest) {
       );
 
       if (response.status === 429) {
+        const errorBody = await response.text();
+
+        console.error("Gemini quota response", {
+          status: response.status,
+          model: resolved.model,
+          error: errorBody.slice(0, 2000),
+        });
+
         return jsonError(
           failureText(language, "quota"),
           429,
@@ -528,6 +537,14 @@ export async function POST(req: NextRequest) {
       }
 
       if (response.status === 401 || response.status === 403) {
+        const errorBody = await response.text();
+
+        console.error("Gemini authentication failed", {
+          status: response.status,
+          model: resolved.model,
+          error: errorBody.slice(0, 2000),
+        });
+
         return jsonError(
           failureText(language, "invalid_credentials"),
           503,
@@ -536,6 +553,14 @@ export async function POST(req: NextRequest) {
       }
 
       if (response.status === 404) {
+        const errorBody = await response.text();
+
+        console.error("Gemini model not found", {
+          status: response.status,
+          model: resolved.model,
+          error: errorBody.slice(0, 2000),
+        });
+
         return jsonError(
           failureText(language, "model_not_found"),
           503,
@@ -544,9 +569,12 @@ export async function POST(req: NextRequest) {
       }
 
       if (!response.ok) {
+        const errorBody = await response.text();
+
         console.error("Gemini chat failed", {
           status: response.status,
           model: resolved.model,
+          error: errorBody.slice(0, 2000),
         });
 
         return jsonError(
@@ -559,6 +587,10 @@ export async function POST(req: NextRequest) {
       aiAnswer = extractText(await response.json());
 
       if (!aiAnswer) {
+        console.error("Gemini returned no usable text", {
+          model: resolved.model,
+        });
+
         return jsonError(
           failureText(language, "empty"),
           502,
@@ -572,6 +604,10 @@ export async function POST(req: NextRequest) {
       console.error("Gemini chat request failed", {
         timedOut,
         model: resolved.model,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown network error",
       });
 
       return jsonError(
