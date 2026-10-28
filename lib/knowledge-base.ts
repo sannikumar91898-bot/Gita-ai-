@@ -229,24 +229,105 @@ const SEEDS: Omit<KnowledgeEntry, "id">[] = [
       hinglish: "Kundli se disease ka reliable diagnosis nahi ho sakta. Symptoms ya health concern ho to qualified doctor se consult karein; astrology medical care ka replacement nahi hai.",
       en: "A birth chart cannot reliably diagnose illness. Consult a qualified medical professional about symptoms or health concerns; astrology is not a substitute for medical care."
     }
+  },
+  {
+    topic: "health-prevention",
+    question: "स्वास्थ्य की देखभाल और बीमारी से बचाव कैसे करें?",
+    aliases: ["health prevention", "health care tips", "bimari se bachav", "sehat ka dhyan", "स्वास्थ्य की सावधानियां"],
+    answers: {
+      hi: "अपनी सेहत का ध्यान रखने के लिए नियमित नींद, संतुलित भोजन, पर्याप्त पानी, रोज़ाना हल्की गतिविधि और जरूरत के अनुसार डॉक्टर की सलाह को प्राथमिकता दें। कोई भी लक्षण लगातार बना रहे या बढ़े, तो उसे केवल ग्रहों से जोड़कर न टालें।",
+      hinglish: "Apni health ke liye regular sleep, balanced food, enough water, daily light activity aur zarurat par doctor ki advice ko priority dein. Koi symptom persist kare ya badhe, to use sirf grahon se jodkar ignore na karein.",
+      en: "Support your health with regular sleep, balanced meals, enough water, daily movement and medical advice when needed. Do not attribute persistent or worsening symptoms only to planetary influences."
+    }
+  },
+  {
+    topic: "health-anxiety",
+    question: "अगर मुझे बीमारी का डर बार-बार लगता है तो क्या करूं?",
+    aliases: ["fear of illness", "health anxiety", "bimari ka dar", "mujhe bimari ka darr hai", "health ko lekar tension"],
+    answers: {
+      hi: "मैं समझ सकती हूँ कि सेहत को लेकर बार-बार डर लगना कितना थका देने वाला हो सकता है। अभी धीरे-धीरे साँस लें और अपने डर को बिना जज किए पहचानें। अगर यह चिंता बार-बार आती है या रोज़मर्रा की ज़िंदगी प्रभावित करती है, तो डॉक्टर या मानसिक स्वास्थ्य विशेषज्ञ से बात करना मददगार हो सकता है।",
+      hinglish: "Main samajh sakti hoon ki health ko lekar baar-baar darr lagna kitna exhausting ho sakta hai. Abhi dheere saans lein aur apne fear ko bina judge kiye notice karein. Agar anxiety baar-baar aaye ya daily life affect kare, to doctor ya mental-health professional se baat karna helpful ho sakta hai.",
+      en: "Repeated fear about illness can feel exhausting. Take a few slow breaths and notice the worry without judging yourself. If it keeps returning or affects daily life, consider speaking with a doctor or mental-health professional."
+    }
+  },
+  {
+    topic: "mental-wellbeing",
+    question: "तनाव और ज्यादा सोचने पर मन को शांत कैसे करें?",
+    aliases: ["stress and overthinking", "mind ko shant kaise karein", "overthinking help", "tension kam karna", "anxiety calming"],
+    answers: {
+      hi: "चलो, पहले एक छोटा कदम लेते हैं। आराम से बैठें, साँस को धीरे अंदर लें और धीरे बाहर छोड़ें। फिर अपने मन की बात लिखें और देखें कि अभी कौन-सा एक छोटा काम आपके नियंत्रण में है। अगर तनाव लंबे समय तक रहे या संभालना कठिन लगे, तो किसी भरोसेमंद व्यक्ति या विशेषज्ञ से सहायता लें।",
+      hinglish: "Chaliye, pehle ek chhota step lete hain. Aaram se baithkar dheere saans andar lein aur dheere bahar chhodein. Phir apni thoughts likhein aur dekhein ki abhi kaunsa ek chhota kaam aapke control mein hai. Stress lambe time tak rahe ya manage karna mushkil ho, to trusted person ya professional se help lein.",
+      en: "Let's start with one small step. Sit comfortably and breathe in and out slowly. Write down what is on your mind, then identify one small thing within your control. If stress persists or feels hard to manage, seek support from someone you trust or a professional."
+    }
+  },
+  {
+    topic: "age-and-longevity",
+    question: "क्या कुंडली से आयु या मृत्यु का समय पता चल सकता है?",
+    aliases: ["life expectancy astrology", "death prediction", "meri umar kitni hogi", "ayu in kundli", "death age prediction", "longevity prediction"],
+    answers: {
+      hi: "मैं आपकी आयु या मृत्यु का समय कुंडली से निश्चित रूप से नहीं बता सकती, और ऐसी भविष्यवाणी भरोसेमंद नहीं होती। ऐसी बातों से डरने के बजाय आज की सेहत, सुरक्षित आदतों और अपने प्रिय लोगों के साथ समय पर ध्यान देना अधिक उपयोगी है। यदि इस विचार से बहुत घबराहट हो रही है, तो किसी भरोसेमंद व्यक्ति से बात करें।",
+      hinglish: "Main kundli se aapki exact age ya death ka time reliably nahi bata sakti. Aisi predictions par darne ke bajay present health, safe habits aur apno ke saath waqt par focus karna zyada useful hai. Agar is thought se bahut anxiety ho rahi hai, to kisi trusted person se baat karein.",
+      en: "A birth chart cannot reliably determine your lifespan or time of death. Rather than fear such predictions, focus on current health, safe habits and time with people you care about. If this thought causes intense anxiety, talk with someone you trust."
+    }
+  },
+  {
+    topic: "emotional-support",
+    question: "अगर मैं अकेला या भावनात्मक रूप से परेशान महसूस करूं तो क्या करूं?",
+    aliases: ["feeling lonely", "emotional support", "akela mehsoos karna", "dil pareshan hai", "i feel alone", "need someone to talk to"],
+    answers: {
+      hi: "आपको हर बात अकेले सहने की ज़रूरत नहीं है। मैं आपकी बात ध्यान से सुनने और विचारों को व्यवस्थित करने में मदद कर सकती हूँ। अगर संभव हो, किसी भरोसेमंद दोस्त या परिवार के सदस्य से भी खुलकर बात करें। आपकी भावनाएँ मायने रखती हैं, और मदद माँगना कमजोरी नहीं है।",
+      hinglish: "Aapko har baat akele sehne ki zarurat nahi hai. Main aapki baat dhyan se sunne aur thoughts ko sort karne mein help kar sakti hoon. Agar possible ho, kisi trusted friend ya family member se bhi khulkar baat karein. Aapki feelings matter karti hain; help maangna weakness nahi hai.",
+      en: "You do not have to carry everything alone. I can listen and help you sort through your thoughts. If possible, speak openly with a trusted friend or family member too. Your feelings matter, and asking for help is not a weakness."
+    }
+  },
+  {
+    topic: "astrology-health-safety",
+    question: "क्या ज्योतिष डॉक्टर की सलाह का विकल्प हो सकता है?",
+    aliases: ["astrology instead of doctor", "kundli doctor replacement", "medical advice astrology", "doctor ki jagah jyotish", "health remedy guarantee"],
+    answers: {
+      hi: "नहीं, ज्योतिष डॉक्टर की जाँच, निदान या इलाज का विकल्प नहीं है। प्रार्थना या ध्यान आपको भावनात्मक सहारा दे सकते हैं, लेकिन दवा बंद करना या इलाज टालना सुरक्षित नहीं है। स्वास्थ्य संबंधी निर्णय योग्य चिकित्सा विशेषज्ञ के साथ लें।",
+      hinglish: "Nahi, astrology doctor ki examination, diagnosis ya treatment ka replacement nahi hai. Prayer ya meditation emotional support de sakte hain, lekin medicine band karna ya treatment delay karna safe nahi. Health decisions qualified medical professional ke saath lein.",
+      en: "No. Astrology cannot replace medical examination, diagnosis or treatment. Prayer or meditation may offer emotional comfort, but stopping medication or delaying care can be unsafe. Make health decisions with a qualified medical professional."
+    }
   }
 ];
 
 const QUESTION_PREFIXES: Record<KnowledgeLanguage, string[]> = {
   hi: [
-    "क्या", "मुझे बताइए", "समझाइए", "जानना चाहता हूं",
-    "इसके बारे में बताएं", "इसका अर्थ क्या है", "कैसे समझें",
-    "मुझे समझाएं", "कृपया बताएं", "इसका मतलब"
+    "क्या",
+    "मुझे बताइए",
+    "समझाइए",
+    "जानना चाहता हूं",
+    "इसके बारे में बताएं",
+    "इसका अर्थ क्या है",
+    "कैसे समझें",
+    "मुझे समझाएं",
+    "कृपया बताएं",
+    "इसका मतलब"
   ],
   hinglish: [
-    "kya hai", "mujhe batao", "samjhao", "meaning",
-    "iske baare mein", "kaise samjhein", "please explain",
-    "iska matlab", "mujhe samjhao", "details batao"
+    "kya hai",
+    "mujhe batao",
+    "samjhao",
+    "meaning",
+    "iske baare mein",
+    "kaise samjhein",
+    "please explain",
+    "iska matlab",
+    "mujhe samjhao",
+    "details batao"
   ],
   en: [
-    "what is", "explain", "tell me about", "meaning of",
-    "how does", "please explain", "help me understand",
-    "what does it mean", "give me details", "can you explain"
+    "what is",
+    "explain",
+    "tell me about",
+    "meaning of",
+    "how does",
+    "please explain",
+    "help me understand",
+    "what does it mean",
+    "give me details",
+    "can you explain"
   ]
 };
 
@@ -301,7 +382,11 @@ function buildKnowledgeBase(): KnowledgeEntry[] {
 
     for (const candidate of candidates) {
       const key = normalize(candidate);
-      if (!key || seen.has(`${seed.topic}:${key}`)) continue;
+
+      if (!key || seen.has(`${seed.topic}:${key}`)) {
+        continue;
+      }
+
       seen.add(`${seed.topic}:${key}`);
 
       entries.push({
@@ -312,8 +397,7 @@ function buildKnowledgeBase(): KnowledgeEntry[] {
     }
   }
 
-  // Generate additional searchable question forms from curated entries.
-  // These are phrasing variants, not 1000 independently researched answers.
+  // These are searchable phrasing variants, not 1000 independently researched answers.
   const originalEntries = [...entries];
 
   for (const seed of originalEntries) {
@@ -326,7 +410,10 @@ function buildKnowledgeBase(): KnowledgeEntry[] {
         const candidate = `${prefix} ${seed.question}`;
         const key = normalize(candidate);
 
-        if (!key || seen.has(`${seed.topic}:${key}`)) continue;
+        if (!key || seen.has(`${seed.topic}:${key}`)) {
+          continue;
+        }
+
         seen.add(`${seed.topic}:${key}`);
 
         entries.push({
@@ -352,8 +439,7 @@ export function findKnowledgeAnswer(
 
   if (normalizedQuestion.length < 3) return null;
 
-  // Personal chart questions must be handled by real chart calculations
-  // and/or the AI, never by a generic canned FAQ.
+  // Personal chart requests must be handled by real calculations and/or AI.
   if (isPersonalCalculationRequest(question)) return null;
 
   const candidates = KNOWLEDGE_BASE.filter(
@@ -381,8 +467,12 @@ export function findKnowledgeAnswer(
       } else {
         const questionWords = new Set(normalizedQuestion.split(" "));
         const phraseWords = normalizedPhrase.split(" ");
-        const matched = phraseWords.filter((word) => questionWords.has(word));
-        score = (matched.length / Math.max(phraseWords.length, 1)) * 40;
+        const matched = phraseWords.filter((word) =>
+          questionWords.has(word)
+        );
+
+        score =
+          (matched.length / Math.max(phraseWords.length, 1)) * 40;
       }
 
       if (score > bestScore) {
@@ -395,7 +485,6 @@ export function findKnowledgeAnswer(
   // Avoid weak matches that could return an unrelated answer.
   if (!best || bestScore < 65) return null;
 
-  // Return a copy with the requested language selected by the caller.
   return {
     ...best,
     answers: {
