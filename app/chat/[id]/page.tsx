@@ -1,7 +1,7 @@
-
+// app/chat/[id]/page.tsx
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,15 +13,6 @@ type Message = {
   content: string;
 };
 
-type AstrologerId = "gita" | "kriti" | "devaki" | "gargi";
-
-const ASTROLOGER_TOPICS: Record<AstrologerId, string> = {
-  gita: "love",
-  kriti: "career",
-  devaki: "general",
-  gargi: "remedies",
-};
-
 const INTENT_CHIPS = [
   "मेरी शादी कब होगी?",
   "करियर में सफलता कैसे मिलेगी?",
@@ -30,14 +21,10 @@ const INTENT_CHIPS = [
 ];
 
 function createMessageId(): string {
-  if (
-    typeof crypto !== "undefined" &&
-    typeof crypto.randomUUID === "function"
-  ) {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `\( {Date.now()}- \){Math.random().toString(36).slice(2)}`;
 }
 
 export default function AstrologerChatPage() {
@@ -47,10 +34,7 @@ export default function AstrologerChatPage() {
 
   const astrologer = getAstrologerById(id);
   const validId =
-    id === "gita" ||
-    id === "kriti" ||
-    id === "devaki" ||
-    id === "gargi";
+    id === "gita" || id === "kriti" || id === "devaki" || id === "gargi";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -71,14 +55,11 @@ export default function AstrologerChatPage() {
 
     async function loadHistory() {
       setHistoryLoading(true);
-
       try {
-        // API GET contract: accepts conversationId, not topic.
         const response = await fetch("/api/chat", {
           method: "GET",
           cache: "no-store",
         });
-
         const data = await response.json();
 
         if (!response.ok) {
@@ -94,38 +75,28 @@ export default function AstrologerChatPage() {
         if (Array.isArray(data.messages)) {
           const history: Message[] = data.messages
             .filter(
-              (message: unknown): message is {
-                id: string;
-                role: "user" | "assistant";
-                content: string;
-              } => {
-                if (!message || typeof message !== "object") return false;
-
-                const item = message as Record<string, unknown>;
-
+              (msg: unknown): msg is { id: string; role: string; content: string } => {
+                if (!msg || typeof msg !== "object") return false;
+                const m = msg as Record<string, unknown>;
                 return (
-                  typeof item.id === "string" &&
-                  (item.role === "user" || item.role === "assistant") &&
-                  typeof item.content === "string"
+                  typeof m.id === "string" &&
+                  (m.role === "user" || m.role === "assistant") &&
+                  typeof m.content === "string"
                 );
-              },
+              }
             )
-            .map((message) => ({
-              id: message.id,
-              role: message.role,
-              content: message.content,
+            .map((msg) => ({
+              id: msg.id,
+              role: msg.role as "user" | "assistant",
+              content: msg.content,
             }));
 
           setMessages(history);
         }
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Chat history error:", error);
-        }
+      } catch {
+        // history fail होने पर silent रहो
       } finally {
-        if (!cancelled) {
-          setHistoryLoading(false);
-        }
+        if (!cancelled) setHistoryLoading(false);
       }
     }
 
@@ -140,108 +111,74 @@ export default function AstrologerChatPage() {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  const sendMessage = useCallback(
-    async (text: string) => {
-      const cleanText = text.trim();
+  async function sendMessage(text: string) {
+    if (!text.trim() || loading || !astrologer || requestInProgress.current) return;
 
-      if (
-        !cleanText ||
-        requestInProgress.current ||
-        !astrologer ||
-        !validId
-      ) {
-        return;
+    const content = text.trim();
+    const userMessage: Message = {
+      id: createMessageId(),
+      role: "user",
+      content,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
+    setLoading(true);
+    requestInProgress.current = true;
+
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: content,
+          topic: astrologer.topic || "general",
+          conversationId: conversationId || undefined,
+          persona: astrologer.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.conversationId) {
+        setConversationId(data.conversationId);
       }
 
-      requestInProgress.current = true;
-      setLoading(true);
-      setInput("");
-
-      const userMessage: Message = {
-        id: createMessageId(),
-        role: "user",
-        content: cleanText,
-      };
-
-      setMessages((previous) => [...previous, userMessage]);
-
-      try {
-        const response = await fetch("/api/chat", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            message: cleanText,
-            topic: ASTROLOGER_TOPICS[id as AstrologerId],
-            conversationId: conversationId || undefined,
-            persona: id,
-          }),
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(
-            typeof data.error === "string"
-              ? data.error
-              : "अभी उत्तर नहीं मिल पाया। कृपया दोबारा कोशिश करें।",
-          );
-        }
-
-        if (typeof data.conversationId === "string") {
-          setConversationId(data.conversationId);
-        }
-
-        const reply =
-          typeof data.reply === "string"
-            ? data.reply
-            : typeof data.message === "string"
-              ? data.message
-              : typeof data.content === "string"
-                ? data.content
-                : null;
-
-        if (!reply) {
-          throw new Error(
-            "उत्तर खाली मिला। कृपया अपना सवाल दोबारा भेजें।",
-          );
-        }
-
-        setMessages((previous) => [
-          ...previous,
+      if (data.reply) {
+        setMessages((prev) => [
+          ...prev,
           {
-            id:
-              typeof data.message?.id === "string"
-                ? data.message.id
-                : createMessageId(),
+            id: data.message?.id || createMessageId(),
             role: "assistant",
-            content: reply,
+            content: data.reply,
           },
         ]);
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "नेटवर्क की समस्या है। कृपया फिर से कोशिश करें।";
-
-        setMessages((previous) => [
-          ...previous,
+      } else {
+        setMessages((prev) => [
+          ...prev,
           {
             id: createMessageId(),
             role: "assistant",
-            content: errorMessage,
+            content: data.error || "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
           },
         ]);
-      } finally {
-        requestInProgress.current = false;
-        setLoading(false);
       }
-    },
-    [astrologer, validId, id, conversationId],
-  );
+    } catch {
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: createMessageId(),
+          role: "assistant",
+          content: "नेटवर्क की समस्या है। कृपया फिर से भेजें।",
+        },
+      ]);
+    } finally {
+      setLoading(false);
+      requestInProgress.current = false;
+    }
+  }
 
-  if (!astrologer || !validId) {
+  if (!astrologer) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FFF9E6]">
         <p className="text-gray-600">Loading...</p>
@@ -250,12 +187,12 @@ export default function AstrologerChatPage() {
   }
 
   return (
-    <div className="flex h-[100dvh] flex-col bg-[#FFF9E6]">
+    <div className="flex h-screen flex-col bg-[#FFF9E6]">
+      {/* Header */}
       <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-orange-100 bg-white px-3 py-3">
-        <Link href="/" className="text-2xl leading-none" aria-label="Home">
+        <Link href="/" className="text-2xl leading-none">
           ←
         </Link>
-
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
           <Image
             src={astrologer.photo}
@@ -265,33 +202,28 @@ export default function AstrologerChatPage() {
             className="h-full w-full object-cover"
           />
         </div>
-
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-semibold text-gray-900">
             {astrologer.name}
           </h1>
-          <p className="text-[11px] text-green-600">AI Astrology Guide</p>
+          <p className="text-[11px] text-green-600">Online</p>
         </div>
       </header>
 
-      <main
-        className="flex-1 space-y-3 overflow-y-auto px-3 py-4"
-        aria-live="polite"
-      >
-        {historyLoading && messages.length === 0 && (
-          <p className="mt-6 text-center text-sm text-gray-500">
-            Chat load ho rahi hai...
-          </p>
+      {/* Messages */}
+      <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
+        {historyLoading && (
+          <div className="py-10 text-center text-sm text-gray-500">
+            इतिहास लोड हो रहा है...
+          </div>
         )}
 
         {!historyLoading && messages.length === 0 && (
           <div className="mt-10 px-4 text-center text-sm text-gray-500">
-            <p className="text-base font-medium text-gray-800">
-              {astrologer.name}
-            </p>
+            <p className="text-base font-medium text-gray-800">{astrologer.name}</p>
             <p className="mt-2">{astrologer.shortBio}</p>
             <p className="mt-6 text-xs text-gray-400">
-              नीचे से सवाल चुनें या अपना सवाल लिखें।
+              नीचे से सवाल चुनें या अपना सवाल टाइप करें
             </p>
           </div>
         )}
@@ -326,6 +258,7 @@ export default function AstrologerChatPage() {
         <div ref={endRef} />
       </main>
 
+      {/* Intent Chips */}
       {messages.length === 0 && !historyLoading && (
         <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 pb-2">
           {INTENT_CHIPS.map((chip) => (
@@ -342,26 +275,24 @@ export default function AstrologerChatPage() {
         </div>
       )}
 
+      {/* Input */}
       <form
         className="flex items-center gap-2 border-t border-orange-100 bg-white px-3 py-3"
-        onSubmit={(event) => {
-          event.preventDefault();
+        onSubmit={(e) => {
+          e.preventDefault();
           void sendMessage(input);
         }}
       >
         <input
           value={input}
-          onChange={(event) => setInput(event.target.value)}
+          onChange={(e) => setInput(e.target.value)}
           placeholder="अपना सवाल लिखें..."
-          aria-label="अपना सवाल लिखें"
           className="flex-1 rounded-full border border-orange-100 bg-[#FFF9E6] px-4 py-2.5 text-sm outline-none focus:border-orange-400"
           disabled={loading}
         />
-
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          aria-label="Send message"
           className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white transition active:scale-95 disabled:opacity-50"
         >
           →
