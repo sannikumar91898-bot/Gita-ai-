@@ -15,6 +15,8 @@ import {
 import { translate, type Lang } from "../i18n";
 import type { Entitlement } from "../entitlement";
 
+export type Theme = "dark" | "light";
+
 const SUPPORTED_LANGUAGES: readonly Lang[] = [
   "en",
   "hi",
@@ -35,6 +37,16 @@ function readSavedLanguage(): Lang | null {
     return isLang(saved) ? saved : null;
   } catch {
     return null;
+  }
+}
+
+function readSavedTheme(): Theme {
+  try {
+    return localStorage.getItem("gita_theme") === "light"
+      ? "light"
+      : "dark";
+  } catch {
+    return "dark";
   }
 }
 
@@ -67,9 +79,11 @@ type Ctx = {
   loading: boolean;
   lang: Lang;
   t: (key: string) => string;
-  setLanguage: (l: Lang) => Promise<void>;
+  setLanguage: (language: Lang) => Promise<void>;
   refresh: () => Promise<void>;
-  setEntitlement: (e: Entitlement) => void;
+  setEntitlement: (entitlement: Entitlement) => void;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -82,28 +96,49 @@ export function AppProvider({
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   const [localLang, setLocalLang] = useState<Lang>("en");
+  const [theme, setThemeState] = useState<Theme>("dark");
 
   const mountedRef = useRef(false);
   const languageLoadedRef = useRef(false);
   const hasLocalLanguageRef = useRef(false);
   const refreshInProgressRef = useRef(false);
 
-  // Load local preference before using the server language as a fallback.
   useEffect(() => {
     mountedRef.current = true;
 
-    const saved = readSavedLanguage();
+    const savedLanguage = readSavedLanguage();
+    const savedTheme = readSavedTheme();
 
-    if (saved) {
+    if (savedLanguage) {
       hasLocalLanguageRef.current = true;
-      setLocalLang(saved);
+      setLocalLang(savedLanguage);
     }
 
+    setThemeState(savedTheme);
     languageLoadedRef.current = true;
 
     return () => {
       mountedRef.current = false;
     };
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.style.colorScheme = theme;
+
+    try {
+      localStorage.setItem("gita_theme", theme);
+    } catch {
+      // Theme still works for the current session.
+    }
+  }, [theme]);
+
+  const setTheme = useCallback((nextTheme: Theme) => {
+    if (nextTheme !== "dark" && nextTheme !== "light") {
+      return;
+    }
+
+    setThemeState(nextTheme);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -120,14 +155,12 @@ export function AppProvider({
         },
       });
 
-      // Do not create a guest session if the API itself failed.
       if (!response.ok) {
-        throw new Error(`/api/me failed with status ${response.status}`);
+        throw new Error(`/api/me failed: ${response.status}`);
       }
 
       let data = await response.json();
 
-      // Create a guest only when the API successfully reports no user.
       if (!data?.user) {
         const guestResponse = await fetch("/api/auth/guest", {
           method: "POST",
@@ -158,7 +191,7 @@ export function AppProvider({
       }
 
       if (!data?.user || typeof data.user.id !== "string") {
-        throw new Error("The session response did not contain a valid user.");
+        throw new Error("Invalid user session response.");
       }
 
       const serverLanguage = isLang(data.user.language)
@@ -180,7 +213,6 @@ export function AppProvider({
       };
 
       if (!languageLoadedRef.current) {
-        // Normally the initial language effect runs before this request finishes.
         await new Promise<void>((resolve) => {
           const check = () => {
             if (languageLoadedRef.current) {
@@ -189,6 +221,7 @@ export function AppProvider({
               queueMicrotask(check);
             }
           };
+
           check();
         });
       }
@@ -199,7 +232,7 @@ export function AppProvider({
         try {
           localStorage.setItem("gita_lang", serverLanguage);
         } catch {
-          // Server language still works for this session.
+          // Keep server language in memory.
         }
       }
 
@@ -245,21 +278,18 @@ export function AppProvider({
       "serviceWorker" in navigator &&
       process.env.NODE_ENV === "production"
     ) {
-      navigator.serviceWorker
-        .register("/sw.js")
-        .catch((error: unknown) => {
-          console.warn(
-            "Service worker registration failed:",
-            error instanceof Error ? error.message : "Unknown error"
-          );
-        });
+      navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
+        console.warn(
+          "Service worker registration failed:",
+          error instanceof Error ? error.message : "Unknown error"
+        );
+      });
     }
   }, [refresh]);
 
   const setLanguage = useCallback(async (language: Lang) => {
     if (!isLang(language)) return;
 
-    // Apply the preference immediately in the UI.
     hasLocalLanguageRef.current = true;
     setLocalLang(language);
 
@@ -281,7 +311,6 @@ export function AppProvider({
         : current
     );
 
-    // Persist on the server when the profile endpoint is available.
     try {
       const response = await fetch("/api/profile", {
         method: "PATCH",
@@ -295,7 +324,7 @@ export function AppProvider({
 
       if (!response.ok) {
         console.warn(
-          `Language preference was not saved to the server (${response.status}).`
+          `Language preference was not saved (${response.status}).`
         );
       }
     } catch (error) {
@@ -328,6 +357,8 @@ export function AppProvider({
       setLanguage,
       refresh,
       setEntitlement,
+      theme,
+      setTheme,
     }),
     [
       me,
@@ -337,6 +368,8 @@ export function AppProvider({
       setLanguage,
       refresh,
       setEntitlement,
+      theme,
+      setTheme,
     ]
   );
 
