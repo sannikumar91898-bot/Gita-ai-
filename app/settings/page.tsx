@@ -17,11 +17,10 @@ import {
   Sun,
   UserRound,
   LockKeyhole,
-  LogOut,
   Settings as SettingsIcon,
 } from "lucide-react";
 
-import { useApp } from "../Providers";
+import { useApp, type Theme } from "../Providers";
 import type { Lang } from "../../i18n";
 
 const LANGUAGE_OPTIONS: {
@@ -47,7 +46,13 @@ const LANGUAGE_OPTIONS: {
 ];
 
 export default function SettingsPage() {
-  const { lang, setLanguage, me } = useApp();
+  const {
+    lang,
+    setLanguage,
+    me,
+    theme,
+    setTheme,
+  } = useApp();
 
   const [savingLanguage, setSavingLanguage] = useState(false);
   const [languageMessage, setLanguageMessage] = useState("");
@@ -84,9 +89,12 @@ export default function SettingsPage() {
     }
   }
 
+  function changeTheme(value: Theme) {
+    setTheme(value);
+  }
+
   function toggleReminders() {
     const nextValue = !remindersEnabled;
-
     setRemindersEnabled(nextValue);
 
     try {
@@ -95,7 +103,7 @@ export default function SettingsPage() {
         String(nextValue)
       );
     } catch {
-      // Keep the selection for this page session.
+      // Preference still works for this page session.
     }
   }
 
@@ -109,7 +117,6 @@ export default function SettingsPage() {
   return (
     <main className="bg-celestial min-h-dvh px-4 pb-12 pt-4 text-violet-50">
       <div className="mx-auto max-w-xl">
-        {/* Page header */}
         <header className="mb-6 flex items-center gap-3">
           <Link
             href="/profile"
@@ -123,7 +130,6 @@ export default function SettingsPage() {
             <h1 className="font-display text-2xl font-bold">
               Settings
             </h1>
-
             <p className="text-sm text-violet-300">
               Personalize your Gita AI experience
             </p>
@@ -136,12 +142,8 @@ export default function SettingsPage() {
         <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
           <div className="mb-4 flex items-center gap-3">
             <Languages size={23} className="text-gold-300" />
-
             <div>
-              <h2 className="font-semibold">
-                Language
-              </h2>
-
+              <h2 className="font-semibold">Language</h2>
               <p className="text-xs text-violet-300">
                 Choose your preferred chat language
               </p>
@@ -168,42 +170,88 @@ export default function SettingsPage() {
                     <span className="block font-semibold">
                       {option.label}
                     </span>
-
                     <span className="mt-1 block text-xs text-violet-300">
                       {option.description}
                     </span>
                   </span>
 
                   {selected ? (
-                    <Check
-                      size={20}
-                      className="text-gold-300"
-                    />
+                    <Check size={20} className="text-gold-300" />
                   ) : (
-                    <ChevronRight
-                      size={18}
-                      className="text-violet-400"
-                    />
+                    <ChevronRight size={18} className="text-violet-400" />
                   )}
                 </button>
               );
             })}
           </div>
 
-          {savingLanguage ? (
+          {savingLanguage && (
             <p className="mt-3 text-xs text-violet-300">
               Saving language preference...
             </p>
-          ) : null}
+          )}
 
-          {languageMessage ? (
-            <p
-              role="status"
-              className="mt-3 text-xs text-gold-200"
-            >
+          {languageMessage && (
+            <p role="status" className="mt-3 text-xs text-gold-200">
               {languageMessage}
             </p>
-          ) : null}
+          )}
+        </section>
+
+        {/* Actual global theme switch */}
+        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
+          <div className="mb-4 flex items-center gap-3">
+            {theme === "dark" ? (
+              <Moon size={23} className="text-gold-300" />
+            ) : (
+              <Sun size={23} className="text-gold-300" />
+            )}
+
+            <div>
+              <h2 className="font-semibold">Appearance</h2>
+              <p className="text-xs text-violet-300">
+                Change the theme across the app
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              aria-pressed={theme === "dark"}
+              onClick={() => changeTheme("dark")}
+              className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition ${
+                theme === "dark"
+                  ? "border-gold-300 bg-violet-950 text-gold-200"
+                  : "border-white/10 bg-black/10"
+              }`}
+            >
+              <Moon size={19} />
+              <span>Dark</span>
+              {theme === "dark" && <Check size={17} />}
+            </button>
+
+            <button
+              type="button"
+              aria-pressed={theme === "light"}
+              onClick={() => changeTheme("light")}
+              className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition ${
+                theme === "light"
+                  ? "border-violet-400 bg-violet-100 text-violet-950"
+                  : "border-white/10 bg-black/10"
+              }`}
+            >
+              <Sun size={19} />
+              <span>Light</span>
+              {theme === "light" && <Check size={17} />}
+            </button>
+          </div>
+
+          <p className="mt-3 text-xs text-violet-400">
+            {mounted
+              ? `Current theme: ${theme === "dark" ? "Dark Purple & Gold" : "Light"}`
+              : "Loading theme preference..."}
+          </p>
         </section>
 
         {/* Reminder preference */}
@@ -212,12 +260,9 @@ export default function SettingsPage() {
             <Bell size={23} className="text-gold-300" />
 
             <div className="min-w-0 flex-1">
-              <h2 className="font-semibold">
-                Reminder Preference
-              </h2>
-
+              <h2 className="font-semibold">Reminder Preference</h2>
               <p className="mt-1 text-xs leading-5 text-violet-300">
-                Save whether you want reminders on this device.
+                Save your reminder preference on this device.
               </p>
             </div>
 
@@ -228,9 +273,7 @@ export default function SettingsPage() {
               aria-label="Toggle reminder preference"
               onClick={toggleReminders}
               className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-                remindersEnabled
-                  ? "bg-gold-500"
-                  : "bg-violet-900"
+                remindersEnabled ? "bg-gold-500" : "bg-violet-900"
               }`}
             >
               <span
@@ -242,99 +285,35 @@ export default function SettingsPage() {
           </div>
 
           <p className="mt-3 text-xs text-violet-400">
-            {remindersEnabled
-              ? "Reminder preference is on."
-              : "Reminder preference is off."}
+            {remindersEnabled ? "Preference is on." : "Preference is off."}
           </p>
-
           <p className="mt-2 text-xs leading-5 text-violet-400">
-            This setting does not activate push notifications or
-            scheduled reminders by itself.
+            Actual push notifications and scheduled reminders require a
+            separate notification service.
           </p>
-        </section>
-
-        {/* Appearance */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <Moon size={23} className="text-gold-300" />
-
-            <div>
-              <h2 className="font-semibold">
-                Appearance
-              </h2>
-
-              <p className="text-xs text-violet-300">
-                Current app theme
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between rounded-xl border border-gold-300/20 bg-violet-950/50 p-3">
-            <div className="flex items-center gap-3">
-              <Moon size={19} className="text-gold-300" />
-
-              <div>
-                <p className="text-sm font-medium">
-                  Dark Purple & Gold
-                </p>
-
-                <p className="mt-1 text-xs text-violet-300">
-                  Current theme
-                </p>
-              </div>
-            </div>
-
-            <Check size={20} className="text-gold-300" />
-          </div>
-
-          <div className="mt-3 flex items-start gap-2">
-            <Sun
-              size={17}
-              className="mt-0.5 shrink-0 text-violet-400"
-            />
-
-            <p className="text-xs leading-5 text-violet-400">
-              Light mode is not enabled yet. A working theme switch
-              needs to be implemented across the whole application.
-            </p>
-          </div>
         </section>
 
         {/* Account */}
         <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
           <div className="mb-3 flex items-center gap-3">
             <UserRound size={23} className="text-gold-300" />
-
-            <h2 className="font-semibold">
-              Account
-            </h2>
+            <h2 className="font-semibold">Account</h2>
           </div>
 
           <div className="rounded-xl border border-white/10 p-3">
-            <p className="text-xs text-violet-400">
-              Account name
-            </p>
-
+            <p className="text-xs text-violet-400">Account name</p>
             <p className="mt-1 break-words text-sm font-medium">
               {me?.user?.name || "Guest User"}
             </p>
 
-            <p className="mt-3 text-xs text-violet-400">
-              Email
-            </p>
-
+            <p className="mt-3 text-xs text-violet-400">Email</p>
             <p className="mt-1 break-all text-sm font-medium">
               {me?.user?.email || "Not added"}
             </p>
 
-            <p className="mt-3 text-xs text-violet-400">
-              Account type
-            </p>
-
+            <p className="mt-3 text-xs text-violet-400">Account type</p>
             <p className="mt-1 text-sm font-medium">
-              {me?.user?.isGuest
-                ? "Guest session"
-                : "Registered account"}
+              {me?.user?.isGuest ? "Guest session" : "Registered account"}
             </p>
           </div>
 
@@ -342,44 +321,21 @@ export default function SettingsPage() {
             href="/profile"
             className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-3 transition hover:bg-white/5"
           >
-            <UserRound
-              size={19}
-              className="text-gold-300"
-            />
-
-            <span className="flex-1 text-sm font-medium">
-              View Profile
-            </span>
-
-            <ChevronRight
-              size={18}
-              className="text-violet-400"
-            />
+            <UserRound size={19} className="text-gold-300" />
+            <span className="flex-1 text-sm font-medium">View Profile</span>
+            <ChevronRight size={18} className="text-violet-400" />
           </Link>
-
-          <p className="mt-3 text-xs leading-5 text-violet-400">
-            {me?.user?.isGuest
-              ? "You are using a guest session. Registration and account linking must be configured separately."
-              : "Your account details are read from your current session."}
-          </p>
         </section>
 
-        {/* Privacy and security */}
+        {/* Privacy */}
         <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
           <div className="mb-3 flex items-center gap-3">
             <ShieldCheck size={23} className="text-gold-300" />
-
-            <h2 className="font-semibold">
-              Privacy & Security
-            </h2>
+            <h2 className="font-semibold">Privacy & Security</h2>
           </div>
 
           <div className="flex items-start gap-3">
-            <LockKeyhole
-              size={19}
-              className="mt-0.5 shrink-0 text-gold-300"
-            />
-
+            <LockKeyhole size={19} className="mt-0.5 shrink-0 text-gold-300" />
             <p className="text-sm leading-6 text-violet-300">
               Never share your password, bank PIN, OTP or payment
               credentials in a chat.
@@ -387,9 +343,8 @@ export default function SettingsPage() {
           </div>
 
           <p className="mt-3 text-xs leading-5 text-violet-400">
-            Password changes, account deletion and privacy export
-            controls are not available until their secure backend
-            features are implemented.
+            Password changes, account deletion and data export require
+            secure backend endpoints and are not implemented yet.
           </p>
         </section>
 
@@ -397,34 +352,20 @@ export default function SettingsPage() {
         <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
           <div className="mb-3 flex items-center gap-3">
             <CircleHelp size={23} className="text-gold-300" />
-
-            <h2 className="font-semibold">
-              Help & Support
-            </h2>
+            <h2 className="font-semibold">Help & Support</h2>
           </div>
 
           <p className="text-sm leading-6 text-violet-300">
-            Need help using Gita AI? You can return to the main
-            application and continue using the available features.
+            Return to Gita AI home to continue using available features.
           </p>
 
           <Link
             href="/"
             className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-3 transition hover:bg-white/5"
           >
-            <CircleHelp
-              size={19}
-              className="text-gold-300"
-            />
-
-            <span className="flex-1 text-sm font-medium">
-              Go to Home
-            </span>
-
-            <ChevronRight
-              size={18}
-              className="text-violet-400"
-            />
+            <CircleHelp size={19} className="text-gold-300" />
+            <span className="flex-1 text-sm font-medium">Go to Home</span>
+            <ChevronRight size={18} className="text-violet-400" />
           </Link>
         </section>
 
@@ -432,23 +373,16 @@ export default function SettingsPage() {
         <section className="rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
           <div className="mb-3 flex items-center gap-3">
             <Info size={23} className="text-gold-300" />
-
-            <h2 className="font-semibold">
-              About Gita AI
-            </h2>
+            <h2 className="font-semibold">About Gita AI</h2>
           </div>
 
           <p className="text-sm leading-6 text-violet-300">
-            Your personal AI companion for astrology, reflection
-            and practical guidance.
+            Your personal AI companion for astrology, reflection and
+            practical guidance.
           </p>
 
           <p className="mt-2 text-xs text-violet-400">
             Language: {selectedLanguage}
-          </p>
-
-          <p className="mt-1 text-xs text-violet-400">
-            {mounted ? "Settings page loaded" : "Loading settings..."}
           </p>
 
           <a
@@ -463,9 +397,7 @@ export default function SettingsPage() {
         </section>
 
         <footer className="pb-4 pt-7 text-center">
-          <p className="text-xs text-violet-400">
-            Gita AI · Settings
-          </p>
+          <p className="text-xs text-violet-400">Gita AI · Settings</p>
         </footer>
       </div>
     </main>
