@@ -73,30 +73,32 @@ export default function AstrologerChatPage() {
         }
 
         if (Array.isArray(data.messages)) {
-          const history: Message[] = data.messages
-            .filter(
-              (msg: unknown): msg is { id: string; role: string; content: string } => {
-                if (!msg || typeof msg !== "object") return false;
-                const m = msg as Record<string, unknown>;
-                return (
-                  typeof m.id === "string" &&
-                  (m.role === "user" || m.role === "assistant") &&
-                  typeof m.content === "string"
-                );
-              }
-            )
-            .map((msg) => ({
-              id: msg.id,
-              role: msg.role as "user" | "assistant",
-              content: msg.content,
-            }));
+          const history: Message[] = [];
+
+          for (const item of data.messages) {
+            if (
+              item &&
+              typeof item === "object" &&
+              typeof item.id === "string" &&
+              (item.role === "user" || item.role === "assistant") &&
+              typeof item.content === "string"
+            ) {
+              history.push({
+                id: item.id,
+                role: item.role,
+                content: item.content,
+              });
+            }
+          }
 
           setMessages(history);
         }
       } catch {
-        // history fail होने पर silent रहो
+        // silent fail
       } finally {
-        if (!cancelled) setHistoryLoading(false);
+        if (!cancelled) {
+          setHistoryLoading(false);
+        }
       }
     }
 
@@ -112,7 +114,9 @@ export default function AstrologerChatPage() {
   }, [messages, loading]);
 
   async function sendMessage(text: string) {
-    if (!text.trim() || loading || !astrologer || requestInProgress.current) return;
+    if (!text.trim() || loading || !astrologer || requestInProgress.current) {
+      return;
+    }
 
     const content = text.trim();
     const userMessage: Message = {
@@ -159,7 +163,9 @@ export default function AstrologerChatPage() {
           {
             id: createMessageId(),
             role: "assistant",
-            content: data.error || "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
+            content:
+              data.error ||
+              "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
           },
         ]);
       }
@@ -220,7 +226,9 @@ export default function AstrologerChatPage() {
 
         {!historyLoading && messages.length === 0 && (
           <div className="mt-10 px-4 text-center text-sm text-gray-500">
-            <p className="text-base font-medium text-gray-800">{astrologer.name}</p>
+            <p className="text-base font-medium text-gray-800">
+              {astrologer.name}
+            </p>
             <p className="mt-2">{astrologer.shortBio}</p>
             <p className="mt-6 text-xs text-gray-400">
               नीचे से सवाल चुनें या अपना सवाल टाइप करें
