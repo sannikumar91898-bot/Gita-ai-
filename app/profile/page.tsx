@@ -1,0 +1,301 @@
+
+"use client";
+
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import Link from "next/link";
+import {
+  ArrowLeft,
+  Camera,
+  ChevronRight,
+  Settings,
+  UserRound,
+  ImagePlus,
+  Wallet,
+  ShieldCheck,
+  LogOut,
+  Save,
+  X,
+} from "lucide-react";
+import { useApp } from "../Providers";
+
+const PHOTO_KEY = "gita_customer_profile_photo";
+const NAME_KEY = "gita_customer_profile_name";
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+
+export default function ProfilePage() {
+  const { me, loading } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [name, setName] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    try {
+      setName(
+        localStorage.getItem(NAME_KEY) || me?.user?.name || ""
+      );
+      setPhoto(localStorage.getItem(PHOTO_KEY) || "");
+    } catch {
+      setName(me?.user?.name || "");
+    }
+  }, [me?.user?.name]);
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      setMessage("Photo must be 5 MB or smaller.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        setMessage("Could not read this photo. Try another image.");
+        return;
+      }
+
+      try {
+        localStorage.setItem(PHOTO_KEY, reader.result);
+        setPhoto(reader.result);
+        setMessage("Profile photo saved on this device.");
+      } catch {
+        setMessage("Photo could not be saved. Choose a smaller image.");
+      }
+    };
+
+    reader.onerror = () => {
+      setMessage("Could not read this photo. Please try again.");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function saveProfile() {
+    setSaving(true);
+    setMessage("");
+
+    try {
+      const trimmedName = name.trim();
+      localStorage.setItem(NAME_KEY, trimmedName);
+      setName(trimmedName);
+      setMessage("Profile saved on this device.");
+    } catch {
+      setMessage("Could not save your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function removePhoto() {
+    try {
+      localStorage.removeItem(PHOTO_KEY);
+      setPhoto("");
+      setMessage("Custom photo removed from this device.");
+    } catch {
+      setMessage("Could not remove the photo.");
+    }
+  }
+
+  const displayName = name.trim() || "Your Profile";
+
+  return (
+    <main className="min-h-dvh bg-[#0D0719] px-4 pb-10 pt-4 text-white">
+      <div className="mx-auto max-w-xl">
+        <header className="mb-6 flex items-center gap-3">
+          <Link
+            href="/"
+            aria-label="Back to home"
+            className="rounded-full border border-white/10 p-2.5 hover:bg-white/10"
+          >
+            <ArrowLeft size={20} />
+          </Link>
+
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">My Profile</h1>
+            <p className="text-sm text-violet-300">
+              Manage your personal details
+            </p>
+          </div>
+
+          <Link
+            href="/settings"
+            aria-label="Settings"
+            className="rounded-full border border-white/10 p-2.5 hover:bg-white/10"
+          >
+            <Settings size={21} />
+          </Link>
+        </header>
+
+        <section className="mb-5 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-violet-900/60 to-[#171023] p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-amber-300 bg-violet-950">
+                {photo ? (
+                  <img
+                    src={photo}
+                    alt="Your profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserRound size={52} className="text-amber-200" />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Choose profile photo"
+                className="absolute bottom-0 right-0 rounded-full bg-amber-400 p-2.5 text-black shadow-lg"
+              >
+                <Camera size={18} />
+              </button>
+            </div>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
+
+            <h2 className="text-xl font-semibold">{displayName}</h2>
+
+            <p className="mt-1 text-sm text-violet-300">
+              {loading
+                ? "Loading account..."
+                : me?.user?.email || "Gita AI member"}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/40 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-white/5"
+            >
+              <ImagePlus size={17} />
+              Choose Photo
+            </button>
+
+            {photo && (
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="mt-3 inline-flex items-center gap-1 text-xs text-violet-300 hover:text-white"
+              >
+                <X size={14} />
+                Remove custom photo
+              </button>
+            )}
+          </div>
+        </section>
+
+        <section className="mb-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+          <h2 className="mb-4 text-lg font-semibold">
+            Personal Information
+          </h2>
+
+          <label
+            htmlFor="profile-name"
+            className="mb-2 block text-sm text-violet-200"
+          >
+            Your name
+          </label>
+
+          <input
+            id="profile-name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Enter your name"
+            maxLength={80}
+            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none placeholder:text-violet-400 focus:border-amber-300"
+          />
+
+          <button
+            type="button"
+            onClick={saveProfile}
+            disabled={saving}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 font-semibold text-black disabled:opacity-60"
+          >
+            <Save size={18} />
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
+
+          {message && (
+            <p
+              role="status"
+              className="mt-3 text-center text-sm text-amber-200"
+            >
+              {message}
+            </p>
+          )}
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+          <Link
+            href="/wallet"
+            className="flex items-center gap-3 border-b border-white/10 p-4 hover:bg-white/5"
+          >
+            <Wallet className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">My Wallet</p>
+              <p className="text-xs text-violet-300">
+                Balance and transactions
+              </p>
+            </div>
+            <ChevronRight size={19} className="text-violet-300" />
+          </Link>
+
+          <Link
+            href="/settings"
+            className="flex items-center gap-3 border-b border-white/10 p-4 hover:bg-white/5"
+          >
+            <Settings className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">Settings</p>
+              <p className="text-xs text-violet-300">
+                Language and appearance
+              </p>
+            </div>
+            <ChevronRight size={19} className="text-violet-300" />
+          </Link>
+
+          <div className="flex items-center gap-3 p-4">
+            <ShieldCheck className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">Privacy</p>
+              <p className="text-xs text-violet-300">
+                Keep your account details private
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <Link
+          href="/"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm text-violet-200 hover:bg-white/5"
+        >
+          <LogOut size={17} />
+          Back to Home
+        </Link>
+
+        <p className="mt-5 text-center text-xs leading-relaxed text-violet-400">
+          Your custom photo and name are currently saved only in
+          this browser on this device.
+        </p>
+      </div>
+    </main>
+  );
+}
