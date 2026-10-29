@@ -191,3 +191,23 @@ export const astrologyKnowledgeBase = pgTable(
     index("search_key_idx").on(table.searchKey),
   ],
 );
+export const supportTickets = pgTable("support_tickets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+
+  userId: uuid("user_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+
+  email: text("email"),
+  category: text("category").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+
+  status: text("status").notNull().default("open"),
+
+  createdAt: timestamp("created_at", {
+    withTimezone: true,
+  })
+    .notNull()
+    .defaultNow(),
+});
