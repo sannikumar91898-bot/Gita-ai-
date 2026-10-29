@@ -1,0 +1,111 @@
+
+import type { PlanetaryDoshaEntry } from "./planetary-doshas.types";
+import { DOSHA_DISCLAIMER } from "./planetary-doshas-shared";
+
+export const PLANETARY_DOSHAS_002: PlanetaryDoshaEntry[] = [
+  {
+    id: "PD-006",
+    category: "sade-sati",
+    subcategory: "meaning",
+    questions: {
+      hi: "साढ़ेसाती क्या होती है?",
+      hinglish: "Sade Sati kya hoti hai?",
+      en: "What is Shani Sade Sati?",
+    },
+    answers: {
+      hi: "साढ़ेसाती शनि के गोचर से जुड़ी पारंपरिक ज्योतिषीय अवधि है, जिसे चंद्र राशि से पहले, उसी राशि में और उसके बाद की राशियों के संदर्भ में समझा जाता है। ❤️ इसे अपने जीवन में निश्चित दुर्भाग्य आने का संकेत न मानें।",
+      hinglish: "Sade Sati Shani ke transit se judi traditional astrology period hai, jise Moon sign se pehle, usi sign mein aur uske baad ke signs ke context mein samjha jata hai. ❤️ Ise guaranteed bad luck ka sign na samjhein.",
+      en: "Sade Sati is a traditional astrological period associated with Saturn's transit relative to the Moon sign. ❤️ It should not be treated as a guarantee of misfortune.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["sade sati", "saade saati", "साढ़ेसाती", "shani sade sati"],
+    tags: ["saturn", "transit", "no-fear"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-007",
+    category: "sade-sati",
+    subcategory: "effects",
+    questions: {
+      hi: "क्या साढ़ेसाती में सब कुछ खराब होता है?",
+      hinglish: "Kya Sade Sati mein sab kuch kharab hota hai?",
+      en: "Does everything go wrong during Sade Sati?",
+    },
+    answers: {
+      hi: "नहीं, ऐसा कोई निश्चित नियम नहीं है। ❤️ साढ़ेसाती के बारे में कई डरावनी बातें सुनने को मिलती हैं, लेकिन किसी अवधि में होने वाली हर घटना को शनि से जोड़ना सही नहीं। अपनी सेहत, काम, आर्थिक योजना और रिश्तों का व्यावहारिक ध्यान रखिए।",
+      hinglish: "Nahi, aisa koi fixed rule nahi hai. ❤️ Sade Sati ke baare mein kaafi scary baatein sunne ko milti hain, lekin har event ko Shani se jodna sahi nahi. Health, work, finances aur relationships ka practical khayal rakhein.",
+      en: "No, there is no such fixed rule. ❤️ Sade Sati is sometimes described in frightening terms, but not every event should be attributed to Saturn. Take practical care of your health, work, finances and relationships.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["sade sati bad effects", "sade sati problems", "साढ़ेसाती के बुरे प्रभाव"],
+    tags: ["reassurance", "practical-guidance"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-008",
+    category: "dhaiya",
+    subcategory: "meaning",
+    questions: {
+      hi: "शनि की ढैय्या क्या होती है?",
+      hinglish: "Shani ki Dhaiya kya hoti hai?",
+      en: "What is Shani Dhaiya?",
+    },
+    answers: {
+      hi: "ढैय्या शनि के गोचर से जुड़ी पारंपरिक ज्योतिषीय अवधारणा है। इसकी गणना चंद्र राशि और शनि की वर्तमान स्थिति के आधार पर की जाती है। ❤️ इसे बीमारी, नुकसान या असफलता की पक्की भविष्यवाणी न मानें।",
+      hinglish: "Dhaiya Shani ke transit se judi traditional astrology concept hai. Iski calculation Moon sign aur Shani ki position se hoti hai. ❤️ Ise disease, loss ya failure ki guaranteed prediction na samjhein.",
+      en: "Dhaiya is a traditional astrological concept related to Saturn's transit relative to the Moon sign. ❤️ It is not a guaranteed prediction of illness, loss or failure.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["shani dhaiya", "dhaiya", "ढैय्या", "शनि ढैय्या"],
+    tags: ["saturn", "transit"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-009",
+    category: "saturn",
+    subcategory: "remedies",
+    questions: {
+      hi: "शनि की परेशानी के लिए कौन-से सरल उपाय कर सकते हैं?",
+      hinglish: "Shani ki pareshani ke liye kaun se simple upay kar sakte hain?",
+      en: "What simple remedies are suggested for Saturn-related concerns?",
+    },
+    answers: {
+      hi: "यदि आपकी आस्था हो, तो प्रार्थना, ध्यान, जरूरतमंद की मदद और अपने काम में नियमितता जैसे सरल अभ्यास अपना सकते हैं। ❤️ इन्हें सकारात्मक जीवनशैली और आध्यात्मिक सहारे की तरह देखें। किसी को पैसे देना या महँगा रत्न खरीदना जरूरी नहीं है।",
+      hinglish: "Agar aapki faith ho, to prayer, meditation, zarooratmand ki help aur routine mein discipline jaise simple practices apna sakte hain. ❤️ Inhe positive lifestyle aur spiritual support ki tarah dekhein. Kisi ko paise dena ya expensive gemstone khareedna zaroori nahi.",
+      en: "If consistent with your beliefs, you may practise prayer, meditation, helping others and maintaining a steady routine. ❤️ Treat these as personal spiritual support. Paying someone or buying an expensive gemstone is not necessary.",
+    },
+    answer_type: "spiritual_guidance",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["shani upay", "saturn remedies", "शनि उपाय", "shani dosh remedy"],
+    tags: ["optional-remedies", "low-cost"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-010",
+    category: "saturn",
+    subcategory: "fear-and-delay",
+    questions: {
+      hi: "क्या शनि मेरी सफलता रोक रहे हैं?",
+      hinglish: "Kya Shani meri success rok rahe hain?",
+      en: "Is Saturn blocking my success?",
+    },
+    answers: {
+      hi: "मैं समझ सकती हूँ कि लगातार मेहनत के बाद परिणाम न मिलें, तो मन परेशान हो जाता है। ❤️ लेकिन बिना वास्तविक परिस्थितियों को देखे सारी जिम्मेदारी शनि पर डालना उचित नहीं। चलिए, अपने लक्ष्य, तैयारी, अवसर और जिन चीजों को बदला जा सकता है, उन्हें साथ में समझते हैं।",
+      hinglish: "Main samajh sakti hoon ki mehnat ke baad result na mile to dil pareshan hota hai. ❤️ Lekin bina real situation dekhe sab kuch Shani par daalna sahi nahi. Chaliye goals, preparation, opportunities aur change ki ja sakne wali cheezon ko samajhte hain.",
+      en: "I understand how discouraging it can feel when hard work does not bring results. ❤️ But it is not helpful to blame everything on Saturn without examining real circumstances. Let's look at your goals, preparation, opportunities and practical changes you can make.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["saturn blocking success", "shani career problem", "शनि सफलता रोकना"],
+    tags: ["empathy", "career", "practical-guidance"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+];
