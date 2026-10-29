@@ -1,0 +1,111 @@
+
+import type { PlanetaryDoshaEntry } from "./planetary-doshas.types";
+import { DOSHA_DISCLAIMER } from "./planetary-doshas-shared";
+
+export const PLANETARY_DOSHAS_001: PlanetaryDoshaEntry[] = [
+  {
+    id: "PD-001",
+    category: "kaal-sarp-dosha",
+    subcategory: "meaning",
+    questions: {
+      hi: "कालसर्प दोष क्या होता है?",
+      hinglish: "Kaal Sarp Dosh kya hota hai?",
+      en: "What is Kaal Sarp Dosha?",
+    },
+    answers: {
+      hi: "मैं आपको प्यार से समझाती हूँ। ❤️ पारंपरिक ज्योतिष में कालसर्प दोष की व्याख्या राहु-केतु और अन्य ग्रहों की विशेष स्थिति के आधार पर की जाती है। अलग-अलग ज्योतिषी इसकी परिभाषा में अंतर रखते हैं। इसे जीवन में दुर्भाग्य या असफलता की पक्की मुहर नहीं मानना चाहिए।",
+      hinglish: "Main aapko pyaar se samjhati hoon. ❤️ Traditional astrology mein Kaal Sarp Dosh ki interpretation Rahu-Ketu aur doosre grahon ki specific positions se judi hoti hai. Alag astrologers iski definition alag tarah se samajh sakte hain. Ise bad luck ya failure ki guarantee mat samjhiye.",
+      en: "Let me explain gently. ❤️ In traditional astrology, Kaal Sarp Dosha is interpreted through particular Rahu-Ketu and planetary positions. Astrologers differ in how they define it. It should not be treated as a guarantee of bad luck or failure.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["kaal sarp", "kaalsarp", "कालसर्प दोष", "rahu ketu dosha"],
+    tags: ["rahu", "ketu", "no-fear"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-002",
+    category: "kaal-sarp-dosha",
+    subcategory: "life-obstacles",
+    questions: {
+      hi: "क्या कालसर्प दोष से जीवन में हमेशा बाधाएँ आती हैं?",
+      hinglish: "Kya Kaal Sarp Dosh se life mein hamesha problems aati hain?",
+      en: "Does Kaal Sarp Dosha always cause obstacles?",
+    },
+    answers: {
+      hi: "नहीं, ऐसा निश्चित रूप से कहना सही नहीं होगा। ❤️ जीवन में आने वाली कठिनाइयों के कई वास्तविक कारण होते हैं। किसी ज्योतिषीय योग को हर परेशानी का कारण मानने के बजाय परिस्थिति, उपलब्ध विकल्प और अपने अगले कदम पर ध्यान देना अधिक उपयोगी है।",
+      hinglish: "Nahi, aisa pakke taur par kehna sahi nahi hoga. ❤️ Life ki problems ke kai real reasons hote hain. Har pareshani ka reason kisi dosh ko maan lene ke bajay situation aur practical next steps par focus karna zyada helpful hai.",
+      en: "No, it would not be accurate to say that with certainty. ❤️ Life's difficulties have many possible real-world causes. Instead of attributing every problem to a dosha, consider your circumstances, options and practical next steps.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["kaal sarp problems", "obstacles", "bad luck", "कालसर्प बाधा"],
+    tags: ["reassurance", "practical-guidance"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-003",
+    category: "kaal-sarp-dosha",
+    subcategory: "remedies",
+    questions: {
+      hi: "कालसर्प दोष के लिए कौन-से उपाय कर सकते हैं?",
+      hinglish: "Kaal Sarp Dosh ke liye kaun se upay kar sakte hain?",
+      en: "What remedies are suggested for Kaal Sarp Dosha?",
+    },
+    answers: {
+      hi: "अगर पूजा, मंत्र-जप या ध्यान आपकी आस्था का हिस्सा हैं, तो आप इन्हें अपनी सुविधा और बजट के अनुसार कर सकते हैं। ❤️ इन्हें मन की शांति का माध्यम समझें, सफलता की गारंटी नहीं। किसी से डरकर महँगी पूजा करवाने या कर्ज लेने की जरूरत नहीं है।",
+      hinglish: "Agar pooja, mantra-jap ya meditation aapki faith ka hissa hain, to apni convenience aur budget ke hisaab se kar sakte hain. ❤️ Inhe peace ka source samjhein, guaranteed result nahi. Dar ke kaaran expensive pooja ya loan lene ki zaroorat nahi hai.",
+      en: "If prayer, chanting or meditation are part of your faith, you may practise them within your comfort and budget. ❤️ Treat them as sources of personal meaning, not guaranteed solutions. You do not need expensive rituals or debt because of fear.",
+    },
+    answer_type: "spiritual_guidance",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["kaal sarp remedy", "kaal sarp upay", "कालसर्प उपाय"],
+    tags: ["optional-remedies", "no-expensive-rituals"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-004",
+    category: "manglik-dosha",
+    subcategory: "meaning",
+    questions: {
+      hi: "मांगलिक दोष क्या होता है?",
+      hinglish: "Manglik Dosh kya hota hai?",
+      en: "What is Manglik Dosha?",
+    },
+    answers: {
+      hi: "प्यारे से समझिए ❤️ पारंपरिक वैदिक ज्योतिष में मंगल की कुछ भावों में स्थिति को मांगलिक दोष से जोड़ा जाता है। इसकी गणना और व्याख्या में अलग-अलग परंपराओं के नियम भिन्न हो सकते हैं। केवल इस नाम से किसी व्यक्ति के स्वभाव या विवाह का भविष्य तय नहीं किया जा सकता।",
+      hinglish: "Pyaar se samjhiye ❤️ Traditional Vedic astrology mein Mars ki kuch house positions ko Manglik Dosh se joda jata hai. Calculation aur interpretation ke rules alag traditions mein vary kar sakte hain. Sirf is label se kisi ka nature ya marriage future decide nahi hota.",
+      en: "In traditional Vedic astrology, certain Mars placements are associated with Manglik Dosha. Rules and interpretations can vary by tradition. The label alone cannot determine someone's character or marital future.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["manglik", "mangal dosha", "मांगलिक दोष", "mars dosha"],
+    tags: ["mars", "marriage", "no-fear"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-005",
+    category: "manglik-dosha",
+    subcategory: "marriage-fear",
+    questions: {
+      hi: "क्या मांगलिक होने से शादी में परेशानी या तलाक होता है?",
+      hinglish: "Kya Manglik hone se shaadi mein problems ya divorce hota hai?",
+      en: "Does Manglik Dosha cause marital problems or divorce?",
+    },
+    answers: {
+      hi: "नहीं, केवल मांगलिक होने के आधार पर ऐसा निष्कर्ष निकालना उचित नहीं है। ❤️ रिश्ते में सम्मान, बातचीत, सहमति, भरोसा और कठिन समय में साथ देना बहुत मायने रखता है। शादी जैसा बड़ा फैसला डर के आधार पर नहीं, बल्कि एक-दूसरे को समझकर और अपनी वास्तविक परिस्थितियों को देखकर लेना चाहिए।",
+      hinglish: "Nahi, sirf Manglik hone se aisa conclusion nikalna sahi nahi. ❤️ Relationship mein respect, communication, consent, trust aur mushkil waqt mein support bahut matter karte hain. Marriage ka decision fear ke basis par nahi, ek-doosre ko samajhkar lena chahiye.",
+      en: "No, it is not appropriate to conclude that from Manglik status alone. ❤️ Respect, communication, consent, trust and mutual support matter in relationships. A marriage decision should be based on understanding each other and real circumstances, not fear.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["manglik marriage", "manglik divorce", "manglik shaadi problem", "मांगलिक शादी"],
+    tags: ["marriage", "reassurance", "relationship-health"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+];
