@@ -1,0 +1,111 @@
+
+import type { FavorablePeriodEntry } from "./favorable-periods.types";
+import { PERIOD_DISCLAIMER } from "./favorable-periods-shared";
+
+export const FAVORABLE_PERIODS_001: FavorablePeriodEntry[] = [
+  {
+    id: "FP-001",
+    category: "yog",
+    subcategory: "meaning",
+    questions: {
+      hi: "कुंडली में शुभ योग क्या होता है?",
+      hinglish: "Kundli mein shubh yog kya hota hai?",
+      en: "What is an auspicious yoga in a birth chart?",
+    },
+    answers: {
+      hi: "मैं आपको प्यार से समझाती हूँ। ❤️ पारंपरिक ज्योतिष में कुछ ग्रहों और भावों के विशेष संबंधों को शुभ योग कहा जाता है। इनका अर्थ परंपरा के अनुसार समझा जाता है, लेकिन किसी योग से सफलता या खुशी की गारंटी नहीं होती।",
+      hinglish: "Main aapko pyaar se samjhati hoon. ❤️ Traditional astrology mein kuch grahon aur houses ke special combinations ko shubh yog kehte hain. Inki interpretation tradition par depend karti hai, lekin koi yog success ya happiness guarantee nahi karta.",
+      en: "Let me explain gently. ❤️ In traditional astrology, certain planetary and house combinations are called auspicious yogas. Their interpretation depends on the tradition, and no yoga guarantees success or happiness.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["shubh yog", "auspicious yoga", "शुभ योग", "kundli yog"],
+    tags: ["yog", "chart"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-002",
+    category: "favorable-period",
+    subcategory: "good-time",
+    questions: {
+      hi: "मेरे जीवन में अच्छा समय कब आएगा?",
+      hinglish: "Meri life mein achha time kab aayega?",
+      en: "When will a better period begin in my life?",
+    },
+    answers: {
+      hi: "मैं समझ सकती हूँ कि आप अच्छे दिनों का इंतज़ार कर रहे हैं। ❤️ ज्योतिष में दशा और गोचर को समय की पारंपरिक व्याख्या के लिए देखा जाता है, लेकिन किसी खास तारीख को सब कुछ अच्छा हो जाएगा, ऐसा पक्का नहीं कहा जा सकता। अगर आप चाहें, तो हम आपके सवाल—करियर, रिश्ते या आर्थिक स्थिति—को अलग से समझकर व्यावहारिक कदम भी देख सकते हैं।",
+      hinglish: "Main samajh sakti hoon ki aap achhe din ka wait kar rahe hain. ❤️ Astrology mein dasha aur transit ko timing ki traditional interpretation ke liye dekha jata hai, lekin exact date par sab achha ho jayega, yeh guarantee nahi ki ja sakti. Chahein to hum career, relationship ya finances par practical next steps bhi dekh sakte hain.",
+      en: "I understand that you are hoping for better days. ❤️ Astrology traditionally interprets timing through dashas and transits, but it cannot guarantee that everything will improve on a particular date. We can also explore practical next steps for your career, relationships or finances.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["good time", "achha samay", "अच्छा समय कब आएगा", "better days"],
+    tags: ["reassurance", "timing"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-003",
+    category: "muhurat",
+    subcategory: "meaning",
+    questions: {
+      hi: "शुभ मुहूर्त क्या होता है?",
+      hinglish: "Shubh muhurat kya hota hai?",
+      en: "What is an auspicious muhurat?",
+    },
+    answers: {
+      hi: "शुभ मुहूर्त हिंदू परंपरा में किसी कार्य के लिए चुना गया अनुकूल समय है। ❤️ इसे आस्था और सांस्कृतिक परंपरा के रूप में देख सकते हैं। साथ ही काम की तैयारी, उपलब्धता, बजट और जरूरी व्यावहारिक शर्तें भी ध्यान में रखें।",
+      hinglish: "Shubh muhurat Hindu tradition mein kisi kaam ke liye chuna gaya auspicious time hota hai. ❤️ Ise faith aur cultural tradition ki tarah le sakte hain. Saath hi preparation, availability, budget aur practical requirements bhi dekhein.",
+      en: "A muhurat is a time selected as auspicious within Hindu tradition. ❤️ You may treat it as a matter of faith and culture while also considering preparation, availability, budget and practical requirements.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["muhurat", "shubh muhurat", "शुभ मुहूर्त", "auspicious time"],
+    tags: ["muhurat", "tradition"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-004",
+    category: "decision-making",
+    subcategory: "important-decisions",
+    questions: {
+      hi: "क्या शुभ समय देखकर नौकरी या बिजनेस का फैसला लेना चाहिए?",
+      hinglish: "Kya shubh time dekhkar job ya business ka decision lena chahiye?",
+      en: "Should I decide about a job or business based on an auspicious time?",
+    },
+    answers: {
+      hi: "आप अपनी आस्था के अनुसार शुभ समय देख सकते हैं। ❤️ लेकिन नौकरी या बिजनेस का फैसला लेते समय अवसर की वास्तविकता, आय, जोखिम, कौशल, अनुबंध और अपनी तैयारी को प्राथमिकता दें। मुहूर्त को सहायक परंपरा मानें, निर्णय का अकेला आधार नहीं।",
+      hinglish: "Aap apni faith ke hisaab se shubh time dekh sakte hain. ❤️ Lekin job ya business ke decision mein real opportunity, income, risk, skills, contract aur preparation ko priority dein. Muhurat ko supportive tradition samjhein, only decision factor nahi.",
+      en: "You may consider an auspicious time if it matters to your beliefs. ❤️ For a job or business decision, prioritize the actual opportunity, income, risks, skills, contract and preparation. Treat muhurat as a supportive tradition, not the sole basis for the decision.",
+    },
+    answer_type: "practical_guidance",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["job muhurat", "business timing", "नौकरी शुभ समय", "business shubh time"],
+    tags: ["career", "decision-making"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-005",
+    category: "yog",
+    subcategory: "raj-yog",
+    questions: {
+      hi: "राजयोग होने से क्या सफलता निश्चित है?",
+      hinglish: "Rajyog hone se kya success pakki hai?",
+      en: "Does Raj Yoga guarantee success?",
+    },
+    answers: {
+      hi: "नहीं, केवल राजयोग के नाम से सफलता निश्चित नहीं होती। ❤️ यह ज्योतिषीय परंपरा का एक विचार है। वास्तविक प्रगति में अवसर, मेहनत, सीखना, सहयोग, परिस्थितियाँ और समय के साथ लिए गए फैसले भी भूमिका निभाते हैं।",
+      hinglish: "Nahi, sirf Rajyog ke naam se success guaranteed nahi hoti. ❤️ Yeh astrology tradition ka ek concept hai. Real progress mein opportunities, effort, learning, support, circumstances aur decisions bhi role play karte hain.",
+      en: "No, the label Raj Yoga does not guarantee success. ❤️ It is a concept within astrological tradition. Real progress also depends on opportunities, effort, learning, support, circumstances and decisions.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["raj yog", "rajyog success", "राजयोग सफलता", "success yoga"],
+    tags: ["yog", "career"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+];
