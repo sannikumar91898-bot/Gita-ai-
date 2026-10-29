@@ -81,8 +81,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Verified AI Astrologer Reviews Section */}
-      <section className="mt-8">
+      {/* Verified AI Astrologer Reviews Section with Bottom Spacing Fix */}
+      <section className="mt-8 mb-12 pb-6">
         <ReviewsSection />
       </section>
 
