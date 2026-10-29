@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
+import { useApp } from "../../Providers";
 
 type Message = {
   id: string;
@@ -36,6 +37,7 @@ function createMessageId(): string {
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
+  const { lang } = useApp();
 
   const id = typeof params?.id === "string" ? params.id : "";
   const astrologer = getAstrologerById(id);
@@ -147,7 +149,10 @@ export default function AstrologerChatPage() {
   }, [id, validId, astrologer, router, loadHistory]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    endRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "end",
+    });
   }, [messages, loading]);
 
   async function sendMessage(text: string) {
@@ -187,7 +192,7 @@ export default function AstrologerChatPage() {
         signal: AbortSignal.timeout(50_000),
         body: JSON.stringify({
           message: content,
-          language: "hinglish",
+          language: lang,
           topic: astrologer.topic || "general",
           conversationId: conversationId || undefined,
           persona: selectedPersona,
