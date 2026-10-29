@@ -5,6 +5,7 @@ import { ASTROLOGERS } from "@/lib/astrologers";
 import AstrologerCard from "@/components/AstrologerCard";
 import BottomNav from "@/components/BottomNav";
 import FreeChatPopup from "@/components/FreeChatPopup";
+import ReviewsSection from "@/components/ReviewsSection";
 
 export default function HomePage() {
   return (
@@ -78,6 +79,11 @@ export default function HomePage() {
             <AstrologerCard key={astro.id} astrologer={astro} />
           ))}
         </div>
+      </section>
+
+      {/* Verified AI Astrologer Reviews Section */}
+      <section className="mt-8">
+        <ReviewsSection />
       </section>
 
       <BottomNav />
