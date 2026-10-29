@@ -1,331 +1,304 @@
+
 "use client";
 
-import type { ElementType, ReactNode } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  CalendarDays,
+  Camera,
   ChevronRight,
-  CircleHelp,
-  Clock3,
-  Gem,
-  Gift,
-  Heart,
-  History,
-  House,
-  Languages,
-  LogIn,
   Settings,
-  ShieldCheck,
-  ShoppingBag,
-  Sparkles,
   UserRound,
+  ImagePlus,
   Wallet,
-  Headset,
-  BookOpen,
+  ShieldCheck,
+  LogOut,
+  Save,
+  X,
 } from "lucide-react";
-
 import { useApp } from "../Providers";
 
-type ProfileRowProps = {
-  href: string;
-  icon: ElementType;
-  title: string;
-  description?: string;
-  badge?: string;
-};
-
-function ProfileRow({
-  href,
-  icon: Icon,
-  title,
-  description,
-  badge,
-}: ProfileRowProps) {
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-3 border-b border-white/10 px-4 py-4 transition last:border-b-0 hover:bg-white/5"
-    >
-      <Icon size={21} className="shrink-0 text-gold-300" />
-
-      <span className="min-w-0 flex-1">
-        <span className="block font-medium text-violet-50">{title}</span>
-
-        {description ? (
-          <span className="mt-1 block text-xs text-violet-300">
-            {description}
-          </span>
-        ) : null}
-      </span>
-
-      {badge ? (
-        <span className="rounded-full border border-gold-300/20 px-2 py-0.5 text-[10px] text-gold-200">
-          {badge}
-        </span>
-      ) : (
-        <ChevronRight size={19} className="shrink-0 text-violet-400" />
-      )}
-    </Link>
-  );
-}
-
-function ProfileSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: ReactNode;
-}) {
-  return (
-    <section className="mt-7">
-      <h2 className="mb-3 px-1 text-xs font-bold uppercase tracking-[0.18em] text-violet-300">
-        {title}
-      </h2>
-
-      <div className="overflow-hidden rounded-2xl border border-gold-400/10 bg-white/[0.04]">
-        {children}
-      </div>
-    </section>
-  );
-}
+const PHOTO_KEY = "gita_customer_profile_photo";
+const NAME_KEY = "gita_customer_profile_name";
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
 
 export default function ProfilePage() {
-  const { me, loading, lang } = useApp();
-  const user = me?.user;
+  const { me, loading } = useApp();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const displayName =
-    user?.name?.trim() ||
-    (user?.isGuest ? "Guest User" : "Gita AI User");
+  const [name, setName] = useState("");
+  const [photo, setPhoto] = useState("");
+  const [message, setMessage] = useState("");
+  const [saving, setSaving] = useState(false);
 
-  const languageName =
-    lang === "hi"
-      ? "हिंदी"
-      : lang === "hinglish"
-        ? "Hinglish"
-        : "English";
+  useEffect(() => {
+    try {
+      setName(
+        localStorage.getItem(NAME_KEY) ||
+          me?.user?.name ||
+          ""
+      );
+      setPhoto(localStorage.getItem(PHOTO_KEY) || "");
+    } catch {
+      setName(me?.user?.name || "");
+    }
+  }, [me?.user?.name]);
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setMessage("Please choose an image file.");
+      return;
+    }
+
+    if (file.size > MAX_PHOTO_SIZE) {
+      setMessage("Photo must be 5 MB or smaller.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        setMessage("Could not read this photo. Try another image.");
+        return;
+      }
+
+      try {
+        localStorage.setItem(PHOTO_KEY, reader.result);
+        setPhoto(reader.result);
+        setMessage("Profile photo saved on this device.");
+      } catch {
+        setMessage(
+          "Photo could not be saved. Choose a smaller image."
+        );
+      }
+    };
+
+    reader.onerror = () => {
+      setMessage("Could not read this photo. Please try again.");
+    };
+
+    reader.readAsDataURL(file);
+  }
+
+  function saveProfile() {
+    setSaving(true);
+    setMessage("");
+
+    try {
+      localStorage.setItem(NAME_KEY, name.trim());
+      setName(name.trim());
+      setMessage("Profile saved on this device.");
+    } catch {
+      setMessage("Could not save your profile. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function removePhoto() {
+    try {
+      localStorage.removeItem(PHOTO_KEY);
+      setPhoto("");
+      setMessage("Custom photo removed from this device.");
+    } catch {
+      setMessage("Could not remove the photo.");
+    }
+  }
+
+  const displayName = name.trim() || "Your Profile";
 
   return (
-    <main className="bg-celestial min-h-dvh px-4 pb-28 pt-4 text-violet-50">
+    <main className="min-h-dvh bg-[#0D0719] px-4 pb-10 pt-4 text-white">
       <div className="mx-auto max-w-xl">
-        {/* Header */}
-        <header className="mb-5 flex items-center gap-3">
+        <header className="mb-6 flex items-center gap-3">
           <Link
             href="/"
             aria-label="Back to home"
-            className="rounded-full border border-white/10 p-2 hover:bg-white/10"
+            className="rounded-full border border-white/10 p-2.5 hover:bg-white/10"
           >
             <ArrowLeft size={20} />
           </Link>
 
-          <div className="min-w-0 flex-1">
-            <h1 className="font-display text-2xl font-bold">My Profile</h1>
-            <p className="text-sm text-violet-300">Your Gita AI account</p>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">My Profile</h1>
+            <p className="text-sm text-violet-300">
+              Manage your personal details
+            </p>
           </div>
 
           <Link
             href="/settings"
             aria-label="Settings"
-            className="rounded-full border border-gold-400/20 p-2.5 text-gold-300 hover:bg-white/5"
+            className="rounded-full border border-white/10 p-2.5 hover:bg-white/10"
           >
             <Settings size={21} />
           </Link>
         </header>
 
-        {/* Profile Card */}
-        <section className="rounded-3xl border border-gold-400/20 bg-white/[0.07] p-5 shadow-xl shadow-black/10">
-          <div className="flex items-center gap-4">
-            <div className="flex h-[68px] w-[68px] shrink-0 items-center justify-center rounded-full border-2 border-gold-300/50 bg-violet-950/70">
-              <UserRound size={34} className="text-gold-300" />
+        <section className="mb-5 rounded-3xl border border-amber-300/20 bg-gradient-to-br from-violet-900/60 to-[#171023] p-6">
+          <div className="flex flex-col items-center text-center">
+            <div className="relative mb-4">
+              <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-full border-2 border-amber-300 bg-violet-950">
+                {photo ? (
+                  // User-selected customer photo; not the Gita app logo.
+                  <img
+                    src={photo}
+                    alt="Your profile"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <UserRound size={52} className="text-amber-200" />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                aria-label="Choose profile photo"
+                className="absolute bottom-0 right-0 rounded-full bg-amber-400 p-2.5 text-black shadow-lg"
+              >
+                <Camera size={18} />
+              </button>
             </div>
 
-            <div className="min-w-0 flex-1">
-              <h2 className="truncate text-lg font-bold">
-                {loading ? "Loading profile..." : displayName}
-              </h2>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handlePhotoChange}
+            />
 
-              <p className="mt-1 break-all text-sm text-violet-300">
-                {user?.email ||
-                  (user?.isGuest ? "Guest session" : "Email not added")}
-              </p>
+            <h2 className="text-xl font-semibold">{displayName}</h2>
 
-              <span className="mt-2 inline-flex rounded-full border border-gold-300/20 bg-gold-400/10 px-2.5 py-1 text-xs text-gold-200">
-                {user?.isGuest ? "Guest Account" : "Gita AI Account"}
-              </span>
-            </div>
+            <p className="mt-1 text-sm text-violet-300">
+              {loading
+                ? "Loading account..."
+                : me?.user?.email || "Gita AI member"}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="mt-4 inline-flex items-center gap-2 rounded-full border border-amber-300/40 px-4 py-2 text-sm font-medium text-amber-200 hover:bg-white/5"
+            >
+              <ImagePlus size={17} />
+              Choose Photo
+            </button>
+
+            {photo && (
+              <button
+                type="button"
+                onClick={removePhoto}
+                className="mt-3 inline-flex items-center gap-1 text-xs text-violet-300 hover:text-white"
+              >
+                <X size={14} />
+                Remove custom photo
+              </button>
+            )}
           </div>
-
-          <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/10 pt-3 text-sm">
-            <span className="text-violet-300">Preferred language</span>
-            <span className="font-semibold text-gold-200">{languageName}</span>
-          </div>
-
-          {user?.isGuest ? (
-            <div className="mt-4 rounded-xl border border-gold-400/15 bg-black/10 p-3">
-              <p className="text-sm text-violet-200">
-                You are using a guest session. Account registration can be
-                added separately.
-              </p>
-            </div>
-          ) : null}
         </section>
 
-        {/* Quick Actions */}
-        <div className="mt-4 grid grid-cols-3 gap-3">
-          <Link
-            href="/daily"
-            className="card card-hover flex min-h-28 flex-col justify-between gap-3 p-3"
+        <section className="mb-5 rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+          <h2 className="mb-4 text-lg font-semibold">
+            Personal Information
+          </h2>
+
+          <label
+            htmlFor="profile-name"
+            className="mb-2 block text-sm text-violet-200"
           >
-            <Clock3 size={23} className="text-gold-300" />
-            <span className="text-sm font-semibold">Daily Astrology</span>
+            Your name
+          </label>
+
+          <input
+            id="profile-name"
+            type="text"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            placeholder="Enter your name"
+            maxLength={80}
+            className="w-full rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-white outline-none placeholder:text-violet-400 focus:border-amber-300"
+          />
+
+          <button
+            type="button"
+            onClick={saveProfile}
+            disabled={saving}
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 font-semibold text-black disabled:opacity-60"
+          >
+            <Save size={18} />
+            {saving ? "Saving..." : "Save Profile"}
+          </button>
+
+          {message && (
+            <p
+              role="status"
+              className="mt-3 text-center text-sm text-amber-200"
+            >
+              {message}
+            </p>
+          )}
+        </section>
+
+        <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.04]">
+          <Link
+            href="/wallet"
+            className="flex items-center gap-3 border-b border-white/10 p-4 hover:bg-white/5"
+          >
+            <Wallet className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">My Wallet</p>
+              <p className="text-xs text-violet-300">
+                Balance and transactions
+              </p>
+            </div>
+            <ChevronRight size={19} className="text-violet-300" />
           </Link>
 
           <Link
-            href="/kundli"
-            className="card card-hover flex min-h-28 flex-col justify-between gap-3 p-3"
+            href="/settings"
+            className="flex items-center gap-3 border-b border-white/10 p-4 hover:bg-white/5"
           >
-            <Gem size={23} className="text-gold-300" />
-            <span className="text-sm font-semibold">My Kundli</span>
+            <Settings className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">Settings</p>
+              <p className="text-xs text-violet-300">
+                Language and appearance
+              </p>
+            </div>
+            <ChevronRight size={19} className="text-violet-300" />
           </Link>
 
-          <Link
-            href="/settings"
-            className="card card-hover flex min-h-28 flex-col justify-between gap-3 p-3"
-          >
-            <Settings size={23} className="text-gold-300" />
-            <span className="text-sm font-semibold">Settings</span>
-          </Link>
-        </div>
+          <div className="flex items-center gap-3 p-4">
+            <ShieldCheck className="text-amber-300" size={21} />
+            <div className="flex-1">
+              <p className="font-medium">Privacy</p>
+              <p className="text-xs text-violet-300">
+                Keep your account details private
+              </p>
+            </div>
+          </div>
+        </section>
 
-        {/* Explore */}
-        <ProfileSection title="Explore">
-          <ProfileRow
-            href="/"
-            icon={House}
-            title="Home"
-            description="Return to the home page"
-          />
-          <ProfileRow
-            href="/chat"
-            icon={Sparkles}
-            title="Chat with AI"
-            description="Ask questions and get guidance"
-          />
-          <ProfileRow
-            href="/chat?topic=remedies"
-            icon={Gift}
-            title="Free Services"
-            description="Explore available AI guidance"
-          />
-          <ProfileRow
-            href="/chat?topic=love"
-            icon={Heart}
-            title="Love & Relationships"
-          />
-          <ProfileRow
-            href="/chat?topic=career"
-            icon={BookOpen}
-            title="Career Guidance"
-          />
-          <ProfileRow
-            href="/chat?topic=money"
-            icon={Wallet}
-            title="Money Guidance"
-          />
-        </ProfileSection>
+        <Link
+          href="/"
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl border border-white/10 py-3 text-sm text-violet-200 hover:bg-white/5"
+        >
+          <LogOut size={17} />
+          Back to Home
+        </Link>
 
-        {/* Account */}
-        <ProfileSection title="Account">
-          <ProfileRow
-            href="/settings"
-            icon={Languages}
-            title="Language Preferences"
-            description={languageName}
-          />
-          <ProfileRow
-            href="/settings"
-            icon={ShieldCheck}
-            title="Privacy & Security"
-            description="Account and privacy information"
-          />
-          <ProfileRow
-            href="/settings"
-            icon={CircleHelp}
-            title="Help & App Information"
-          />
-          <ProfileRow
-            href="/settings"
-            icon={History}
-            title="Activity & Preferences"
-          />
-          <ProfileRow
-            href="/settings"
-            icon={LogIn}
-            title="Login & Registration"
-            description="Account access options"
-          />
-        </ProfileSection>
-
-        {/* Services */}
-        <ProfileSection title="Services">
-          <ProfileRow
-            href="/chat?topic=remedies"
-            icon={ShoppingBag}
-            title="AstroRemedy"
-            description="Explore spiritual guidance"
-          />
-          <ProfileRow
-            href="/daily"
-            icon={BookOpen}
-            title="Astrology & Daily Guidance"
-          />
-          <ProfileRow
-            href="/chat"
-            icon={Headset}
-            title="Chat with Astrologers"
-            description="Gita, Kriti, Devaki and Gargi"
-          />
-          <ProfileRow
-            href="/kundli"
-            icon={Gem}
-            title="Kundli & Birth Chart"
-          />
-        </ProfileSection>
-
-        {/* More Services */}
-        <ProfileSection title="More Services">
-          <ProfileRow
-            href="#"
-            icon={Wallet}
-            title="Wallet & Transactions"
-            description="Secure wallet service planned for a future update"
-            badge="Soon"
-          />
-          <ProfileRow
-            href="#"
-            icon={History}
-            title="Orders & Bookings"
-            description="Booking history will be added with its backend"
-            badge="Soon"
-          />
-        </ProfileSection>
-
-        {/* Footer */}
-        <footer className="pb-5 pt-8 text-center">
-          <p className="font-semibold text-violet-200">Gita AI</p>
-          <p className="mt-1 text-xs text-violet-400">
-            Your personal AI companion
-          </p>
-
-          <Link
-            href="/settings"
-            className="mt-4 inline-flex items-center gap-2 text-sm text-gold-200 hover:text-gold-100"
-          >
-            <Settings size={16} />
-            App Settings
-            <ChevronRight size={16} />
-          </Link>
-        </footer>
+        <p className="mt-5 text-center text-xs leading-relaxed text-violet-400">
+          Your custom photo and name are currently saved only in
+          this browser on this device.
+        </p>
       </div>
     </main>
   );
