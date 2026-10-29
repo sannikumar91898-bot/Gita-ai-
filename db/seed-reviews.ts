@@ -1,6 +1,6 @@
 // @ts-nocheck
-import { db } from "./index"; // आपके प्रोजेक्ट का Drizzle db instance
-import { astrologerReviews } from "./schema"; // आपकी Drizzle schema फ़ाइल
+import { db } from "./index"; 
+import { astrologerReviews } from "./schema"; 
 
 export async function seedReviews() {
   console.log("🌱 समीक्षाओं का सीडिंग डेटा शुरू हो रहा है...");
@@ -12,7 +12,7 @@ export async function seedReviews() {
       reviewerName: "Asha K.",
       stars: 5,
       comment: "thank you ji..will update you ji..very nice talking to you..he guided me well.. 🙏🙏🙏",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 14,
       isApproved: true,
     },
     {
@@ -20,7 +20,7 @@ export async function seedReviews() {
       reviewerName: "Deepak Rawat",
       stars: 5,
       comment: "Superb experience and realistic predictions, will connect again once I start seeing the changes as advised, but I am confident I will 😊🙏",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 22,
       isApproved: true,
     },
     {
@@ -28,7 +28,7 @@ export async function seedReviews() {
       reviewerName: "Bhavna_92",
       stars: 5,
       comment: "Very straight forward and clear guidance. accuracy and knows what he says. Definitely recommend and looking forward...",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 8,
       isApproved: true,
     },
     {
@@ -36,7 +36,7 @@ export async function seedReviews() {
       reviewerName: "Rohan Verma",
       stars: 4,
       comment: "gita mam ne jo bataya tha wesa hi hua shadi ki baten bilkul accurate thi par thoda wait krna pda.. remedies bht easy hain unki.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 19,
       isApproved: true,
     },
     {
@@ -44,7 +44,7 @@ export async function seedReviews() {
       reviewerName: "Meera_Bisht",
       stars: 5,
       comment: "Highly accurate readings! Unmatched wisdom on this platform. bht calm tareeqe se samjhati hain chijo ko.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 11,
       isApproved: true,
     },
     {
@@ -52,7 +52,7 @@ export async function seedReviews() {
       reviewerName: "Vikram S.",
       stars: 5,
       comment: "bhai sach me kamaal hai jo pareshani chal rhi thi bina bataye mam ne khud hi bol di.. tnx a lot!",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 25,
       isApproved: true,
     },
     {
@@ -60,7 +60,7 @@ export async function seedReviews() {
       reviewerName: "Priya Neogi",
       stars: 5,
       comment: "Gita ji handles messy situations so well. Meri health issues pe jo bola tha 100% real tha.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 7,
       isApproved: true,
     },
     {
@@ -68,7 +68,7 @@ export async function seedReviews() {
       reviewerName: "Rahul_K",
       stars: 4,
       comment: "Acha experience tha. Thoda phone line busy thi pehle par connect hone k baad sab detail me bataya mam ne. Satisfied.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 13,
       isApproved: true,
     },
     {
@@ -76,7 +76,7 @@ export async function seedReviews() {
       reviewerName: "Sapna Rawal",
       stars: 5,
       comment: "Gita ji real gems hain is app par! Unki baten sunkar hi adha depression door ho jata h mirror ki trh sach bolti hain.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 29,
       isApproved: true,
     },
     {
@@ -84,7 +84,7 @@ export async function seedReviews() {
       reviewerName: "Alok Dwivedi",
       stars: 5,
       comment: "Very deep spiritual knowledge. Genuinely impressed by her calculations.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 16,
       isApproved: true,
     },
 
@@ -94,7 +94,7 @@ export async function seedReviews() {
       reviewerName: "Ritika Sharma",
       stars: 5,
       comment: "He is amazing, the way he explains the chart, my goddd!! How wonderful it is, and his predictions are unmatched. Truly a great person inside out.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 18,
       isApproved: true,
     },
     {
@@ -102,7 +102,7 @@ export async function seedReviews() {
       reviewerName: "Latika_Singh",
       stars: 5,
       comment: "my go to place for any kind of a solution. thank you sir for always being there 🙏😊",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 24,
       isApproved: true,
     },
     {
@@ -110,7 +110,7 @@ export async function seedReviews() {
       reviewerName: "Manish Kumar",
       stars: 5,
       comment: "Very knowledgeable and accurate astrologer. His guidance is clear, precise, and to the point. Truly insightful and highly recommended! 🙏",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 9,
       isApproved: true,
     },
     {
@@ -118,7 +118,7 @@ export async function seedReviews() {
       reviewerName: "Suresh_K",
       stars: 5,
       comment: "आचार्य कृति जी की भविष्यवाणियां शत-प्रतिशत सही साबित हुईं। मेरे व्यापार में जो रुकावट थी वो दूर हो गई।",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 31,
       isApproved: true,
     },
     {
@@ -126,7 +126,7 @@ export async function seedReviews() {
       reviewerName: "Nisha Patel",
       stars: 4,
       comment: "Best astrologer for career guidance. Clean, crisp and honest logic. thoda queue me wait krna pdta h baki query solid solve krte h",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 15,
       isApproved: true,
     },
     {
@@ -134,7 +134,7 @@ export async function seedReviews() {
       reviewerName: "Amit Yadav",
       stars: 5,
       comment: "Bina time waste kiye point to point baat karte hain. Mera promotion kab hoga exect month bataya tha inhone nd wahi hua!!",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 27,
       isApproved: true,
     },
     {
@@ -142,7 +142,7 @@ export async function seedReviews() {
       reviewerName: "divya_sharma",
       stars: 5,
       comment: "Kriti sir rocks!! Unka logic bht sahi h blindly trust kr skte ho unki advice pe.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 20,
       isApproved: true,
     },
     {
@@ -150,7 +150,7 @@ export async function seedReviews() {
       reviewerName: "Rakesh Raj",
       stars: 5,
       comment: "Govt job preparation k liye bht acha guide kiya. Negative points bhi khul k bataye.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 12,
       isApproved: true,
     },
     {
@@ -158,7 +158,7 @@ export async function seedReviews() {
       reviewerName: "Sonali_77",
       stars: 4,
       comment: "Accurate tha chart reading par remedies thodi complicated lagi mujhe karne me par results ache mile bad me.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 6,
       isApproved: true,
     },
     {
@@ -166,7 +166,7 @@ export async function seedReviews() {
       reviewerName: "Jatin Malhotra",
       stars: 5,
       comment: "Super calculations via KP system. Highly recommended for property disputes.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 23,
       isApproved: true,
     },
 
@@ -176,7 +176,7 @@ export async function seedReviews() {
       reviewerName: "Swarna_M",
       stars: 5,
       comment: "he is exceptional.... i have been in toich with him since last 2 years and he is the best",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 17,
       isApproved: true,
     },
     {
@@ -184,7 +184,7 @@ export async function seedReviews() {
       reviewerName: "Neeru Bala",
       stars: 5,
       comment: "He is very kind and his prediction is accurate.. he always solve my all problems with very easy remedies. His remedies r also eff...",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 21,
       isApproved: true,
     },
     {
@@ -192,7 +192,7 @@ export async function seedReviews() {
       reviewerName: "Aditi Rao",
       stars: 5,
       comment: "Just had 4-5 mins with him but he was very clear in what he says and very straight forward. His guidance really helped me...",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 14,
       isApproved: true,
     },
     {
@@ -200,7 +200,7 @@ export async function seedReviews() {
       reviewerName: "Vikas Hegde",
       stars: 5,
       comment: "डॉ. देवकी जी के पास असीम ज्ञान है। उनके ग्रहों के गोचर का विश्लेषण अद्भुत है। प्रणाम गुरुजी।",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 19,
       isApproved: true,
     },
     {
@@ -208,7 +208,7 @@ export async function seedReviews() {
       reviewerName: "Pooja_99",
       stars: 5,
       comment: "Truly a saviour in desperate times. Job ka bht bada tension solve kr diya inhone.. Thank you doctor saab!",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 26,
       isApproved: true,
     },
     {
@@ -216,7 +216,7 @@ export async function seedReviews() {
       reviewerName: "Anand Chaturvedi",
       stars: 5,
       comment: "Nadi shastra ka aisa gyan maine pehle kahi nahi dekha. Khub khub dhanyawad shastri ji.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 11,
       isApproved: true,
     },
     {
@@ -224,7 +224,7 @@ export async function seedReviews() {
       reviewerName: "Kavita_R",
       stars: 4,
       comment: "Prediction bohot powerful thi par call drop ho gyi network issue se. Pr jitni baat hui sir ne dil jeet liya.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 8,
       isApproved: true,
     },
     {
@@ -232,7 +232,7 @@ export async function seedReviews() {
       reviewerName: "Gaurav Joshi",
       stars: 5,
       comment: "Kundli ka ek ek dasha bilkul sahi match ho rha tha past life events k sath. Remarkable accuracy.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 15,
       isApproved: true,
     },
     {
@@ -240,7 +240,7 @@ export async function seedReviews() {
       reviewerName: "Megha Singhal",
       stars: 5,
       comment: "Unki batayi gemstone remedy se meri health bht jaldi recover hui h. Very compassionate soul.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 30,
       isApproved: true,
     },
     {
@@ -248,7 +248,7 @@ export async function seedReviews() {
       reviewerName: "S. K. Mishra",
       stars: 5,
       comment: "Experience speaks! Doctor saab has immense depth in astrology.",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 12,
       isApproved: true,
     },
 
@@ -258,7 +258,7 @@ export async function seedReviews() {
       reviewerName: "Tejaswini",
       stars: 5,
       comment: "To me He is the best person available on this platform,completely Reliable,Astonishingly Accurate..",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 22,
       isApproved: true,
     },
     {
@@ -266,4 +266,35 @@ export async function seedReviews() {
       reviewerName: "Swaroop S.",
       stars: 5,
       comment: "my savrook...this one word is enough how knowledgeable he is and how his predictions are precise and true indeed...Sir...",
-      helpfulCount: Math.floor(Math.random() * 25) + 5,
+      helpfulCount: 14,
+      isApproved: true,
+    },
+    {
+      persona: "Gargi Maa",
+      reviewerName: "Anjali Mishra",
+      stars: 5,
+      comment: "As usual, sir is the best, bang on predictions, very straightforward and exceptional, i have trusted him in the past and whatever he says is true.",
+      helpfulCount: 19,
+      isApproved: true,
+    },
+    {
+      persona: "Gargi Maa",
+      reviewerName: "Harish_Chandra",
+      stars: 5,
+      comment: "गार्गी मां का आशीर्वाद मिलते ही मेरे जीवन की सारी बाधाएं समाप्त होने लगीं। मानसिक तनाव एकदम खत्म हो गया।",
+      helpfulCount: 25,
+      isApproved: true,
+    },
+    {
+      persona: "Gargi Maa",
+      reviewerName: "Kiran J.",
+      stars: 4,
+      comment: "Her intuition is top notch. Every word resonates deeply with reality. Remedie thodi lambi h pr asar krti h.",
+      helpfulCount: 9,
+      isApproved: true,
+    },
+    {
+      persona: "Gargi Maa",
+      reviewerName: "Preeti_Rani",
+      stars: 5,
+      comment: "Tarot card readings generally general lgti h pr gargi maa ne ekdm clear chije boli relation ko lekar.. eye opening session.",
