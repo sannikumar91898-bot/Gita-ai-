@@ -270,3 +270,79 @@ const SEEDS: Omit<KnowledgeEntry, "id">[] = [
     }
   }
 ];
+import { getExtendedKnowledgeEntries } from "./knowledge/knowledge-adapter";
+
+function normalizeKnowledgeText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[.,!?;:'"()[\]{}]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function getKnowledgeAnswerText(
+  question: string,
+  language: KnowledgeLanguage = "hinglish",
+  topic = "general",
+): string | null {
+  const query = normalizeKnowledgeText(question);
+  if (!query) return null;
+
+  const baseEntries: KnowledgeEntry[] = SEEDS.map((entry, index) => ({
+    ...entry,
+    id: `seed-${index + 1}`,
+  }));
+
+  const entries = [
+    ...baseEntries,
+    ...getExtendedKnowledgeEntries(),
+  ];
+
+  const topicAliases: Record<string, string[]> = {
+    health: ["health", "wellbeing", "physical_wellbeing"],
+    love: ["love", "relationship", "marriage"],
+    career: ["career", "career-business", "job", "business"],
+    money: ["money", "wealth", "property"],
+    remedies: ["remedies", "dosha", "planetary-doshas"],
+    family: ["family", "marriage", "relationship"],
+    palm: ["palm", "palmistry"],
+  };
+
+  const allowedTopics = topicAliases[topic] ?? [topic];
+
+  for (const entry of entries) {
+    if (
+      topic !== "general" &&
+      !allowedTopics.some((item) =>
+        entry.topic.toLowerCase().includes(item),
+      )
+    ) {
+      continue;
+    }
+
+    const phrases = [entry.question, ...entry.aliases];
+
+    const matched = phrases.some((phrase) => {
+      const candidate = normalizeKnowledgeText(phrase);
+
+      return (
+        candidate.length >= 3 &&
+        (candidate === query ||
+          query.includes(candidate) ||
+          candidate.includes(query))
+      );
+    });
+
+    if (!matched) continue;
+
+    return (
+      entry.answers[language] ||
+      entry.answers.hinglish ||
+      entry.answers.hi ||
+      entry.answers.en ||
+      null
+    );
+  }
+
+  return null;
+}
