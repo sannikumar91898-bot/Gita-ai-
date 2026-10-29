@@ -1,7 +1,7 @@
-// app/chat/[id]/page.tsx
+
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,21 +20,26 @@ const INTENT_CHIPS = [
   "क्या मेरा पार्टनर सच्चा है?",
 ];
 
+const VALID_PERSONAS = new Set(["gita", "kriti", "devaki", "gargi"]);
+
 function createMessageId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+  if (
+    typeof crypto !== "undefined" &&
+    typeof crypto.randomUUID === "function"
+  ) {
     return crypto.randomUUID();
   }
-  return `\( {Date.now()}- \){Math.random().toString(36).slice(2)}`;
+
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const id = params?.id ?? "";
 
+  const id = typeof params?.id === "string" ? params.id : "";
   const astrologer = getAstrologerById(id);
-  const validId =
-    id === "gita" || id === "kriti" || id === "devaki" || id === "gargi";
+  const validId = VALID_PERSONAS.has(id);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -44,37 +49,39 @@ export default function AstrologerChatPage() {
 
   const endRef = useRef<HTMLDivElement>(null);
   const requestInProgress = useRef(false);
+  const activePersonaRef = useRef(id);
 
-  useEffect(() => {
-    if (!validId || !astrologer) {
-      router.replace("/");
-      return;
-    }
+  const loadHistory = useCallback(
+    async (signal?: AbortSignal) => {
+      if (!VALID_PERSONAS.has(id)) return;
 
-    let cancelled = false;
-
-    async function loadHistory() {
       setHistoryLoading(true);
+
       try {
-        const response = await fetch("/api/chat", {
+        const query = new URLSearchParams({ persona: id });
+
+        const response = await fetch(`/api/chat?${query.toString()}`, {
           method: "GET",
           cache: "no-store",
+          headers: { Accept: "application/json" },
+          signal,
         });
-        const data = await response.json();
+
+        const data = await response.json().catch(() => ({}));
 
         if (!response.ok) {
-          throw new Error(data.error || "Chat history load nahi hui.");
+          throw new Error(
+            typeof data.error === "string"
+              ? data.error
+              : "Chat history load nahi hui.",
+          );
         }
 
-        if (cancelled) return;
+        if (signal?.aborted || activePersonaRef.current !== id) return;
 
-        if (data.conversationId) {
-          setConversationId(data.conversationId);
-        }
+        const history: Message[] = [];
 
         if (Array.isArray(data.messages)) {
-          const history: Message[] = [];
-
           for (const item of data.messages) {
             if (
               item &&
@@ -90,42 +97,81 @@ export default function AstrologerChatPage() {
               });
             }
           }
-
-          setMessages(history);
         }
-      } catch {
-        // silent fail
+
+        setConversationId(
+          typeof data.conversationId === "string"
+            ? data.conversationId
+            : null,
+        );
+        setMessages(history);
+      } catch (error) {
+        if (signal?.aborted) return;
+
+        console.error(
+          "Astrologer history load failed:",
+          error instanceof Error ? error.message : error,
+        );
+
+        if (activePersonaRef.current === id) {
+          setMessages([]);
+          setConversationId(null);
+        }
       } finally {
-        if (!cancelled) {
+        if (!signal?.aborted && activePersonaRef.current === id) {
           setHistoryLoading(false);
         }
       }
-    }
-
-    void loadHistory();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id, validId, astrologer, router]);
+    },
+    [id],
+  );
 
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, loading]);
+    activePersonaRef.current = id;
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading || !astrologer || requestInProgress.current) {
+    if (!validId || !astrologer) {
+      router.replace("/");
       return;
     }
 
+    const controller = new AbortController();
+
+    setMessages([]);
+    setConversationId(null);
+    setInput("");
+    void loadHistory(controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [id, validId, astrologer, router, loadHistory]);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, loading]);
+
+  async function sendMessage(text: string) {
+    if (
+      !text.trim() ||
+      loading ||
+      !astrologer ||
+      !validId ||
+      historyLoading ||
+      requestInProgress.current
+    ) {
+      return;
+    }
+
+    const selectedPersona = id;
     const content = text.trim();
+
     const userMessage: Message = {
       id: createMessageId(),
       role: "user",
       content,
     };
 
-    setMessages((prev) => [...prev, userMessage]);
+    setMessages((previous) => [...previous, userMessage]);
     setInput("");
     setLoading(true);
     requestInProgress.current = true;
@@ -133,58 +179,93 @@ export default function AstrologerChatPage() {
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        cache: "no-store",
+        signal: AbortSignal.timeout(50_000),
         body: JSON.stringify({
           message: content,
+          language: "hinglish",
           topic: astrologer.topic || "general",
           conversationId: conversationId || undefined,
-          persona: astrologer.id,
+          persona: selectedPersona,
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
-      if (data.conversationId) {
+      if (activePersonaRef.current !== selectedPersona) return;
+
+      if (!response.ok) {
+        setMessages((previous) => [
+          ...previous,
+          {
+            id: createMessageId(),
+            role: "assistant",
+            content:
+              typeof data.error === "string"
+                ? data.error
+                : "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
+          },
+        ]);
+        return;
+      }
+
+      if (typeof data.conversationId === "string") {
         setConversationId(data.conversationId);
       }
 
-      if (data.reply) {
-        setMessages((prev) => [
-          ...prev,
+      if (typeof data.reply === "string" && data.reply.trim()) {
+        setMessages((previous) => [
+          ...previous,
           {
-            id: data.message?.id || createMessageId(),
+            id:
+              typeof data.message?.id === "string"
+                ? data.message.id
+                : createMessageId(),
             role: "assistant",
             content: data.reply,
           },
         ]);
       } else {
-        setMessages((prev) => [
-          ...prev,
+        setMessages((previous) => [
+          ...previous,
           {
             id: createMessageId(),
             role: "assistant",
-            content:
-              data.error ||
-              "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।",
+            content: "अभी उत्तर खाली आया। कृपया फिर कोशिश करें।",
           },
         ]);
       }
-    } catch {
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: createMessageId(),
-          role: "assistant",
-          content: "नेटवर्क की समस्या है। कृपया फिर से भेजें।",
-        },
-      ]);
+    } catch (error) {
+      if (activePersonaRef.current === selectedPersona) {
+        const timedOut =
+          error instanceof Error &&
+          (error.name === "TimeoutError" || error.name === "AbortError");
+
+        setMessages((previous) => [
+          ...previous,
+          {
+            id: createMessageId(),
+            role: "assistant",
+            content: timedOut
+              ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।"
+              : "नेटवर्क की समस्या है। कृपया इंटरनेट जाँचकर फिर कोशिश करें।",
+          },
+        ]);
+      }
     } finally {
-      setLoading(false);
       requestInProgress.current = false;
+
+      if (activePersonaRef.current === selectedPersona) {
+        setLoading(false);
+      }
     }
   }
 
-  if (!astrologer) {
+  if (!astrologer || !validId) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#FFF9E6]">
         <p className="text-gray-600">Loading...</p>
@@ -193,12 +274,12 @@ export default function AstrologerChatPage() {
   }
 
   return (
-    <div className="flex h-screen flex-col bg-[#FFF9E6]">
-      {/* Header */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-orange-100 bg-white px-3 py-3">
-        <Link href="/" className="text-2xl leading-none">
+    <div className="flex h-[100dvh] flex-col overflow-hidden bg-[#FFF9E6]">
+      <header className="sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b border-orange-100 bg-white px-3 py-3">
+        <Link href="/" aria-label="Back" className="text-2xl leading-none">
           ←
         </Link>
+
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
           <Image
             src={astrologer.photo}
@@ -208,6 +289,7 @@ export default function AstrologerChatPage() {
             className="h-full w-full object-cover"
           />
         </div>
+
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-sm font-semibold text-gray-900">
             {astrologer.name}
@@ -216,8 +298,10 @@ export default function AstrologerChatPage() {
         </div>
       </header>
 
-      {/* Messages */}
-      <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
+      <main
+        className="flex-1 space-y-3 overflow-y-auto px-3 py-4"
+        aria-live="polite"
+      >
         {historyLoading && (
           <div className="py-10 text-center text-sm text-gray-500">
             इतिहास लोड हो रहा है...
@@ -231,29 +315,30 @@ export default function AstrologerChatPage() {
             </p>
             <p className="mt-2">{astrologer.shortBio}</p>
             <p className="mt-6 text-xs text-gray-400">
-              नीचे से सवाल चुनें या अपना सवाल टाइप करें
+              नीचे से सवाल चुनें या अपना सवाल टाइप करें।
             </p>
           </div>
         )}
 
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${
-              message.role === "user" ? "justify-end" : "justify-start"
-            }`}
-          >
+        {!historyLoading &&
+          messages.map((message) => (
             <div
-              className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                message.role === "user"
-                  ? "rounded-br-md bg-orange-500 text-white"
-                  : "rounded-bl-md border border-orange-100 bg-white text-gray-800"
+              key={message.id}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
-              {message.content}
+              <div
+                className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                  message.role === "user"
+                    ? "rounded-br-md bg-orange-500 text-white"
+                    : "rounded-bl-md border border-orange-100 bg-white text-gray-800"
+                }`}
+              >
+                {message.content}
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
 
         {loading && (
           <div className="flex justify-start">
@@ -266,9 +351,8 @@ export default function AstrologerChatPage() {
         <div ref={endRef} />
       </main>
 
-      {/* Intent Chips */}
-      {messages.length === 0 && !historyLoading && (
-        <div className="no-scrollbar flex gap-2 overflow-x-auto px-3 pb-2">
+      {!historyLoading && messages.length === 0 && (
+        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-3 pb-2">
           {INTENT_CHIPS.map((chip) => (
             <button
               key={chip}
@@ -283,25 +367,27 @@ export default function AstrologerChatPage() {
         </div>
       )}
 
-      {/* Input */}
       <form
-        className="flex items-center gap-2 border-t border-orange-100 bg-white px-3 py-3"
-        onSubmit={(e) => {
-          e.preventDefault();
+        className="flex shrink-0 items-center gap-2 border-t border-orange-100 bg-white px-3 py-3"
+        onSubmit={(event) => {
+          event.preventDefault();
           void sendMessage(input);
         }}
       >
         <input
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(event) => setInput(event.target.value)}
           placeholder="अपना सवाल लिखें..."
-          className="flex-1 rounded-full border border-orange-100 bg-[#FFF9E6] px-4 py-2.5 text-sm outline-none focus:border-orange-400"
-          disabled={loading}
+          className="min-w-0 flex-1 rounded-full border border-orange-100 bg-[#FFF9E6] px-4 py-2.5 text-sm outline-none focus:border-orange-400"
+          disabled={loading || historyLoading}
+          maxLength={8000}
         />
+
         <button
           type="submit"
-          disabled={loading || !input.trim()}
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white transition active:scale-95 disabled:opacity-50"
+          disabled={loading || historyLoading || !input.trim()}
+          aria-label="Send message"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-500 text-white transition active:scale-95 disabled:opacity-50"
         >
           →
         </button>
