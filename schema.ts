@@ -79,8 +79,8 @@ export const conversations = pgTable("conversations", {
   title: text("title").notNull().default("New conversation"),
   topic: text("topic").notNull().default("general"),
 
-  // Astrologer assigned to this conversation.
-  // Nullable to preserve existing conversations safely.
+  // Selected astrologer for this conversation.
+  // Nullable so existing conversations remain compatible.
   persona: text("persona"),
 
   createdAt: timestamp("created_at", {
