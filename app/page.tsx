@@ -11,11 +11,9 @@ import ReviewsSection from "@/components/ReviewsSection";
 
 export default function HomePage() {
   const router = useRouter();
-  // रिव्यू पॉपअप खोलने के लिए स्टेट
   const [activeReviewAstro, setActiveReviewAstro] = useState<string | null>(null);
 
   const handleChatClick = (astroId: string) => {
-    // चैट रूम ओपन करने का लॉजिक (अपनी ज़रूरत के हिसाब से रूट बदलें)
     router.push(`/chat/${astroId}`);
   };
 
@@ -87,66 +85,71 @@ export default function HomePage() {
         </div>
         
         <div className="space-y-4">
-          {ASTROLOGERS.map((astro) => (
-            <div 
-              key={astro.id} 
-              className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 flex justify-between items-center gap-3"
-            >
-              {/* प्रोफाइल फोटो, रेटिंग और व्यूइंग डिटेल्स (इस पर क्लिक करने से रिव्यू पॉपअप खुलेगा) */}
-              <div 
-                onClick={() => setActiveReviewAstro(astro.name)}
-                className="flex items-center gap-3 cursor-pointer group flex-1"
-              >
-                <div className="relative w-14 h-14 rounded-full overflow-hidden border border-orange-100">
-                  <img 
-                    src={astro.image || `/_next/image?url=%2Fastrologers%2Friya.jpg&w=256&q=75`} 
-                    alt={astro.name}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
-                  />
-                  <div className="absolute bottom-0 inset-x-0 bg-emerald-500 text-[8px] text-white text-center py-0.5 font-bold tracking-tight">
-                    Online
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex items-center gap-1">
-                    <h4 className="font-bold text-gray-950 text-sm">{astro.name}</h4>
-                    {astro.isCelebrity && (
-                      <span className="text-[9px] bg-amber-400 text-amber-950 px-1 rounded-sm font-semibold scale-90">Celebrity</span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-gray-500 font-medium">{astro.specialty || 'Tarot • Relationship'}</p>
-                  
-                  {/* रेटिंग, चैट्स और लाइव व्यूइंग ट्रिगर */}
-                  <div className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-400">
-                    <span className="text-orange-500 font-bold">★ {astro.rating || '4.9'}</span>
-                    <span>•</span>
-                    <span>{astro.chatsCount || '12k+'} chats</span>
-                    <span>•</span>
-                    <span className="text-emerald-600 font-medium bg-emerald-50 px-1 rounded-sm">👁 {astro.viewing || '43'} viewing</span>
-                  </div>
-                  
-                  {/* प्राइसिंग */}
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-gray-900 font-bold text-xs">₹{astro.price || '19'}/min</span>
-                    <span className="text-[10px] text-gray-400 line-through">₹{astro.originalPrice || '29'}/min</span>
-                  </div>
-                </div>
-              </div>
+          {ASTROLOGERS.map((astro: any) => {
+            // इमेज के लिए सुरक्षित पाथ ढूंढने का तरीका ताकि टाइप एरर न आए
+            const astroImage = astro.image || astro.avatar || `/_next/image?url=%2Fastrologers%2Friya.jpg&w=256&q=75`;
 
-              {/* Chat Now बटन (इस पर क्लिक करने से सीधे चैट रूम खुलेगा) */}
-              <button
-                onClick={() => handleChatClick(astro.id)}
-                className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-sm transition-all active:scale-95 whitespace-nowrap"
+            return (
+              <div 
+                key={astro.id} 
+                className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100 flex justify-between items-center gap-3"
               >
-                Chat Now
-              </button>
-            </div>
-          ))}
+                {/* प्रोफाइल फोटो, रेटिंग और व्यूइंग डिटेल्स */}
+                <div 
+                  onClick={() => setActiveReviewAstro(astro.name)}
+                  className="flex items-center gap-3 cursor-pointer group flex-1"
+                >
+                  <div className="relative w-14 h-14 rounded-full overflow-hidden border border-orange-100">
+                    <img 
+                      src={astroImage} 
+                      alt={astro.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform" 
+                    />
+                    <div className="absolute bottom-0 inset-x-0 bg-emerald-500 text-[8px] text-white text-center py-0.5 font-bold tracking-tight">
+                      Online
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <div className="flex items-center gap-1">
+                      <h4 className="font-bold text-gray-950 text-sm">{astro.name}</h4>
+                      {astro.isCelebrity && (
+                        <span className="text-[9px] bg-amber-400 text-amber-950 px-1 rounded-sm font-semibold scale-90">Celebrity</span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-gray-500 font-medium">{astro.specialty || 'Tarot • Relationship'}</p>
+                    
+                    {/* रेटिंग, चैट्स और लाइव व्यूइंग ट्रिगर */}
+                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-gray-400">
+                      <span className="text-orange-500 font-bold">★ {astro.rating || '4.9'}</span>
+                      <span>•</span>
+                      <span>{astro.chatsCount || '12k+'} chats</span>
+                      <span>•</span>
+                      <span className="text-emerald-600 font-medium bg-emerald-50 px-1 rounded-sm">👁 {astro.viewing || '43'} viewing</span>
+                    </div>
+                    
+                    {/* प्राइसिंग */}
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="text-gray-900 font-bold text-xs">₹{astro.price || '19'}/min</span>
+                      <span className="text-[10px] text-gray-400 line-through">₹{astro.originalPrice || '29'}/min</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Chat Now बटन */}
+                <button
+                  onClick={() => handleChatClick(astro.id)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs px-4 py-2.5 rounded-full shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                >
+                  Chat Now
+                </button>
+              </div>
+            );
+          })}
         </div>
       </section>
 
-      {/* डायनामिक रिव्यू पॉपअप (केवल तभी दिखेगा जब फोटो/व्यूइंग पर क्लिक होगा) */}
+      {/* डायनामिक रिव्यू पॉपअप मॉडल */}
       <ReviewsSection 
         selectedAstrologer={activeReviewAstro} 
         onClose={() => setActiveReviewAstro(null)} 
