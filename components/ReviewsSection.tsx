@@ -8,6 +8,7 @@ interface Review {
   stars: number;
   timeAgo: string;
   comment: string;
+  helpfulCount: number;
 }
 
 interface AstrologerReviews {
@@ -21,11 +22,7 @@ interface AstrologerReviews {
 export default function ReviewsSection() {
   const [astrologersData, setAstrologersData] = useState<AstrologerReviews[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // 'और देखें' के लिए स्टेट (खुलने पर सीधे पूरे 10 कमेंट्स दिखेंगे)
   const [expandedAstro, setExpandedAstro] = useState<Record<string, boolean>>({});
-  
-  // प्रत्येक कमेंट के 'Helpful' काउंट को ट्रैक करने का स्टेट
   const [helpfulCounts, setHelpfulCounts] = useState<Record<string, number>>({});
   const [userVoted, setUserVoted] = useState<Record<string, boolean>>({});
 
@@ -37,11 +34,11 @@ export default function ReviewsSection() {
           const data = await res.json();
           setAstrologersData(data);
           
-          // हर कमेंट के लिए एक रैंडम शुरुआती 'Helpful' काउंट जेनरेट करें (जैसे 5 से 25 के बीच)
+          // डेटाबेस से आने वाले वास्तविक helpfulCount को स्टेट में सेट करें
           const initialHelpful: Record<string, number> = {};
           data.forEach((astro: AstrologerReviews) => {
             astro.reviews.forEach((rev) => {
-              initialHelpful[rev.id] = Math.floor(Math.random() * 20) + 5;
+              initialHelpful[rev.id] = rev.helpfulCount || 0;
             });
           });
           setHelpfulCounts(initialHelpful);
@@ -59,81 +56,90 @@ export default function ReviewsSection() {
     setExpandedAstro(prev => ({ ...prev, [name]: true }));
   };
 
-  const handleHelpfulClick = (reviewId: string) => {
-    if (userVoted[reviewId]) return; // एक यूजर एक ही बार वोट कर सकता है
+  const handleHelpfulClick = async (reviewId: string) => {
+    if (userVoted[reviewId]) return;
     
+    // फ्रंटएंड पर तुरंत स्टेट अपडेट करें (Optimistic UI Update)
     setUserVoted(prev => ({ ...prev, [reviewId]: true }));
-    setHelpfulCounts(prev => ({
-      ...prev,
-      [reviewId]: prev[reviewId] + 1
-    }));
+    setHelpfulCounts(prev => ({ ...prev, [reviewId]: (prev[reviewId] || 0) + 1 }));
+
+    try {
+      // डेटाबेस में काउंट को हमेशा के लिए सुरक्षित करने के लिए बैकएंड API हिट करें
+      await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reviewId }),
+      });
+    } catch (error) {
+      console.error("Error updating helpful count in DB:", error);
+    }
   };
 
   if (loading) {
     return (
-      <div className="w-full bg-[#0d0d0d] text-zinc-500 font-sans min-h-screen flex items-center justify-center">
-        <p className="text-sm animate-pulse tracking-wide">समीक्षाएं लोड हो रही हैं...</p>
+      <div className="w-full text-gray-400 font-sans py-8 text-center flex items-center justify-center">
+        <p className="text-xs animate-pulse tracking-wide">समीक्षाएं लोड हो रही हैं...</p>
       </div>
     );
   }
 
   return (
-    <div className="w-full bg-[#0d0d0d] text-[#e3e3e3] font-sans min-h-screen py-8 px-4 md:px-6 select-none">
-      <div className="max-w-xl mx-auto space-y-8">
+    <div className="w-full font-sans pb-12 px-4 select-none">
+      <div className="max-w-xl mx-auto space-y-6">
+        <h3 className="text-base font-bold text-gray-900 mb-2">यूज़र्स के अनुभव (Reviews)</h3>
         
         {astrologersData.map((astro) => {
           const isExpanded = expandedAstro[astro.astrologerName];
-          // अगर एक्सपैंडेड नहीं है तो शुरू के 3 दिखेंगे, क्लिक करने पर सभी 10
           const visibleReviews = isExpanded ? astro.reviews : astro.reviews.slice(0, 3);
           const hasMore = astro.reviews.length > 3 && !isExpanded;
 
           return (
-            <div key={astro.astrologerName} className="bg-[#141414] rounded-xl p-5 shadow-2xl border border-zinc-900/80 space-y-5">
+            <div key={astro.astrologerName} className="bg-white rounded-2xl p-4 shadow-sm border border-orange-100/70 space-y-4">
               
-              {/* ज्योतिष हेडर प्रोफाइल */}
-              <div className="flex justify-between items-start border-b border-zinc-800/60 pb-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center font-bold text-amber-400 text-lg shadow-inner">
+              {/* ज्योतिष हेडर प्रोफाइल - मैचिंग विद गिताटॉक लाइट थीम */}
+              <div className="flex justify-between items-start border-b border-orange-50 pb-3">
+                <div className="flex items-center space-x-2.5">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-400 to-orange-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
                     {astro.astrologerName.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-zinc-100 tracking-wide">{astro.astrologerName}</h3>
-                    <p className="text-[11px] text-zinc-500">{astro.title}</p>
+                    <h4 className="text-sm font-bold text-gray-900 tracking-wide">{astro.astrologerName}</h4>
+                    <p className="text-[10px] text-gray-500 font-medium">{astro.title}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center justify-end space-x-1.5">
-                    <span className="text-2xl font-black text-white tracking-tighter">{astro.rating.toFixed(2)}</span>
-                    <div className="text-amber-400 text-sm tracking-tighter flex">
-                      {"★".repeat(5)}
-                    </div>
+                  <div className="flex items-center justify-end space-x-1">
+                    <span className="text-base font-black text-gray-900 tracking-tighter">{astro.rating.toFixed(2)}</span>
+                    <span className="text-orange-500 text-xs">★</span>
                   </div>
-                  <p className="text-[10px] text-zinc-500 font-medium mt-0.5">👤 {astro.totalOrders} आदेश</p>
+                  <p className="text-[9px] text-gray-400 font-medium mt-0.5">👥 {astro.totalOrders} परामर्श</p>
                 </div>
               </div>
 
               {/* वास्तविक इंसानी कमेंट लिस्टिंग */}
-              <div className="space-y-5">
+              <div className="space-y-4">
                 {visibleReviews.map((rev) => (
-                  <div key={rev.id} className="border-b border-zinc-900/60 pb-4 last:border-0 last:pb-0 space-y-1.5">
+                  <div key={rev.id} className="border-b border-gray-100 pb-3 last:border-0 last:pb-0 space-y-1">
                     <div className="flex justify-between items-center">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-6 h-6 bg-zinc-800 text-zinc-400 rounded-full flex items-center justify-center font-semibold text-[10px] uppercase border border-zinc-700">
+                      <div className="flex items-center space-x-1.5">
+                        <div className="w-5 h-5 bg-gray-100 text-gray-600 rounded-full flex items-center justify-center font-semibold text-[9px] uppercase border border-gray-200">
                           {rev.name.charAt(0)}
                         </div>
-                        <span className="font-medium text-xs text-zinc-300">{rev.name}</span>
+                        <span className="font-semibold text-[11px] text-gray-700">{rev.name}</span>
                       </div>
-                      <span className="text-[9px] text-zinc-600 font-mono">{rev.timeAgo}</span>
+                      <span className="text-[8px] text-gray-400 font-mono">{rev.timeAgo}</span>
                     </div>
                     
                     {/* स्टार रेटिंग */}
-                    <div className="text-amber-500 text-[10px] flex">
+                    <div className="text-orange-400 text-[9px] flex">
                       {"★".repeat(rev.stars)}
                       {"☆".repeat(5 - rev.stars)}
                     </div>
                     
                     {/* कमेंट टेक्स्ट */}
-                    <p className="text-zinc-400 text-[12.5px] leading-relaxed font-normal break-words whitespace-pre-wrap">
+                    <p className="text-gray-600 text-[12px] leading-relaxed font-normal break-words whitespace-pre-wrap">
                       {rev.comment}
                     </p>
 
@@ -142,14 +148,14 @@ export default function ReviewsSection() {
                       <button
                         onClick={() => handleHelpfulClick(rev.id)}
                         disabled={userVoted[rev.id]}
-                        className={`flex items-center space-x-1 text-[10px] px-2 py-0.5 rounded-full border transition-all active:scale-95 ${
+                        className={`flex items-center space-x-1 text-[9px] px-2 py-0.5 rounded-full border transition-all active:scale-95 ${
                           userVoted[rev.id] 
-                            ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' 
-                            : 'bg-zinc-800/30 border-zinc-800 hover:border-zinc-700 text-zinc-500 hover:text-zinc-400'
+                            ? 'bg-emerald-500 text-white border-emerald-500' 
+                            : 'bg-gray-50 border-gray-200 hover:border-gray-300 text-gray-500'
                         }`}
                       >
-                        <span>👍 {userVoted[rev.id] ? 'Helpful' : 'Helpful'}</span>
-                        <span className="font-mono text-[9px] bg-zinc-900/60 px-1 rounded-sm text-zinc-400">
+                        <span>👍 Helpful</span>
+                        <span className="font-mono text-[8px] bg-gray-200/60 px-1 rounded-sm text-gray-600">
                           {helpfulCounts[rev.id] || 0}
                         </span>
                       </button>
@@ -158,14 +164,14 @@ export default function ReviewsSection() {
                 ))}
               </div>
 
-              {/* 'और देखें' बटन विकल्प (एक बार में पूरा खोलने के लिए) */}
+              {/* 'और देखें' बटन विकल्प */}
               {hasMore && (
                 <div className="text-center pt-1">
                   <button
                     onClick={() => handleShowAll(astro.astrologerName)}
-                    className="text-amber-400/90 hover:text-amber-300 text-[11px] font-semibold tracking-wide border border-amber-500/20 px-5 py-1.5 rounded-md bg-amber-500/5 hover:bg-amber-500/10 transition-all active:scale-95"
+                    className="text-orange-600 hover:text-orange-700 text-[11px] font-bold tracking-wide border border-orange-200 px-4 py-1.5 rounded-full bg-orange-50/50 hover:bg-orange-50 transition-all active:scale-95"
                   >
-                    और देखें... ({astro.reviews.length - 3} अधिक समीक्षाएं)
+                    और देखें ({astro.reviews.length - 3} अधिक समीक्षाएं)
                   </button>
                 </div>
               )}
