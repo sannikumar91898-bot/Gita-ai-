@@ -32,10 +32,6 @@ const TOPICS = new Set([
   "family",
 ]);
 
-/**
- * Four genuinely different personas.
- * The selected persona is applied to every Gemini request.
- */
 const PERSONA_PROMPTS: Record<string, string> = {
   gita: `IDENTITY: Gita — a caring, emotionally intelligent spiritual and relationship guide.
 
@@ -254,10 +250,6 @@ function isPersona(value: unknown): value is string {
   );
 }
 
-/**
- * A conversation belongs to exactly one user and one astrologer.
- * Never reuse an ID owned by a different user or persona.
- */
 async function ensureConversation(
   userId: string,
   requested: unknown,
@@ -272,9 +264,7 @@ async function ensureConversation(
 
   if (requestedId) {
     const existing = await db
-      .select({
-        id: conversations.id,
-      })
+      .select({ id: conversations.id })
       .from(conversations)
       .where(
         and(
@@ -314,14 +304,6 @@ async function ensureConversation(
   return freshId;
 }
 
-/**
- * GET /api/chat?persona=gita
- * GET /api/chat?persona=gargi
- * GET /api/chat?persona=devaki
- * GET /api/chat?persona=kriti
- *
- * History is loaded only for the selected persona.
- */
 export async function GET(req: NextRequest) {
   try {
     const user = await getUser();
@@ -330,7 +312,6 @@ export async function GET(req: NextRequest) {
       return jsonError("Please sign in to continue.", 401);
     }
 
-    // Keep the legacy /chat page compatible with Gita.
     const requestedPersona = req.nextUrl.searchParams.get("persona");
     const persona = isPersona(requestedPersona)
       ? requestedPersona
@@ -449,7 +430,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Old /chat requests without persona remain compatible with Gita.
     const persona = isPersona(body.persona) ? body.persona : "gita";
     const personaPrompt = PERSONA_PROMPTS[persona];
 
@@ -527,10 +507,14 @@ export async function POST(req: NextRequest) {
       )
       .join("\n\n");
 
+    // Forward the selected section to knowledge matching.
+    // Health uses the dataset's actual category name.
+    const knowledgeTopic = topic === "health" ? "wellbeing" : topic;
+
     const knowledgeAnswer = getKnowledgeAnswerText(
       content,
       language,
-      topic === "health" ? "wellbeing" : "general",
+      knowledgeTopic,
     );
 
     const knowledgeContext = knowledgeAnswer
