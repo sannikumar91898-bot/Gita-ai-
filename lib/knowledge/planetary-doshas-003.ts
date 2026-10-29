@@ -1,0 +1,111 @@
+
+import type { PlanetaryDoshaEntry } from "./planetary-doshas.types";
+import { DOSHA_DISCLAIMER } from "./planetary-doshas-shared";
+
+export const PLANETARY_DOSHAS_003: PlanetaryDoshaEntry[] = [
+  {
+    id: "PD-011",
+    category: "rahu-ketu",
+    subcategory: "meaning",
+    questions: {
+      hi: "राहु और केतु का ज्योतिष में क्या अर्थ है?",
+      hinglish: "Rahu aur Ketu ka astrology mein kya meaning hai?",
+      en: "What do Rahu and Ketu represent in astrology?",
+    },
+    answers: {
+      hi: "वैदिक ज्योतिष में राहु और केतु को छाया-बिंदुओं के रूप में समझा जाता है और उन्हें अलग-अलग प्रतीकात्मक अर्थ दिए जाते हैं। ❤️ इनकी स्थिति को लेकर डरने की जरूरत नहीं है। व्यक्तिगत व्याख्या के लिए सही जन्म विवरण और स्पष्ट गणना-पद्धति चाहिए।",
+      hinglish: "Vedic astrology mein Rahu aur Ketu ko lunar nodes ya shadow points ke roop mein samjha jata hai aur unke symbolic meanings hote hain. ❤️ Inki position se darne ki zaroorat nahi. Personal interpretation ke liye accurate birth details aur calculation chahiye.",
+      en: "In Vedic astrology, Rahu and Ketu are lunar nodes with symbolic interpretations. ❤️ Their placements are not a reason for fear. A personal interpretation requires accurate birth details and a defined calculation method.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["rahu ketu", "rahu meaning", "ketu meaning", "राहु केतु"],
+    tags: ["rahu", "ketu", "traditional-interpretation"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-012",
+    category: "rahu-ketu",
+    subcategory: "confusion-and-fear",
+    questions: {
+      hi: "क्या राहु-केतु की वजह से मेरी जिंदगी खराब हो सकती है?",
+      hinglish: "Kya Rahu-Ketu ki wajah se meri life kharab ho sakti hai?",
+      en: "Can Rahu and Ketu ruin my life?",
+    },
+    answers: {
+      hi: "नहीं, किसी ग्रह के आधार पर आपकी पूरी जिंदगी को खराब घोषित करना उचित नहीं है। ❤️ आप सिर्फ अपनी कुंडली के किसी एक योग से परिभाषित नहीं होते। अगर अभी कोई कठिनाई है, तो हम उसे वास्तविक परिस्थितियों और उपलब्ध विकल्पों के आधार पर समझ सकते हैं।",
+      hinglish: "Nahi, kisi grah ke basis par aapki poori life ko ruined kehna sahi nahi. ❤️ Aap sirf kundli ke ek yog se define nahi hote. Agar abhi koi problem hai, to hum real circumstances aur available options ke basis par use samajh sakte hain.",
+      en: "No planetary placement should be used to declare your whole life ruined. ❤️ You are not defined by one chart combination. If you are facing a difficulty, we can explore the real circumstances and options available to you.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["rahu ketu bad effects", "rahu life problem", "केतु बाधा", "राहु का डर"],
+    tags: ["reassurance", "emotional-support"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-013",
+    category: "eclipse-yoga",
+    subcategory: "meaning",
+    questions: {
+      hi: "ग्रहण योग क्या होता है?",
+      hinglish: "Grahan Yog kya hota hai?",
+      en: "What is Grahan Yoga?",
+    },
+    answers: {
+      hi: "कुछ ज्योतिषीय परंपराओं में सूर्य या चंद्रमा के साथ राहु-केतु के विशेष संबंध को ग्रहण योग कहा जाता है। इसकी परिभाषा अलग-अलग परंपराओं में बदल सकती है। ❤️ इसे अपने भविष्य में निश्चित नुकसान या दुर्भाग्य का प्रमाण न समझें।",
+      hinglish: "Kuch astrology traditions mein Sun ya Moon ke saath Rahu-Ketu ke specific sambandh ko Grahan Yog kaha jata hai. Definition traditions ke hisaab se vary kar sakti hai. ❤️ Ise guaranteed loss ya bad luck ka proof na samjhein.",
+      en: "Some astrological traditions use Grahan Yoga for particular relationships between the Sun or Moon and Rahu or Ketu. Definitions vary. ❤️ It is not proof of guaranteed loss or misfortune.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["grahan yog", "eclipse yoga", "ग्रहण योग", "surya rahu", "chandra ketu"],
+    tags: ["sun", "moon", "rahu", "ketu"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-014",
+    category: "remedies",
+    subcategory: "safe-practices",
+    questions: {
+      hi: "क्या दोष दूर करने के लिए महँगी पूजा या रत्न जरूरी हैं?",
+      hinglish: "Kya dosh door karne ke liye expensive pooja ya gemstones zaroori hain?",
+      en: "Are expensive rituals or gemstones necessary to remove a dosha?",
+    },
+    answers: {
+      hi: "नहीं, आपको डरकर महँगी पूजा या रत्न खरीदने की जरूरत नहीं है। ❤️ अगर पूजा, ध्यान या मंत्र-जप आपकी आस्था का हिस्सा हैं, तो सरल तरीके से कर सकते हैं। अपनी आर्थिक स्थिति का ध्यान रखें और किसी भी ऐसे वादे पर भरोसा न करें जो निश्चित चमत्कार या परिणाम की गारंटी दे।",
+      hinglish: "Nahi, aapko dar kar expensive pooja ya gemstone khareedne ki zaroorat nahi. ❤️ Agar prayer, meditation ya mantra-jap aapki faith ka hissa hain, to simple tareeke se kar sakte hain. Apni finances ka khayal rakhein aur guaranteed miracle ke claims se bachein.",
+      en: "No, you do not need to buy expensive rituals or gemstones out of fear. ❤️ If prayer, meditation or chanting are meaningful to you, simple practices are an option. Protect your finances and be cautious of anyone promising guaranteed miracles.",
+    },
+    answer_type: "safety_information",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["expensive remedies", "gemstone compulsory", "महँगी पूजा", "ratna zaroori"],
+    tags: ["financial-safety", "no-guarantees"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+  {
+    id: "PD-015",
+    category: "remedies",
+    subcategory: "fraud-awareness",
+    questions: {
+      hi: "कोई ज्योतिषी दोष के नाम पर डराकर पैसे माँगे तो क्या करूँ?",
+      hinglish: "Agar koi astrologer dosh ke naam par dara kar paise maange to kya karun?",
+      en: "What if an astrologer frightens me and demands money for a remedy?",
+    },
+    answers: {
+      hi: "प्यारे से सुनिए ❤️ डराकर पैसे माँगना और तुरंत महँगा उपाय करवाने का दबाव डालना चेतावनी का संकेत है। आप आराम से मना कर सकते हैं, किसी भरोसेमंद व्यक्ति से सलाह ले सकते हैं और बिना जाँच-पड़ताल पैसे नहीं दे सकते। कोई भी जिम्मेदार मार्गदर्शन आपको डराकर निर्णय लेने के लिए मजबूर नहीं करेगा।",
+      hinglish: "Pyaar se suniye ❤️ Darr dikha kar paise maangna ya turant expensive remedy ka pressure dena red flag hai. Aap aaram se mana kar sakte hain, trusted person se advice le sakte hain aur verify kiye bina payment na karein. Responsible guidance aapko fear mein decision lene par majboor nahi karegi.",
+      en: "Please remember ❤️ Demanding money through fear or pressuring you into an expensive remedy is a warning sign. You can say no, consult someone you trust and avoid paying without checking the claims. Responsible guidance should never force decisions through fear.",
+    },
+    answer_type: "safety_information",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["astrologer fraud", "dosha money scam", "दोष के नाम पर पैसे", "fear based remedy"],
+    tags: ["fraud-awareness", "financial-safety"],
+    disclaimer: DOSHA_DISCLAIMER,
+  },
+];
