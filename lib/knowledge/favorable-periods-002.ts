@@ -1,0 +1,111 @@
+
+import type { FavorablePeriodEntry } from "./favorable-periods.types";
+import { PERIOD_DISCLAIMER } from "./favorable-periods-shared";
+
+export const FAVORABLE_PERIODS_002: FavorablePeriodEntry[] = [
+  {
+    id: "FP-006",
+    category: "mahadasha",
+    subcategory: "meaning",
+    questions: {
+      hi: "महादशा क्या होती है?",
+      hinglish: "Mahadasha kya hoti hai?",
+      en: "What is a Mahadasha?",
+    },
+    answers: {
+      hi: "महादशा वैदिक ज्योतिष की एक पारंपरिक ग्रह-अवधि प्रणाली है। ❤️ इसमें अलग-अलग ग्रहों से जुड़े समय-खंडों की व्याख्या की जाती है। आपकी व्यक्तिगत महादशा जानने के लिए जन्म नक्षत्र और संबंधित गणना चाहिए; केवल जन्म राशि से इसे निश्चित नहीं बताया जा सकता।",
+      hinglish: "Mahadasha Vedic astrology ki traditional planetary-period system hai. ❤️ Ismein alag grahon se jude time periods interpret kiye jate hain. Personal Mahadasha ke liye birth nakshatra aur proper calculation chahiye; sirf rashi se ise confirm nahi kar sakte.",
+      en: "Mahadasha is a traditional planetary-period system in Vedic astrology. ❤️ Personal Mahadasha calculations require the birth nakshatra and an appropriate method; the Moon sign alone is not enough to confirm it.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["mahadasha", "महादशा", "planetary period"],
+    tags: ["dasha", "chart-calculation"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-007",
+    category: "antardasha",
+    subcategory: "meaning",
+    questions: {
+      hi: "अंतर्दशा क्या होती है?",
+      hinglish: "Antardasha kya hoti hai?",
+      en: "What is an Antardasha?",
+    },
+    answers: {
+      hi: "अंतर्दशा महादशा के भीतर आने वाली उप-अवधि को कहा जाता है। ❤️ ज्योतिषी इसे समय की पारंपरिक व्याख्या के लिए देखते हैं। इसका अर्थ समझने के लिए पूरी दशा-तालिका और गणना जरूरी है; इसे किसी घटना की गारंटी न समझें।",
+      hinglish: "Antardasha, Mahadasha ke andar aane wali sub-period hoti hai. ❤️ Astrologers ise timing ki traditional interpretation ke liye dekhte hain. Iske liye complete dasha table aur calculation chahiye; ise kisi event ki guarantee na samjhein.",
+      en: "An Antardasha is a sub-period within a Mahadasha. ❤️ Astrologers use it for traditional timing interpretations. Understanding it requires a calculated dasha sequence, and it does not guarantee a particular event.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["antardasha", "अंतर्दशा", "sub period"],
+    tags: ["dasha", "chart-calculation"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-008",
+    category: "mahadasha",
+    subcategory: "bad-period-fear",
+    questions: {
+      hi: "क्या खराब महादशा में सब कुछ बिगड़ जाता है?",
+      hinglish: "Kya kharab Mahadasha mein sab kuch bigad jata hai?",
+      en: "Does everything go wrong during a difficult Mahadasha?",
+    },
+    answers: {
+      hi: "नहीं, ऐसा निश्चित रूप से नहीं कहा जा सकता। ❤️ ‘खराब दशा’ सुनकर डर लग सकता है, लेकिन यह किसी परेशानी का पक्का प्रमाण नहीं है। अपनी परिस्थिति को अलग-अलग हिस्सों में समझें और जिन चीजों पर आपका नियंत्रण है, उनसे शुरुआत करें।",
+      hinglish: "Nahi, aisa pakke taur par nahi kaha ja sakta. ❤️ ‘Kharab dasha’ sunkar fear ho sakta hai, lekin yeh problem ka proof nahi. Situation ko parts mein samjhein aur jo cheezein aapke control mein hain, unse start karein.",
+      en: "No, that cannot be stated with certainty. ❤️ Hearing the phrase 'difficult period' can feel frightening, but it does not prove that something bad will happen. Break down your situation and start with what you can control.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["bad mahadasha", "difficult dasha", "खराब महादशा", "dasha fear"],
+    tags: ["reassurance", "emotional-support"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-009",
+    category: "mahadasha",
+    subcategory: "career",
+    questions: {
+      hi: "क्या महादशा से नौकरी मिलने का समय पता चल सकता है?",
+      hinglish: "Kya Mahadasha se job milne ka time pata chal sakta hai?",
+      en: "Can Mahadasha tell me when I will get a job?",
+    },
+    answers: {
+      hi: "ज्योतिषीय परंपरा में दशा और गोचर को करियर के समय के संदर्भ में देखा जाता है, लेकिन नौकरी मिलने की तारीख भरोसे से तय नहीं की जा सकती। ❤️ आपकी तैयारी, आवेदन, कौशल, रिक्तियाँ और इंटरव्यू की तैयारी पर ध्यान देना सबसे उपयोगी रहेगा।",
+      hinglish: "Traditional astrology mein dasha aur transit ko career timing ke context mein dekha jata hai, lekin job ki exact date reliably nahi batayi ja sakti. ❤️ Preparation, applications, skills, vacancies aur interview practice par focus karna helpful rahega.",
+      en: "Traditional astrology interprets dashas and transits in relation to career timing, but it cannot reliably determine a job date. ❤️ Preparation, applications, skills, vacancies and interview practice are practical areas to focus on.",
+    },
+    answer_type: "practical_guidance",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["job mahadasha", "job timing astrology", "नौकरी दशा", "career dasha"],
+    tags: ["career", "decision-making"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-010",
+    category: "mahadasha",
+    subcategory: "health-safety",
+    questions: {
+      hi: "क्या महादशा से बीमारी आने का पता चलता है?",
+      hinglish: "Kya Mahadasha se illness aane ka pata chalta hai?",
+      en: "Can Mahadasha predict an illness?",
+    },
+    answers: {
+      hi: "महादशा से बीमारी का विश्वसनीय निदान या निश्चित भविष्यवाणी नहीं की जा सकती। ❤️ अगर कोई लक्षण है या सेहत को लेकर चिंता है, तो योग्य डॉक्टर से सलाह लें। ज्योतिष को चिकित्सा का विकल्प न बनाएं और किसी ग्रह-अवधि के कारण डरकर जरूरी इलाज न टालें।",
+      hinglish: "Mahadasha se illness ka reliable diagnosis ya certain prediction nahi ki ja sakti. ❤️ Symptoms ya health concern ho to qualified doctor se consult karein. Astrology ko medical care ka replacement na banayein aur dasha ke fear se treatment delay na karein.",
+      en: "Mahadasha cannot reliably diagnose or predict illness. ❤️ Consult a qualified doctor about symptoms or health concerns. Do not replace medical care with astrology or delay treatment because of a planetary period.",
+    },
+    answer_type: "safety_information",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["health mahadasha", "illness dasha", "बीमारी महादशा", "health prediction"],
+    tags: ["health-safety", "no-diagnosis"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+];
