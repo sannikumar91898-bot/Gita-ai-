@@ -1,4 +1,3 @@
-
 import {
   pgTable,
   uuid,
@@ -191,23 +190,56 @@ export const astrologyKnowledgeBase = pgTable(
     index("search_key_idx").on(table.searchKey),
   ],
 );
+
 export const supportTickets = pgTable("support_tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
-
   userId: uuid("user_id").references(() => users.id, {
     onDelete: "set null",
   }),
-
   email: text("email"),
   category: text("category").notNull(),
   subject: text("subject").notNull(),
   message: text("message").notNull(),
-
   status: text("status").notNull().default("open"),
-
   createdAt: timestamp("created_at", {
     withTimezone: true,
   })
     .notNull()
     .defaultNow(),
 });
+
+// ==========================================
+// NEW TABLE: ASTROLOGER REVIEWS (HUMAN-LIKE)
+// ==========================================
+export const astrologerReviews = pgTable(
+  "astrologer_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    
+    // यह फ़ील्ड conversations.persona (जैसे: "Gita", "Acharya Kriti") से जुड़ेगा
+    persona: text("persona").notNull(),
+    
+    // यूज़र द्वारा सबमिट होने पर या मार्केटिंग बोट के लिए नाम
+    reviewerName: text("reviewer_name").notNull(),
+    
+    // स्टार रेटिंग (1 से 5)
+    stars: integer("stars").notNull().default(5),
+    
+    // यूज़र का वास्तविक या मार्केटिंग कमेंट टेक्स्ट
+    comment: text("comment").notNull(),
+    
+    // कितने अन्य लोगों को यह रिव्यू काम का लगा (Real human engagement counter)
+    helpfulCount: integer("helpful_count").notNull().default(0),
+    
+    // मार्केटिंग सेफ्टी के लिए: केवल स्वीकृत रिव्यूज ही फ्रंटएंड पर दिखेंगे
+    isApproved: boolean("is_approved").notNull().default(true),
+    
+    createdAt: timestamp("created_at", {
+      withTimezone: true,
+    }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("persona_idx").on(table.persona),
+    index("is_approved_idx").on(table.isApproved),
+  ],
+);
