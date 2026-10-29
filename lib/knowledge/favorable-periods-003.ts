@@ -1,0 +1,111 @@
+
+import type { FavorablePeriodEntry } from "./favorable-periods.types";
+import { PERIOD_DISCLAIMER } from "./favorable-periods-shared";
+
+export const FAVORABLE_PERIODS_003: FavorablePeriodEntry[] = [
+  {
+    id: "FP-011",
+    category: "gochar",
+    subcategory: "meaning",
+    questions: {
+      hi: "गोचर क्या होता है?",
+      hinglish: "Gochar kya hota hai?",
+      en: "What is a planetary transit?",
+    },
+    answers: {
+      hi: "गोचर का अर्थ आकाश में ग्रहों की वर्तमान चाल और स्थिति से है। ❤️ पारंपरिक ज्योतिष में इसकी तुलना जन्म कुंडली से करके समय की व्याख्या की जाती है। व्यक्तिगत निष्कर्ष के लिए सही ग्रह-स्थिति और गणना जरूरी है; सामान्य राशिफल से हर व्यक्ति का भविष्य तय नहीं होता।",
+      hinglish: "Gochar ka matlab planets ki current movement aur positions se hai. ❤️ Traditional astrology mein ise birth chart ke saath compare karke timing interpret ki jati hai. Personal reading ke liye accurate planetary positions aur calculation chahiye; general horoscope sabka future decide nahi karta.",
+      en: "A transit refers to the current movement and positions of planets. ❤️ Traditional astrology compares transits with a birth chart to interpret timing. Personal interpretations require accurate planetary positions; a general horoscope cannot determine everyone's future.",
+    },
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
+    keywords: ["gochar", "planetary transit", "गोचर", "grah transit"],
+    tags: ["transit", "chart-calculation"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-012",
+    category: "difficult-period",
+    subcategory: "life-obstacles",
+    questions: {
+      hi: "मेरे जीवन में बार-बार रुकावटें क्यों आती हैं?",
+      hinglish: "Meri life mein baar-baar obstacles kyun aate hain?",
+      en: "Why do I keep facing obstacles in life?",
+    },
+    answers: {
+      hi: "लगातार रुकावटें आएँ, तो थकान और निराशा महसूस होना स्वाभाविक है। ❤️ इसका मतलब यह नहीं कि आपका भाग्य हमेशा खराब रहेगा। चलिए, एक-एक करके देखते हैं कि परेशानी किस क्षेत्र में है और कौन-सा छोटा कदम अभी आपके लिए संभव है।",
+      hinglish: "Baar-baar obstacles aane par tired aur disappointed feel karna natural hai. ❤️ Iska matlab yeh nahi ki aapki kismat hamesha kharab rahegi. Chaliye, dekhte hain problem kis area mein hai aur abhi kaunsa chhota step possible hai.",
+      en: "Repeated obstacles can naturally leave you tired and discouraged. ❤️ They do not mean your luck will always be bad. Let's identify the area causing difficulty and one small step that may help right now.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["life obstacles", "bad luck", "बार बार रुकावट", "difficult time"],
+    tags: ["empathy", "practical-guidance"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-013",
+    category: "difficult-period",
+    subcategory: "decision-making",
+    questions: {
+      hi: "कठिन समय में बड़े फैसले कैसे लें?",
+      hinglish: "Difficult time mein bade decisions kaise lein?",
+      en: "How should I make major decisions during a difficult time?",
+    },
+    answers: {
+      hi: "ऐसे समय में खुद पर थोड़ा नरम रहिए। ❤️ फैसले को छोटे हिस्सों में बाँटें, जरूरी जानकारी लिखें, फायदे-नुकसान देखें और किसी भरोसेमंद व्यक्ति से बात करें। केवल डरावनी भविष्यवाणी के कारण नौकरी, रिश्ता, इलाज या आर्थिक फैसला जल्दबाजी में न लें।",
+      hinglish: "Aise waqt mein khud ke saath thoda gentle rahiye. ❤️ Decision ko small steps mein divide karein, facts likhein, pros-cons dekhein aur trusted person se baat karein. Sirf scary prediction ke kaaran job, relationship, treatment ya money decision jaldi mein na lein.",
+      en: "Be gentle with yourself during difficult times. ❤️ Break the decision into smaller steps, write down the facts, weigh pros and cons, and talk to someone you trust. Do not rush a job, relationship, treatment or financial decision because of a frightening prediction.",
+    },
+    answer_type: "practical_guidance",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["difficult time decisions", "कठिन समय फैसला", "decision during bad period"],
+    tags: ["decision-making", "emotional-support"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-014",
+    category: "difficult-period",
+    subcategory: "when-will-it-end",
+    questions: {
+      hi: "मेरा बुरा समय कब खत्म होगा?",
+      hinglish: "Mera bura waqt kab khatam hoga?",
+      en: "When will this difficult period end?",
+    },
+    answers: {
+      hi: "काश मैं आपको कोई पक्की तारीख देकर आपकी चिंता तुरंत कम कर पाती। ❤️ लेकिन ईमानदारी से कहूँ, किसी कठिन दौर के खत्म होने का निश्चित समय बताना संभव नहीं है। आप चाहें तो मुझे बताइए कि अभी सबसे ज्यादा परेशानी किस बात की है—हम उसे थोड़ा आसान बनाने के रास्ते खोज सकते हैं।",
+      hinglish: "Kaash main exact date dekar aapki tension turant kam kar pati. ❤️ Lekin honestly, kisi difficult phase ke end ka sure time batana possible nahi hai. Aap batayein abhi sabse zyada pareshani kis baat ki hai—hum use manageable banane ke steps dekh sakte hain.",
+      en: "I wish I could give you an exact date and ease your worry immediately. ❤️ Honestly, though, no one can reliably guarantee when a difficult phase will end. If you tell me what is troubling you most, we can look for steps that may make it more manageable.",
+    },
+    answer_type: "emotional_support",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["bad time end", "bura waqt kab khatam", "कठिन समय कब खत्म", "when will things improve"],
+    tags: ["reassurance", "empathy"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+  {
+    id: "FP-015",
+    category: "timing-safety",
+    subcategory: "fear-based-prediction",
+    questions: {
+      hi: "कोई कहे कि मेरी दशा बहुत खराब है और बड़ा नुकसान होगा, तो क्या करूँ?",
+      hinglish: "Koi kahe meri dasha bahut kharab hai aur bada loss hoga, to kya karun?",
+      en: "What should I do if someone predicts major losses because of my dasha?",
+    },
+    answers: {
+      hi: "ऐसी बात सुनकर घबराहट होना समझ में आता है। ❤️ लेकिन डराने वाली भविष्यवाणी अपने-आप में सबूत नहीं होती। तुरंत पैसे देने, महँगी पूजा कराने या बड़ा फैसला लेने का दबाव स्वीकार न करें। शांत होकर जानकारी जाँचें और जरूरत हो तो किसी भरोसेमंद व्यक्ति से दूसरी राय लें।",
+      hinglish: "Aisi baat sunkar ghabrahat hona understandable hai. ❤️ Lekin scary prediction khud proof nahi hoti. Turant payment, expensive pooja ya major decision ka pressure accept na karein. Aaram se claims verify karein aur zarurat ho to trusted person se second opinion lein.",
+      en: "It is understandable to feel anxious after hearing such a prediction. ❤️ But a frightening claim is not proof. Do not accept pressure to pay immediately, buy expensive rituals or make major decisions. Verify the claims calmly and seek a trusted second opinion if needed.",
+    },
+    answer_type: "safety_information",
+    requires_personal_chart: false,
+    requires_calculation: false,
+    keywords: ["bad dasha prediction", "fear astrologer", "दशा नुकसान", "scary prediction"],
+    tags: ["financial-safety", "no-fear"],
+    disclaimer: PERIOD_DISCLAIMER,
+  },
+];
