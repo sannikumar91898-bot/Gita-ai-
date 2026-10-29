@@ -1,0 +1,113 @@
+
+import type { KnowledgeEntry, KnowledgeLanguage } from "../knowledge-base";
+import { HEALTH_AGE_ENTRIES } from "./health-age";
+import { FAVORABLE_PERIODS } from "./favorable-periods";
+import { PLANETARY_DOSHAS } from "./planetary-doshas";
+import { MARRIAGE_RELATIONSHIPS } from "./marriage-relationships";
+import { WEALTH_PROPERTY_ENTRIES } from "./wealth-property";
+import { careerBusinessKnowledge } from "./career-business";
+
+type LocalizedText = Record<KnowledgeLanguage, string>;
+
+function toKnowledgeEntry(
+  id: string,
+  topic: string,
+  question: LocalizedText,
+  answer: LocalizedText,
+  aliases: string[] = [],
+): KnowledgeEntry {
+  return {
+    id,
+    topic,
+    question: question.hi,
+    aliases: [
+      ...aliases,
+      question.hi,
+      question.hinglish,
+      question.en,
+    ].filter(Boolean),
+    answers: {
+      hi: answer.hi,
+      hinglish: answer.hinglish,
+      en: answer.en,
+    },
+  };
+}
+
+export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
+  const health = HEALTH_AGE_ENTRIES.map((entry) =>
+    toKnowledgeEntry(
+      `health-${entry.id}`,
+      entry.category,
+      entry.question,
+      entry.answer,
+      [entry.subcategory, ...entry.tags],
+    ),
+  );
+
+  const periods = FAVORABLE_PERIODS.map((entry) =>
+    toKnowledgeEntry(
+      `period-${entry.id}`,
+      "favorable-periods",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.keywords, ...entry.tags],
+    ),
+  );
+
+  const doshas = PLANETARY_DOSHAS.map((entry) =>
+    toKnowledgeEntry(
+      `dosha-${entry.id}`,
+      "planetary-doshas",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.keywords, ...entry.tags],
+    ),
+  );
+
+  const relationships = MARRIAGE_RELATIONSHIPS.map((entry) =>
+    toKnowledgeEntry(
+      `relationship-${entry.id}`,
+      "marriage-relationships",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.tags],
+    ),
+  );
+
+  const wealth = WEALTH_PROPERTY_ENTRIES.map((entry) =>
+    toKnowledgeEntry(
+      `wealth-${entry.id}`,
+      "wealth-property",
+      entry.questions,
+      entry.answers,
+      [
+        entry.category,
+        entry.subcategory,
+        ...(entry.tags ?? []),
+        ...(entry.aliases?.hi ?? []),
+        ...(entry.aliases?.hinglish ?? []),
+        ...(entry.aliases?.en ?? []),
+      ],
+    ),
+  );
+
+  const careers = careerBusinessKnowledge.map((entry) =>
+    toKnowledgeEntry(
+      `career-${entry.id}`,
+      "career-business",
+      entry.question,
+      entry.answer,
+      [entry.category, ...entry.keywords],
+    ),
+  );
+
+  return [
+    ...health,
+    ...periods,
+    ...doshas,
+    ...relationships,
+    ...wealth,
+    ...careers,
+  ];
+}
