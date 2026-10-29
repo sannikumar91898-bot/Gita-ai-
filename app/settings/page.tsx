@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -46,13 +45,7 @@ const LANGUAGE_OPTIONS: {
 ];
 
 export default function SettingsPage() {
-  const {
-    lang,
-    setLanguage,
-    me,
-    theme,
-    setTheme,
-  } = useApp();
+  const { lang, setLanguage, me, theme, setTheme } = useApp();
 
   const [savingLanguage, setSavingLanguage] = useState(false);
   const [languageMessage, setLanguageMessage] = useState("");
@@ -61,7 +54,6 @@ export default function SettingsPage() {
 
   useEffect(() => {
     setMounted(true);
-
     try {
       setRemindersEnabled(
         localStorage.getItem("gita_reminders_enabled") === "true"
@@ -96,61 +88,92 @@ export default function SettingsPage() {
   function toggleReminders() {
     const nextValue = !remindersEnabled;
     setRemindersEnabled(nextValue);
-
     try {
-      localStorage.setItem(
-        "gita_reminders_enabled",
-        String(nextValue)
-      );
+      localStorage.setItem("gita_reminders_enabled", String(nextValue));
     } catch {
       // Preference still works for this page session.
     }
   }
 
   const selectedLanguage =
-    lang === "hi"
-      ? "हिंदी"
-      : lang === "hinglish"
-        ? "Hinglish"
-        : "English";
+    lang === "hi" ? "हिंदी" : lang === "hinglish" ? "Hinglish" : "English";
+
+  const isDark = theme === "dark";
 
   return (
-    <main className="bg-celestial min-h-dvh px-4 pb-12 pt-4 text-violet-50">
+    <main
+      className={`min-h-dvh px-4 pb-12 pt-4 transition-colors ${
+        isDark
+          ? "bg-celestial text-violet-50"
+          : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
+      }`}
+    >
       <div className="mx-auto max-w-xl">
+        {/* Header */}
         <header className="mb-6 flex items-center gap-3">
           <Link
             href="/profile"
             aria-label="Back to profile"
-            className="rounded-full border border-white/10 p-2 transition hover:bg-white/10"
+            className={`rounded-full border p-2.5 transition ${
+              isDark
+                ? "border-white/10 hover:bg-white/10"
+                : "border-violet-200 bg-white hover:bg-violet-50 shadow-sm"
+            }`}
           >
             <ArrowLeft size={20} />
           </Link>
 
           <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold">
+            <h1 className="font-display text-2xl font-bold tracking-tight">
               Settings
             </h1>
-            <p className="text-sm text-violet-300">
+            <p
+              className={`text-sm ${
+                isDark ? "text-violet-300" : "text-violet-600"
+              }`}
+            >
               Personalize your Gita AI experience
             </p>
           </div>
 
-          <SettingsIcon size={24} className="text-gold-300" />
+          <div
+            className={`rounded-full p-2.5 ${
+              isDark ? "text-gold-300" : "text-violet-600"
+            }`}
+          >
+            <SettingsIcon size={22} />
+          </div>
         </header>
 
-        {/* Language */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-4 flex items-center gap-3">
-            <Languages size={23} className="text-gold-300" />
+        {/* Language Section */}
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="mb-5 flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              <Languages size={20} />
+            </div>
             <div>
               <h2 className="font-semibold">Language</h2>
-              <p className="text-xs text-violet-300">
+              <p
+                className={`text-xs ${
+                  isDark ? "text-violet-300" : "text-violet-500"
+                }`}
+              >
                 Choose your preferred chat language
               </p>
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             {LANGUAGE_OPTIONS.map((option) => {
               const selected = lang === option.value;
 
@@ -160,25 +183,40 @@ export default function SettingsPage() {
                   type="button"
                   disabled={savingLanguage}
                   onClick={() => void chooseLanguage(option.value)}
-                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition ${
+                  className={`flex w-full items-center gap-3 rounded-xl border px-4 py-3.5 text-left transition-all ${
                     selected
-                      ? "border-gold-300/60 bg-gold-400/10"
-                      : "border-white/10 bg-black/10 hover:bg-white/5"
+                      ? isDark
+                        ? "border-gold-300/60 bg-gold-400/10 shadow-sm"
+                        : "border-violet-500 bg-violet-50 shadow-sm"
+                      : isDark
+                        ? "border-white/10 bg-black/10 hover:bg-white/5"
+                        : "border-violet-100 bg-violet-50/50 hover:bg-violet-50"
                   } disabled:cursor-wait disabled:opacity-60`}
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block font-semibold">
-                      {option.label}
-                    </span>
-                    <span className="mt-1 block text-xs text-violet-300">
+                    <span className="block font-semibold">{option.label}</span>
+                    <span
+                      className={`mt-0.5 block text-xs ${
+                        isDark ? "text-violet-300" : "text-violet-500"
+                      }`}
+                    >
                       {option.description}
                     </span>
                   </span>
 
                   {selected ? (
-                    <Check size={20} className="text-gold-300" />
+                    <div
+                      className={`flex h-6 w-6 items-center justify-center rounded-full ${
+                        isDark ? "bg-gold-400/20 text-gold-300" : "bg-violet-500 text-white"
+                      }`}
+                    >
+                      <Check size={14} strokeWidth={3} />
+                    </div>
                   ) : (
-                    <ChevronRight size={18} className="text-violet-400" />
+                    <ChevronRight
+                      size={18}
+                      className={isDark ? "text-violet-400" : "text-violet-400"}
+                    />
                   )}
                 </button>
               );
@@ -186,30 +224,45 @@ export default function SettingsPage() {
           </div>
 
           {savingLanguage && (
-            <p className="mt-3 text-xs text-violet-300">
+            <p
+              className={`mt-3 text-xs ${
+                isDark ? "text-violet-300" : "text-violet-500"
+              }`}
+            >
               Saving language preference...
             </p>
           )}
 
           {languageMessage && (
-            <p role="status" className="mt-3 text-xs text-gold-200">
+            <p role="status" className="mt-3 text-xs font-medium text-emerald-500">
               {languageMessage}
             </p>
           )}
         </section>
 
-        {/* Actual global theme switch */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-4 flex items-center gap-3">
-            {theme === "dark" ? (
-              <Moon size={23} className="text-gold-300" />
-            ) : (
-              <Sun size={23} className="text-gold-300" />
-            )}
-
+        {/* Appearance / Theme */}
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="mb-5 flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              {isDark ? <Moon size={20} /> : <Sun size={20} />}
+            </div>
             <div>
               <h2 className="font-semibold">Appearance</h2>
-              <p className="text-xs text-violet-300">
+              <p
+                className={`text-xs ${
+                  isDark ? "text-violet-300" : "text-violet-500"
+                }`}
+              >
                 Change the theme across the app
               </p>
             </div>
@@ -218,51 +271,71 @@ export default function SettingsPage() {
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
-              aria-pressed={theme === "dark"}
+              aria-pressed={isDark}
               onClick={() => changeTheme("dark")}
-              className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition ${
-                theme === "dark"
-                  ? "border-gold-300 bg-violet-950 text-gold-200"
-                  : "border-white/10 bg-black/10"
+              className={`flex items-center justify-center gap-2.5 rounded-xl border p-4 transition-all ${
+                isDark
+                  ? "border-gold-300 bg-violet-950 text-gold-200 shadow-md"
+                  : "border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100"
               }`}
             >
-              <Moon size={19} />
-              <span>Dark</span>
-              {theme === "dark" && <Check size={17} />}
+              <Moon size={18} />
+              <span className="font-medium">Dark</span>
+              {isDark && <Check size={16} className="ml-1" />}
             </button>
 
             <button
               type="button"
-              aria-pressed={theme === "light"}
+              aria-pressed={!isDark}
               onClick={() => changeTheme("light")}
-              className={`flex items-center justify-center gap-2 rounded-xl border p-4 transition ${
-                theme === "light"
-                  ? "border-violet-400 bg-violet-100 text-violet-950"
-                  : "border-white/10 bg-black/10"
+              className={`flex items-center justify-center gap-2.5 rounded-xl border p-4 transition-all ${
+                !isDark
+                  ? "border-violet-500 bg-violet-600 text-white shadow-md"
+                  : "border-white/10 bg-black/10 text-violet-200 hover:bg-white/5"
               }`}
             >
-              <Sun size={19} />
-              <span>Light</span>
-              {theme === "light" && <Check size={17} />}
+              <Sun size={18} />
+              <span className="font-medium">Light</span>
+              {!isDark && <Check size={16} className="ml-1" />}
             </button>
           </div>
 
-          <p className="mt-3 text-xs text-violet-400">
+          <p
+            className={`mt-4 text-xs ${
+              isDark ? "text-violet-400" : "text-violet-500"
+            }`}
+          >
             {mounted
-              ? `Current theme: ${theme === "dark" ? "Dark Purple & Gold" : "Light"}`
+              ? `Current theme: ${isDark ? "Dark Purple & Gold" : "Clean Light"}`
               : "Loading theme preference..."}
           </p>
         </section>
 
-        {/* Reminder preference */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="flex items-center gap-3">
-            <Bell size={23} className="text-gold-300" />
+        {/* Reminder Preference */}
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="flex items-center gap-4">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              <Bell size={20} />
+            </div>
 
             <div className="min-w-0 flex-1">
               <h2 className="font-semibold">Reminder Preference</h2>
-              <p className="mt-1 text-xs leading-5 text-violet-300">
-                Save your reminder preference on this device.
+              <p
+                className={`mt-0.5 text-xs leading-5 ${
+                  isDark ? "text-violet-300" : "text-violet-500"
+                }`}
+              >
+                Save your reminder preference on this device
               </p>
             </div>
 
@@ -272,132 +345,228 @@ export default function SettingsPage() {
               aria-checked={remindersEnabled}
               aria-label="Toggle reminder preference"
               onClick={toggleReminders}
-              className={`relative h-7 w-12 shrink-0 rounded-full transition ${
-                remindersEnabled ? "bg-gold-500" : "bg-violet-900"
+              className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${
+                remindersEnabled
+                  ? "bg-gold-500"
+                  : isDark
+                    ? "bg-violet-900"
+                    : "bg-violet-200"
               }`}
             >
               <span
-                className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${
+                className={`absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-all ${
                   remindersEnabled ? "left-6" : "left-1"
                 }`}
               />
             </button>
           </div>
 
-          <p className="mt-3 text-xs text-violet-400">
-            {remindersEnabled ? "Preference is on." : "Preference is off."}
-          </p>
-          <p className="mt-2 text-xs leading-5 text-violet-400">
-            Actual push notifications and scheduled reminders require a
-            separate notification service.
+          <p
+            className={`mt-4 text-xs ${
+              isDark ? "text-violet-400" : "text-violet-500"
+            }`}
+          >
+            {remindersEnabled ? "Reminders preference is on." : "Reminders preference is off."}
           </p>
         </section>
 
-        {/* Account */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <UserRound size={23} className="text-gold-300" />
+        {/* Account Info */}
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              <UserRound size={20} />
+            </div>
             <h2 className="font-semibold">Account</h2>
           </div>
 
-          <div className="rounded-xl border border-white/10 p-3">
-            <p className="text-xs text-violet-400">Account name</p>
-            <p className="mt-1 break-words text-sm font-medium">
-              {me?.user?.name || "Guest User"}
-            </p>
+          <div
+            className={`rounded-xl border p-4 ${
+              isDark ? "border-white/10 bg-black/20" : "border-violet-100 bg-violet-50/50"
+            }`}
+          >
+            <div className="space-y-3">
+              <div>
+                <p
+                  className={`text-xs ${
+                    isDark ? "text-violet-400" : "text-violet-500"
+                  }`}
+                >
+                  Account name
+                </p>
+                <p className="mt-0.5 break-words text-sm font-medium">
+                  {me?.user?.name || "Guest User"}
+                </p>
+              </div>
 
-            <p className="mt-3 text-xs text-violet-400">Email</p>
-            <p className="mt-1 break-all text-sm font-medium">
-              {me?.user?.email || "Not added"}
-            </p>
+              <div>
+                <p
+                  className={`text-xs ${
+                    isDark ? "text-violet-400" : "text-violet-500"
+                  }`}
+                >
+                  Email
+                </p>
+                <p className="mt-0.5 break-all text-sm font-medium">
+                  {me?.user?.email || "Not added"}
+                </p>
+              </div>
 
-            <p className="mt-3 text-xs text-violet-400">Account type</p>
-            <p className="mt-1 text-sm font-medium">
-              {me?.user?.isGuest ? "Guest session" : "Registered account"}
-            </p>
+              <div>
+                <p
+                  className={`text-xs ${
+                    isDark ? "text-violet-400" : "text-violet-500"
+                  }`}
+                >
+                  Account type
+                </p>
+                <p className="mt-0.5 text-sm font-medium">
+                  {me?.user?.isGuest ? "Guest session" : "Registered account"}
+                </p>
+              </div>
+            </div>
           </div>
 
           <Link
             href="/profile"
-            className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-3 transition hover:bg-white/5"
+            className={`mt-4 flex items-center gap-3 rounded-xl border px-4 py-3.5 transition ${
+              isDark
+                ? "border-white/10 hover:bg-white/5"
+                : "border-violet-100 hover:bg-violet-50"
+            }`}
           >
-            <UserRound size={19} className="text-gold-300" />
+            <UserRound
+              size={18}
+              className={isDark ? "text-gold-300" : "text-violet-600"}
+            />
             <span className="flex-1 text-sm font-medium">View Profile</span>
-            <ChevronRight size={18} className="text-violet-400" />
+            <ChevronRight
+              size={18}
+              className={isDark ? "text-violet-400" : "text-violet-400"}
+            />
           </Link>
         </section>
 
         {/* Privacy */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <ShieldCheck size={23} className="text-gold-300" />
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              <ShieldCheck size={20} />
+            </div>
             <h2 className="font-semibold">Privacy & Security</h2>
           </div>
 
           <div className="flex items-start gap-3">
-            <LockKeyhole size={19} className="mt-0.5 shrink-0 text-gold-300" />
-            <p className="text-sm leading-6 text-violet-300">
-              Never share your password, bank PIN, OTP or payment
-              credentials in a chat.
+            <LockKeyhole
+              size={18}
+              className={`mt-0.5 shrink-0 ${
+                isDark ? "text-gold-300" : "text-violet-600"
+              }`}
+            />
+            <p
+              className={`text-sm leading-relaxed ${
+                isDark ? "text-violet-300" : "text-violet-600"
+              }`}
+            >
+              Never share your password, bank PIN, OTP or payment credentials
+              in a chat.
             </p>
           </div>
-
-          <p className="mt-3 text-xs leading-5 text-violet-400">
-            Password changes, account deletion and data export require
-            secure backend endpoints and are not implemented yet.
-          </p>
         </section>
 
-        {/* Help */}
-        <section className="mb-5 rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <CircleHelp size={23} className="text-gold-300" />
-            <h2 className="font-semibold">Help & Support</h2>
-          </div>
-
-          <p className="text-sm leading-6 text-violet-300">
-            Return to Gita AI home to continue using available features.
-          </p>
-
-          <Link
-            href="/"
-            className="mt-3 flex items-center gap-3 rounded-xl border border-white/10 px-3 py-3 transition hover:bg-white/5"
-          >
-            <CircleHelp size={19} className="text-gold-300" />
-            <span className="flex-1 text-sm font-medium">Go to Home</span>
-            <ChevronRight size={18} className="text-violet-400" />
-          </Link>
-        </section>
-
-        {/* About */}
-        <section className="rounded-2xl border border-gold-400/15 bg-white/[0.04] p-4">
-          <div className="mb-3 flex items-center gap-3">
-            <Info size={23} className="text-gold-300" />
+        {/* Help & About */}
+        <section
+          className={`mb-5 overflow-hidden rounded-2xl border p-5 ${
+            isDark
+              ? "border-gold-400/15 bg-white/[0.04]"
+              : "border-violet-200 bg-white shadow-sm"
+          }`}
+        >
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl ${
+                isDark ? "bg-gold-400/10 text-gold-300" : "bg-violet-100 text-violet-700"
+              }`}
+            >
+              <Info size={20} />
+            </div>
             <h2 className="font-semibold">About Gita AI</h2>
           </div>
 
-          <p className="text-sm leading-6 text-violet-300">
-            Your personal AI companion for astrology, reflection and
-            practical guidance.
-          </p>
-
-          <p className="mt-2 text-xs text-violet-400">
-            Language: {selectedLanguage}
-          </p>
-
-          <a
-            href="https://github.com/sannikumar91898-bot/Gita-ai-"
-            target="_blank"
-            rel="noreferrer"
-            className="mt-4 inline-flex items-center gap-2 text-sm text-gold-200 hover:text-gold-100"
+          <p
+            className={`text-sm leading-relaxed ${
+              isDark ? "text-violet-300" : "text-violet-600"
+            }`}
           >
-            Project Repository
-            <ExternalLink size={15} />
-          </a>
+            Your personal AI companion for astrology, reflection and practical
+            guidance.
+          </p>
+
+          <p
+            className={`mt-3 text-xs ${
+              isDark ? "text-violet-400" : "text-violet-500"
+            }`}
+          >
+            Current language: {selectedLanguage}
+          </p>
+
+          <div className="mt-5 flex flex-col gap-2.5 sm:flex-row">
+            <Link
+              href="/"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                isDark
+                  ? "border-white/10 hover:bg-white/5"
+                  : "border-violet-200 hover:bg-violet-50"
+              }`}
+            >
+              <CircleHelp size={16} />
+              Go to Home
+            </Link>
+
+            <a
+              href="https://github.com/sannikumar91898-bot/Gita-ai-"
+              target="_blank"
+              rel="noreferrer"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                isDark
+                  ? "border-gold-400/30 text-gold-200 hover:bg-gold-400/10"
+                  : "border-violet-300 text-violet-700 hover:bg-violet-50"
+              }`}
+            >
+              Project Repository
+              <ExternalLink size={14} />
+            </a>
+          </div>
         </section>
 
-        <footer className="pb-4 pt-7 text-center">
-          <p className="text-xs text-violet-400">Gita AI · Settings</p>
+        {/* Footer */}
+        <footer className="pb-6 pt-6 text-center">
+          <p
+            className={`text-xs font-medium ${
+              isDark ? "text-violet-400" : "text-violet-500"
+            }`}
+          >
+            Gita AI · Settings
+          </p>
         </footer>
       </div>
     </main>
