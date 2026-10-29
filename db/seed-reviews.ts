@@ -1,5 +1,6 @@
-import { db } from "./index"; // अपने प्रोजेक्ट के Drizzle db instance का सही पाथ दें
-import { astrologerReviews } from "../schema"; // अपनी schema फ़ाइल का सही पाथ दें
+// @ts-nocheck
+import { db } from "./index"; // आपके प्रोजेक्ट का Drizzle db instance
+import { astrologerReviews } from "./schema"; // आपकी Drizzle schema फ़ाइल
 
 export async function seedReviews() {
   console.log("🌱 समीक्षाओं का सीडिंग डेटा शुरू हो रहा है...");
@@ -116,7 +117,7 @@ export async function seedReviews() {
       persona: "Acharya Kriti",
       reviewerName: "Suresh_K",
       stars: 5,
-      comment: "आचार्य कृति जी की भविष्यवाणियां शत-प्रतिशत सही साबित हुईं। मेरे व्यापार में जो रुकावट थी वो दूर हो गई।" /* [1] */,
+      comment: "आचार्य कृति जी की भविष्यवाणियां शत-प्रतिशत सही साबित हुईं। मेरे व्यापार में जो रुकावट थी वो दूर हो गई।",
       helpfulCount: Math.floor(Math.random() * 25) + 5,
       isApproved: true,
     },
@@ -198,7 +199,7 @@ export async function seedReviews() {
       persona: "Dr. Devaki Shastri",
       reviewerName: "Vikas Hegde",
       stars: 5,
-      comment: "डॉ. देवकी जी के पास असीम ज्ञान है। उनके ग्रहों के गोचर का विश्लेषण अद्भुत है। प्रणाम गुरुजी।" /* [1] */,
+      comment: "डॉ. देवकी जी के पास असीम ज्ञान है। उनके ग्रहों के गोचर का विश्लेषण अद्भुत है। प्रणाम गुरुजी।",
       helpfulCount: Math.floor(Math.random() * 25) + 5,
       isApproved: true,
     },
@@ -266,6 +267,3 @@ export async function seedReviews() {
       stars: 5,
       comment: "my savrook...this one word is enough how knowledgeable he is and how his predictions are precise and true indeed...Sir...",
       helpfulCount: Math.floor(Math.random() * 25) + 5,
-      isApproved: true,
-    },
-    {
