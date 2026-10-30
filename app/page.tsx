@@ -36,21 +36,18 @@ const FREE_TOOLS = [
 ];
 
 export default function HomePage() {
-  // Realtime fake stats states
   const [onlineUsers, setOnlineUsers] = useState(143);
   const [queueNum, setQueueNum] = useState(4);
 
   useEffect(() => {
-    // Fake live users fluctuate dynamically
     const usersInterval = setInterval(() => {
       setOnlineUsers((prev) => {
-        const delta = Math.floor(Math.random() * 7) - 3; // -3 to +3
+        const delta = Math.floor(Math.random() * 7) - 3;
         const nextUsers = prev + delta;
         return nextUsers < 120 ? 125 : nextUsers > 160 ? 152 : nextUsers;
       });
     }, 4000);
 
-    // Fake queue decreases over time then resets
     const queueInterval = setInterval(() => {
       setQueueNum((prev) => (prev <= 1 ? 5 : prev - 1));
     }, 12000);
@@ -71,7 +68,6 @@ export default function HomePage() {
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-sm font-extrabold text-white shadow-sm">
             G
           </div>
-
           <div>
             <h1 className="text-base font-extrabold tracking-tight text-gray-900">
               GitaTalk
@@ -226,11 +222,9 @@ export default function HomePage() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-orange-600">
               Find Your Guidance
             </span>
-
             <h2 className="mt-1 text-lg font-extrabold text-gray-900">
               Talk to AI Astrologers
             </h2>
-
             <p className="mt-1 text-[10px] text-gray-500">
               Choose the guide that matches your needs
             </p>
@@ -243,7 +237,6 @@ export default function HomePage() {
 
         <div className="space-y-3">
           {ASTROLOGERS.map((astro, index) => {
-            // High ratings for conversion setup
             const fakeRating = index === 0 ? "4.9" : index === 1 ? "4.8" : "4.7";
             const fakeOrders = index === 0 ? "12.4K" : index === 1 ? "8.9K" : "5.1K";
 
@@ -262,7 +255,6 @@ export default function HomePage() {
                       sizes="76px"
                       className="object-cover"
                     />
-
                     <span className="absolute inset-x-0 bottom-0 bg-emerald-600 py-0.5 text-center text-[8px] font-extrabold text-white">
                       AI GUIDE
                     </span>
@@ -271,3 +263,6 @@ export default function HomePage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
                       <h3 className="text-sm font-extrabold text-gray-900">
+                        {astro.name}
+                      </h3>
+                      {index === 0 && (
