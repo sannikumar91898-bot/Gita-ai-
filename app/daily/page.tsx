@@ -186,7 +186,6 @@ export default function DailyPage() {
 
         console.error("Daily reading error:", err);
 
-        // 👑 100% सॉलिड ज्योतिषीय ज्ञान पर आधारित फॉलबैक इंजन (अगर बैकएंड लिमिट हिट हो जाए तब भी क्लाइंट बंधा रहेगा)
         if (!cancelled) {
           setReading({
             signName: sign === "General" ? (isHindi ? "सभी 12 राशियाँ" : "All Signs") : sign.split(" ")[0],
@@ -269,7 +268,6 @@ export default function DailyPage() {
   return (
     <main className={`min-h-screen w-full px-4 pb-28 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
-
         <header className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <div className="flex min-w-0 items-center gap-3">
             <Link
@@ -286,7 +284,7 @@ export default function DailyPage() {
 
             <div className="min-w-0">
               <h1 className="flex items-center gap-1.5 text-base font-black uppercase tracking-tight text-orange-600">
-                <Sun className="shrink-0 text-amber-500 animate-spin-slow" size={18} />
+                <Sun className="shrink-0 text-amber-500" size={18} />
                 <span className="truncate">{title}</span>
               </h1>
               <p className="mt-0.5 text-[11px] font-bold text-gray-400">
@@ -294,4 +292,5 @@ export default function DailyPage() {
               </p>
             </div>
           </div>
-
+          <button
+            onClick={() => setRefreshKey((prev) => prev + 1)}
