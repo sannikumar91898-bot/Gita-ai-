@@ -26,8 +26,8 @@ const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
     specializations: "Love, relationships, marriage and deep emotional bonding",
-    tone: "Warm, highly empathetic, friendly Hindi and Hinglish",
-    rules: "Speak with absolute authority, 100% confidence and certainty. Directly pinpoint the exact month and year of marriage using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers.",
+    tone: "Warm, highly empathetic, caring female astrologer voice in natural Hindi/Hinglish — like a real experienced lady Pandit ji who genuinely cares",
+    rules: "Speak with absolute authority, 100% confidence and certainty. Directly pinpoint the exact month and year of marriage using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real female astrologer.",
   },
   kriti: {
     name: "Acharya Kriti",
@@ -45,7 +45,7 @@ const PERSONAS: Record<string, PersonaConfig> = {
     name: "Gargi Maa",
     specializations: "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
     tone: "Maternal, soothing, profoundly wise and spiritually grounded Hinglish",
-    rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful, mandatory traditional remedies inspired by Bhagavad Gita blockbusters (Pooja, Daan, Ratna) to completely shift their luck.",
+    rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful, mandatory traditional remedies inspired by Bhagavad Gita (Pooja, Daan, Ratna) to completely shift their luck.",
   },
 };
 
@@ -305,16 +305,107 @@ export async function POST(request: Request) {
     ].join("\n\n");
 
     const systemPrompt = `
-You are the absolute premium, elite human Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
+You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
 
 YOUR ASSIGNED FIELD:
 ${personaConfig.specializations}
 
 YOUR TONE & VOICE:
 ${personaConfig.tone}
+${personaConfig.rules}
 
 CRITICAL BUSINESS RETENTION AND MARKETING LAWS:
 1. GYAN PELNA 0% (NO LECTURES / NO FLUFF): Do not explain planetary science, rules, or give textbook definitions. Cut the chatter. Talk straight to the user's specific problem and immediate pain point.
 2. 100% ASTROLOGER KNOWLEDGE: Deliver sharp, highly accurate, and jaw-dropping predictions using the provided chart matrix. Mention clear houses, transits, or dashas to make your claim solid.
 3. 100% MARKETING HOOK: Speak with absolute certainty and 100% confidence. Never hesitate or use speculative words like 'maybe', 'possibly', 'it might', or 'astrology is a belief'. Always state 'This WILL happen' with absolute authority.
 4. HARD TIMELINES: Give exact, bold date/month brackets (e.g., 'December 2026 to April 2027').
+5. FEMALE ASTROLOGER VOICE (especially for Gita): Speak exactly like a real experienced lady Pandit / female astrologer. Warm, caring, slightly authoritative, natural Hinglish/Hindi. Never sound like a robot, male voice, or AI.
+6. CONTROLLED FEAR IS ALLOWED FOR MARKETING: You may highlight a temporary obstruction, negative transit, or delay to create urgency, but always pair it with a clear remedy and a positive final outcome. Never leave the customer hopeless.
+7. REMEDIES: Always prescribe 1-2 clear, traditional Upay (fasting, daan, simple pooja, or gemstone). At the very end of your reply, if you are giving a remedy, append exactly this format on new lines:
+||REMEDY_EXTRACT||
+Remedy Title Here
+Detailed description of the remedy in the same language.
+
+8. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}). Keep it conversational and short-to-medium length (max 350-400 words).
+9. NEVER say you are AI, a language model, OpenAI, Gemini, or a machine. Never give any disclaimer, warning, or "astrology is belief" statement.
+10. Use the chart data below when available. If chart is missing, still give confident guidance based on the query and general Vedic principles without inventing exact degrees.
+
+CHART & BIRTH CONTEXT:
+${astrologyContext}
+`.trim();
+
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+
+    const historyForModel = previousMessages
+      .reverse()
+      .map((m) => ({
+        role: (m.role === "assistant" ? "assistant" : "user") as
+          | "assistant"
+          | "user",
+        content: m.content,
+      }));
+
+    const completion = await openai.chat.completions.create({
+      model: process.env.OPENAI_MODEL || "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...historyForModel,
+        { role: "user", content: userMessage },
+      ],
+      temperature: 0.75,
+      max_tokens: 700,
+    });
+
+    const rawReply =
+      completion.choices[0]?.message?.content?.trim() ||
+      "अभी जवाब तैयार नहीं हो पाया। कृपया दोबारा पूछें।";
+
+    const { message: finalMessage, remedy } = extractRemedy(rawReply);
+
+    // Save user + assistant messages
+    try {
+      await db.insert(messages).values({
+        conversationId: conversation.id,
+        userId: user.id,
+        role: "user",
+        content: userMessage,
+      });
+
+      await db.insert(messages).values({
+        conversationId: conversation.id,
+        userId: user.id,
+        role: "assistant",
+        content: finalMessage,
+      });
+
+      if (remedy) {
+        await db.insert(remedies).values({
+          userId: user.id,
+          conversationId: conversation.id,
+          title: remedy.title,
+          description: remedy.description,
+        });
+      }
+    } catch (saveError) {
+      console.error("Failed to save chat messages:", saveError);
+      // Still return the reply even if history save fails
+    }
+
+    return NextResponse.json({
+      success: true,
+      conversationId: conversation.id,
+      reply: finalMessage,
+      remedy: remedy
+        ? { title: remedy.title, description: remedy.description }
+        : null,
+    });
+  } catch (error) {
+    console.error("POST /api/chat error:", error);
+    return NextResponse.json(
+      { error: "Something went wrong while generating the prediction." },
+      { status: 500 },
+    );
+  }
+}
