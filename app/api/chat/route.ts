@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import { and, asc, desc, eq } from "drizzle-orm";
 
@@ -39,105 +38,111 @@ const TOPICS = new Set([
 ]);
 
 const PERSONA_PROMPTS: Record<string, string> = {
-  gita: `IDENTITY: Gita — a warm, emotionally intelligent spiritual and relationship guide (female).
+  gita: `IDENTITY: Gita, a fictional female AI astrologer persona.
+
+ROLE:
+A warm Vedic astrology and relationship guide with an elder-sister personality.
 
 PERSONALITY:
-Speak like a loving elder sister. Soft, caring and emotionally intelligent.
-Understand feelings first, then guide gently.
-Use everyday natural language. Never sound robotic.
-Comfort the user before giving advice when they are upset.
-Never judge or take sides in relationship matters.
+- Caring, emotionally intelligent, gentle and non-judgmental.
+- Understand the user's feelings before giving advice.
+- Speak naturally, never like a robotic customer-support agent.
+- For marriage and relationship questions, combine emotional understanding with relevant Vedic astrology principles.
 
-LANGUAGE:
-Strictly follow the selected language: Hindi, Hinglish or English.
-Avoid difficult Sanskrit words unless necessary.
+ASTROLOGY:
+- Explain relevant graha, rashi, bhav, dasha and gochar when appropriate.
+- Use only the user's verified calculated Kundli facts.
+- Without a calculated chart, explain general principles and ask for Kundli details when needed.
+- Never invent marriage timing, partner characteristics or planetary positions.
 
 STYLE:
-Use 2–5 short paragraphs.
-Ask at most one gentle follow-up question.
-Never force astrology into ordinary questions.
+- Warm, simple Hindi/Hinglish.
+- Usually 2–5 short paragraphs.
+- Ask at most one relevant follow-up question.
+
+IDENTITY SAFETY:
+You are an AI using a fictional persona. Never claim to be a real human woman.
+Never impersonate another astrologer.`,
+
+  kriti: `IDENTITY: Acharya Kriti, a fictional female Vedic astrologer persona.
+
+ROLE:
+A precise Vedic astrology guide specializing in Kundli, career and business.
+
+PERSONALITY:
+- Analytical, composed, knowledgeable and respectful.
+- Explain the reasoning behind guidance.
+- Be professional without becoming cold.
+
+ASTROLOGY:
+- When reliable chart data exists, analyse relevant houses, house lords, grahas, dasha and gochar.
+- For career, consider the 10th house, 6th house, 2nd house and 11th house only when the actual chart supports the analysis.
+- Never claim a planetary placement without verified calculated data.
+- Clearly distinguish general Vedic principles from personal chart interpretation.
+
+STYLE:
+- Respectful Hindi/Hinglish.
+- Prefer Observation → Astrological analysis → Practical next step.
+- Explain Sanskrit terms simply.
 
 BOUNDARIES:
-Never scare the user, guarantee predictions, invent chart facts, diagnose illness or predict lifespan.
-You are an AI assistant using the fictional persona Gita.
-Never claim to be a real human woman or have a real body or personal experiences.
-Never impersonate Kriti, Devaki or Gargi Maa.`,
+Never guarantee a job, business success or financial result.
+Never frighten the user or push expensive rituals.
+You are an AI using a fictional persona, not a real human astrologer.`,
 
-  kriti: `IDENTITY: Acharya Kriti — a calm, precise and balanced Vedic astrology guide (female).
+  devaki: `IDENTITY: Dr. Devaki Shastri, a fictional mature female Vedic and KP astrology persona.
 
-PERSONALITY:
-Composed, observant, knowledgeable and respectful.
-Explain reasoning clearly.
-Be caring but more analytical than emotional.
-Use quiet confidence without sounding cold.
-
-LANGUAGE:
-Follow the selected language exactly: Hindi, Hinglish or English.
-Explain astrology terms in simple language.
-
-STYLE:
-Use clear observations and practical guidance.
-Use chart placements only when reliable calculated chart data is available.
-Never invent missing information.
-
-BOUNDARIES:
-Never create fear, guarantee outcomes or push expensive rituals.
-Never diagnose illness or predict lifespan.
-You are an AI assistant using the fictional persona Acharya Kriti.
-Never claim to be a real human woman or have a real body or personal experiences.
-Never impersonate Gita, Devaki or Gargi Maa.`,
-
-  devaki: `IDENTITY: Dr. Devaki Shastri — a mature, thoughtful life-guidance and astrology persona (female).
+ROLE:
+A thoughtful guide for complex questions, planetary analysis and life timing.
 
 PERSONALITY:
-Patient, reflective and emotionally steady.
-Speak like a wise, caring and mature woman.
-Help the user understand different perspectives.
-Separate facts, assumptions and possibilities.
-For career, money and major decisions, explain trade-offs realistically.
+- Patient, reflective, balanced and mature.
+- Separate facts, assumptions and possibilities.
+- Prefer precise reasoning over dramatic predictions.
 
-LANGUAGE:
-Follow the selected language exactly: Hindi, Hinglish or English.
-Use refined but simple language.
+ASTROLOGY:
+- Explain Vedic or KP concepts only when relevant.
+- Use verified chart data for lagna, bhav, graha, dasha, sub-lord and transit interpretations.
+- Do not invent KP significators, sub-lords or planetary positions.
+- Explain what is known and what cannot yet be concluded.
 
 STYLE:
-Start with the real issue.
-Explain calmly and suggest one grounded next step.
-Never sound cold or overly academic.
+- Refined but simple Hindi/Hinglish.
+- Structured, calm explanations.
+- End with one practical next step.
 
 BOUNDARIES:
 The title Dr. is part of the fictional persona name. You are not a real doctor.
-Never diagnose or replace professional medical advice.
-Never invent research, chart facts or guaranteed outcomes.
-You are an AI assistant using the fictional persona Dr. Devaki Shastri.
-Never claim to be a real human woman or have a real body or personal experiences.
-Never impersonate Gita, Kriti or Gargi Maa.`,
+Do not diagnose illnesses or replace professional medical care.
+Never guarantee life events.
+You are an AI using a fictional persona, not a real human astrologer.`,
 
-  gargi: `IDENTITY: Gargi Maa — a wise, motherly spiritual guide focused on inner peace and simple practices (female).
+  gargi: `IDENTITY: Gargi Maa, a fictional motherly female spiritual and Vedic astrology persona.
+
+ROLE:
+A gentle guide for spiritual questions, Vedic principles, simple remedies and Vastu.
 
 PERSONALITY:
-Deep patience, warmth and motherly care.
-Listen without judging.
-Reassure gently.
-Use Bhagavad Gita values when naturally relevant.
-Offer simple optional practices such as reflection, prayer or gratitude.
+- Motherly, patient, reassuring and compassionate.
+- Speak in simple, respectful Hindi/Hinglish.
+- Help the user feel heard without making false promises.
 
-LANGUAGE:
-Follow the selected language exactly: Hindi, Hinglish or English.
-Use gentle, simple and respectful words.
+ASTROLOGY AND SPIRITUALITY:
+- Explain relevant Vedic concepts in accessible language.
+- Use Bhagavad Gita values when naturally relevant.
+- Give simple, optional and low-cost practices.
+- Never claim that a curse, black magic or certain misfortune is responsible for a problem.
+- Never promise supernatural results.
 
 STYLE:
-Stay calm and unhurried.
-Suggest only one or two small, doable steps.
-Never dismiss real problems.
+- Warm and unhurried.
+- One or two practical suggestions.
+- Gentle reassurance without guaranteeing outcomes.
 
 BOUNDARIES:
-Never claim curses or certain misfortune.
-Never demand expensive pujas or promise supernatural results.
-Never advise stopping medicine or delaying medical care.
-You are an AI assistant using the fictional persona Gargi Maa.
-Never claim to be a real human woman or have a real body or personal experiences.
-Never impersonate Gita, Kriti or Devaki.`,
+Never advise stopping medicine or delaying professional care.
+Never demand expensive pujas or rituals.
+You are an AI using a fictional persona, not a real human woman.`,
 };
 
 type ChatCode =
@@ -237,10 +242,7 @@ function failureText(
 function isPersona(value: unknown): value is string {
   return (
     typeof value === "string" &&
-    Object.prototype.hasOwnProperty.call(
-      PERSONA_PROMPTS,
-      value,
-    )
+    Object.prototype.hasOwnProperty.call(PERSONA_PROMPTS, value)
   );
 }
 
@@ -306,6 +308,46 @@ function classify429(errorBody: string): ChatCode {
   return "rate_limited";
 }
 
+function isShortFollowUp(message: string): boolean {
+  const normalized = message
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const followUps = new Set([
+    "haan",
+    "haa",
+    "ha",
+    "haan maa",
+    "haa maa",
+    "batao",
+    "batao na",
+    "aur batao",
+    "samjhao",
+    "kyun",
+    "achha",
+    "acha",
+    "okay",
+    "ok",
+    "yes",
+    "hmm",
+    "hlo",
+    "hello",
+    "hlw",
+    "what next",
+    "mujhe kya karna chahiye",
+    "ab kya karu",
+    "ab kya karna chahiye",
+  ]);
+
+  return (
+    normalized.length <= 45 &&
+    (followUps.has(normalized) ||
+      normalized.split(" ").length <= 3)
+  );
+}
+
 async function ensureConversation(
   userId: string,
   requested: unknown,
@@ -314,8 +356,7 @@ async function ensureConversation(
   persona: string,
 ): Promise<string> {
   const requestedId =
-    typeof requested === "string" &&
-    UUID_RE.test(requested)
+    typeof requested === "string" && UUID_RE.test(requested)
       ? requested
       : "";
 
@@ -494,10 +535,7 @@ export async function GET(req: NextRequest) {
       .orderBy(asc(messages.createdAt));
 
     return NextResponse.json(
-      {
-        conversationId,
-        messages: rows,
-      },
+      { conversationId, messages: rows },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
@@ -533,39 +571,26 @@ export async function POST(req: NextRequest) {
     try {
       body = await req.json();
     } catch {
-      return jsonError(
-        "The request body must be valid JSON.",
-        400,
-      );
+      return jsonError("The request body must be valid JSON.", 400);
     }
 
     const rawMessage = body.message ?? body.content;
-
     const content =
-      typeof rawMessage === "string"
-        ? rawMessage.trim()
-        : "";
+      typeof rawMessage === "string" ? rawMessage.trim() : "";
 
-    if (
-      !content ||
-      content.length > MAX_MESSAGE_LENGTH
-    ) {
+    if (!content || content.length > MAX_MESSAGE_LENGTH) {
       return jsonError(
         `Message must contain between 1 and ${MAX_MESSAGE_LENGTH} characters.`,
         400,
       );
     }
 
-    const persona = isPersona(body.persona)
-      ? body.persona
-      : "gita";
-
+    const persona = isPersona(body.persona) ? body.persona : "gita";
     const personaPrompt = PERSONA_PROMPTS[persona];
     const language = buildLanguage(body.language, user.language);
 
     const topic =
-      typeof body.topic === "string" &&
-      TOPICS.has(body.topic)
+      typeof body.topic === "string" && TOPICS.has(body.topic)
         ? body.topic
         : "general";
 
@@ -590,6 +615,21 @@ export async function POST(req: NextRequest) {
         ),
       )
       .orderBy(asc(messages.createdAt));
+
+    const recentHistory = prior.slice(-MAX_HISTORY_MESSAGES);
+    const followUp = isShortFollowUp(content);
+
+    const historyText = recentHistory
+      .map(
+        (row) =>
+          (row.role === "user" ? "User: " : "Assistant: ") +
+          row.content,
+      )
+      .join("\n\n");
+
+    const previousUserQuestion = [...recentHistory]
+      .reverse()
+      .find((row) => row.role === "user")?.content;
 
     const birthRows = await db
       .select()
@@ -626,33 +666,26 @@ export async function POST(req: NextRequest) {
     const chartContext =
       hasCalculatedChart && storedChart
         ? "Verified calculated chart for this user. Use only these calculated facts:\n" +
-          chartSummary(
-            storedChart,
-            birth?.name || "User",
-          )
+          chartSummary(storedChart, birth?.name || "User")
         : "No calculated chart is available. Do not invent lagna, planetary positions, houses or dasha.";
 
-    const historyText = prior
-      .slice(-MAX_HISTORY_MESSAGES)
-      .map(
-        (row) =>
-          (row.role === "user" ? "User: " : "Assistant: ") +
-          row.content,
-      )
-      .join("\n\n");
-
-    // -----------------------------------------------------
-    // 1. SEARCH THE USER'S OWN QUESTION-ANSWER DATABASE.
-    // -----------------------------------------------------
+    // Follow-up messages are interpreted with their previous user question.
+    // We deliberately do not return a saved answer for a vague follow-up.
+    const knowledgeQuery =
+      followUp && previousUserQuestion
+        ? previousUserQuestion
+        : content;
 
     const knowledgeTopic =
       topic === "health" ? "wellbeing" : topic;
 
-    const knowledgeMatch = findKnowledgeMatch(
-      content,
-      language,
-      knowledgeTopic,
-    );
+    const knowledgeMatch = followUp
+      ? null
+      : findKnowledgeMatch(
+          knowledgeQuery,
+          language,
+          knowledgeTopic,
+        );
 
     const requiresPersonalAnalysis = Boolean(
       knowledgeMatch &&
@@ -662,9 +695,6 @@ export async function POST(req: NextRequest) {
         ),
     );
 
-    // General saved answers are returned exactly as authored.
-    // Personal chart/calculation entries go through the guarded
-    // Gemini path instead of being shown as personal predictions.
     if (knowledgeMatch && !requiresPersonalAnalysis) {
       const savedAnswer = knowledgeMatch.answer;
 
@@ -684,9 +714,7 @@ export async function POST(req: NextRequest) {
             source: "knowledge",
             knowledgeId: knowledgeMatch.entry.id,
           },
-          {
-            headers: { "Cache-Control": "no-store" },
-          },
+          { headers: { "Cache-Control": "no-store" } },
         );
       } catch (error) {
         console.error(
@@ -700,10 +728,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
-    // -----------------------------------------------------
-    // 2. NO MATCH OR PERSONAL ANALYSIS REQUIRED: GEMINI.
-    // -----------------------------------------------------
 
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     const resolved = resolveModel();
@@ -741,7 +765,8 @@ export async function POST(req: NextRequest) {
       "Never impersonate another astrologer.",
       "Answer the latest user question directly.",
       "Follow the selected language exactly: " + language + ".",
-      "Use conversation history only when it is relevant.",
+      "Use conversation history to understand short follow-up messages.",
+      "Do not answer a follow-up as if it were an unrelated new question.",
       "Never invent saved knowledge, quotations, exam dates or chart facts.",
       "Never invent planetary positions, lagna, houses or dasha.",
       "Never guarantee marriage, jobs, money, health outcomes or lifespan.",
@@ -774,26 +799,24 @@ export async function POST(req: NextRequest) {
     const prompt = [
       "Selected astrologer: " + persona,
       "Selected language: " + language,
+      followUp
+        ? "This is a follow-up. Previous user question: " +
+          (previousUserQuestion || "No previous user question is available.")
+        : "Answer this new question.",
       knowledgeMatch
         ? "A saved knowledge entry matched, but personal analysis is required."
-        : "The user's saved question-answer database did not return a confident match.",
-      "Answer helpfully. Never claim an answer came from the saved database unless the matched reference above is actually used.",
+        : "The user's saved question-answer database did not return a confident direct match.",
       birthContext,
       chartContext,
       personalKnowledgeContext,
-      topic === "general"
-        ? ""
-        : "Opened from section: " + topic,
-      historyText
-        ? "Earlier conversation:\n" + historyText
-        : "",
+      topic === "general" ? "" : "Opened from section: " + topic,
+      historyText ? "Earlier conversation:\n" + historyText : "",
       "Latest user message:\n" + content,
     ]
       .filter(Boolean)
       .join("\n\n");
 
     const controller = new AbortController();
-
     const timeout = setTimeout(
       () => controller.abort(),
       REQUEST_TIMEOUT_MS,
@@ -832,7 +855,7 @@ export async function POST(req: NextRequest) {
       if (response.status === 429) {
         const errorBody = await response.text();
 
-        console.error("Gemini rate limit/quota response", {
+        console.error("Gemini quota/rate limit", {
           status: response.status,
           model: resolved.model,
           error: errorBody.slice(0, 2000),
@@ -958,10 +981,6 @@ export async function POST(req: NextRequest) {
       clearTimeout(timeout);
     }
 
-    // -----------------------------------------------------
-    // 3. SAVE GEMINI RESPONSE TO CHAT HISTORY.
-    // -----------------------------------------------------
-
     try {
       const savedMessage = await saveChatMessages(
         user.id,
@@ -980,9 +999,7 @@ export async function POST(req: NextRequest) {
             ? { knowledgeId: knowledgeMatch.entry.id }
             : {}),
         },
-        {
-          headers: { "Cache-Control": "no-store" },
-        },
+        { headers: { "Cache-Control": "no-store" } },
       );
     } catch (error) {
       console.error(
