@@ -4,15 +4,13 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "images.unsplash.com",
+        hostname: "://unsplash.com",
       },
     ],
   },
 
-  // ⚠️ सुधारा गया: serverExternalPackages को सही ढंग से experimental ऑब्जेक्ट के अंदर रखा गया है
-  experimental: {
-    serverExternalPackages: ["drizzle-orm", "pg"],
-  },
+  // ✅ Next.js 14 के अनुसार डायरेक्ट रूट लेवल पर सही कॉन्फ़िगरेशन
+  serverExternalPackages: ["drizzle-orm", "pg"],
 
   typescript: {
     ignoreBuildErrors: false,
