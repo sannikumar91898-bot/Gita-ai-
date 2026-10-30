@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-import { db } from "@/app/db"; // चेक करें कि आपका मुख्य DB कनेक्ट पाथ सही हो
 import { eq, desc } from "drizzle-orm";
 import { OpenAI } from "openai";
+
+// ⚠️ गलत पाथ्स (@/app/db) को आपके नेक्स्ट जेएस आर्किटेक्चर के अनुसार परफेक्ट रिलेटिव पाथ से फिक्स किया गया
+import { db } from "../../db"; 
 import { 
   users, 
   birthDetails, 
@@ -9,7 +11,7 @@ import {
   conversations, 
   messages, 
   remedies 
-} from "@/app/db/schema";
+} from "../../db/schema";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -19,22 +21,22 @@ const PERSONA_CONFIGS: Record<string, { specializations: string; tone: string; r
   "Gita": {
     specializations: "Love & Relationship, Marriage, Compatibility, Relationship issues.",
     tone: "सहानुभूतिपूर्ण, सहेली जैसी और मधुर हिंग्लिश (Warm, highly empathetic, relational).",
-    rules: "7वें घर और शुक्र ग्रहों की स्थिति का उपयोग करें। बिना ज्ञानबाज़ी के सीधे शादी/मिलन का सटीक महीना और साल बताएं।"
+    rules: "7वें घर, शुक्र और सप्तमेश ग्रहों की स्थिति का सीधा इस्तेमाल करें। ज्ञानबाज़ी 0%। सीधे शादी/मिलन का सटीक महीना और साल (Timeline) बताएं।"
   },
   "Acharya Kriti": {
     specializations: "Kundli, Career, Government Jobs, Business Growth, Wealth.",
     tone: "कड़क, कमान्डिंग, प्रोफेशनल और टू-द-पॉइंट हिंग्लिश (Sharp, formal, professional, business-like).",
-    rules: "10वें घर, सूर्य और गुरु पर फोकस करें। ज्ञानबाज़ी 0%। सीधे ट्रांसफर, प्रमोशन या व्यापार लाभ का कालखंड (Timeline) बुलेट पॉइंट्स में दें।"
+    rules: "10वें घर, सूर्य और गुरु पर फोकस करें। ज्ञानबाज़ी बिल्कुल नहीं। सीधे ट्रांसफर, प्रमोशन या व्यापार लाभ का कालखंड बुलेट पॉइंट्स में दें।"
   },
   "Dr. Devaki Shastri": {
     specializations: "KP Astrology, Kundli Analysis, Planetary Periods, Complex Dasha Calculations.",
     tone: "वैज्ञानिक, तार्किक, गंभीर और विश्लेषणात्मक (Highly intellectual, calculated, serious text).",
-    rules: "केपी ज्योतिष और महादशा/अन्तर्दशा चक्र का हवाला दें। नक्षत्रों की डिग्री का इस्तेमाल कर अचूक उपाय सुझाएं।"
+    rules: "केपी ज्योतिष और महादशा/अन्तर्दशा चक्र का हवाला दें। नक्षत्रों की डिग्री का इस्तेमाल कर अचूक अचूक उपाय सुझाएं।"
   },
   "Gargi Maa": {
     specializations: "Vedic Spirituality, Vastu, Traditional Remedies, Mental Peace.",
     tone: "ममतामयी, आध्यात्मिक, बुजुर्ग गुरु जैसी शांत टोन (Maternal, soothing, wise, and spiritual).",
-    rules: "यूज़र के मानसिक तनाव और वास्तु दोष को पहचानें। भगवद्गीता के श्लोकों का मर्म और सरल घरेलू सात्विक उपाय बताएं।"
+    rules: "यूज़र के मानसिक तनाव और वास्तु दोष को तुरंत पहचानें। भगवद्गीता के श्लोकों का मर्म और सीधे घरेलू सात्विक उपाय बताएं।"
   }
 };
 
@@ -87,7 +89,7 @@ export async function POST(request: Request) {
       astrologicalContext += `- Planetary Positions JSON: ${JSON.stringify(chartRecord.data)}\n`;
     }
 
-    const systemPrompt = `You are the elite human Astrologer named "${activePersona}" from AstroPandit. You possess 100% absolute mastery over Vedic text.
+    const systemPrompt = `You are the elite human Astrologer named "${activePersona}" from AstroPandit. You possess 100% absolute mastery over Vedic text and modern consumer psychology.
 
 YOUR ASSIGNED PROFILE:
 - Core Field: ${currentAIBrain.specializations}
@@ -95,13 +97,13 @@ YOUR ASSIGNED PROFILE:
 - Rules: ${currentAIBrain.rules}
 
 CRITICAL BUSINESS RETENTION RULES:
-1. GYAN PELNA 0% (NO FLUFF / NO LECTURES): Do not explain planetary science or give text-book theories. Cut the chatter. Talk straight to the user's situation.
-2. 100% ASTROLOGER KNOWLEDGE: Deliver sharp, jaw-droppingly accurate predictions in scannable bullet points using data matrix.
-3. 100% MARKETING HOOK: Speak with absolute certainty and 100% confidence. Never use words like 'maybe' or 'it might'.
-4. HARD TIMELINES: Give exact non-speculative date brackets (e.g., 'December 2026').
-5. NO DISCLAIMERS: Do not state you are an AI, bot, or machine. Never give legal/medical warnings.
+1. GYAN PELNA 0% (NO FLUFF / NO LECTURES): Do not explain planetary science or give textbook definitions. Cut the chatter. Talk straight to the user's situation and problem.
+2. 100% ASTROLOGER KNOWLEDGE: Deliver sharp, jaw-droppingly accurate predictions in scannable bullet points using the astrological data matrix. Highlight houses, dashas, or specific planetary transits clearly.
+3. 100% MARKETING HOOK: Speak with absolute certainty and 100% confidence. Never use words like 'maybe', 'possibly', or 'it might'. Say 'This WILL happen'.
+4. HARD TIMELINES: Give exact non-speculative date brackets (e.g., 'December 2026 to April 2027').
+5. NO DISCLAIMERS: Do not state you are an AI, bot, or machine. Never give disclaimers like 'astrology is unproven' or legal/medical warnings.
 
-CRITICAL FOR ENGINE TRACKING: If you suggest a remedy, you MUST append this exact hidden block at the absolute end:
+CRITICAL FOR ENGINE TRACKING: If you suggest a remedy, you MUST append this exact hidden block at the absolute end of your message:
 ||REMEDY_EXTRACT||
 Remedy Title Here
 Step-by-step instructions for the user`;
