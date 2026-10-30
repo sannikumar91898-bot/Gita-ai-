@@ -42,6 +42,7 @@ const demoTestimonials = [
 ];
 
 export default function HomePage() {
+  // Realtime fake conversion stats
   const [onlineUsers, setOnlineUsers] = useState(146);
   const [queueNum, setQueueNum] = useState(4);
 
