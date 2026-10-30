@@ -1,294 +1,124 @@
+// app/settings/page.tsx
 "use client";
 
+import { ArrowLeft, User, Moon, Sun, Globe, Phone } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  ArrowLeft,
-  Bell,
-  Check,
-  ChevronRight,
-  CircleHelp,
-  ExternalLink,
-  Info,
-  Languages,
-  Moon,
-  ShieldCheck,
-  Sun,
-  UserRound,
-  LockKeyhole,
-  Settings as SettingsIcon,
-} from "lucide-react";
-
-import { useApp, type Theme } from "../Providers";
-import type { Lang } from "../../i18n";
-
-const LANGUAGE_OPTIONS: {
-  value: Lang;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "hi",
-    label: "हिंदी",
-    description: "पूरी बातचीत हिंदी में",
-  },
-  {
-    value: "hinglish",
-    label: "Hinglish",
-    description: "Hindi + simple English",
-  },
-  {
-    value: "en",
-    label: "English",
-    description: "Chat in English",
-  },
-];
+import { useApp } from "../Providers";
 
 export default function SettingsPage() {
-  const { lang, setLanguage, me, theme, setTheme } = useApp();
-
-  const [savingLanguage, setSavingLanguage] = useState(false);
-  const [languageMessage, setLanguageMessage] = useState("");
-  const [remindersEnabled, setRemindersEnabled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    try {
-      setRemindersEnabled(
-        localStorage.getItem("gita_reminders_enabled") === "true"
-      );
-    } catch {
-      setRemindersEnabled(false);
-    }
-  }, []);
-
-  async function chooseLanguage(value: Lang) {
-    if (value === lang || savingLanguage) return;
-
-    setSavingLanguage(true);
-    setLanguageMessage("");
-
-    try {
-      await setLanguage(value);
-      setLanguageMessage("Language preference updated successfully.");
-    } catch {
-      setLanguageMessage(
-        "Language changed for this session. Server save could not be confirmed."
-      );
-    } finally {
-      setSavingLanguage(false);
-    }
-  }
-
-  function changeTheme(value: Theme) {
-    setTheme(value);
-  }
-
-  function toggleReminders() {
-    const nextValue = !remindersEnabled;
-    setRemindersEnabled(nextValue);
-    try {
-      localStorage.setItem("gita_reminders_enabled", String(nextValue));
-    } catch {
-      // Preference still works local to the state session
-    }
-  }
-
-  const selectedLanguage =
-    lang === "hi" ? "हिंदी" : lang === "hinglish" ? "Hinglish" : "English";
+  const { lang, setLang, theme, setTheme } = useApp();
 
   const isDark = theme === "dark";
+  const isHindi = lang === "hi";
+  const isHinglish = lang === "hinglish";
+
+  const t = (hi: string, hing: string, en: string) =>
+    isHindi ? hi : isHinglish ? hing : en;
+
+  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white shadow-xl";
 
   return (
-    <main
-      className={`min-h-dvh px-5 pb-16 pt-6 transition-colors duration-300 ${
-        isDark
-          ? "bg-celestial text-violet-50"
-          : "bg-gradient-to-b from-violet-50/70 to-white text-violet-950"
-      }`}
-    >
-      <div className="mx-auto max-w-xl">
-        {/* Header */}
-        <header className="mb-8 flex items-center gap-4">
-          <Link
-            href="/profile"
-            aria-label="Back to profile"
-            className={`rounded-full border p-2.5 transition-all duration-200 ${
-              isDark
-                ? "border-white/10 bg-white/[0.02] hover:bg-white/10 hover:scale-105"
-                : "border-violet-200 bg-white hover:bg-violet-100/60 hover:scale-105 shadow-sm"
-            }`}
-          >
-            <ArrowLeft size={20} />
+    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+      <div className="mx-auto max-w-xl space-y-5">
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
+          <Link href="/" className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
+            <ArrowLeft size={18} />
           </Link>
-
-          <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold tracking-tight">
-              Settings
+          <div>
+            <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
+              {t("सेटिंग्स", "Settings", "Settings")}
             </h1>
-            <p
-              className={`text-sm ${
-                isDark ? "text-violet-300/90" : "text-violet-600 font-medium"
-              }`}
-            >
-              Personalize your Gita AI experience
-            </p>
-          </div>
-
-          <div
-            className={`rounded-full p-2.5 transition-transform duration-500 hover:rotate-45 ${
-              isDark ? "text-gold-400" : "text-violet-600"
-            }`}
-          >
-            <SettingsIcon size={22} />
           </div>
         </header>
 
-        {/* Language Section */}
-        <section
-          className={`mb-6 overflow-hidden rounded-2xl border p-6 transition-all duration-200 ${
-            isDark
-              ? "border-gold-400/20 bg-white/[0.03] shadow-inner"
-              : "border-violet-200/80 bg-white shadow-md shadow-violet-100/40"
-          }`}
-        >
-          <div className="mb-6 flex items-center gap-3.5">
-            <div
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
-                isDark ? "bg-gold-400/10 text-gold-400" : "bg-violet-100 text-violet-700"
-              }`}
-            >
-              <Languages size={22} />
+        <section className={`space-y-6 rounded-2xl border p-5 ${cardClass}`}>
+          {/* Profile Placeholder */}
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-500">
+              <User size={32} />
             </div>
             <div>
-              <h2 className="text-base font-bold tracking-wide">Language</h2>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? "text-violet-300/80" : "text-violet-500 font-medium"
-                }`}
-              >
-                Choose your preferred chat language
-              </p>
+              <h2 className="text-lg font-bold">{t("अतिथि उपयोगकर्ता", "Guest User", "Guest User")}</h2>
+              <p className="text-xs text-gray-500">{t("लॉगिन करने के लिए टैप करें", "Login karne ke liye tap karein", "Tap to login")}</p>
             </div>
           </div>
 
+          <hr className={isDark ? "border-slate-700" : "border-gray-200"} />
+
+          {/* Theme Settings */}
           <div className="space-y-3">
-            {LANGUAGE_OPTIONS.map((option) => {
-              const selected = lang === option.value;
-
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  disabled={savingLanguage}
-                  onClick={() => void chooseLanguage(option.value)}
-                  className={`flex w-full items-center gap-4 rounded-xl border px-5 py-4 text-left transition-all duration-200 ${
-                    selected
-                      ? isDark
-                        ? "border-gold-400 bg-gold-400/15 shadow-md"
-                        : "border-violet-600 bg-violet-50 text-violet-950 ring-2 ring-violet-500/20 shadow-sm"
-                      : isDark
-                        ? "border-white/10 bg-black/20 hover:border-white/20 hover:bg-white/5"
-                        : "border-violet-100 bg-violet-50/30 hover:border-violet-200 hover:bg-violet-50/80"
-                  } disabled:cursor-wait disabled:opacity-60`}
-                >
-                  <span className="min-w-0 flex-1">
-                    <span className={`block font-semibold text-[15px] ${selected && !isDark ? "text-violet-900" : ""}`}>
-                      {option.label}
-                    </span>
-                    <span
-                      className={`mt-1 block text-xs leading-normal ${
-                        selected
-                          ? isDark
-                            ? "text-gold-200/90"
-                            : "text-violet-700 font-medium"
-                          : isDark
-                            ? "text-violet-300/70"
-                            : "text-violet-500"
-                      }`}
-                    >
-                      {option.description}
-                    </span>
-                  </span>
-
-                  {selected ? (
-                    <div
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
-                        isDark ? "bg-gold-400 text-celestial font-bold" : "bg-violet-600 text-white"
-                      }`}
-                    >
-                      <Check size={14} strokeWidth={3.5} />
-                    </div>
-                  ) : (
-                    <ChevronRight
-                      size={18}
-                      className={`shrink-0 transition-transform ${isDark ? "text-violet-400/60" : "text-violet-400"}`}
-                    />
-                  )}
-                </button>
-              );
-            })}
+            <h3 className="flex items-center gap-2 text-sm font-bold text-orange-500">
+              {isDark ? <Moon size={16} /> : <Sun size={16} />}
+              {t("थीम", "Theme", "Theme")}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setTheme("light")}
+                className={`flex-1 rounded-xl border py-2 text-xs font-bold ${!isDark ? "border-orange-500 bg-orange-50 text-orange-600" : "border-slate-700 text-slate-400"}`}
+              >
+                {t("लाइट", "Light", "Light")}
+              </button>
+              <button
+                onClick={() => setTheme("dark")}
+                className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isDark ? "border-orange-500 bg-slate-800 text-orange-400" : "border-gray-200 text-gray-500"}`}
+              >
+                {t("डार्क", "Dark", "Dark")}
+              </button>
+            </div>
           </div>
 
-          {savingLanguage && (
-            <div className="mt-4 flex items-center gap-2 px-1">
-              <span className="h-1.5 w-1.5 animate-ping rounded-full bg-gold-400"></span>
-              <p
-                className={`text-xs font-medium ${
-                  isDark ? "text-gold-300/90" : "text-violet-600"
-                }`}
-              >
-                Saving language preference...
-              </p>
-            </div>
-          )}
+          <hr className={isDark ? "border-slate-700" : "border-gray-200"} />
 
-          {languageMessage && (
-            <p role="status" className={`mt-4 px-1 text-xs font-semibold ${languageMessage.includes('could not') ? 'text-amber-500' : 'text-emerald-500'}`}>
-              {languageMessage}
-            </p>
-          )}
+          {/* Language Settings */}
+          <div className="space-y-3">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-orange-500">
+              <Globe size={16} />
+              {t("भाषा", "Language", "Language")}
+            </h3>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setLang("hi")}
+                className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHindi ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}
+              >
+                हिंदी
+              </button>
+              <button
+                onClick={() => setLang("hinglish")}
+                className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}
+              >
+                Hinglish
+              </button>
+              <button
+                onClick={() => setLang("en")}
+                className={`flex-1 rounded-xl border py-2 text-xs font-bold ${!isHindi && !isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}
+              >
+                English
+              </button>
+            </div>
+          </div>
+
         </section>
+      </div>
 
-        {/* Appearance / Theme */}
-        <section
-          className={`mb-6 overflow-hidden rounded-2xl border p-6 transition-all duration-200 ${
-            isDark
-              ? "border-gold-400/20 bg-white/[0.03] shadow-inner"
-              : "border-violet-200/80 bg-white shadow-md shadow-violet-100/40"
-          }`}
-        >
-          <div className="mb-6 flex items-center gap-3.5">
-            <div
-              className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${
-                isDark ? "bg-gold-400/10 text-gold-400" : "bg-violet-100 text-violet-700"
-              }`}
-            >
-              {isDark ? <Moon size={22} /> : <Sun size={22} />}
-            </div>
-            <div>
-              <h2 className="text-base font-bold tracking-wide">Appearance</h2>
-              <p
-                className={`text-xs mt-0.5 ${
-                  isDark ? "text-violet-300/80" : "text-violet-500 font-medium"
-                }`}
-              >
-                Change the theme across the app
-              </p>
-            </div>
+      <a
+        href="tel:+919999999999"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Phone size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {isHindi ? "महिला ज्योतिषी • 24x7 उपलब्ध" : isHinglish ? "Mahila Jyotishi • 24x7 Available" : "Female Astrologer • 24x7 Available"}
+            </p>
+            <p className="text-sm font-black">
+              {isHindi ? "दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Dil Se Baat Karein — Wo Pyaar Se Sab Samjha Dengi" : "Talk from the Heart — She Explains with Love"}
+            </p>
           </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              type="button"
-              aria-pressed={isDark}
-              onClick={() => changeTheme("dark")}
-              className={`flex items-center justify-center gap-3 rounded-xl border p-4 font-semibold text-[15px] transition-all duration-200 ${
-                isDark
-                  ? "border-gold-400 bg-violet-950 text-gold-300 shadow-md ring-2 ring-gold-400/20"
-                  : "border-violet-200 bg-violet-50/50 text-violet-400 hover:bg-violet-100 hover:text-violet-700"
-              }`}
-            >
-              <Moon size={18} className={isDark ? "text-gold-400" : ""} />
-              <span>Dark</span>
+        </div>
+      </a>
+    </main>
+  );
+}
