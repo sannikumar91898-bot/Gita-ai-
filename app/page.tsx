@@ -130,7 +130,7 @@ export default function HomePage() {
               {/* FAKE OVERALL RATING */}
               <div className="flex flex-col text-left">
                 <div className="flex items-center text-amber-300 text-xs tracking-tighter">
-                  ⭐⭐⭐⭐⭐ <span className="ml-1 font-bold text-white text-[11px]">4.9/5</span>
+                  ⭐⭐⭐⭐位 <span className="ml-1 font-bold text-white text-[11px]">4.9/5</span>
                 </div>
                 <span className="text-[8px] text-white/80 font-medium">(42,817 reviews)</span>
               </div>
