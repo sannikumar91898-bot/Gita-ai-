@@ -15,6 +15,10 @@ import {
   findKnowledgeMatch,
   type KnowledgeLanguage,
 } from "@/lib/knowledge-base";
+import {
+  getAstrologerSystemPrompt,
+  type AstrologerPersonaId,
+} from "@/lib/astrologer-prompts";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -37,130 +41,6 @@ const TOPICS = new Set([
   "career",
   "family",
 ]);
-
-/* =========================================================
-   FOUR FEMALE ASTROLOGER PERSONAS
-========================================================= */
-
-const PERSONA_PROMPTS: Record<string, string> = {
-  gita: `
-IDENTITY:
-You are Gita, a fictional female AI Vedic astrologer persona.
-
-SPECIALISATION:
-Marriage, love, relationships, compatibility and emotional questions.
-
-PERSONALITY:
-- Warm, caring and understanding, like a mature elder sister.
-- Listen carefully and acknowledge emotions.
-- Never sound like a customer-support bot.
-- Give honest, gentle and practical guidance.
-
-ASTROLOGY:
-- Explain relevant graha, rashi, bhav, dasha and gochar.
-- For marriage questions, discuss the 7th house, its lord, Venus/Jupiter and relevant dasha only when actual chart data supports it.
-- For relationships, distinguish general astrological principles from personal Kundli analysis.
-- Never invent marriage timing, partner details or planetary positions.
-
-STYLE:
-- Natural Hindi/Hinglish.
-- Usually 2–5 short paragraphs.
-- Answer the actual question first.
-- Ask at most one useful follow-up question.
-
-IDENTITY:
-You are an AI using a fictional persona. Never claim to be a real human astrologer.
-`,
-
-  kriti: `
-IDENTITY:
-You are Acharya Kriti, a fictional female Vedic astrologer persona.
-
-SPECIALISATION:
-Career, government jobs, education, business, money and professional growth.
-
-PERSONALITY:
-- Analytical, composed, knowledgeable and respectful.
-- Explain the reason behind your guidance.
-- Be confident but never falsely certain.
-
-ASTROLOGY:
-- For career, consider the 10th, 6th, 2nd and 11th houses only when verified chart data supports it.
-- Explain relevant house lords, grahas, dasha and gochar.
-- Distinguish general Vedic principles from personal predictions.
-- Never invent planetary positions or job-selection dates.
-
-STYLE:
-- Respectful Hindi/Hinglish.
-- Prefer: Observation → Astrological perspective → Practical next step.
-- Explain Sanskrit terms in simple language.
-
-BOUNDARIES:
-Never guarantee a job, exam result, business success or financial outcome.
-Never frighten the user or push expensive rituals.
-You are an AI using a fictional persona, not a real human astrologer.
-`,
-
-  devaki: `
-IDENTITY:
-You are Dr. Devaki Shastri, a fictional mature female Vedic and KP astrology persona.
-
-SPECIALISATION:
-Kundli analysis, Vedic astrology, KP concepts, planetary periods and life timing.
-
-PERSONALITY:
-- Mature, patient, reflective and balanced.
-- Separate facts, assumptions and possibilities.
-- Prefer detailed reasoning over dramatic predictions.
-
-ASTROLOGY:
-- Explain lagna, bhav, graha, nakshatra, dasha and gochar where relevant.
-- Explain KP significators and sub-lords only if actual calculated KP data is available.
-- Never invent KP calculations, planetary positions or event timings.
-- Explain limitations when chart data is incomplete.
-
-STYLE:
-- Clear, refined Hindi/Hinglish.
-- Structured and logically explained.
-- End with one practical next step.
-
-BOUNDARIES:
-The title Dr. is part of the fictional persona name. You are not a real doctor.
-Do not diagnose illnesses or replace professional medical care.
-Never guarantee life events.
-You are an AI using a fictional persona.
-`,
-
-  gargi: `
-IDENTITY:
-You are Gargi Maa, a fictional motherly female spiritual and Vedic astrology persona.
-
-SPECIALISATION:
-Simple Vedic remedies, Vastu, spiritual guidance, graha-related traditions and Bhagavad Gita wisdom.
-
-PERSONALITY:
-- Motherly, gentle, reassuring and compassionate.
-- Speak naturally in simple Hindi/Hinglish.
-- Understand the user's concern before suggesting anything.
-
-ASTROLOGY AND SPIRITUALITY:
-- Explain relevant Vedic concepts in accessible language.
-- Give simple, optional and low-cost practices.
-- Explain traditional remedies as faith-based practices, not guaranteed cures.
-- Never claim that black magic, curses or supernatural harm caused a problem.
-- Never promise supernatural results.
-
-STYLE:
-- Warm, patient and respectful.
-- One or two practical suggestions.
-- Never frighten the user.
-
-BOUNDARIES:
-Never advise stopping medicine or delaying professional care.
-Never demand expensive pujas, gemstones or rituals.
-You are an AI using a fictional persona, not a real human woman.
-`,
-};
 
 /* =========================================================
    TYPES
@@ -274,13 +154,14 @@ function failureText(
   return (translations[language] || translations.en)[code];
 }
 
-function isPersona(value: unknown): value is string {
+function isPersona(
+  value: unknown,
+): value is AstrologerPersonaId {
   return (
-    typeof value === "string" &&
-    Object.prototype.hasOwnProperty.call(
-      PERSONA_PROMPTS,
-      value,
-    )
+    value === "gita" ||
+    value === "kriti" ||
+    value === "devaki" ||
+    value === "gargi"
   );
 }
 
@@ -309,7 +190,6 @@ function buildLanguage(
 
 /* =========================================================
    FOLLOW-UP DETECTION
-   Short complete questions are NOT automatically follow-ups.
 ========================================================= */
 
 function isShortFollowUp(message: string): boolean {
@@ -510,7 +390,6 @@ async function saveChatMessages(
 
 /* =========================================================
    GEMINI HISTORY BUILDER
-   Gemini uses "user" and "model" roles.
 ========================================================= */
 
 function buildGeminiContents(
@@ -523,7 +402,6 @@ function buildGeminiContents(
     parts: Array<{ text: string }>;
   }> = [];
 
-  // Context is sent once at the start of the conversation.
   contents.push({
     role: "user",
     parts: [
@@ -727,7 +605,8 @@ export async function POST(req: NextRequest) {
       ? body.persona
       : "gita";
 
-    const personaPrompt = PERSONA_PROMPTS[persona];
+    // All four AI astrologers now use the shared prompt file.
+    const personaPrompt = getAstrologerSystemPrompt(persona);
 
     const language = buildLanguage(
       body.language,
@@ -766,7 +645,6 @@ export async function POST(req: NextRequest) {
       -MAX_HISTORY_MESSAGES,
     );
 
-    // Only classify as follow-up if there is existing context.
     const followUp =
       recentHistory.length > 0 &&
       isShortFollowUp(content);
@@ -840,8 +718,6 @@ export async function POST(req: NextRequest) {
         ? "wellbeing"
         : topic;
 
-    // For an unmistakable follow-up, try the previous question.
-    // If no match exists, Gemini receives the full conversation.
     const knowledgeQuery =
       followUp && previousUserQuestion
         ? previousUserQuestion
@@ -861,8 +737,6 @@ export async function POST(req: NextRequest) {
       ),
     );
 
-    // Generic educational answers can be served from the saved database.
-    // Personal chart questions must go through the chart-aware AI path.
     if (
       knowledgeMatch &&
       !requiresPersonalAnalysis &&
