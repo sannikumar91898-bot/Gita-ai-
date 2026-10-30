@@ -101,6 +101,46 @@ function extractRemedy(response: string) {
   };
 }
 
+// 🟢 1. GET HANDLER: चैट पेज लोड होने पर पुरानी हिस्ट्री मंगाने के लिए
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const conversationId = searchParams.get("conversationId");
+    const userId = searchParams.get("userId");
+
+    if (!isValidUuid(conversationId) || !isValidUuid(userId)) {
+      return NextResponse.json(
+        { error: "Valid conversationId and userId are required." },
+        { status: 400 }
+      );
+    }
+
+    const chatHistory = await db
+      .select()
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversationId),
+          eq(messages.userId, userId)
+        )
+      )
+      .orderBy(desc(messages.createdAt))
+      .limit(50); // सुरक्षा के लिए लिमिट
+
+    return NextResponse.json({
+      success: true,
+      history: chatHistory.reverse(),
+    });
+  } catch (error) {
+    console.error("Chat API GET error:", error);
+    return NextResponse.json(
+      { error: "Internal server error while fetching history." },
+      { status: 500 }
+    );
+  }
+}
+
+// 🔵 2. POST HANDLER: नया मैसेज भेजने, AI प्रेडिक्शन सेव करने और रेमेडी डालने के लिए
 export async function POST(request: Request) {
   try {
     if (!process.env.OPENAI_API_KEY) {
@@ -281,55 +321,3 @@ Step-by-step instructions for the user
       model: process.env.OPENAI_MODEL || "gpt-4o",
       messages: [
         { role: "system", content: systemPrompt },
-        { role: "system", content: astrologyContext },
-        ...history,
-        { role: "user", content: userMessageContent },
-      ],
-      temperature: 0.7,
-      max_tokens: 900,
-    });
-
-    const rawReply =
-      completion.choices[0]?.message?.content?.trim() || "";
-
-    if (!rawReply) {
-      return NextResponse.json(
-        { error: "AI returned an empty response. Please try again." },
-        { status: 502 }
-      );
-    }
-
-    const extracted = extractRemedy(rawReply);
-
-    if (!extracted.message) {
-      return NextResponse.json(
-        { error: "AI response could not be processed." },
-        { status: 502 }
-      );
-    }
-
-    await db.insert(messages).values([
-      {
-        conversationId,
-        userId,
-        role: "user",
-        content: userMessageContent,
-      },
-      {
-        conversationId,
-        userId,
-        role: "assistant",
-        content: extracted.message,
-      },
-    ]);
-
-    if (extracted.remedy) {
-      await db.insert(remedies).values({
-        userId,
-        title: extracted.remedy.title,
-        description: extracted.remedy.description,
-        category: conversationRecord.topic || "general",
-        completedDates: [],
-      });
-    }
-
