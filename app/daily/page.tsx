@@ -7,15 +7,10 @@ import {
   Sparkles,
   Palette,
   Hash,
-  AlertTriangle,
-  LayoutGrid,
   RefreshCw,
-  MessageSquare,
   CalendarDays,
-  TrendingUp,
   Heart,
-  ShieldCheck,
-  Zap,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -30,6 +25,12 @@ type DailyReading = {
   luckyNumber?: number;
   affirmation?: string;
   source?: string;
+};
+
+type ApiResponse = {
+  reading?: unknown;
+  source?: string;
+  error?: string;
 };
 
 const SIGNS = [
@@ -59,12 +60,19 @@ export default function DailyPage() {
   const [reading, setReading] = useState<DailyReading | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-
   const [refreshKey, setRefreshKey] = useState(0);
+
+  const today = new Date().toLocaleDateString(
+    isHindi ? "hi-IN" : "en-IN",
+    {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }
+  );
 
   useEffect(() => {
     const controller = new AbortController();
-    let cancelled = false;
 
     async function loadReading() {
       setLoading(true);
@@ -89,37 +97,32 @@ export default function DailyPage() {
           }
         );
 
-        const data: unknown = await response.json().catch(() => null);
+        const data: ApiResponse | null = await response
+          .json()
+          .catch(() => null);
 
         if (!response.ok) {
-          const message =
-            data &&
-            typeof data === "object" &&
-            "error" in data &&
-            typeof data.error === "string"
-              ? data.error
-              : isHindi
-                ? "आज का राजयोग राशिफल अभी लोड नहीं हो सका।"
+          throw new Error(
+            data?.error ||
+              (isHindi
+                ? "आज का राशिफल अभी उपलब्ध नहीं है।"
                 : isHinglish
-                  ? "Aaj ka Rajyog rashifal abhi available nahi hai."
-                  : "Today's premium reading is not available right now.";
-
-          throw new Error(message);
+                  ? "Aaj ka rashifal abhi available nahi hai."
+                  : "Today's horoscope is currently unavailable.")
+          );
         }
 
         if (
           !data ||
-          typeof data !== "object" ||
-          !("reading" in data) ||
           !data.reading ||
           typeof data.reading !== "object"
         ) {
           throw new Error(
             isHindi
-              ? "सर्वर से सही महागोचर डेटा प्राप्त नहीं हुआ।"
+              ? "सर्वर से सही राशिफल डेटा नहीं मिला।"
               : isHinglish
-                ? "Server se valid chart data nahi mila."
-                : "The server returned an invalid transit reading."
+                ? "Server se valid rashifal data nahi mila."
+                : "The server returned invalid horoscope data."
           );
         }
 
@@ -127,14 +130,15 @@ export default function DailyPage() {
 
         if (
           typeof raw.signName !== "string" ||
-          typeof raw.focus !== "string"
+          typeof raw.focus !== "string" ||
+          !raw.focus.trim()
         ) {
           throw new Error(
             isHindi
-              ? "राशिफल का डेटा अपूर्ण है।"
+              ? "राशिफल का डेटा अधूरा है।"
               : isHinglish
                 ? "Rashifal ka data incomplete hai."
-                : "The reading chart matrix data is incomplete."
+                : "The horoscope data is incomplete."
           );
         }
 
@@ -144,7 +148,7 @@ export default function DailyPage() {
             ? (raw.luckyColour as Record<string, unknown>)
             : null;
 
-        const colour =
+        const luckyColour =
           rawColour &&
           typeof rawColour.name === "string" &&
           typeof rawColour.hex === "string" &&
@@ -168,51 +172,34 @@ export default function DailyPage() {
             ? raw.affirmation
             : undefined;
 
-        if (!cancelled) {
-          setReading({
-            signName: raw.signName,
-            focus: raw.focus,
-            luckyColour: colour,
-            luckyNumber,
-            affirmation,
-            source:
-              typeof raw.source === "string"
-                ? raw.source
-                : typeof data.source === "string"
-                  ? data.source
-                  : "gemini",
-          });
-        }
+        setReading({
+          signName: raw.signName,
+          focus: raw.focus,
+          luckyColour,
+          luckyNumber,
+          affirmation,
+          source:
+            typeof raw.source === "string"
+              ? raw.source
+              : data.source,
+        });
       } catch (err) {
-        if (cancelled || controller.signal.aborted) {
-          return;
-        }
+        if (controller.signal.aborted) return;
 
         console.error("Daily reading error:", err);
 
-        if (!cancelled) {
-          setReading({
-            signName: sign === "General" ? (isHindi ? "सभी 12 राशियाँ" : "All Signs") : sign.split(" ")[0],
-            focus: isHindi
-              ? "आज आपकी कुंडली के कर्म और लाभ भाव (10th & 11th House) में गोचर कर रहे ग्रहों की चाल आपके भाग्य को प्रचंड गति दे रही है। बृहस्पति की शुभ अमृत दृष्टि आपके संचित धन को तेज़ी से बढ़ाने और राहू-केतु जनित बाधाओं को काटने वाली है। व्यापारिक और करियर के क्षेत्र में अभूतपूर्व आर्थिक लाभ के महायोग बन रहे हैं, सही समय पर सही निर्णय लें!"
+        setReading(null);
+        setError(
+          err instanceof Error
+            ? err.message
+            : isHindi
+              ? "राशिफल लोड नहीं हो सका।"
               : isHinglish
-                ? "Aaj aapki kundali ke Karma aur Labh bhaav (10th & 11th House) mein grahon ka transit aapke bhagya ko top par le ja raha hai. Jupiter ki shubh drishti se blocked money wapas milega aur Rahu-Ketu ka nishkarsh aapke favour mein badlega. Badi deal final karne ka sahi samay hai."
-                : "Today's premium alignment in your 10th house of profession and 11th house of financial gains triggers a direct Rajyoga. Transiting Jupiter dissolves previous blockages, indicating sudden financial breakthroughs and clear business victories.",
-            luckyColour: {
-              name: isHindi ? "शाही केसरिया सुनहरा" : isHinglish ? "Royal Saffron Gold" : "Royal Saffron Gold",
-              hex: "#F59E0B"
-            },
-            luckyNumber: 7,
-            affirmation: isHindi
-              ? "मैं नवग्रहों की अनुकूल ऊर्जा और महालक्ष्मी योग को सहर्ष स्वीकार करता हूँ। मेरा पुरुषार्थ आज सिद्ध होगा।"
-              : isHinglish
-                ? "Mein Navgrahon ki favourable energy aur Mahalaxmi yog ko accept karta hu. Mera bhagya aaj top par hai."
-                : "I invoke the auspicious strength of the Navagrahas. Wealth and victory align with my destiny today.",
-            source: "calculated"
-          });
-        }
+                ? "Rashifal load nahi ho saka."
+                : "Unable to load the horoscope."
+        );
       } finally {
-        if (!cancelled) {
+        if (!controller.signal.aborted) {
           setLoading(false);
         }
       }
@@ -221,43 +208,21 @@ export default function DailyPage() {
     void loadReading();
 
     return () => {
-      cancelled = true;
       controller.abort();
     };
   }, [sign, lang, refreshKey, isHindi, isHinglish]);
 
   const title = isHindi
-    ? "दैनिक राजयोग राशिफल"
+    ? "दैनिक राशिफल"
     : isHinglish
-      ? "Daily Rajyog Rashifal"
-      : "Daily Premium Horoscope";
+      ? "Daily Rashifal"
+      : "Daily Horoscope";
 
   const intro = isHindi
-    ? "अपनी राशि चुनें और सीधे पंडित जी के गहन नवग्रह विश्लेषण और 100% सटीक महा-भाग्यशाली भविष्यफल का लाभ उठाएं।"
+    ? "अपनी राशि चुनें और आज का ज्योतिषीय मार्गदर्शन पढ़ें।"
     : isHinglish
-      ? "Apni rashi chuniye aur seedhe Pandit Ji ke gahan Navgrah analysis aur 100% accurate bhavishyafal ka labh uthayein."
-      : "Select your zodiac sign to unlock Pandit Ji's deep planetary transit analysis and 100% confident royal predictions.";
-
-  const today = new Date().toLocaleDateString(
-    lang === "en" ? "en-IN" : "hi-IN",
-    {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }
-  );
-
-  const pageClass = isDark
-    ? "bg-slate-950 text-violet-50"
-    : "bg-gradient-to-b from-orange-50/40 to-white text-slate-900";
-
-  const cardClass = isDark
-    ? "border-slate-800 bg-slate-900/70"
-    : "border-orange-100 bg-white shadow-xl";
-
-  const mutedClass = isDark
-    ? "text-slate-300"
-    : "text-gray-700";
+      ? "Apni rashi chuniye aur aaj ka astrology guidance padhiye."
+      : "Select your zodiac sign and explore today's astrology guidance.";
 
   const selectedSign = SIGNS.find((item) => item.id === sign);
 
@@ -269,11 +234,24 @@ export default function DailyPage() {
         : selectedSign.en
     : sign;
 
+  const pageClass = isDark
+    ? "bg-slate-950 text-violet-50"
+    : "bg-gradient-to-b from-orange-50/40 to-white text-slate-900";
+
+  const cardClass = isDark
+    ? "border-slate-800 bg-slate-900/70"
+    : "border-orange-100 bg-white shadow-xl";
+
+  const mutedClass = isDark
+    ? "text-slate-300"
+    : "text-gray-600";
+
   return (
     <main className={`min-h-screen w-full px-4 pb-28 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
-        {/* Header Block */}
-        <header className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${cardClass}`}>
+        <header
+          className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${cardClass}`}
+        >
           <div className="flex min-w-0 items-center gap-3">
             <Link
               href="/"
@@ -289,13 +267,268 @@ export default function DailyPage() {
 
             <div className="min-w-0">
               <h1 className="flex items-center gap-1.5 text-base font-black uppercase tracking-tight text-orange-600">
-                <Sun className="shrink-0 text-amber-500" size={18} />
+                <Sun
+                  className="shrink-0 text-amber-500"
+                  size={18}
+                />
                 <span className="truncate">{title}</span>
               </h1>
-              <p className="mt-0.5 text-[11px] font-bold text-gray-400">
+
+              <p className="mt-0.5 flex items-center gap-1 text-[11px] font-bold text-gray-400">
+                <CalendarDays size={12} />
                 {today}
               </p>
             </div>
           </div>
+
           <button
             type="button"
+            onClick={() => setRefreshKey((value) => value + 1)}
+            disabled={loading}
+            aria-label="Refresh horoscope"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500 transition hover:bg-orange-500/20 disabled:opacity-50"
+          >
+            <RefreshCw
+              size={17}
+              className={loading ? "animate-spin" : ""}
+            />
+          </button>
+        </header>
+
+        <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-orange-600 via-amber-600 to-yellow-500 p-6 text-white shadow-xl">
+          <div className="relative z-10 space-y-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20">
+              <Sparkles size={25} />
+            </div>
+
+            <h2 className="text-2xl font-black">
+              {title}
+            </h2>
+
+            <p className="max-w-sm text-sm leading-6 text-orange-50">
+              {intro}
+            </p>
+          </div>
+
+          <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -bottom-12 -right-4 h-32 w-32 rounded-full bg-yellow-200/10 blur-2xl" />
+        </section>
+
+        <section
+          className={`space-y-3 rounded-2xl border p-4 ${cardClass}`}
+        >
+          <label
+            htmlFor="daily-sign"
+            className="block text-sm font-bold"
+          >
+            {isHindi
+              ? "अपनी राशि चुनें"
+              : isHinglish
+                ? "Apni Rashi Chuniye"
+                : "Choose Your Zodiac Sign"}
+          </label>
+
+          <select
+            id="daily-sign"
+            value={sign}
+            onChange={(event) => setSign(event.target.value)}
+            className={`w-full rounded-xl border px-4 py-3 text-sm outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 ${
+              isDark
+                ? "border-slate-700 bg-slate-800 text-white"
+                : "border-orange-200 bg-orange-50 text-gray-900"
+            }`}
+          >
+            {SIGNS.map((item) => (
+              <option key={item.id} value={item.id}>
+                {isHindi
+                  ? item.hi
+                  : isHinglish
+                    ? item.hg
+                    : item.en}
+              </option>
+            ))}
+          </select>
+
+          <button
+            type="button"
+            onClick={() => setRefreshKey((value) => value + 1)}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-md transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <RefreshCw
+              size={16}
+              className={loading ? "animate-spin" : ""}
+            />
+            {loading
+              ? isHindi
+                ? "लोड हो रहा है..."
+                : isHinglish
+                  ? "Loading ho raha hai..."
+                  : "Loading..."
+              : isHindi
+                ? "राशिफल देखें"
+                : isHinglish
+                  ? "Rashifal Dekhein"
+                  : "View Horoscope"}
+          </button>
+        </section>
+
+        {loading && (
+          <section
+            className={`rounded-2xl border p-8 text-center ${cardClass}`}
+          >
+            <RefreshCw
+              size={30}
+              className="mx-auto animate-spin text-orange-500"
+            />
+
+            <p className="mt-3 text-sm font-semibold">
+              {isHindi
+                ? "आज का राशिफल तैयार हो रहा है..."
+                : isHinglish
+                  ? "Aaj ka rashifal taiyar ho raha hai..."
+                  : "Preparing today's horoscope..."}
+            </p>
+          </section>
+        )}
+
+        {!loading && error && (
+          <section className="rounded-2xl border border-red-200 bg-red-50 p-5">
+            <div className="flex items-center gap-2 text-red-700">
+              <AlertCircle size={19} />
+              <h3 className="text-sm font-black">
+                {isHindi
+                  ? "राशिफल उपलब्ध नहीं है"
+                  : isHinglish
+                    ? "Rashifal available nahi hai"
+                    : "Reading unavailable"}
+              </h3>
+            </div>
+
+            <p className="mt-2 text-sm leading-6 text-red-700">
+              {error}
+            </p>
+
+            <button
+              type="button"
+              onClick={() => setRefreshKey((value) => value + 1)}
+              className="mt-4 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white"
+            >
+              {isHindi ? "फिर कोशिश करें" : "Try Again"}
+            </button>
+          </section>
+        )}
+
+        {!loading && reading && (
+          <section
+            className={`space-y-5 rounded-2xl border p-5 ${cardClass}`}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-orange-500">
+                  {isHindi
+                    ? "आपकी राशि"
+                    : isHinglish
+                      ? "Aapki Rashi"
+                      : "Your Zodiac"}
+                </p>
+
+                <h2 className="mt-1 text-xl font-black">
+                  {signLabel}
+                </h2>
+              </div>
+
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/10 text-orange-500">
+                <Sun size={25} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="flex items-center gap-2 text-sm font-black text-orange-500">
+                <Sparkles size={17} />
+                {isHindi
+                  ? "आज का ज्योतिषीय मार्गदर्शन"
+                  : isHinglish
+                    ? "Aaj Ka Guidance"
+                    : "Today's Guidance"}
+              </h3>
+
+              <p className={`whitespace-pre-wrap text-sm leading-7 ${mutedClass}`}>
+                {reading.focus}
+              </p>
+            </div>
+
+            {reading.luckyColour && (
+              <div className="flex items-center gap-3 rounded-xl bg-orange-500/5 p-3">
+                <div
+                  className="h-11 w-11 shrink-0 rounded-full border border-black/10"
+                  style={{
+                    backgroundColor: reading.luckyColour.hex,
+                  }}
+                />
+
+                <div>
+                  <p className="text-xs text-gray-400">
+                    {isHindi
+                      ? "शुभ रंग"
+                      : isHinglish
+                        ? "Lucky Colour"
+                        : "Lucky Colour"}
+                  </p>
+
+                  <p className="text-sm font-bold">
+                    {reading.luckyColour.name}
+                  </p>
+                </div>
+
+                <Palette
+                  size={19}
+                  className="ml-auto text-orange-500"
+                />
+              </div>
+            )}
+
+            {typeof reading.luckyNumber === "number" && (
+              <div className="flex items-center gap-3 rounded-xl bg-orange-500/5 p-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-500/10 text-orange-500">
+                  <Hash size={20} />
+                </div>
+
+                <div>
+                  <p className="text-xs text-gray-400">
+                    {isHindi
+                      ? "शुभ अंक"
+                      : isHinglish
+                        ? "Lucky Number"
+                        : "Lucky Number"}
+                  </p>
+
+                  <p className="text-lg font-black">
+                    {reading.luckyNumber}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {reading.affirmation && (
+              <div className="rounded-xl border border-orange-200/30 bg-orange-500/5 p-4">
+                <p className="mb-2 flex items-center gap-2 text-xs font-black text-orange-500">
+                  <Heart size={15} />
+                  {isHindi
+                    ? "आज का सकारात्मक विचार"
+                    : isHinglish
+                      ? "Aaj Ka Positive Thought"
+                      : "Daily Affirmation"}
+                </p>
+
+                <p className="text-sm leading-6">
+                  {reading.affirmation}
+                </p>
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+    </main>
+  );
+}
