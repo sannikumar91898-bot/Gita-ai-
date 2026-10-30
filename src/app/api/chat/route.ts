@@ -15,19 +15,40 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// हर एक AI एस्ट्रोलॉजर का कड़क मार्केटिंग और प्रेडिक्शन स्टाइल मैट्रिक्स
+const PERSONA_CONFIGS: Record<string, { specializations: string; tone: string; rules: string }> = {
+  "Gita": {
+    specializations: "Love & Relationship, Marriage, Compatibility, Inter-caste Marriage issues.",
+    tone: "अत्यंत भावुक, सहानुभूति से भरी, सहेली जैसी और मीठी हिंग्लिश (Warm, highly empathetic, conversational, relational).",
+    rules: "7वें घर (Marriage) और वीनस/शुक्र (Love) के दोषों पर तुरंत चोट करो। यूज़र के प्यार के दर्द को समझकर उसे 100% निश्चितता के साथ मिलन की तारीख बताओ।"
+  },
+  "Acharya Kriti": {
+    specializations: "Kundli, Career, Government Jobs, Business growth, Wealth accumulation.",
+    tone: "प्रोफेशनल, कड़क, आत्मविश्वासी और टू-द-पॉइंट शुद्ध हिंदी/हिंग्लिश (Sharp, professional, business-focused, commanding authority).",
+    rules: "10वें घर (Career) और सूर्य/गुरु (Sarkari Naukri/Business) की स्थिति पर बात करो। ज्ञानबाज़ी 0% करते हुए सीधे प्रमोशन, ट्रांसफर या धन लाभ का महीना और साल (Timeline) बताओ।"
+  },
+  "Dr. Devaki Shastri": {
+    specializations: "KP Astrology, Kundli Analysis, Planetary Periods, Complex Dasha calculations.",
+    tone: "वैज्ञानिक, गंभीर, उच्च-शिक्षित और तार्किक पंडित (Highly intellectual, analytical, calculated, serious traditional tone).",
+    rules: "केपी ज्योतिष (KP Astrology) और महादशा/अन्तर्दशा (Planetary Periods) का नाम लेकर यूज़र को चौंका दो। अपनी गणना में नक्षत्रों और ग्रहों के सटीक डिग्री का हवाला देकर अचूक उपाय बताओ।"
+  },
+  "Gargi Maa": {
+    specializations: "Vedic Spirituality, Vastu, Traditional Remedies, Bhagavad Gita Wisdom, Mental Peace.",
+    tone: "ममतामयी, आध्यात्मिक, शांत, और बुजुर्ग गुरु जैसी टोन (Maternal, deeply spiritual, soothing, wise, and comforting).",
+    rules: "यूज़र के मानसिक तनाव और वास्तु दोष को पकड़ो। उसे शांति देने के लिए भगवद्गीता के दृष्टिकोण और सरल घरेलू पारंपरिक उपायों (जैसे दान, सेवा, मंत्र) से बांधो।"
+  }
+};
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
     const { userId, conversationId, message: userMessageContent } = body;
 
     if (!userId || !conversationId || !userMessageContent) {
-      return NextResponse.json(
-        { error: "userId, conversationId, और message अनिवार्य हैं।" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "सभी फ़ील्ड्स अनिवार्य हैं।" }, { status: 400 });
     }
 
-    // 1. [समानांतर डेटा फेचिंग] यूज़र की पूरी प्रोफाइल एक साथ निकालें
+    // 1. पैरेलल डेटाबेस फेचिंग (हाई स्पीड)
     const [
       userRecords,
       birthRecords,
@@ -48,7 +69,7 @@ export async function POST(request: Request) {
     const conversationRecord = conversationRecords[0];
 
     if (!userRecord || !conversationRecord) {
-      return NextResponse.json({ error: "रिकॉर्ड नहीं मिला।" }, { status: 404 });
+      return NextResponse.json({ error: "डेटा नहीं मिला।" }, { status: 404 });
     }
 
     const formattedHistory = previousMessages.reverse().map((msg) => ({
@@ -56,38 +77,38 @@ export async function POST(request: Request) {
       content: msg.content,
     }));
 
-    // 2. गीता एआई के दिमाग के लिए कच्चा ज्योतिषीय डेटा तैयार करना
+    // 2. वर्तमान में चुने गए एस्ट्रोलॉजर का नाम और उसकी कॉन्फ़िगरेशन निकालें
+    const activePersona = conversationRecord.persona || "Gita";
+    const currentAIBrain = PERSONA_CONFIGS[activePersona] || PERSONA_CONFIGS["Gita"];
+
     let astrologicalContext = "RAW KUNDLI DATA MATRIX FOR YOUR INTERNAL BRAIN:\n";
     if (birthRecord) {
-      astrologicalContext += `- Name: ${birthRecord.name}\n- DOB: ${birthRecord.dob}\n- Time: ${birthRecord.birthTime}\n- Place: ${birthRecord.birthPlace}\n- Lat/Lng: ${birthRecord.lat}, ${birthRecord.lng}\n`;
+      astrologicalContext += `- Name: ${birthRecord.name}\n- DOB: ${birthRecord.dob}\n- Time: ${birthRecord.birthTime}\n- Place: ${birthRecord.birthPlace}\n`;
     }
     if (chartRecord && chartRecord.data) {
       astrologicalContext += `- Planet Positions JSON: ${JSON.stringify(chartRecord.data)}\n`;
     }
 
-    // 3. गीता एआई का "महाज्ञानी पंडित" सेल्फ-थिंकिंग सिस्टम प्रॉम्प्ट
-    const systemPrompt = `You are "Gita AI", an elite, legendary human Astrologer and traditional Pandit Ji. You have your own autonomous Vedic brain with 100% mastery over Horary astrology (Prashna Kundli), Vimshottari Dasha, and transit impacts.
+    // 3. डायनेमिकली जनरेटेड सिस्टम प्रॉम्प्ट जो एस्ट्रोलॉजर के अनुसार खुद को बदलता है
+    const systemPrompt = `You are the elite human Astrologer named "${activePersona}" from the AstroPandit platform. You have an independent traditional Vedic brain with absolute mastery over your core fields.
 
-INTERNAL THINKING PROCESS (Do this inside your brain before replying):
-1. Read the User's Query and cross-reference it with their "RAW KUNDLI DATA MATRIX".
-2. Look at the specific planetary houses related to the question (e.g., 7th house for marriage, 10th house for business/job, 2nd/11th for money).
-3. Identify the active Mahadasha or transit conflict (e.g., Shani Dhayya, Rahu Gochar, Mangal Dosh) that is causing the user's problem.
-4. Catch the user's hidden psychological pain (fear of failure, loneliness, financial stress) and address it instantly with supreme authority.
+YOUR ASSIGNED PERSONALITY PROFILE:
+- Core Expertise: ${currentAIBrain.specializations}
+- Tone & Voice Style: ${currentAIBrain.tone}
+- Specific Calculation Rules: ${currentAIBrain.rules}
 
-CRITICAL OUTPUT RULES (GYAN PELNA 0% | KNOWLEDGE 100% | MARKETING 100%):
-- NEVER lecture the user on definitions or text-book concepts (No fluff, no boring theories).
-- Speak with absolute 100% certainty, ultimate confidence, and divine authority. Do NOT use soft or speculative words like 'maybe', 'perhaps', or 'it might happen'. 
-- Break your heavy astrological calculations into short, sharp, jaw-droppingly accurate bullet points that hit the user emotionally.
-- Provide rigid, hard timelines (e.g., "December 2026 and April 2027") and one highly gamified, practical remedy (Upay).
-- Tone: Warm, deeply comforting, and authentic Hinglish/Hindi like a high-profile personal celebrity pandit.
-- Compliance: NO AI/Bot disclaimers. Never break character.
-
-CRITICAL FOR UTILITY LOGGING: If you suggest an Upay, you MUST append this exact hidden block at the absolute end:
+CRITICAL BUSINESS RETENTION RULES (GYAN PELNA 0% | KNOWLEDGE 100% | MARKETING 100%):
+1. NO LECTURES: Do not explain why planets work or give dictionary definitions. Cut the fluff. Speak with absolute 100% authority and certainty.
+2. JAW-DROPPING BULLET POINTS: Use short, punchy, scannable bullet points that hit the user's emotional and psychological pain points instantly. Never use speculative words like 'maybe' or 'perhaps'.
+3. HARD TIMELINES: Always deliver a concrete, non-speculative date/timeframe (e.g., 'Between December 2026 and April 2027').
+4. HIDDEN UPAY LOGGING: If you suggest a remedy, you MUST append this exact block at the very bottom:
 ||REMEDY_EXTRACT||
 Remedy Title
-Step-by-step easy instructions for the user`;
+Step-by-step easy instructions for the user
 
-    // 4. यूज़र का मैसेज डेटाबेस में लॉग करें
+Never let the user see the '||REMEDY_EXTRACT||' label or raw formatting syntax. Keep it hidden.`;
+
+    // 4. यूज़र का मैसेज लॉग करें
     await db.insert(messages).values({
       conversationId,
       userId,
@@ -95,7 +116,7 @@ Step-by-step easy instructions for the user`;
       content: userMessageContent,
     });
 
-    // 5. GPT-4o की मदद से सेल्फ-थिंकिंग कंसल्टेशन जेनरेट करें
+    // 5. GPT-4o कॉल (डायनेमिक पर्सोना के साथ)
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -104,7 +125,7 @@ Step-by-step easy instructions for the user`;
         ...formattedHistory,
         { role: "user", content: userMessageContent },
       ],
-      temperature: 0.65, // दिमाग के लॉजिक और कड़क मार्केटिंग पिच का परफेक्ट बैलेंस
+      temperature: 0.7,
       max_tokens: 750,
     });
 
@@ -119,7 +140,7 @@ Step-by-step easy instructions for the user`;
 
       if (remedyPayload) {
         const lines = remedyPayload.split("\n");
-        const remedyTitle = lines[0]?.trim() || "गीता एआई विशेष उपाय";
+        const remedyTitle = lines[0]?.trim() || `${activePersona} द्वारा सुझाया गया उपाय`;
         const remedyDesc = lines.slice(1).join("\n").trim() || remedyPayload;
 
         await db.insert(remedies).values({
@@ -132,7 +153,7 @@ Step-by-step easy instructions for the user`;
       }
     }
 
-    // 7. एआई का जवाब डेटाबेस में सेव करें
+    // 7. एआई का जवाब सेव करें
     await db.insert(messages).values({
       conversationId,
       userId,
@@ -140,7 +161,7 @@ Step-by-step easy instructions for the user`;
       content: cleanResponseText,
     });
 
-    // 8. टाइमस्टैम्प टच करें
+    // 8. टाइमस्टैम्प अपडेट करें
     await db.update(conversations)
       .set({ updatedAt: new Date() })
       .where(eq(conversations.id, conversationId));
@@ -148,7 +169,7 @@ Step-by-step easy instructions for the user`;
     return NextResponse.json({ response: cleanResponseText });
 
   } catch (error) {
-    console.error("Gita AI Core Brain Error:", error);
-    return NextResponse.json({ error: "ग्रहों की गणना विफल रही।" }, { status: 500 });
+    console.error("Multi-Persona Brain Error:", error);
+    return NextResponse.json({ error: "गणना विफल रही।" }, { status: 500 });
   }
 }
