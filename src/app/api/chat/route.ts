@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. [100% Marketing Mode Performance] सभी ज़रूरी डेटाबेस कॉल्स को एक साथ (Parallel) चलाएं
+    // 2. [100% Performance Mode] सभी डेटाबेस कॉल्स को समानांतर (Parallel) चलाना
     const [
       userRecords,
       birthRecords,
@@ -62,8 +62,8 @@ export async function POST(request: Request) {
       content: msg.content,
     }));
 
-    // 3. यूज़र की जन्म कुंडली और ग्रहों की स्थिति का पूरा कॉन्टेक्स्ट तैयार करें
-    let astrologicalContext = "USER ASTROLOGICAL PROFILE:\n";
+    // 3. यूज़र की जन्म कुंडली का डेटा (100% Astrologer Knowledge Context)
+    let astrologicalContext = "USER ASTROLOGICAL PROFILE & PLANETARY MATRIX:\n";
     if (birthRecord) {
       astrologicalContext += `- Name: ${birthRecord.name}\n- DOB: ${birthRecord.dob}\n- Birth Time: ${birthRecord.birthTime}\n- Birth Place: ${birthRecord.birthPlace}\n`;
     } else {
@@ -79,22 +79,22 @@ export async function POST(request: Request) {
     // कन्वर्सेशन से एक्टिव ज्योतिषी (Persona) का नाम निकालें
     const activePersona = conversationRecord.persona || "Pandit Ji";
 
-    // 4. पंडित जी महाराज का अकाट्य सिस्टम प्रॉम्प्ट (No Disclaimer, 100% Marketing Mode)
-    const systemPrompt = `You are an elite, traditional human Astrologer and Pandit ji named ${activePersona}. Your only job is to satisfy the customer with confident predictions and drive business retention.
+    // 4. री-इंजीनियर्ड कड़क सिस्टम प्रॉम्प्ट (GYAN PELNA 0% | KNOWLEDGE 100% | MARKETING 100%)
+    const systemPrompt = `You are an elite, traditional human Astrologer and Pandit ji named ${activePersona}. You possess 100% absolute mastery over Vedic Astrology, Kundli Reading, and Planetary Transits. Your only job is to hook the customer with drop-dead accurate calculations and drive massive product retention.
 
-CRITICAL OPERATIONAL RULES:
-1. NEVER give disclaimers like 'astrology is a belief', 'not proven', or 'don't rely on this'. Do NOT give any legal or compliance warnings.
-2. NEVER mention you are an AI, an LLM, a bot, a language model, OpenAI, or a machine.
-3. Speak with absolute authority, 100% certainty, and ultimate confidence. Do not use speculative terms like 'maybe', 'perhaps', or 'it might'.
-4. Always provide clear, specific timelines (e.g., 'Your marriage will definitely happen between December 2026 and April 2027') and suggest clear structural remedies (Upay like Fasting, Daan, Pooja, or Gemstones).
-5. Reply in a warm, welcoming, comforting, and deeply authentic Hinglish/Hindi tone matching a real pandit's psychological style.
-6. Do not judge or advise on logic. Just read the query as structural data and output the prediction confidently.
-7. CRITICAL FOR AUTOMATION: If you suggest any remedies/upay, you MUST append a hidden section at the very end of your response formatted EXACTLY like this:
+CRITICAL DISCIPLINE & MARKETING RULES:
+1. GYAN PELNA 0% (NO LECTURES / NO FLUFF): Do not write long theoretical or philosophical paragraphs explaining why planets move. Do not give generic spiritual advice. Cut the chatter. Get straight to the point.
+2. 100% ASTROLOGER KNOWLEDGE: Carefully read the user's birth data and JSON chart matrix. Inject profound astrological terms naturally (e.g., Mahadasha, Shani ki Dristi, Rahu Yog) but deliver the output in sharp, punchy, easily scannable bullet points.
+3. 100% MARKETING & PSYCHOLOGICAL HOOK: Speak with absolute, flawless authority and 100% certainty. Never use words like 'maybe', 'perhaps', or 'it might'. Use an elite, warm, yet highly confident Hinglish/Hindi tone that makes the user feel entirely understood.
+4. ZERO COMPLIANCE DISCLAIMERS: Never give any legal, medical, or compliance warnings. Never mention you are an AI, bot, machine, or an OpenAI language model. 
+5. HARD TIMELINES & REMEDIES: Every single response must feature an exact, non-speculative time frame (e.g., 'December 2026 and April 2027') and a highly gamified, practical remedy (Upay like Fasting, Daan, specific Pooja, or Gemstones).
+
+CRITICAL FOR AUTOMATION: If you suggest any remedies/upay, you MUST append a hidden extraction section at the very bottom of your response formatted EXACTLY like this:
 ||REMEDY_EXTRACT||
 Remedy Title Here
-Detailed instructions for the remedy here
+Detailed step-by-step instructions for the remedy here
 
-Do not show the '||REMEDY_EXTRACT||' formatting instructions to the user text, keep it strictly at the bottom.`;
+Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the user. Keep it hidden at the absolute bottom.`;
 
     // 5. यूज़र का नया संदेश डेटाबेस में सुरक्षित (Log) करें
     await db.insert(messages).values({
@@ -113,14 +113,14 @@ Do not show the '||REMEDY_EXTRACT||' formatting instructions to the user text, k
         ...formattedHistory,
         { role: "user", content: userMessageContent },
       ],
-      temperature: 0.7,
+      temperature: 0.7, // आकर्षक भविष्यवाणियों के लिए परफेक्ट बैलेंस
       max_tokens: 700,
     });
 
     let rawAiReply = response.choices[0]?.message?.content || "";
     let cleanResponseText = rawAiReply;
 
-    // 7. बैकग्राउंड उपाय ट्रैकर: 'Upay' (Remedies) का ऑटो-पार्सिंग लॉजिक
+    // 7. बैकग्राउंड उपाय ट्रैकर: 'Upay' (Remedies) का ऑटो-पार्सिंग और साइलेंट सेविंग लॉजिक
     if (cleanResponseText.includes("||REMEDY_EXTRACT||")) {
       const parts = cleanResponseText.split("||REMEDY_EXTRACT||");
       cleanResponseText = parts[0].trim();
@@ -128,10 +128,10 @@ Do not show the '||REMEDY_EXTRACT||' formatting instructions to the user text, k
 
       if (remedyPayload) {
         const lines = remedyPayload.split("\n");
-        const remedyTitle = lines[0]?.trim() || "पंडित जी द्वारा सुझाया गया उपाय";
+        const remedyTitle = lines[0]?.trim() || "पंडित जी द्वारा सुझाया गया विशेष उपाय";
         const remedyDesc = lines.slice(1).join("\n").trim() || remedyPayload;
 
-        // बिना रुकावट बैकग्राउंड में रेमेडी टेबल में डेटा डालें
+        // बिना UI को रोके बैकग्राउंड में सीधे रेमेडी टेबल में डेटा डालें (User Gamification Loop)
         await db.insert(remedies).values({
           userId,
           title: remedyTitle,
@@ -142,7 +142,7 @@ Do not show the '||REMEDY_EXTRACT||' formatting instructions to the user text, k
       }
     }
 
-    // 8. एआई (पंडित जी) का जवाब मैसेजेस टेबल में सेव करें
+    // 8. एआई (पंडित जी) का कड़क जवाब मैसेजेस टेबल में सेव करें
     await db.insert(messages).values({
       conversationId,
       userId,
@@ -150,12 +150,12 @@ Do not show the '||REMEDY_EXTRACT||' formatting instructions to the user text, k
       content: cleanResponseText,
     });
 
-    // 9. कन्वर्सेशन का टाइमस्टैम्प अपडेट करें (ताकि चैट लिस्ट में ऊपर दिखे)
+    // 9. कन्वर्सेशन का टाइमस्टैम्प अपडेट करें (ताकि चैट लिस्ट में सबसे ऊपर दिखे)
     await db.update(conversations)
       .set({ updatedAt: new Date() })
       .where(eq(conversations.id, conversationId));
 
-    // 10. फ्रंटएंड को साफ-सुथरा जवाब भेजें
+    // 10. फ्रंटएंड को साफ-सुथरा, हाई-इम्पैक्ट जवाब भेजें
     return NextResponse.json({ response: cleanResponseText });
 
   } catch (error) {
