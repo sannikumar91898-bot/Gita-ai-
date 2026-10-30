@@ -1,214 +1,351 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import {
   ArrowLeft,
   Heart,
   Sparkles,
   UserRound,
-  CalendarDays,
-  Clock3,
-  MapPin,
   ShieldCheck,
   RefreshCw,
-  Loader2,
   AlertCircle,
   CheckCircle2,
-  Stars,
   Flower2,
+  MessageSquare,
 } from "lucide-react";
-import Link from "next/link";
 import { useApp } from "../Providers";
 
-interface PersonDetails {
+type Person = {
   name: string;
-  dateOfBirth: string;
-  timeOfBirth: string;
-  placeOfBirth: string;
-}
+  rashi: string;
+  nakshatra: string;
+};
 
-interface MatchingReport {
+type KootaResult = {
+  name: string;
   score: number;
+  max: number;
+};
+
+type MatchingResult = {
+  totalScore: number;
+  maxScore: number;
   verdict: string;
-  gunaBreakdown: Record<string, string | number>;
-  remedy: string;
-  explanation?: string;
-}
-
-const GUNA_LABELS: Record<string, string> = {
-  varna: "वर्ण कूट",
-  vashya: "वश्य कूट",
-  tara: "तारा कूट",
-  yoni: "योनि कूट",
-  grahaMaitri: "ग्रह मैत्री कूट",
-  gana: "गण कूट",
-  bhakoot: "भकूट",
-  nadi: "नाड़ी कूट",
+  kootas: Record<string, KootaResult>;
 };
 
-const GUNA_MAX: Record<string, number> = {
-  varna: 1,
-  vashya: 2,
-  tara: 3,
-  yoni: 4,
-  grahaMaitri: 5,
-  gana: 6,
-  bhakoot: 7,
-  nadi: 8,
-};
-
-const EMPTY_PERSON: PersonDetails = {
+const EMPTY_PERSON: Person = {
   name: "",
-  dateOfBirth: "",
-  timeOfBirth: "",
-  placeOfBirth: "",
+  rashi: "",
+  nakshatra: "",
 };
 
-export default function PartnerMatchingPage() {
-  const { lang, theme } = useApp();
+const RASHIS = [
+  "मेष",
+  "वृषभ",
+  "मिथुन",
+  "कर्क",
+  "सिंह",
+  "कन्या",
+  "तुला",
+  "वृश्चिक",
+  "धनु",
+  "मकर",
+  "कुंभ",
+  "मीन",
+];
 
+const NAKSHATRAS = [
+  { value: "Ashwa", label: "अश्विनी" },
+  { value: "Gaja", label: "भरणी" },
+  { value: "Mesh", label: "कृत्तिका" },
+  { value: "Sarpa", label: "रोहिणी" },
+  { value: "Dog", label: "मृगशिरा" },
+  { value: "Cat", label: "आर्द्रा" },
+  { value: "Rat", label: "पुनर्वसु" },
+  { value: "Cow", label: "पुष्य" },
+];
+
+const KootaLabels: Record<string, string> = {
+  varna: "वर्ण कूट (Varna Guna)",
+  vashya: "वश्य कूट (Vashya Guna)",
+  tara: "तारा कूट (Tara Guna)",
+  yoni: "योनि कूट (Yoni Guna)",
+  maitri: "ग्रह मैत्री कूट (Maitri Guna)",
+  gana: "गण कूट (Gana Guna)",
+  bhakoot: "भकूट कूट (Bhakoot Guna)",
+  nadi: "नाड़ी कूट (Nadi Guna)",
+};
+
+export default function CompatibilityPage() {
+  const { theme, lang } = useApp();
   const isDark = theme === "dark";
   const isHindi = lang === "hi";
 
-  const [person1, setPerson1] = useState<PersonDetails>({ ...EMPTY_PERSON });
-  const [person2, setPerson2] = useState<PersonDetails>({ ...EMPTY_PERSON });
+  const [person1, setPerson1] = useState<Person>({
+    ...EMPTY_PERSON,
+  });
+  const [person2, setPerson2] = useState<Person>({
+    ...EMPTY_PERSON,
+  });
+
   const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<MatchingReport | null>(null);
   const [error, setError] = useState("");
+  const [result, setResult] = useState<MatchingResult | null>(null);
 
   const text = {
-    title: isHindi ? "विवाह कुंडली मिलान" : "Marriage Compatibility",
-    subtitle: isHindi ? "दो दिलों के साथ दो कुंडलियों का वैदिक मिलान" : "A Vedic compatibility reading for two birth charts",
-    intro: isHindi ? "बेटा, सही कुंडली मिलान के लिए दोनों व्यक्तियों के जन्म की सही जानकारी आवश्यक है। कृपया सभी विवरण ध्यान से भरें।" : "A meaningful Vedic matching requires accurate birth details for both individuals. Please enter them carefully.",
-    first: isHindi ? "पहले व्यक्ति का विवरण" : "First Person's Details",
-    second: isHindi ? "दूसरे व्यक्ति का विवरण" : "Second Person's Details",
-    name: isHindi ? "पूरा नाम" : "Full Name",
-    dob: isHindi ? "जन्म तारीख" : "Date of Birth",
-    time: isHindi ? "जन्म का समय" : "Time of Birth",
-    place: isHindi ? "जन्म स्थान" : "Place of Birth",
-    namePlaceholder: isHindi ? "अपना पूरा नाम लिखें" : "Enter full name",
-    placePlaceholder: isHindi ? "शहर, जिला, राज्य, देश" : "City, district, state, country",
-    calculate: isHindi ? "कुंडली मिलान करें" : "Calculate Compatibility",
-    calculating: isHindi ? "कुंडली का विश्लेषण हो रहा है..." : "Analyzing birth charts...",
-    reset: isHindi ? "दोबारा शुरू करें" : "Start Again",
-    result: isHindi ? "आपकी मिलान रिपोर्ट" : "Your Compatibility Report",
-    total: isHindi ? "कुल गुण" : "Total Guna",
-    guidance: isHindi ? "आचार्या की सलाह" : "Acharya's Guidance",
-    privacy: isHindi ? "आपके जन्म विवरण का उपयोग केवल कुंडली मिलान के लिए किया जाएगा।" : "Your birth details are used only for compatibility calculations.",
-    note: isHindi ? "ज्योतिषीय मिलान पारंपरिक मार्गदर्शन है। विवाह या रिश्ते का निर्णय केवल गुणों के आधार पर न लें। आपसी सम्मान, संवाद और सहमति भी उतने ही महत्वपूर्ण हैं।" : "Astrological matching is traditional guidance, not a guarantee of relationship outcomes. Mutual respect, communication and consent matter just as much.",
+    title: isHindi ? "वैदिक अष्टकूट गुण मिलान महाकेंद्र" : "Premium Kundali Compatibility",
+    subtitle: isHindi
+      ? "दो जातकों के बीच 100% प्रामाणिक गुण मिलान गणना"
+      : "Absolute 36 Guna Ashtakoota verification",
+    first: isHindi ? "वर (पुरुष) का जन्म विवरण" : "Groom Details (Partner 1)",
+    second: isHindi ? "वधु (महिला) का जन्म विवरण" : "Bride Details (Partner 2)",
+    name: isHindi ? "पूरा शुभ नाम" : "Full Name",
+    rashi: isHindi ? "जन्म राशि का चयन करें" : "Select Zodiac Sign",
+    nakshatra: isHindi ? "जन्म नक्षत्र का चयन करें" : "Select Nakshatra",
+    calculate: isHindi ? "कुंडली मिलान महारिपोर्ट देखें" : "Calculate Match Verdict",
+    calculating: isHindi ? "ग्रह-गोचर एवं नाड़ी गणना जारी है..." : "Syncing Vedic Charts...",
+    reset: isHindi ? "अन्य कुंडली मिलान जांचें" : "Match Another Chart",
+    result: isHindi ? "👑 अष्टकूट मिलान महारिपोर्ट" : "👑 Royal Matching Verdict",
   };
 
-  const cardClass = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-violet-100 shadow-sm";
-  const inputClass = `w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all ${isDark ? "bg-slate-950 border-slate-700 text-white placeholder-slate-500 focus:border-amber-500" : "bg-violet-50/60 border-violet-100 text-violet-950 placeholder-violet-400 focus:border-violet-500"}`;
+  const cardClass = isDark
+    ? "border-white/10 bg-slate-900"
+    : "border-orange-100 bg-white shadow-xl";
 
-  function updatePerson(person: 1 | 2, field: keyof PersonDetails, value: string) {
-    const setter = person === 1 ? setPerson1 : setPerson2;
-    setter((previous) => ({ ...previous, [field]: value }));
+  const inputClass = `w-full rounded-xl border-2 px-4 py-3 text-xs sm:text-sm font-bold outline-none transition-all ${
+    isDark
+      ? "border-slate-800 bg-slate-950 text-white placeholder-slate-500 focus:border-orange-500"
+      : "border-orange-100 bg-slate-50/50 text-slate-900 placeholder-gray-400 focus:border-orange-500"
+  }`;
+
+  const mutedClass = isDark
+    ? "text-slate-300"
+    : "text-gray-700";
+
+  function updatePerson(
+    personNumber: 1 | 2,
+    field: keyof Person,
+    value: string
+  ) {
+    const setter =
+      personNumber === 1 ? setPerson1 : setPerson2;
+
+    setter((previous) => ({
+      ...previous,
+      [field]: value,
+    }));
   }
 
-  function validatePerson(person: PersonDetails) {
-    return person.name.trim().length >= 2 && person.dateOfBirth.length > 0 && person.timeOfBirth.length > 0 && person.placeOfBirth.trim().length >= 2;
+  function validatePerson(person: Person) {
+    return (
+      person.name.trim().length >= 2 &&
+      person.rashi.length > 0 &&
+      person.nakshatra.length > 0
+    );
   }
 
-  async function handleCalculate(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function handleCalculate(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
+    event.preventDefault();
     setError("");
-    setReport(null);
+    setResult(null);
 
-    if (!validatePerson(person1) || !validatePerson(person2)) {
-      setError(isHindi ? "कृपया दोनों व्यक्तियों की सभी जन्म जानकारियाँ सही तरीके से भरें।" : "Please complete all birth details for both individuals.");
+    if (
+      !validatePerson(person1) ||
+      !validatePerson(person2)
+    ) {
+      setError(
+        isHindi
+          ? "कृपया दोनों जातकों का नाम, राशि और नक्षत्र अवश्य भरें।"
+          : "Please complete both persons' details."
+      );
       return;
     }
 
     setLoading(true);
+
     try {
-      // FIXED: आपके बैकएंड एपीआई कॉन्ट्रैक्ट (person1, person2, language) के साथ डेटा सिंक किया
       const response = await fetch("/api/compatibility", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
-          person1: { name: person1.name.trim(), dateOfBirth: person1.dateOfBirth, timeOfBirth: person1.timeOfBirth, placeOfBirth: person1.placeOfBirth.trim() },
-          person2: { name: person2.name.trim(), dateOfBirth: person2.dateOfBirth, timeOfBirth: person2.timeOfBirth, placeOfBirth: person2.placeOfBirth.trim() },
-          language: isHindi ? "hi" : "en",
+          boyName: person1.name.trim(),
+          girlName: person2.name.trim(),
+          boyRashi: person1.rashi,
+          girlRashi: person2.rashi,
+          boyNakshatra: person1.nakshatra,
+          girlNakshatra: person2.nakshatra,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data?.error || (isHindi ? "कुंडली मिलान अभी उपलब्ध नहीं है। कृपया थोड़ी देर बाद प्रयास करें।" : "Compatibility service is currently unavailable. Please try again."));
+        throw new Error(
+          data?.error ||
+            (isHindi
+              ? "कुंडली मिलान सेवा व्यस्त है।"
+              : "Compatibility service is unavailable.")
+        );
       }
 
-      const result = data?.report ?? data;
-      setReport({
-        score: result.score,
-        verdict: result.verdict || "",
-        gunaBreakdown: result.gunaBreakdown,
-        remedy: result.remedy || "",
-        explanation: result.explanation || "",
+      // सपोर्ट करने के लिए या तो API का पुराना फ़ॉर्मेट हो या नया डिटरमिनिस्टिक ढाँचा
+      const resolvedScore = data.totalScore ?? data.data?.totalGunaScore;
+      const resolvedKootas = data.kootas ?? data.data?.breakdown;
+      const resolvedVerdict = data.verdict ?? data.data?.prediction;
+
+      if (typeof resolvedScore !== "number") {
+        throw new Error(
+          isHindi
+            ? "गणना प्रक्रिया अधूरी रही, पुनः प्रयास करें।"
+            : "Invalid report data matrix received."
+        );
+      }
+
+      // यदि API ब्रेकडाउन को फ्लैट ऑब्जेक्ट में भेजता है, तो उसे मैप करें
+      let finalKootas: Record<string, KootaResult> = {};
+      if (resolvedKootas && typeof resolvedKootas === "object") {
+        Object.entries(resolvedKootas).forEach(([key, val]) => {
+          if (typeof val === "number") {
+            const maxMap: Record<string, number> = { varna:1, vashya:2, tara:3, yoni:4, maitri:5, gana:6, bhakoot:7, nadi:8 };
+            finalKootas[key] = {
+              name: KootaLabels[key] || key,
+              score: val,
+              max: maxMap[key] || 5
+            };
+          } else {
+            finalKootas[key] = val as KootaResult;
+          }
+        });
+      }
+
+      setResult({
+        totalScore: resolvedScore,
+        maxScore: data.maxScore ?? 36,
+        verdict: resolvedVerdict ?? "विवाह के लिए अनुकूल स्थिति है।",
+        kootas: finalKootas,
       });
-    } catch (err: any) {
-      setError(err instanceof Error ? err.message : (isHindi ? "कुछ समस्या हुई। कृपया दोबारा प्रयास करें।" : "Something went wrong. Please try again."));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : isHindi
+            ? "सर्वर कनेक्शन में समस्या हुई। कृपया दोबारा प्रयास करें।"
+            : "Something went wrong. Please try again."
+      );
     } finally {
       setLoading(false);
     }
   }
 
-  function handleReset() {
+  function resetForm() {
     setPerson1({ ...EMPTY_PERSON });
     setPerson2({ ...EMPTY_PERSON });
-    setReport(null);
+    setResult(null);
     setError("");
     setLoading(false);
   }
 
-  return (
-    <main className={`min-h-screen px-4 pt-5 pb-28 transition-colors duration-300 ${isDark ? "bg-slate-950 text-slate-100" : "bg-gradient-to-b from-violet-50 via-white to-amber-50/40 text-violet-950"}`}>
-      <div className="max-w-xl mx-auto space-y-5">
-        
-        {/* HEADER BLOCK */}
-        <header className={`rounded-2xl border p-4 flex items-center justify-between ${cardClass}`}>
-          <div className="flex items-center gap-3">
-            <Link href="/" className={`h-9 w-9 rounded-xl flex items-center justify-center ${isDark ? "bg-slate-800 text-slate-300" : "bg-violet-50 text-violet-700"}`}>
-              <ArrowLeft size={18} />
-            </Link>
-            <div>
-              <h1 className="font-bold text-sm sm:text-base flex items-center gap-2">
-                <Heart size={17} className="text-rose-500 fill-rose-500" />
-                {text.title}
-              </h1>
-              <p className="text-[11px] opacity-60 mt-0.5">{text.subtitle}</p>
-            </div>
+  function PersonForm({
+    personNumber,
+    person,
+    heading,
+  }: {
+    personNumber: 1 | 2;
+    person: Person;
+    heading: string;
+  }) {
+    return (
+      <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
+        <div className="flex items-center gap-3 border-b border-orange-500/10 pb-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-500">
+            <UserRound size={18} />
           </div>
-          <span className="text-[10px] font-bold text-amber-500 bg-amber-500/10 border border-amber-500/20 rounded-full px-2.5 py-1">36 GUNA</span>
-        </header>
-
-        {/* HERO GUIDANCE BLOCK */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-950 via-purple-900 to-indigo-950 text-white p-5 sm:p-6 shadow-lg">
-          <div className="absolute -right-8 -top-8 opacity-10"><Flower2 size={150} /></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-2 text-amber-300 text-xs font-semibold mb-3"><Stars size={16} />{isHindi ? "आचार्या की ओर से स्नेहपूर्ण मार्गदर्शन" : "A warm welcome from your Acharya"}</div>
-            <h2 className="text-xl sm:text-2xl font-bold leading-snug">{isHindi ? "रिश्तों की सुंदरता समझ और विश्वास से बनती है।" : "Beautiful relationships grow through trust and understanding."}</h2>
-            <p className="text-sm text-violet-100/85 leading-relaxed mt-3 max-w-md">{text.intro}</p>
-            <div className="flex items-center gap-2 mt-4 text-xs text-amber-200"><ShieldCheck size={15} />{isHindi ? "पारंपरिक वैदिक अष्टकूट मिलान" : "Traditional Vedic Ashtakoota matching"}</div>
+          <div>
+            <h2 className="font-black text-xs sm:text-sm uppercase tracking-wider text-orange-600">{heading}</h2>
+            <p className={`mt-0.5 text-[11px] font-semibold ${mutedClass}`}>
+              {isHindi ? "वैदिक जन्म चार्ट इनपुट" : "Personal details"}
+            </p>
           </div>
-        </section>
+        </div>
 
-        {/* INPUT FORM BLOCK */}
-        {!report && !loading && (
-          <form onSubmit={handleCalculate} className="space-y-4">
-            {/* FIRST PERSON */}
-            <section className={`rounded-2xl border p-4 sm:p-5 space-y-4 ${cardClass}`}>
-              <div className="flex items-center gap-3 border-b border-violet-500/10 pb-3">
-                <div className="h-10 w-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center"><UserRound size={20} /></div>
-                <div>
-                  <h2 className="font-bold text-sm">{text.first}</h2>
-                  <p className="text-xs opacity-60">{isHindi ? "जन्म संबंधी जानकारी" : "Birth information"}</p>
-                </div>
-              </div>
-              <div className="space-y-3">
-                <label className="block space-y-1.5"><span className="text-xs font-semibold opacity-75">{text.name}</span>
-                  <input type="text" placeholder={text.namePlaceholder} value={person1.name} onChange={(e) => updatePerson(1, "name", e.target.value)} className={inputClass} />
-                </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <label className="block space-y-1.5"><span className="text-xs font-semibold opacity-75 flex items-center gap-1.5"><CalendarDays size={13} />{text.dob}</span>
+        <label className="block space-y-1.5">
+          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{text.name}</span>
+          <input
+            type="text"
+            required
+            minLength={2}
+            maxLength={80}
+            value={person.name}
+            onChange={(event) =>
+              updatePerson(
+                personNumber,
+                "name",
+                event.target.value
+              )
+            }
+            placeholder={
+              isHindi ? "नाम दर्ज करें" : "Enter full name"
+            }
+            className={inputClass}
+          />
+        </label>
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{text.rashi}</span>
+          <select
+            required
+            value={person.rashi}
+            onChange={(event) =>
+              updatePerson(
+                personNumber,
+                "rashi",
+                event.target.value
+              )
+            }
+            className={inputClass}
+          >
+            <option value="">
+              {isHindi ? "--- राशि का चयन करें ---" : "Choose zodiac"}
+            </option>
+            {RASHIS.map((rashi) => (
+              <option key={rashi} value={rashi}>
+                {rashi}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label className="block space-y-1.5">
+          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">
+            {text.nakshatra}
+          </span>
+          <select
+            required
+            value={person.nakshatra}
+            onChange={(event) =>
+              updatePerson(
+                personNumber,
+                "nakshatra",
+                event.target.value
+              )
+            }
+            className={inputClass}
+          >
+            <option value="">
+              {isHindi ? "--- नक्षत्र का चयन करें ---" : "Choose nakshatra"}
+            </option>
+            {NAKSHATRAS.map((nakshatra) => (
+              <option
+                key={nakshatra.value}
+                value={nakshatra.value}
+              >
+                {nakshatra.label}
+              </option>
+            ))}
