@@ -1,3 +1,4 @@
+// app/daily/page.tsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,6 +12,8 @@ import {
   CalendarDays,
   Heart,
   AlertCircle,
+  MessageCircle,
+  TriangleAlert,
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -247,7 +250,7 @@ export default function DailyPage() {
     : "text-gray-600";
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-28 pt-5 ${pageClass}`}>
+    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         <header
           className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${cardClass}`}
@@ -301,9 +304,7 @@ export default function DailyPage() {
               <Sparkles size={25} />
             </div>
 
-            <h2 className="text-2xl font-black">
-              {title}
-            </h2>
+            <h2 className="text-2xl font-black">{title}</h2>
 
             <p className="max-w-sm text-sm leading-6 text-orange-50">
               {intro}
@@ -312,6 +313,19 @@ export default function DailyPage() {
 
           <div className="absolute -right-8 -top-8 h-36 w-36 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-12 -right-4 h-32 w-32 rounded-full bg-yellow-200/10 blur-2xl" />
+        </section>
+
+        <section className="rounded-2xl border border-rose-300 bg-rose-50 p-4 text-rose-800">
+          <div className="flex items-start gap-2">
+            <TriangleAlert size={20} className="mt-0.5 shrink-0 text-rose-500" />
+            <p className="text-sm font-semibold leading-6">
+              {isHindi
+                ? "🌸 यह सामान्य राशिफल है। आपके जीवन की असली कहानी आपकी व्यक्तिगत कुंडली में छिपी है — एक बार हमारी महिला ज्योतिषियों में से किसी एक से दिल से चैट करें, वो प्यार से सब समझा देंगी।"
+                : isHinglish
+                  ? "🌸 Yeh general rashifal hai. Aapke jeevan ki asli kahani aapki vyaktigat kundli mein chhipi hai — ek baar hamari Mahila Jyotishiyon mein se kisi ek se dil se chat karein, wo pyaar se sab samjha dengi."
+                  : "🌸 This is a general reading. The real story of your life is hidden in your personal chart — chat once from the heart with one of our Female Astrologers, she will lovingly explain everything."}
+            </p>
+          </div>
         </section>
 
         <section
@@ -340,11 +354,7 @@ export default function DailyPage() {
           >
             {SIGNS.map((item) => (
               <option key={item.id} value={item.id}>
-                {isHindi
-                  ? item.hi
-                  : isHinglish
-                    ? item.hg
-                    : item.en}
+                {isHindi ? item.hi : isHinglish ? item.hg : item.en}
               </option>
             ))}
           </select>
@@ -393,28 +403,40 @@ export default function DailyPage() {
         )}
 
         {!loading && error && (
-          <section className="rounded-2xl border border-red-200 bg-red-50 p-5">
-            <div className="flex items-center gap-2 text-red-700">
+          <section className="rounded-2xl border border-rose-200 bg-rose-50 p-5">
+            <div className="flex items-center gap-2 text-rose-700">
               <AlertCircle size={19} />
               <h3 className="text-sm font-black">
                 {isHindi
-                  ? "राशिफल उपलब्ध नहीं है"
+                  ? "राशिफल अभी नहीं दिख पा रहा"
                   : isHinglish
-                    ? "Rashifal available nahi hai"
-                    : "Reading unavailable"}
+                    ? "Rashifal abhi nahi dikh pa raha"
+                    : "Reading not available right now"}
               </h3>
             </div>
 
-            <p className="mt-2 text-sm leading-6 text-red-700">
+            <p className="mt-2 text-sm leading-6 text-rose-700">
               {error}
+            </p>
+
+            <p className="mt-2 text-xs font-bold leading-5 text-rose-800">
+              {isHindi
+                ? "🌸 कोई बात नहीं, घबराएं नहीं — हमारी महिला ज्योतिषियों में से किसी एक से दिल से चैट करें, वो प्यार से आपका मार्गदर्शन करेंगी।"
+                : isHinglish
+                  ? "🌸 Koi baat nahi, ghabrayein nahi — hamari Mahila Jyotishiyon mein se kisi ek se dil se chat karein, wo pyaar se aapka margdarshan karengi."
+                  : "🌸 No worries, don't be anxious — chat once from the heart with one of our Female Astrologers, she will lovingly guide you."}
             </p>
 
             <button
               type="button"
               onClick={() => setRefreshKey((value) => value + 1)}
-              className="mt-4 rounded-xl bg-red-600 px-4 py-2.5 text-xs font-bold text-white"
+              className="mt-4 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-bold text-white"
             >
-              {isHindi ? "फिर कोशिश करें" : "Try Again"}
+              {isHindi
+                ? "फिर कोशिश करें"
+                : isHinglish
+                  ? "Phir Koshish Karein"
+                  : "Try Again"}
             </button>
           </section>
         )}
@@ -433,9 +455,7 @@ export default function DailyPage() {
                       : "Your Zodiac"}
                 </p>
 
-                <h2 className="mt-1 text-xl font-black">
-                  {signLabel}
-                </h2>
+                <h2 className="mt-1 text-xl font-black">{signLabel}</h2>
               </div>
 
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-500/10 text-orange-500">
@@ -462,9 +482,7 @@ export default function DailyPage() {
               <div className="flex items-center gap-3 rounded-xl bg-orange-500/5 p-3">
                 <div
                   className="h-11 w-11 shrink-0 rounded-full border border-black/10"
-                  style={{
-                    backgroundColor: reading.luckyColour.hex,
-                  }}
+                  style={{ backgroundColor: reading.luckyColour.hex }}
                 />
 
                 <div>
@@ -481,10 +499,7 @@ export default function DailyPage() {
                   </p>
                 </div>
 
-                <Palette
-                  size={19}
-                  className="ml-auto text-orange-500"
-                />
+                <Palette size={19} className="ml-auto text-orange-500" />
               </div>
             )}
 
@@ -521,14 +536,61 @@ export default function DailyPage() {
                       : "Daily Affirmation"}
                 </p>
 
-                <p className="text-sm leading-6">
-                  {reading.affirmation}
-                </p>
+                <p className="text-sm leading-6">{reading.affirmation}</p>
               </div>
             )}
+
+            <div className="rounded-xl border border-rose-300 bg-rose-50 p-4 text-rose-800">
+              <p className="flex items-center gap-2 text-xs font-black text-rose-500">
+                <Heart size={15} />
+                {isHindi
+                  ? "एक छोटी सी सलाह"
+                  : isHinglish
+                    ? "Ek Chhoti Si Salah"
+                    : "A Gentle Note"}
+              </p>
+
+              <p className="mt-1 text-xs font-semibold leading-5">
+                {isHindi
+                  ? "यह सामान्य राशिफल है। आपकी असली कहानी आपकी व्यक्तिगत कुंडली में है — एक बार हमारी महिला ज्योतिषियों में से किसी एक से दिल से चैट कर लें, वो प्यार से आपका सही मार्ग दिखा देंगी।"
+                  : isHinglish
+                    ? "Yeh general rashifal hai. Aapki asli kahani aapki vyaktigat kundli mein hai — ek baar hamari Mahila Jyotishiyon mein se kisi ek se dil se chat kar lein, wo pyaar se aapka sahi marg dikha dengi."
+                    : "This is a general reading. Your real story lives in your personal chart — chat once from the heart with one of our Female Astrologers, she will lovingly show you the right path."}
+              </p>
+            </div>
           </section>
         )}
       </div>
+
+      <a
+        href="sms:+919999999999"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <MessageCircle size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {isHindi
+                ? "महिला ज्योतिषी • 24x7 एसएमएस चैट"
+                : isHinglish
+                  ? "Mahila Jyotishi • 24x7 SMS Chat"
+                  : "Female Astrologer • 24x7 SMS Chat"}
+            </p>
+            <p className="text-sm font-black">
+              {isHindi
+                ? "तुरंत चैट करें — देरी संकट ला सकती है"
+                : isHinglish
+                  ? "Turant Chat Karein — Deri Sankat La Sakti Hai"
+                  : "Chat Now — Delay Can Bring Crisis"}
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-rose-700">
+          {isHindi ? "चैट" : isHinglish ? "Chat" : "Chat"}
+        </span>
+      </a>
     </main>
   );
 }
