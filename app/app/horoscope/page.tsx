@@ -34,7 +34,7 @@ const ZODIAC_SIGNS: ZodiacSign[] = [
     emoji: "♈",
     guidance: "आज आपकी राशि के कर्म भाव में ग्रहों का महागोचर एक अत्यंत दुर्लभ और शुभ राजयोग का निर्माण कर रहा है! भाग्य सातवें आसमान पर रहेगा।",
     career: "बिजनेस और करियर में आकस्मिक धन लाभ के महायोग बन रहे हैं। कोई बड़ी डील फाइनल होने वाली है, जिससे धन की स्थिति मजबूत होगी।",
-    relationship: "लव लाइफ और वैवाहिक जीवन में चल रहा तनाव आज पूर्णतः समाप्त होगा। पार्टनर से कोई बहुत बड़ा सरप्राइज मिलने वाला है।",
+    relationship: "लव化 लाइफ और वैवाहिक जीवन में चल रहा तनाव आज पूर्णतः समाप्त होगा। पार्टनर से कोई बहुत बड़ा सरप्राइज मिलने वाला है।",
     wellness: "मानसिक और शारीरिक ऊर्जा चरम पर रहेगी। पुराना कोई रोग आज पूरी तरह कट जाएगा।",
     tip: "इस अद्भुत राजयोग कालखंड का पूरा लाभ उठाएं और नया निवेश तुरंत शुरू करें।",
     luckyColor: "शाही गहरा लाल (प्रचंड भाग्यशाली)",
@@ -68,7 +68,7 @@ const ZODIAC_SIGNS: ZodiacSign[] = [
     name: "कर्क",
     english: "Cancer",
     emoji: "♋",
-    guidance: "आपकी राशि में आज नवग्रहों का विशेष लक्ष्मी नारायण योग सक्रिय हो चुका है। सुख-साधनों और विलासिता में भारी वृद्धि होगी।",
+    guidance: "आपकी राशि में आज navग्रहों का विशेष लक्ष्मी नारायण योग सक्रिय हो चुका है। सुख-साधनों और विलासिता में भारी वृद्धि होगी।",
     career: "शेयर मार्केट, लॉटरी या पैतृक संपत्ति से अचानक बड़ा धन हाथ आ सकता है। नया व्यापार शुरू करने का सबसे लकी दिन है।",
     relationship: "वैवाहिक जीवन में खुशियाँ लौटेंगी। जीवनसाथी के भाग्य से आपको धन और मान-सम्मान की प्राप्ति होगी।",
     wellness: "स्वास्थ्य उत्तम रहेगा, पुरानी मानसिक चिंताएं जड़ से खत्म होंगी।",
@@ -145,7 +145,7 @@ const ZODIAC_SIGNS: ZodiacSign[] = [
     relationship: "जीवनसाथी का पूरा सहयोग मिलेगा, जिससे आपका सामाजिक स्टेटस और धन दोनों तेज़ी से बढ़ेंगे।",
     wellness: "हड्डियों और जोड़ों के पुराने दर्द से हमेशा के लिए राहत मिल जाएगी। आप पूरी तरह फिट रहेंगे।",
     tip: "अनुशासन के साथ काम करें, शनि देव आज आपको आपकी मेहनत का छप्परफाड़ फल देने वाले हैं।",
-    luckyColor: "शाही नेवी ब्लू",
+    luckyColor: "शाही नेवीू ब्लू",
   },
   {
     id: "aquarius",
@@ -156,7 +156,7 @@ const ZODIAC_SIGNS: ZodiacSign[] = [
     career: "नौकरी में ट्रांसफर के साथ-साथ आपकी सैलरी में भारी वृद्धि तय है। यदि नया स्टार्ट-अप शुरू करना चाहते हैं, तो भाग्य आपके साथ है।",
     relationship: "प्रेम जीवन में चल रहे सारे गतिरोध दूर होंगे। लव पार्टनर के साथ संबंध बेहद मजबूत और अटूट बनेंगे।",
     wellness: "मानसिक तनाव शून्य हो जाएगा। नींद अच्छी आएगी और आप खुद को तरोताजा महसूस करेंगे।",
-    tip: "आज के दिन किसी भी बड़े निवेश या डील को फाइनल करने से बिल्कुल न हिचकिचाएं।",
+    tip: "आज के दिन किसी भी बड़े निवेश या डील को final करने से बिल्कुल न हिचकिचाएं।",
     luckyColor: "चमकदार आसमानी पीला",
   },
   {
@@ -177,8 +177,7 @@ export default function DailyHoroscopePage() {
   const { theme } = useApp();
   const isDark = theme === "dark";
 
-  const [selectedSign, setSelectedSign] =
-    useState<ZodiacSign | null>(null);
+  const [selectedSign, setSelectedSign] = useState<ZodiacSign | null>(null);
 
   const today = new Date().toLocaleDateString("hi-IN", {
     day: "numeric",
@@ -194,9 +193,7 @@ export default function DailyHoroscopePage() {
     ? "border-white/10 bg-slate-900/70"
     : "border-violet-200 bg-white shadow-xl";
 
-  const mutedClass = isDark
-    ? "text-slate-300"
-    : "text-violet-600";
+  const mutedClass = isDark ? "text-slate-300" : "text-violet-600";
 
   return (
     <main className={`min-h-dvh px-4 pb-16 pt-6 ${pageClass}`}>
@@ -211,4 +208,3 @@ export default function DailyHoroscopePage() {
                 : "border-violet-200 bg-white shadow-md"
             }`}
           >
-            <ArrowLeft size={18} />
