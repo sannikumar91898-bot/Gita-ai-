@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/db"; // आपका Drizzle DB इंस्टेंस पाथ
+import { db } from "@/db"; 
 import { eq, desc } from "drizzle-orm";
 import { OpenAI } from "openai";
 import { 
@@ -9,27 +9,25 @@ import {
   conversations, 
   messages, 
   remedies 
-} from "@/db/schema"; // आपका स्कीमा पाथ
+} from "@/db/schema"; 
 
-// OpenAI क्लाइंट को इनिशियलाइज़ करें
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
 export async function POST(request: Request) {
   try {
-    // 1. फ्रंटएंड से आ रहे पेलोड को पार्स करें
     const body = await request.json();
     const { userId, conversationId, message: userMessageContent } = body;
 
     if (!userId || !conversationId || !userMessageContent) {
       return NextResponse.json(
-        { error: "userId, conversationId, और message की फ़ील्ड्स अनिवार्य हैं।" },
+        { error: "userId, conversationId, और message अनिवार्य हैं।" },
         { status: 400 }
       );
     }
 
-    // 2. [100% Performance Mode] सभी डेटाबेस कॉल्स को समानांतर (Parallel) चलाना
+    // 1. [समानांतर डेटा फेचिंग] यूज़र की पूरी प्रोफाइल एक साथ निकालें
     const [
       userRecords,
       birthRecords,
@@ -41,7 +39,7 @@ export async function POST(request: Request) {
       db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
       db.select().from(charts).where(eq(charts.userId, userId)).limit(1),
       db.select().from(conversations).where(eq(conversations.id, conversationId)).limit(1),
-      db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(desc(messages.createdAt)).limit(10)
+      db.select().from(messages).where(eq(messages.conversationId, conversationId)).orderBy(desc(messages.createdAt)).limit(8)
     ]);
 
     const userRecord = userRecords[0];
@@ -50,53 +48,46 @@ export async function POST(request: Request) {
     const conversationRecord = conversationRecords[0];
 
     if (!userRecord || !conversationRecord) {
-      return NextResponse.json(
-        { error: "यूज़र या बातचीत (Conversation) का रिकॉर्ड नहीं मिला।" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "रिकॉर्ड नहीं मिला।" }, { status: 404 });
     }
 
-    // पिछले संदेशों के क्रम को पुराना से नया (Oldest to Newest) सेट करें
     const formattedHistory = previousMessages.reverse().map((msg) => ({
       role: msg.role as "user" | "assistant" | "system",
       content: msg.content,
     }));
 
-    // 3. यूज़र की जन्म कुंडली का डेटा (100% Astrologer Knowledge Context)
-    let astrologicalContext = "USER ASTROLOGICAL PROFILE & PLANETARY MATRIX:\n";
+    // 2. गीता एआई के दिमाग के लिए कच्चा ज्योतिषीय डेटा तैयार करना
+    let astrologicalContext = "RAW KUNDLI DATA MATRIX FOR YOUR INTERNAL BRAIN:\n";
     if (birthRecord) {
-      astrologicalContext += `- Name: ${birthRecord.name}\n- DOB: ${birthRecord.dob}\n- Birth Time: ${birthRecord.birthTime}\n- Birth Place: ${birthRecord.birthPlace}\n`;
-    } else {
-      astrologicalContext += "- Birth Details: Not provided yet.\n";
+      astrologicalContext += `- Name: ${birthRecord.name}\n- DOB: ${birthRecord.dob}\n- Time: ${birthRecord.birthTime}\n- Place: ${birthRecord.birthPlace}\n- Lat/Lng: ${birthRecord.lat}, ${birthRecord.lng}\n`;
     }
-
     if (chartRecord && chartRecord.data) {
-      astrologicalContext += `- Kundli Planetary Positions (JSON Matrix): ${JSON.stringify(chartRecord.data)}\n`;
-    } else {
-      astrologicalContext += "- Chart Data: No pre-calculated natal positions available.\n";
+      astrologicalContext += `- Planet Positions JSON: ${JSON.stringify(chartRecord.data)}\n`;
     }
 
-    // कन्वर्सेशन से एक्टिव ज्योतिषी (Persona) का नाम निकालें
-    const activePersona = conversationRecord.persona || "Pandit Ji";
+    // 3. गीता एआई का "महाज्ञानी पंडित" सेल्फ-थिंकिंग सिस्टम प्रॉम्प्ट
+    const systemPrompt = `You are "Gita AI", an elite, legendary human Astrologer and traditional Pandit Ji. You have your own autonomous Vedic brain with 100% mastery over Horary astrology (Prashna Kundli), Vimshottari Dasha, and transit impacts.
 
-    // 4. री-इंजीनियर्ड कड़क सिस्टम प्रॉम्प्ट (GYAN PELNA 0% | KNOWLEDGE 100% | MARKETING 100%)
-    const systemPrompt = `You are an elite, traditional human Astrologer and Pandit ji named ${activePersona}. You possess 100% absolute mastery over Vedic Astrology, Kundli Reading, and Planetary Transits. Your only job is to hook the customer with drop-dead accurate calculations and drive massive product retention.
+INTERNAL THINKING PROCESS (Do this inside your brain before replying):
+1. Read the User's Query and cross-reference it with their "RAW KUNDLI DATA MATRIX".
+2. Look at the specific planetary houses related to the question (e.g., 7th house for marriage, 10th house for business/job, 2nd/11th for money).
+3. Identify the active Mahadasha or transit conflict (e.g., Shani Dhayya, Rahu Gochar, Mangal Dosh) that is causing the user's problem.
+4. Catch the user's hidden psychological pain (fear of failure, loneliness, financial stress) and address it instantly with supreme authority.
 
-CRITICAL DISCIPLINE & MARKETING RULES:
-1. GYAN PELNA 0% (NO LECTURES / NO FLUFF): Do not write long theoretical or philosophical paragraphs explaining why planets move. Do not give generic spiritual advice. Cut the chatter. Get straight to the point.
-2. 100% ASTROLOGER KNOWLEDGE: Carefully read the user's birth data and JSON chart matrix. Inject profound astrological terms naturally (e.g., Mahadasha, Shani ki Dristi, Rahu Yog) but deliver the output in sharp, punchy, easily scannable bullet points.
-3. 100% MARKETING & PSYCHOLOGICAL HOOK: Speak with absolute, flawless authority and 100% certainty. Never use words like 'maybe', 'perhaps', or 'it might'. Use an elite, warm, yet highly confident Hinglish/Hindi tone that makes the user feel entirely understood.
-4. ZERO COMPLIANCE DISCLAIMERS: Never give any legal, medical, or compliance warnings. Never mention you are an AI, bot, machine, or an OpenAI language model. 
-5. HARD TIMELINES & REMEDIES: Every single response must feature an exact, non-speculative time frame (e.g., 'December 2026 and April 2027') and a highly gamified, practical remedy (Upay like Fasting, Daan, specific Pooja, or Gemstones).
+CRITICAL OUTPUT RULES (GYAN PELNA 0% | KNOWLEDGE 100% | MARKETING 100%):
+- NEVER lecture the user on definitions or text-book concepts (No fluff, no boring theories).
+- Speak with absolute 100% certainty, ultimate confidence, and divine authority. Do NOT use soft or speculative words like 'maybe', 'perhaps', or 'it might happen'. 
+- Break your heavy astrological calculations into short, sharp, jaw-droppingly accurate bullet points that hit the user emotionally.
+- Provide rigid, hard timelines (e.g., "December 2026 and April 2027") and one highly gamified, practical remedy (Upay).
+- Tone: Warm, deeply comforting, and authentic Hinglish/Hindi like a high-profile personal celebrity pandit.
+- Compliance: NO AI/Bot disclaimers. Never break character.
 
-CRITICAL FOR AUTOMATION: If you suggest any remedies/upay, you MUST append a hidden extraction section at the very bottom of your response formatted EXACTLY like this:
+CRITICAL FOR UTILITY LOGGING: If you suggest an Upay, you MUST append this exact hidden block at the absolute end:
 ||REMEDY_EXTRACT||
-Remedy Title Here
-Detailed step-by-step instructions for the remedy here
+Remedy Title
+Step-by-step easy instructions for the user`;
 
-Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the user. Keep it hidden at the absolute bottom.`;
-
-    // 5. यूज़र का नया संदेश डेटाबेस में सुरक्षित (Log) करें
+    // 4. यूज़र का मैसेज डेटाबेस में लॉग करें
     await db.insert(messages).values({
       conversationId,
       userId,
@@ -104,7 +95,7 @@ Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the us
       content: userMessageContent,
     });
 
-    // 6. OpenAI API (GPT-4o) कॉल करें
+    // 5. GPT-4o की मदद से सेल्फ-थिंकिंग कंसल्टेशन जेनरेट करें
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -113,14 +104,14 @@ Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the us
         ...formattedHistory,
         { role: "user", content: userMessageContent },
       ],
-      temperature: 0.7, // आकर्षक भविष्यवाणियों के लिए परफेक्ट बैलेंस
-      max_tokens: 700,
+      temperature: 0.65, // दिमाग के लॉजिक और कड़क मार्केटिंग पिच का परफेक्ट बैलेंस
+      max_tokens: 750,
     });
 
     let rawAiReply = response.choices[0]?.message?.content || "";
     let cleanResponseText = rawAiReply;
 
-    // 7. बैकग्राउंड उपाय ट्रैकर: 'Upay' (Remedies) का ऑटो-पार्सिंग और साइलेंट सेविंग लॉजिक
+    // 6. बैकग्राउंड उपाय ट्रैकर पार्सिंग
     if (cleanResponseText.includes("||REMEDY_EXTRACT||")) {
       const parts = cleanResponseText.split("||REMEDY_EXTRACT||");
       cleanResponseText = parts[0].trim();
@@ -128,10 +119,9 @@ Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the us
 
       if (remedyPayload) {
         const lines = remedyPayload.split("\n");
-        const remedyTitle = lines[0]?.trim() || "पंडित जी द्वारा सुझाया गया विशेष उपाय";
+        const remedyTitle = lines[0]?.trim() || "गीता एआई विशेष उपाय";
         const remedyDesc = lines.slice(1).join("\n").trim() || remedyPayload;
 
-        // बिना UI को रोके बैकग्राउंड में सीधे रेमेडी टेबल में डेटा डालें (User Gamification Loop)
         await db.insert(remedies).values({
           userId,
           title: remedyTitle,
@@ -142,7 +132,7 @@ Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the us
       }
     }
 
-    // 8. एआई (पंडित जी) का कड़क जवाब मैसेजेस टेबल में सेव करें
+    // 7. एआई का जवाब डेटाबेस में सेव करें
     await db.insert(messages).values({
       conversationId,
       userId,
@@ -150,19 +140,15 @@ Never display the '||REMEDY_EXTRACT||' label or text formatting syntax to the us
       content: cleanResponseText,
     });
 
-    // 9. कन्वर्सेशन का टाइमस्टैम्प अपडेट करें (ताकि चैट लिस्ट में सबसे ऊपर दिखे)
+    // 8. टाइमस्टैम्प टच करें
     await db.update(conversations)
       .set({ updatedAt: new Date() })
       .where(eq(conversations.id, conversationId));
 
-    // 10. फ्रंटएंड को साफ-सुथरा, हाई-इम्पैक्ट जवाब भेजें
     return NextResponse.json({ response: cleanResponseText });
 
   } catch (error) {
-    console.error("API Error in Astrology Route:", error);
-    return NextResponse.json(
-      { error: "सर्वर के अंदर कुछ गड़बड़ हो गई है।" },
-      { status: 500 }
-    );
+    console.error("Gita AI Core Brain Error:", error);
+    return NextResponse.json({ error: "ग्रहों की गणना विफल रही।" }, { status: 500 });
   }
 }
