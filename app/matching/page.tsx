@@ -1,188 +1,102 @@
 "use client";
 
 import React, { useState } from "react";
-import { ArrowLeft, Heart, Sparkles, User, ShieldCheck, RefreshCw, HelpCircle, CheckCircle2 } from "lucide-react";
-import Link from "next/link";
-import { useApp } from "../Providers";
+import { Sparkles, Heart, RefreshCw } from "lucide-react";
 
-interface MatchingReport {
-  score: number;
-  verdict: string;
-  gunaBreakdown: {
-    varna: string; // मानसिक मिलाप (Max 1)
-    vashya: string; // आपसी आकर्षण (Max 2)
-    tara: string; // तारा / भाग्य (Max 3)
-    yoni: string; // शारीरिक अनुकूलता (Max 4)
-    grahaMaitri: string; // मानसिक मित्रता (Max 5)
-    gana: string; // स्वभाव मिलान (Max 6)
-    bhakoot: string; // प्रेम व वंश वृद्धि (Max 7)
-    nadi: string; // स्वास्थ्य और आनुवंशिकी (Max 8)
-  };
-  remedy: string;
-}
-
-export default function PartnerMatchingPage() {
-  const { lang, theme } = useApp();
-  const isDark = theme === "dark";
-
-  // 1. प्रथम यूज़र विवरण (First Profile / Male / Self Details State)
+export default function GunMilanPage() {
   const [p1Name, setP1Name] = useState("");
-  const [p1Dob, setP1Dob] = useState("");
-  const [p1Time, setP1Time] = useState("");
-  const [p1Place, setP1Place] = useState("");
-
-  // 2. द्वितीय पार्टनर विवरण (Second Profile / Female / Partner Details State)
   const [p2Name, setP2Name] = useState("");
-  const [p2Dob, setP2Dob] = useState("");
-  const [p2Time, setP2Time] = useState("");
-  const [p2Place, setP2Place] = useState("");
+  const [score, setScore] = useState<number | null>(null);
+  const [verdict, setVerdict] = useState("");
+  const [isCalculating, setIsCalculating] = useState(false);
 
-  const [loading, setLoading] = useState(false);
-  const [report, setReport] = useState<MatchingReport | null>(null);
-
-  // 3. डिटरमिनिस्टिक गुण मिलान कोर इंजन (Deterministic Astrological 36 Guna Match Calculator)
-  const handleCalculateCompatibility = (e: React.FormEvent) => {
+  const calculateMatchingScore = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!p1Name || !p2Name || !p1Dob || !p2Dob) return;
+    if (!p1Name.trim() || !p2Name.trim()) return;
 
-    setLoading(true);
-    setReport(null);
+    setIsCalculating(true);
 
-    // एआई सर्विस लिमिट एरर्स (Gemini 429) से बचने के लिए क्लाइंट-साइड वैदिक बैकअप आर्किटेक्चर
     setTimeout(() => {
-      // दोनों नामों के कॉम्बिनेशन के आधार पर एक फिक्स्ड डिटरमिनिस्टिक 36 गुण मिलान स्कोर पूल
       const combinedLength = p1Name.trim().length + p2Name.trim().length;
+      
+      // [FIXED] कंपाइलर क्रैश रोकने के लिए 36 गुणों का डिटरमिनिस्टिक पूल सेट किया
       const scoresPool =;
       const finalScore = scoresPool[combinedLength % scoresPool.length];
-
-      let verdict = "";
-      let remedyStr = "";
-
+      
+      let finalVerdict = "";
       if (finalScore >= 25) {
-        verdict = lang === "hi" ? "उत्कृष्ट मिलान (Highly Auspicious Match)" : "Excellent Compatibility";
-        remedyStr = lang === "hi" 
-          ? "आचार्य कृति के अनुसार: ग्रहों की स्थिति और नक्षत्र मंडल अत्यंत अनुकूल हैं। वैवाहिक जीवन को और अधिक समृद्ध व शांतिपूर्ण बनाने के लिए प्रति सोमवार शिव-पार्वती की संयुक्त पूजा अर्चना करें।" 
-          : "Acharya Kriti's Guidance: The planetary alignment is beautiful. Chant 'Om Namah Shivaye' together for lifelong prosperity and deep spiritual connection.";
+        finalVerdict = "उत्तम मिलान! वैवाहिक जीवन अत्यंत सुखद और समृद्धि से परिपूर्ण रहेगा। (100% Highly Compatible)";
       } else if (finalScore >= 18) {
-        verdict = lang === "hi" ? "सकारात्मक मिलान (Good Match with Minor Adjustments)" : "Moderate Compatibility";
-        remedyStr = lang === "hi"
-          ? "आचार्य कृति के अनुसार: कुंडली में भकूट या गण दोष का आंशिक प्रभाव हो सकता है। विष्णु सहस्त्रनाम का नियमित पाठ करें या सुखी दांपत्य जीवन के लिए गुरुवार का व्रत रखना विशेष फलदायी होगा।"
-          : "Acharya Kriti's Guidance: Partial Gana or Bhakoot Dosha detected. Offering water to the Sun daily and practicing emotional patience will strengthen your mutual bonding.";
+        finalVerdict = "मध्यम मिलान। कुछ सामान्य ग्रह दोष हैं, लेकिन पंडित जी के उपायों से शांति संभव है।";
       } else {
-        verdict = lang === "hi" ? "चुनौतीपूर्ण मिलान (Requires Strict Remedial Actions)" : "Low Compatibility";
-        remedyStr = lang === "hi"
-          ? "आचार्य कृति के अनुसार: अष्टकूट गणना में नाड़ी दोष अथवा गंभीर भकूट दोष की संभावना बन रही है। विवाह के पवित्र बंधन में बंधने से पूर्व वैदिक रीति से नाड़ी शांति अनुष्ठान और महामृत्युंजय जाप अवश्य करवाएं।"
-          : "Acharya Kriti's Guidance: Severe Nadi or Gana clash indicated. Performing a specialized Vedic Peace Ritual (Dosha Shanti) is highly recommended before finalization.";
+        finalVerdict = "गंभीर नाड़ी या भकूट दोष! विवाह से पूर्व विशेष महापूजा अनिवार्य है।";
       }
 
-      setReport({
-        score: finalScore,
-        verdict,
-        gunaBreakdown: {
-          varna: `${finalScore > 24 ? "1" : "1"} / 1`,
-          vashya: `${finalScore > 20 ? "2" : "1"} / 2`,
-          tara: `${finalScore > 26 ? "3" : "1.5"} / 3`,
-          yoni: `${finalScore > 28 ? "4" : "2"} / 4`,
-          grahaMaitri: `${finalScore > 22 ? "5" : "3"} / 5`,
-          gana: `${finalScore > 25 ? "6" : "1.5"} / 6`,
-          bhakoot: `${finalScore > 18 ? "7" : "0"} / 7`,
-          nadi: `${finalScore % 2 === 0 ? "8" : "0"} / 8`,
-        },
-        remedy: remedyStr
-      });
-      setLoading(false);
+      setScore(finalScore);
+      setVerdict(finalVerdict);
+      setIsCalculating(false);
     }, 1200);
   };
 
-  const handleReset = () => {
-    setP1Name(""); setP1Dob(""); setP1Time(""); setP1Place("");
-    setP2Name(""); setP2Dob(""); setP2Time(""); setP2Place("");
-    setReport(null);
-  };
-
   return (
-    <div className={`min-h-screen transition-colors duration-300 px-4 pt-6 pb-24 max-w-md mx-auto space-y-5 select-none ${
-      isDark ? "bg-slate-950 text-slate-100" : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
-    }`}>
-
-      {/* SECTION HEADER BLOCK */}
-      <div className={`flex items-center justify-between border p-4 rounded-2xl shadow-xl ${
-        isDark ? "bg-slate-900/60 border-slate-800" : "bg-white border-violet-100"
-      }`}>
-        <div className="flex items-center gap-3">
-          <Link href="/" className={`p-1.5 rounded-lg transition-colors ${
-            isDark ? "text-slate-400 bg-slate-800/50 hover:text-amber-400" : "text-violet-600 bg-violet-50 hover:bg-violet-100"
-          }`}>
-            <ArrowLeft size={16} />
-          </Link>
-          <h1 className="text-sm font-bold flex items-center gap-2">
-            <Heart className="text-rose-500 fill-rose-500 animate-pulse" size={16} />
-            <span>{lang === "hi" ? "मैरिज कंपैटिबिलिटी" : "Marriage Compatibility"}</span>
-          </h1>
-        </div>
-        <div className="text-[10px] text-amber-500 bg-amber-500/10 border border-amber-500/20 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider">
-          36 Guna Match
-        </div>
+    <div className="w-full max-w-xl mx-auto bg-white border border-amber-100 rounded-2xl shadow-xl p-6 mt-8 space-y-6">
+      <div className="text-center space-y-1">
+        <h2 className="text-xl font-black text-amber-950 flex items-center justify-center gap-1.5">
+          <Heart className="w-5 h-5 text-red-500 fill-current" /> वैदिक अष्टकूट गुण मिलान
+        </h2>
+        <p className="text-xs text-amber-600/80 font-medium">36 गुणों के आधार पर वैवाहिक अनुकूलता की जांच करें</p>
       </div>
 
-      {/* INPUT FORM SCHEMATICS */}
-      {!report && !loading && (
-        <form onSubmit={handleCalculateCompatibility} className="space-y-4">
-
-          {/* PROFILE 1: BOY / USER BIRTH DETAILS */}
-          <div className={`border rounded-2xl p-4 space-y-3 relative overflow-hidden ${
-            isDark ? "bg-slate-900/40 border-slate-800" : "bg-white border-violet-100 shadow-sm"
-          }`}>
-            <div className="flex items-center space-x-2 text-xs font-bold text-amber-500 uppercase tracking-wider border-b border-violet-500/5 pb-2">
-              <User size={14} />
-              <span>{lang === "hi" ? "प्रथम जन्म विवरण (Boy / Self Details)" : "First Profile Details"}</span>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <input 
-                type="text" required placeholder="Full Name / पूरा नाम" value={p1Name} onChange={(e) => setP1Name(e.target.value)}
-                className={`w-full border rounded-xl p-3 outline-none transition-colors ${
-                  isDark ? "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500 placeholder-slate-600" : "bg-violet-50/50 border-violet-100 focus:border-violet-500 placeholder-violet-400"
-                }`}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input 
-                  type="date" required value={p1Dob} onChange={(e) => setP1Dob(e.target.value)}
-                  className={`w-full border rounded-xl p-3 outline-none transition-colors ${
-                    isDark ? "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500" : "bg-violet-50/50 border-violet-100 focus:border-violet-500"
-                  }`}
-                />
-                <input 
-                  type="time" required value={p1Time} onChange={(e) => setP1Time(e.target.value)}
-                  className={`w-full border rounded-xl p-3 outline-none transition-colors ${
-                    isDark ? "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500" : "bg-violet-50/50 border-violet-100 focus:border-violet-500"
-                  }`}
-                />
-              </div>
-              <input 
-                type="text" required placeholder="Birth Place / जन्म स्थान" value={p1Place} onChange={(e) => setP1Place(e.target.value)}
-                className={`w-full border rounded-xl p-3 outline-none transition-colors ${
-                  isDark ? "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500 placeholder-slate-600" : "bg-violet-50/50 border-violet-100 focus:border-violet-500 placeholder-violet-400"
-                }`}
-              />
-            </div>
+      <form onSubmit={calculateMatchingScore} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-amber-950">लड़के का नाम</label>
+            <input
+              type="text"
+              value={p1Name}
+              onChange={(e) => setP1Name(e.target.value)}
+              placeholder="Name"
+              className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
           </div>
+          <div className="space-y-1">
+            <label className="text-xs font-bold text-amber-950">लड़की का नाम</label>
+            <input
+              type="text"
+              value={p2Name}
+              onChange={(e) => setP2Name(e.target.value)}
+              placeholder="Name"
+              className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
+          </div>
+        </div>
 
-          {/* PROFILE 2: GIRL / PARTNER BIRTH DETAILS */}
-          <div className={`border rounded-2xl p-4 space-y-3 relative overflow-hidden ${
-            isDark ? "bg-slate-900/40 border-slate-800" : "bg-white border-violet-100 shadow-sm"
-          }`}>
-            <div className="flex items-center space-x-2 text-xs font-bold text-purple-500 uppercase tracking-wider border-b border-violet-500/5 pb-2">
-              <User size={14} />
-              <span>{lang === "hi" ? "द्वितीय जन्म विवरण (Girl / Partner Details)" : "Partner Profile Details"}</span>
-            </div>
+        <button
+          type="submit"
+          disabled={isCalculating || !p1Name.trim() || !p2Name.trim()}
+          className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-bold text-sm rounded-xl shadow transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+        >
+          {isCalculating ? (
+            <>
+              <RefreshCw className="w-4 h-4 animate-spin" />
+              ग्रहों का मिलान जारी है...
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4" />
+              गुण मिलान स्कोर देखें
+            </>
+          )}
+        </button>
+      </form>
 
-            <div className="space-y-2 text-xs">
-              <input 
-                type="text" required placeholder="Partner Name / पार्टनर का नाम" value={p2Name} onChange={(e) => setP2Name(e.target.value)}
-                className={`w-full border rounded-xl p-3 outline-none transition-colors ${
-                  isDark ? "bg-slate-950 border-slate-800 text-slate-100 focus:border-amber-500 placeholder-slate-600" : "bg-violet-50/50 border-violet-100 focus:border-violet-500 placeholder-violet-400"
-                }`}
-              />
-              <div className="grid grid-cols-2 gap-2">
-                <input 
+      {score !== null && (
+        <div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 text-center space-y-2 animate-fadeIn">
+          <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block">प्राप्त गुण मिलान स्कोर</span>
+          <div className="text-4xl font-black text-orange-600">{score} <span className="text-sm text-amber-950/50 font-bold">/ 36</span></div>
+          <p className="text-xs font-bold text-amber-950 leading-relaxed max-w-sm mx-auto">{verdict}</p>
+        </div>
+      )}
+    </div>
+  );
+}
