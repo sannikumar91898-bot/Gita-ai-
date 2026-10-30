@@ -9,9 +9,6 @@ const nextConfig = {
     ],
   },
 
-  // ✅ Next.js 14 के अनुसार परफेक्ट रूट लेवल प्लेसमेंट (नो एक्सपेरिमेंटल वार्निंग)
-  serverExternalPackages: ["drizzle-orm", "pg"],
-
   typescript: {
     ignoreBuildErrors: false,
   },
