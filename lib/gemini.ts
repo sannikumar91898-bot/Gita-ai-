@@ -1,103 +1,57 @@
-import { GoogleGenAI } from "@google/genai"; // Standard structural import for Google GenAI standard configurations
+import { GoogleGenAI } from "@google/genai";
 
-// Initialize the API client server-side securely
-const apiKey = process.env.GEMINI_API_KEY || "";
-const modelName = process.env.GEMINI_MODEL || "gemini-2.0-flash";
+// 1. पर्यावरण चर (Environment Variables) से API की निकालें
+const apiKey = process.env.GEMINI_API_KEY?.trim();
 
-// Instantiate the SDK if key exists
-const ai = apiKey ? new GoogleGenAI({ apiKey }) : null;
+// 2. सबसे तेज़ और बिल्कुल नया मॉडल जो आपके मार्केटिंग और चैट को सुपरफास्ट बनाएगा
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 
-/**
- * Exponential backoff helper to retry operations when facing 429 Rate Limits or transient errors.
- */
-async function retryWithBackoff<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
-  try {
-    return await fn();
-  } catch (error: any) {
-    const isRateLimit = error?.status === 429 || error?.message?.includes("429") || error?.message?.includes("Quota exceeded");
-    if (isRateLimit && retries > 0) {
-      console.warn(`Gemini API 429 Detected. Backing off for ${delay}ms... Retries left: ${retries}`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return retryWithBackoff(fn, retries - 1, delay * 2);
-    }
-    throw error;
-  }
+if (!apiKey) {
+  console.warn("⚠️ Warning: GEMINI_API_KEY is missing in your environment variables.");
 }
 
-interface GenerateChatOptions {
-  prompt: string;
-  systemInstruction?: string;
-  history?: Array<{ role: "user" | "model"; content: string }>;
-  fallbackContext?: string; // Sidereal ephemeris details used for offline chart matching
-}
+// 3. नया Google GenAI क्लाइंट इनिशियलाइज़ करें
+const ai = new GoogleGenAI({ apiKey: apiKey || "" });
 
 /**
- * Generates an robust AI astrologer response with automatic fail-safes against quota limitations.
+ * चैट और ज्योतिषीय सलाह के लिए मुख्य फंक्शन (बिना किसी डिस्क्लेमर या ज्ञानबाज़ी के)
  */
-export async function generateAstrologyResponse(options: GenerateChatOptions): Promise<string> {
-  const { prompt, systemInstruction, history = [], fallbackContext = "" } = options;
-
-  // FAIL-SAFE 1: If Gemini API key is missing or blank, seamlessly fallback to localized chart-based processing
-  if (!ai) {
-    return getOfflineGuidanceFallback(prompt, fallbackContext);
+export async function generateAstrologyResponse(prompt: string, systemInstruction: string) {
+  if (!apiKey) {
+    return fallbackResponse();
   }
 
   try {
-    // Format history structure to match the standard Google GenAI SDK specs
-    const contents = [
-      ...history.map((msg) => ({
-        role: msg.role === "user" ? "user" : "model",
-        parts: [{ text: msg.content }],
-      })),
-      { role: "user", parts: [{ text: prompt }] },
-    ];
-
-    // FAIL-SAFE 2: Execute wrapped under exponential backoff mechanics
-    const response = await retryWithBackoff(async () => {
-      return await ai.models.generateContent({
-        model: modelName,
-        contents: contents,
-        config: {
-          systemInstruction: systemInstruction || "You are a wise and empathetic Vedic Astrologer.",
-          temperature: 0.7,
-          maxOutputTokens: 800,
-        },
-      });
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: prompt,
+      config: {
+        // सख्त निर्देश ताकि AI खुद को ज्योतिषी ही समझे और ज्ञान न पेले
+        systemInstruction: systemInstruction,
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+      },
     });
 
-    if (response?.text) {
-      return response.text;
-    }
+    const replyText = response.text?.trim();
+    return replyText || fallbackResponse();
 
-    throw new Error("Empty response received from Gemini engine.");
-  } catch (error: any) {
-    console.error("CRITICAL GRADIENT DEGRADATION IN GEMINI ENGINE:", error);
-    
-    // FAIL-SAFE 3: Gracefully serve precise offline sidereal analysis instead of crashing the chat screen
-    return getOfflineGuidanceFallback(prompt, fallbackContext);
+  } catch (error) {
+    console.error("Gemini API Error:", error);
+    return fallbackResponse();
   }
 }
 
 /**
- * Intelligent deterministic fallback generator that acts as an offline Vedic guide 
- * based on user's active birth charts when live API tokens are exhausted.
+ * ⚡ बिज़नेस और मार्केटिंग फ्रेंडली फ़ॉलबैक (अगर कभी API फेल हो, तो भी कस्टमर खुश रहे)
  */
-function getOfflineGuidanceFallback(prompt: string, fallbackContext: string): string {
-  const lowerPrompt = prompt.toLowerCase();
-  
-  let areaOfInterest = "जीवन और भविष्य (Life Balance)";
-  if (lowerPrompt.includes("career") || lowerPrompt.includes("job") || lowerPrompt.includes("naukri") || lowerPrompt.includes("business")) {
-    areaOfInterest = "करियर और व्यापार (Career & Wealth)";
-  } else if (lowerPrompt.includes("shadi") || lowerPrompt.includes("marriage") || lowerPrompt.includes("love") || lowerPrompt.includes("partner")) {
-    areaOfInterest = "विवाह और प्रेम संबंध (Relationships)";
-  } else if (lowerPrompt.includes("health") || lowerPrompt.includes("bimar") || lowerPrompt.includes("health")) {
-    areaOfInterest = "स्वास्थ्य और ऊर्जा (Health & Vitality)";
-  }
-
-  return `✨ **[Gita AI - ऑफलाइन चार्ट मोड (Vedic Core Guidance)]** ✨\n\n` +
-    `क्षमा करें, इस समय ब्रह्मांडीय संचार चैनल (AI Engine) पर अत्यधिक ट्रैफ़िक है। लेकिन आपके कुंडली चक्र के डेटा के आधार पर आपकी गणना पूरी कर ली गई है:\n\n` +
-    `🔹 **मुख्य विश्लेषण क्षेत्र:** ${areaOfInterest}\n` +
-    `📊 **गोचर गणना प्रासंगिक डेटा:** ${fallbackContext || "दशम भाव सक्रिय है, शनि और गुरु की अनुकूल दृष्टि बनी हुई है।"}\n\n` +
-    `💡 **प्राकृतिक वैदिक समाधान (Remedy):** प्रतिदिन सूर्य देव को जल अर्पित करें और 'ॐ नमो भगवते वासुदेवाय' मंत्र का मानसिक जप करें। इससे नकारात्मक ग्रहों का प्रभाव कम होगा।\n\n` +
-    `*जैसे ही नेटवर्क ट्रैफिक सामान्य होता है, आप विस्तृत व्यक्तिगत संवाद पुनः शुरू कर सकते हैं। हमारा ज्योतिषीय प्रवाह निरंतर सुरक्षित है।*`;
+function fallbackResponse(): string {
+  return [
+    "नमस्कार! आपके ग्रहों की चाल बहुत ही शुभ संकेत दे रही है।",
+    "",
+    "इस समय आपके भाग्य भाव में सकारात्मक बदलाव आ रहे हैं जो आपके जीवन में सुख और समृद्धि लाएंगे। बाधाओं को दूर करने के आसान वैदिक उपाय हमारे ऐप पर दिए गए हैं।",
+    "",
+    "शुभकामनाओं सहित,",
+    "Gita AI",
+  ].join("\n");
 }
