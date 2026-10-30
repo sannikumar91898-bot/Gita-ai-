@@ -17,7 +17,7 @@ const tools = [
 
 const benefits = [
   { emoji: "💬", title: "Personal Chat", detail: "Ask your questions" },
-  { emoji: "🪐", title: "Vedic Guidance", detail: "Ask astrology insights" },
+  { emoji: "🪐", title: "Vedic Guidance", detail: "Astrology insights" },
   { emoji: "🌐", title: "Your Language", detail: "Hindi & English" },
 ];
 
@@ -87,7 +87,7 @@ export default function HomePage() {
           href="/wallet"
           className="flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-2 text-sm font-bold text-orange-700"
         >
-          ₹0
+          <span>₹0</span>
           <span className="flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-white">+</span>
         </Link>
       </header>
