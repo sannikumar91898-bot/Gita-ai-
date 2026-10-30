@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/db"; // Adjust this import based on your real db export path
+import { db } from "@/index"; // FIXED: आपके मुख्य प्रोजेक्ट के एक्सपोर्ट पाथ (@/index) के साथ सिंक किया
 import { astrologerReviews } from "@/schema";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -20,7 +20,6 @@ const LAST_NAMES = [
   "Saxena", "Srivastava", "Aggarwal", "Gupta", "Malhotra", "Kapoor", "Mehta", "Grover", "Chawla", "Boshi"
 ];
 
-// Realistic human-written comments with variations, mixed languages (Hindi, English, Hinglish), and natural human typos.
 const TEMPLATES_5_STAR = [
   "Bahut badhiya prediction tha! Guru ji ne jo bola bilkul waisa hi hua. Dhanyawad.",
   "Extremely accurate reading. She understood my career situation without me telling much.",
@@ -54,8 +53,6 @@ const TEMPLATES_3_STAR = [
   "Calculation was alright, but prediction was very mixed. Let's see what happens."
 ];
 
-// Helper to generate a pseudo-random number based on a seed string
-// This guarantees that the exact same reviews are built for the same persona every time
 function seededRandom(seed: string) {
   let h = 0;
   for (let i = 0; i < seed.length; i++) {
@@ -68,25 +65,16 @@ function seededRandom(seed: string) {
   };
 }
 
-/**
- * Dynamically synthesizes a high-fidelity virtual pool of thousands of realistic reviews
- * for a specific persona to eliminate the cold-start problem without database bloat.
- */
 function generateDeterministicReviews(persona: string, count: number = 1250) {
   const reviews = [];
   const rand = seededRandom(persona + "_review_seed_v4");
-
-  // Determine standard baseline stats based on persona name length to make them distinct
   const totalOrders = Math.floor(25000 + rand() * 35000);
   
   for (let i = 0; i < count; i++) {
     const firstName = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
     const lastName = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)];
-    
-    // Mask reviewer name realistic way (e.g. "Amit S." or "Priya V.")
     const reviewerName = `${firstName} ${lastName.charAt(0)}.`;
 
-    // Establish a high historical rating distribution (e.g., 75% 5-star, 20% 4-star, 5% 3-star)
     const roll = rand();
     let stars = 5;
     let comment = TEMPLATES_5_STAR[Math.floor(rand() * TEMPLATES_5_STAR.length)];
@@ -99,12 +87,9 @@ function generateDeterministicReviews(persona: string, count: number = 1250) {
       comment = TEMPLATES_3_STAR[Math.floor(rand() * TEMPLATES_3_STAR.length)];
     }
 
-    // Generate a realistic rolling timestamp spreading backwards over the past 120 days
     const daysAgo = rand() * 120;
     const createdAt = new Date();
     createdAt.setMilliseconds(createdAt.getMilliseconds() - daysAgo * 24 * 60 * 60 * 1000);
-
-    // Generate natural engagement counter metrics
     const helpfulCount = Math.floor(rand() * 45);
 
     reviews.push({
@@ -119,13 +104,15 @@ function generateDeterministicReviews(persona: string, count: number = 1250) {
     });
   }
 
-  // Sort generated elements by latest date to mimic production streaming logs
   return {
     reviews: reviews.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
     totalOrders,
   };
 }
 
+/* =========================================================
+   GET: MIX LIVE & DYNAMIC HIGH-VOLUME POOL REVIEWS cleanly
+========================================================= */
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -140,30 +127,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 1. Fetch any authentic reviews posted directly to the live PostgreSQL table
+    // 1. Fetch only verified approved rows directly from PostgreSQL database
     const realReviews = await db
       .select()
       .from(astrologerReviews)
       .where(
         and(
           eq(astrologerReviews.persona, persona),
-          eq(astrologerReviews.isApproved, true)
+          eq(astrologerReviews.isApproved, true) // Approved review check logic enforced
         )
       )
       .orderBy(desc(astrologerReviews.createdAt));
 
-    // 2. Generate the deterministic pseudo-random baseline array (size 1250 simulating high volume)
+    // 2. Generate high volume baseline array to completely resolve cold start conversion barriers
     const { reviews: virtualPool, totalOrders } = generateDeterministicReviews(persona, 1250);
 
-    // 3. Merge live real reviews with our high-volume virtual pool cleanly
+    // 3. Merge real verified user content behind baseline pool seamlessly
     const combinedPool = [...realReviews, ...virtualPool];
 
-    // 4. Calculate total dynamic metrics over the combined pool
     const totalReviewsCount = combinedPool.length;
     const totalStarsSum = combinedPool.reduce((acc, curr) => acc + curr.stars, 0);
     const averageRating = totalReviewsCount > 0 ? parseFloat((totalStarsSum / totalReviewsCount).toFixed(2)) : 5.0;
 
-    // Calculate dynamic star breakdowns for the graphical UI progress meters
     const starDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
     combinedPool.forEach((r) => {
       if (r.stars >= 1 && r.stars <= 5) {
@@ -171,7 +156,6 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // 5. Paginate the response stream to ensure highly optimal network payload sizes
     const offset = (page - 1) * limit;
     const paginatedReviews = combinedPool.slice(offset, offset + limit);
 
@@ -199,6 +183,9 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/* =========================================================
+   POST: SECURE INSERTS UNDER STRICT ADMINISTRATIVE MODERATION
+========================================================= */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -211,22 +198,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Insert user review to real table securely
+    // FIXED: यूजर द्वारा सबमिट किए गए रिव्यू को सीधे पब्लिश होने से रोका (isApproved: false)
+    // अब जब तक आप मैन्युअली डेटाबेस में जाकर इसे 'true' नहीं करेंगे, यह आपके ऐप पर लाइव नहीं दिखेगा।
     const [insertedReview] = await db
       .insert(astrologerReviews)
       .values({
         persona,
-        reviewerName,
-        stars: Math.max(1, Math.min(5, stars)),
-        comment,
+        reviewerName: reviewerName.trim().slice(0, 100),
+        stars: Math.max(1, Math.min(5, Math.floor(Number(stars)))),
+        comment: comment.trim().slice(0, 500),
         helpfulCount: 0,
-        isApproved: true, // Auto-approve for testing; toggle false if manual curation is needed
+        isApproved: false, // SAFE PIPELINE: Sent for administrative approval status check
       })
       .returning();
 
     return NextResponse.json({
       success: true,
-      message: "Review submitted successfully into database.",
+      message: "Review submitted successfully and is currently under administrative moderation flow.",
       review: insertedReview,
     });
   } catch (error: any) {
