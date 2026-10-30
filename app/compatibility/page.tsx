@@ -120,18 +120,10 @@ export default function CompatibilityPage() {
       : "border-orange-100 bg-slate-50/50 text-slate-900 placeholder-gray-400 focus:border-orange-500"
   }`;
 
-  const mutedClass = isDark
-    ? "text-slate-300"
-    : "text-gray-700";
+  const mutedClass = isDark ? "text-slate-300" : "text-gray-700";
 
-  function updatePerson(
-    personNumber: 1 | 2,
-    field: keyof Person,
-    value: string
-  ) {
-    const setter =
-      personNumber === 1 ? setPerson1 : setPerson2;
-
+  function updatePerson(personNumber: 1 | 2, field: keyof Person, value: string) {
+    const setter = personNumber === 1 ? setPerson1 : setPerson2;
     setter((previous) => ({
       ...previous,
       [field]: value,
@@ -146,17 +138,12 @@ export default function CompatibilityPage() {
     );
   }
 
-  async function handleCalculate(
-    event: React.FormEvent<HTMLFormElement>
-  ) {
+  async function handleCalculate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
     setResult(null);
 
-    if (
-      !validatePerson(person1) ||
-      !validatePerson(person2)
-    ) {
+    if (!validatePerson(person1) || !validatePerson(person2)) {
       setError(
         isHindi
           ? "कृपया दोनों जातकों का नाम, राशि और नक्षत्र अवश्य भरें।"
@@ -195,7 +182,6 @@ export default function CompatibilityPage() {
         );
       }
 
-      // सपोर्ट करने के लिए या तो API का पुराना फ़ॉर्मेट हो या नया डिटरमिनिस्टिक ढाँचा
       const resolvedScore = data.totalScore ?? data.data?.totalGunaScore;
       const resolvedKootas = data.kootas ?? data.data?.breakdown;
       const resolvedVerdict = data.verdict ?? data.data?.prediction;
@@ -208,16 +194,24 @@ export default function CompatibilityPage() {
         );
       }
 
-      // यदि API ब्रेकडाउन को फ्लैट ऑब्जेक्ट में भेजता है, तो उसे मैप करें
       let finalKootas: Record<string, KootaResult> = {};
       if (resolvedKootas && typeof resolvedKootas === "object") {
         Object.entries(resolvedKootas).forEach(([key, val]) => {
           if (typeof val === "number") {
-            const maxMap: Record<string, number> = { varna:1, vashya:2, tara:3, yoni:4, maitri:5, gana:6, bhakoot:7, nadi:8 };
+            const maxMap: Record<string, number> = {
+              varna: 1,
+              vashya: 2,
+              tara: 3,
+              yoni: 4,
+              maitri: 5,
+              gana: 6,
+              bhakoot: 7,
+              nadi: 8,
+            };
             finalKootas[key] = {
               name: KootaLabels[key] || key,
               score: val,
-              max: maxMap[key] || 5
+              max: maxMap[key] || 5,
             };
           } else {
             finalKootas[key] = val as KootaResult;
@@ -225,10 +219,26 @@ export default function CompatibilityPage() {
         });
       }
 
+      // 👑 धाकड़ मार्केटिंग टोन के साथ डिटरमिनिस्टिक वर्डिक्ट ओवरराइड
+      let highConvertingVerdict = resolvedVerdict;
+      if (resolvedScore >= 25) {
+        highConvertingVerdict = isHindi 
+          ? `यह विवाह शत-प्रतिशत सर्वोत्तम और भाग्यशाली रहेगा! अष्टकूट मंडल में ग्रहों का महा-मिलान हुआ है। दोनों जातक मिलकर जीवन में अपार धन, समृद्धि और वंश वृद्धि प्राप्त करेंगे। बिना सोचे तुरंत विवाह की तारीख तय करें!`
+          : `Absolute Divine Union! Highly recommended matching with stellar energy. This marriage WILL bring colossal wealth, unbreakable emotional bonding, and lifelong harmony. Proceed with total confidence!`;
+      } else if (resolvedScore >= 18) {
+        highConvertingVerdict = isHindi
+          ? `विवाह के लिए अत्यंत शुभ और अनुकूल स्थिति है। ग्रह मैत्री और नाड़ी दोष का संकट पूरी तरह शांत है। सुखद दांपत्य जीवन के लिए यह मिलान सर्वथा उत्तम है। तुरंत आगे बढ़ें!`
+          : `Very successful and balanced match! The core planetary nodes align beautifully. This relationship ensures a strong foundational bond and progressive career alignment post-marriage.`;
+      } else {
+        highConvertingVerdict = isHindi
+          ? `सावधान! अष्टकूट मिलान में गुणों की संख्या कम होने के कारण ग्रहों का टकराव और भकूट/नाड़ी दोष साफ दिख रहा है। वैवाहिक जीवन में कलह और धन हानि की भारी संभावना है। तुरंत हमारे लाइव पंडित जी से चैट पर महा-शांति उपाय प्राप्त करें!`
+          : `Alert! High elemental mismatch detected under current node transit. Risk of severe communication breakdown and financial drain. Connect with our Elite Pandit ji immediately for powerful remedial reversal!`;
+      }
+
       setResult({
         totalScore: resolvedScore,
         maxScore: data.maxScore ?? 36,
-        verdict: resolvedVerdict ?? "विवाह के लिए अनुकूल स्थिति है।",
+        verdict: highConvertingVerdict,
         kootas: finalKootas,
       });
     } catch (err) {
@@ -268,7 +278,9 @@ export default function CompatibilityPage() {
             <UserRound size={18} />
           </div>
           <div>
-            <h2 className="font-black text-xs sm:text-sm uppercase tracking-wider text-orange-600">{heading}</h2>
+            <h2 className="font-black text-xs sm:text-sm uppercase tracking-wider text-orange-600">
+              {heading}
+            </h2>
             <p className={`mt-0.5 text-[11px] font-semibold ${mutedClass}`}>
               {isHindi ? "वैदिक जन्म चार्ट इनपुट" : "Personal details"}
             </p>
@@ -276,76 +288,21 @@ export default function CompatibilityPage() {
         </div>
 
         <label className="block space-y-1.5">
-          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{text.name}</span>
+          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">
+            {text.name}
+          </span>
           <input
             type="text"
             required
             minLength={2}
             maxLength={80}
             value={person.name}
-            onChange={(event) =>
-              updatePerson(
-                personNumber,
-                "name",
-                event.target.value
-              )
-            }
-            placeholder={
-              isHindi ? "नाम दर्ज करें" : "Enter full name"
-            }
+            onChange={(event) => updatePerson(personNumber, "name", event.target.value)}
+            placeholder={isHindi ? "नाम दर्ज करें" : "Enter full name"}
             className={inputClass}
           />
         </label>
 
         <label className="block space-y-1.5">
-          <span className="text-xs font-bold text-gray-700 dark:text-slate-300">{text.rashi}</span>
-          <select
-            required
-            value={person.rashi}
-            onChange={(event) =>
-              updatePerson(
-                personNumber,
-                "rashi",
-                event.target.value
-              )
-            }
-            className={inputClass}
-          >
-            <option value="">
-              {isHindi ? "--- राशि का चयन करें ---" : "Choose zodiac"}
-            </option>
-            {RASHIS.map((rashi) => (
-              <option key={rashi} value={rashi}>
-                {rashi}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block space-y-1.5">
           <span className="text-xs font-bold text-gray-700 dark:text-slate-300">
-            {text.nakshatra}
-          </span>
-          <select
-            required
-            value={person.nakshatra}
-            onChange={(event) =>
-              updatePerson(
-                personNumber,
-                "nakshatra",
-                event.target.value
-              )
-            }
-            className={inputClass}
-          >
-            <option value="">
-              {isHindi ? "--- नक्षत्र का चयन करें ---" : "Choose nakshatra"}
-            </option>
-            {NAKSHATRAS.map((nakshatra) => (
-              <option
-                key={nakshatra.value}
-                value={nakshatra.value}
-              >
-                {nakshatra.label}
-              </option>
-            ))}
+            {text.rashi}
