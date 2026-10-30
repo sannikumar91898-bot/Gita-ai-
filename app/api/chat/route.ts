@@ -19,6 +19,10 @@ import {
   getAstrologerSystemPrompt,
   type AstrologerPersonaId,
 } from "@/lib/astrologer-prompts";
+import {
+  understandFollowUp,
+  buildFollowUpContext,
+} from "@/lib/follow-up-understanding";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -189,46 +193,6 @@ function buildLanguage(
 }
 
 /* =========================================================
-   FOLLOW-UP DETECTION
-========================================================= */
-
-function isShortFollowUp(message: string): boolean {
-  const normalized = message
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  const followUps = new Set([
-    "haan",
-    "haa",
-    "ha",
-    "haan maa",
-    "haa maa",
-    "batao",
-    "batao na",
-    "aur batao",
-    "samjhao",
-    "kyun",
-    "achha",
-    "acha",
-    "okay",
-    "ok",
-    "yes",
-    "hmm",
-    "hlo",
-    "hello",
-    "hlw",
-    "what next",
-    "mujhe kya karna chahiye",
-    "ab kya karu",
-    "ab kya karna chahiye",
-  ]);
-
-  return followUps.has(normalized);
-}
-
-/* =========================================================
    GEMINI RESPONSE PARSER
 ========================================================= */
 
@@ -394,24 +358,14 @@ async function saveChatMessages(
 
 function buildGeminiContents(
   history: HistoryRow[],
-  context: string,
   latestMessage: string,
 ) {
-  const contents: Array<{
+  type GeminiContent = {
     role: "user" | "model";
     parts: Array<{ text: string }>;
-  }> = [];
+  };
 
-  contents.push({
-    role: "user",
-    parts: [
-      {
-        text:
-          context +
-          "\n\nThis is the conversation context. Follow it while answering.",
-      },
-    ],
-  });
+  const normalized: GeminiContent[] = [];
 
   for (const item of history) {
     if (
@@ -421,20 +375,65 @@ function buildGeminiContents(
       continue;
     }
 
-    const text = item.content?.trim();
+    const messageText =
+      typeof item.content === "string"
+        ? item.content.trim()
+        : "";
 
-    if (!text) continue;
+    if (!messageText) continue;
 
-    contents.push({
-      role: item.role === "assistant" ? "model" : "user",
-      parts: [{ text }],
-    });
+    const role: "user" | "model" =
+      item.role === "assistant" ? "model" : "user";
+
+    const previous = normalized[normalized.length - 1];
+
+    if (previous?.role === role) {
+      previous.parts.push({ text: messageText });
+    } else {
+      normalized.push({
+        role,
+        parts: [{ text: messageText }],
+      });
+    }
   }
 
-  contents.push({
-    role: "user",
-    parts: [{ text: latestMessage }],
-  });
+  // Gemini history must begin with a user message.
+  while (
+    normalized.length > 0 &&
+    normalized[0].role !== "user"
+  ) {
+    normalized.shift();
+  }
+
+  // Keep only recent conversation messages.
+  const recent = normalized.slice(-MAX_HISTORY_MESSAGES);
+
+  while (
+    recent.length > 0 &&
+    recent[0].role !== "user"
+  ) {
+    recent.shift();
+  }
+
+  const contents: GeminiContent[] = [...recent];
+
+  const cleanLatestMessage = latestMessage.trim();
+
+  if (!cleanLatestMessage) {
+    throw new Error("Latest user message is empty.");
+  }
+
+  // Append the current user message exactly once.
+  const previous = contents[contents.length - 1];
+
+  if (previous?.role === "user") {
+    previous.parts.push({ text: cleanLatestMessage });
+  } else {
+    contents.push({
+      role: "user",
+      parts: [{ text: cleanLatestMessage }],
+    });
+  }
 
   return contents;
 }
@@ -605,8 +604,8 @@ export async function POST(req: NextRequest) {
       ? body.persona
       : "gita";
 
-    // All four AI astrologers now use the shared prompt file.
-    const personaPrompt = getAstrologerSystemPrompt(persona);
+    const personaPrompt =
+      getAstrologerSystemPrompt(persona);
 
     const language = buildLanguage(
       body.language,
@@ -645,14 +644,21 @@ export async function POST(req: NextRequest) {
       -MAX_HISTORY_MESSAGES,
     );
 
-    const followUp =
-      recentHistory.length > 0 &&
-      isShortFollowUp(content);
+    /* ---------------- Follow-up understanding ---------------- */
 
-    const previousUserQuestion = [...recentHistory]
-      .reverse()
-      .find((row) => row.role === "user")
-      ?.content;
+    const followUpUnderstanding = understandFollowUp(
+      content,
+      recentHistory,
+    );
+
+    const followUp =
+      followUpUnderstanding.isFollowUp;
+
+    const previousUserQuestion =
+      followUpUnderstanding.referenceQuestion;
+
+    const followUpContext =
+      buildFollowUpContext(followUpUnderstanding);
 
     /* ---------------- Birth profile ---------------- */
 
@@ -737,49 +743,50 @@ export async function POST(req: NextRequest) {
       ),
     );
 
-    if (
-      knowledgeMatch &&
-      !requiresPersonalAnalysis &&
-      !followUp
-    ) {
-      const savedAnswer = knowledgeMatch.answer;
+    const knowledgeContext = knowledgeMatch
+      ? [
+          "A relevant Knowledge Base entry was found.",
+          `Saved question: ${knowledgeMatch.entry.question}`,
+          `Educational reference: ${knowledgeMatch.answer}`,
+          `Knowledge entry ID: ${knowledgeMatch.entry.id}`,
+          "Use this as reference material, not as text to copy blindly.",
+          "Explain it naturally in the selected astrologer persona.",
+          "If it conflicts with verified personal chart data, do not make unsupported personal predictions.",
+          requiresPersonalAnalysis
+            ? hasCalculatedChart
+              ? "This entry requires personal chart analysis. A calculated chart is available; use only the supplied chart facts."
+              : "This entry requires personal chart analysis, but no calculated chart is available. Do not make a personal prediction."
+            : "This entry is general educational reference material.",
+        ].join("\n")
+      : "No exact Knowledge Base entry was found. Answer using reliable available context.";
 
-      try {
-        const savedMessage = await saveChatMessages(
-          user.id,
-          conversationId,
-          content,
-          savedAnswer,
-        );
+    const personalKnowledgeContext =
+      knowledgeMatch && requiresPersonalAnalysis
+        ? [
+            "A relevant saved educational knowledge entry was found.",
+            `Saved question: ${knowledgeMatch.entry.question}`,
+            `Educational reference: ${knowledgeMatch.answer}`,
+            `Knowledge entry ID: ${knowledgeMatch.entry.id}`,
+            "This entry requires personal chart analysis or calculation.",
+            "Use it only as educational background, not as a personal prediction.",
+            hasCalculatedChart
+              ? "A calculated chart is available. Use only the supplied chart facts."
+              : "No calculated chart is available. Do not make a personal prediction. Explain that a Kundli calculation is required.",
+          ].join("\n")
+        : "";
 
-        return NextResponse.json(
-          {
-            reply: savedAnswer,
-            conversationId,
-            message: savedMessage,
-            source: "knowledge",
-            knowledgeId: knowledgeMatch.entry.id,
-          },
-          {
-            headers: {
-              "Cache-Control": "no-store",
-            },
-          },
-        );
-      } catch (error) {
-        console.error(
-          "Knowledge answer history save failed:",
-          error instanceof Error
-            ? error.message
-            : error,
-        );
-
-        return jsonError(
-          "The saved answer was found, but chat history could not be saved.",
-          500,
-        );
-      }
-    }
+    const context = [
+      `Selected astrologer: ${persona}`,
+      `Selected language: ${language}`,
+      `Conversation topic: ${topic}`,
+      followUpContext,
+      birthContext,
+      chartContext,
+      personalKnowledgeContext,
+      knowledgeContext,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
 
     /* ---------------- Gemini configuration ---------------- */
 
@@ -818,14 +825,24 @@ export async function POST(req: NextRequest) {
     const systemInstruction = [
       personaPrompt,
 
+      `CONVERSATION CONTEXT:\n${context}`,
+
       "You have one fixed selected astrologer identity.",
       "Never switch to another persona.",
       "Answer the latest user message directly.",
       `Respond in this language: ${language}.`,
 
+      "Understand the user's actual intent, not just matching keywords.",
+      "Use previous user questions and assistant answers to resolve incomplete follow-ups.",
+      "Answer the latest message, not an older question.",
+      "Never invent missing conversation details.",
+      "Maintain the selected female astrologer persona naturally.",
+      "Do not repeat greetings in every response.",
+
       "Use the complete conversation history to understand context.",
       "If the latest message is a follow-up, connect it to the immediately relevant previous topic.",
       "Do not treat a short complete question as a follow-up merely because it is short.",
+      "If the message is a new question, answer the new topic instead of forcing the previous topic into it.",
 
       "When relevant, answer from a Vedic astrology perspective.",
       "Explain graha, rashi, bhav, dasha and gochar in simple language.",
@@ -846,45 +863,8 @@ export async function POST(req: NextRequest) {
       "Do not repeat the same generic disclaimer in every reply.",
     ].join("\n");
 
-    const personalKnowledgeContext =
-      knowledgeMatch && requiresPersonalAnalysis
-        ? [
-            "A relevant saved educational knowledge entry was found.",
-            `Saved question: ${knowledgeMatch.entry.question}`,
-            `Educational reference: ${knowledgeMatch.answer}`,
-            `Knowledge entry ID: ${knowledgeMatch.entry.id}`,
-            "This entry requires personal chart analysis or calculation.",
-            "Use it only as educational background, not as a personal prediction.",
-            hasCalculatedChart
-              ? "A calculated chart is available. Use only the supplied chart facts."
-              : "No calculated chart is available. Do not make a personal prediction. Explain that a Kundli calculation is required.",
-          ].join("\n")
-        : "";
-
-    const followUpContext =
-      followUp && previousUserQuestion
-        ? [
-            "The latest message is a conversational follow-up.",
-            `Previous user question: ${previousUserQuestion}`,
-            "Answer the follow-up in the context of that question.",
-          ].join("\n")
-        : "Treat the latest message as the user's current question.";
-
-    const context = [
-      `Selected astrologer: ${persona}`,
-      `Selected language: ${language}`,
-      `Conversation topic: ${topic}`,
-      followUpContext,
-      birthContext,
-      chartContext,
-      personalKnowledgeContext,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
-
     const geminiContents = buildGeminiContents(
       recentHistory,
-      context,
       content,
     );
 
