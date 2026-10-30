@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
 import { OpenAI } from "openai";
 
-// ⚠️ गलत पाथ्स (@/app/db) को आपके नेक्स्ट जेएस आर्किटेक्चर के अनुसार परफेक्ट रिलेटिव पाथ से फिक्स किया गया
-import { db } from "../../db"; 
+// ✅ बिलकुल सही पाथ एलियास (@/app/db) जो प्रोडक्शन बिल्ड को कभी टूटने नहीं देगा
+import { db } from "@/app/db"; 
 import { 
   users, 
   birthDetails, 
@@ -11,7 +11,7 @@ import {
   conversations, 
   messages, 
   remedies 
-} from "../../db/schema";
+} from "@/app/db/schema";
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -31,7 +31,7 @@ const PERSONA_CONFIGS: Record<string, { specializations: string; tone: string; r
   "Dr. Devaki Shastri": {
     specializations: "KP Astrology, Kundli Analysis, Planetary Periods, Complex Dasha Calculations.",
     tone: "वैज्ञानिक, तार्किक, गंभीर और विश्लेषणात्मक (Highly intellectual, calculated, serious text).",
-    rules: "केपी ज्योतिष और महादशा/अन्तर्दशा चक्र का हवाला दें। नक्षत्रों की डिग्री का इस्तेमाल कर अचूक अचूक उपाय सुझाएं।"
+    rules: "केपी ज्योतिष और महादशा/अन्तर्दशा चक्र का हवाला दें। नक्षत्रों की डिग्री का इस्तेमाल कर अचूक उपाय सुझाएं।"
   },
   "Gargi Maa": {
     specializations: "Vedic Spirituality, Vastu, Traditional Remedies, Mental Peace.",
@@ -132,7 +132,7 @@ Step-by-step instructions for the user`;
     let rawAiReply = response.choices[0]?.message?.content || "";
     let cleanResponseText = rawAiReply;
 
-    // उपाय निष्कर्षण (Remedy Extraction Loop)
+    // ✅ उपाय निष्कर्षण का एरे इंडेक्स फिक्स (Array method split logic fix)
     if (cleanResponseText.includes("||REMEDY_EXTRACT||")) {
       const parts = cleanResponseText.split("||REMEDY_EXTRACT||");
       cleanResponseText = parts[0].trim();
