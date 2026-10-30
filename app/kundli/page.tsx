@@ -1,238 +1,146 @@
+// app/kundli/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowLeft, MoonStar, Sparkles, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { ArrowLeft, Scroll, Sparkles, Phone, TriangleAlert } from "lucide-react";
 import Link from "next/link";
-
 import { useApp } from "../Providers";
 
-type KundliForm = {
-  name: string;
-  dateOfBirth: string;
-  timeOfBirth: string;
-  placeOfBirth: string;
-};
-
-type PublicChart = {
-  lagna: { rashiName: string; rashiNameHi: string; degreeInSign: number };
-  moonSign: { rashiName: string; rashiNameHi: string };
-  nakshatra: { name: string; pada: number };
-  currentDasha: {
-    maha: string;
-    mahaUntil: string;
-    antar: string;
-    antarUntil: string;
-  } | null;
-  planets: {
-    planet: string;
-    rashiName: string;
-    house: number;
-    retrograde: boolean;
-  }[];
-};
-
 export default function KundliPage() {
-  const { refresh } = useApp();
-  const [form, setForm] = useState<KundliForm>({
-    name: "",
-    dateOfBirth: "",
-    timeOfBirth: "",
-    placeOfBirth: "",
-  });
-  const [chart, setChart] = useState<PublicChart | null>(null);
-  const [facts, setFacts] = useState("");
-  const [interpretation, setInterpretation] = useState<string | null>(null);
-  const [interpretationStatus, setInterpretationStatus] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const { lang, theme } = useApp();
+  const isDark = theme === "dark";
+  const isHindi = lang === "hi";
+  const isHinglish = lang === "hinglish";
 
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/kundli", { cache: "no-store" })
-      .then((response) => response.json())
-      .then((data) => {
-        if (cancelled || !data || typeof data !== "object") return;
-        if (data.birth) {
-          setForm({
-            name: typeof data.birth.name === "string" ? data.birth.name : "",
-            dateOfBirth: typeof data.birth.dob === "string" ? data.birth.dob : "",
-            timeOfBirth:
-              typeof data.birth.birthTime === "string" ? data.birth.birthTime : "",
-            placeOfBirth:
-              typeof data.birth.birthPlace === "string" ? data.birth.birthPlace : "",
-          });
-        }
-        if (data.chart) setChart(data.chart as PublicChart);
-        if (typeof data.calculatedReport === "string") setFacts(data.calculatedReport);
-      })
-      .catch(() => undefined);
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({ name: "", dob: "", tob: "", pob: "" });
 
-  function updateField(field: keyof KundliForm, value: string) {
-    setForm((previous) => ({ ...previous, [field]: value }));
-  }
+  const t = (hi: string, hing: string, en: string) =>
+    isHindi ? hi : isHinglish ? hing : en;
 
-  async function generateKundli(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setLoading(true);
-    setError("");
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 30000);
-    try {
-      const response = await fetch("/api/kundli", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
-        signal: controller.signal,
-      });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.chart) {
-        throw new Error(
-          typeof data.error === "string"
-            ? data.error
-            : "कुंडली गणना पूरी नहीं हो सकी। कृपया विवरण जाँचें।"
-        );
-      }
-      setChart(data.chart as PublicChart);
-      setFacts(typeof data.calculatedReport === "string" ? data.calculatedReport : "");
-      setInterpretation(typeof data.interpretation === "string" ? data.interpretation : null);
-      setInterpretationStatus(
-        typeof data.interpretationStatus === "string" ? data.interpretationStatus : ""
-      );
-      await refresh();
-    } catch (err) {
-      setError(
-        err instanceof Error && err.name === "AbortError"
-          ? "अनुरोध में अधिक समय लग रहा है। कृपया दोबारा कोशिश करें।"
-          : err instanceof Error
-            ? err.message
-            : "कुछ गलत हो गया। कृपया दोबारा कोशिश करें।"
-      );
-    } finally {
-      clearTimeout(timeoutId);
-      setLoading(false);
-    }
-  }
+  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white shadow-xl";
 
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 p-4 text-violet-50">
-      <div className="flex items-center gap-3">
-        <Link href="/" aria-label="होम पर वापस जाएँ" className="text-violet-300 hover:text-gold-300">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="font-display text-xl font-bold flex items-center gap-2">
-          <MoonStar className="text-gold-300" size={20} />
-          <span>वैदिक कुंडली</span>
-        </h1>
-      </div>
+    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+      <div className="mx-auto max-w-xl space-y-5">
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
+          <Link href="/" className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
+              {t("वैदिक कुंडली", "Vedic Kundli", "Vedic Kundli")}
+            </h1>
+            <p className="text-[11px] font-bold text-gray-400">
+              {t("सटीक ज्योतिषीय गणना", "Sateek Jyotishiy Ganana", "Accurate Astrological Calculation")}
+            </p>
+          </div>
+        </header>
 
-      <div className="card p-5 border border-gold-400/10 space-y-5">
-        <p className="text-sm text-violet-200 leading-relaxed">
-          जन्म विवरण भरें। लग्न, राशि, नक्षत्र और दशा गणना से बनेंगे।
-        </p>
-        <form onSubmit={generateKundli} className="space-y-4">
-          <label className="block space-y-1.5 text-sm text-violet-200">
-            पूरा नाम
-            <input
-              id="kundli-name"
-              required
-              maxLength={100}
-              value={form.name}
-              onChange={(event) => updateField("name", event.target.value)}
-              placeholder="अपना नाम लिखें"
-              className="w-full rounded-xl border border-gold-400/20 bg-violet-950/40 p-3 text-violet-50"
-            />
-          </label>
-          <label className="block space-y-1.5 text-sm text-violet-200">
-            जन्म की तारीख
-            <input
-              type="date"
-              required
-              value={form.dateOfBirth}
-              onChange={(event) => updateField("dateOfBirth", event.target.value)}
-              className="w-full rounded-xl border border-gold-400/20 bg-violet-950/40 p-3 text-violet-50"
-            />
-          </label>
-          <label className="block space-y-1.5 text-sm text-violet-200">
-            जन्म का समय
-            <input
-              type="time"
-              required
-              value={form.timeOfBirth}
-              onChange={(event) => updateField("timeOfBirth", event.target.value)}
-              className="w-full rounded-xl border border-gold-400/20 bg-violet-950/40 p-3 text-violet-50"
-            />
-          </label>
-          <label className="block space-y-1.5 text-sm text-violet-200">
-            जन्म स्थान
-            <input
-              required
-              maxLength={200}
-              value={form.placeOfBirth}
-              onChange={(event) => updateField("placeOfBirth", event.target.value)}
-              placeholder="शहर, राज्य — जैसे Patna, Bihar"
-              className="w-full rounded-xl border border-gold-400/20 bg-violet-950/40 p-3 text-violet-50"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-amber-300 to-yellow-500 p-3 font-semibold text-violet-950 disabled:opacity-60"
-          >
-            {loading ? <RefreshCw size={18} className="animate-spin" /> : <Sparkles size={18} />}
-            {loading ? "कुंडली गणना हो रही है..." : "कुंडली देखें"}
-          </button>
-        </form>
+        {step === 1 && (
+          <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
+            <div className="rounded-xl border border-rose-300 bg-rose-50 p-3 text-rose-800 mb-4">
+              <p className="flex items-start gap-2 text-xs font-semibold leading-5">
+                <TriangleAlert size={16} className="shrink-0 text-rose-600 mt-0.5" />
+                {t(
+                  "🌸 कुंडली में छिपे दोष आपके जीवन को प्रभावित कर सकते हैं। जन्म विवरण भरें और महिला ज्योतिषी से प्यार से बात करें।",
+                  "🌸 Kundli mein chhipe dosh aapke jeevan ko prabhavit kar sakte hain. Janm vivaran bharein aur Mahila Jyotishi se pyaar se baat karein.",
+                  "🌸 Hidden doshas in your chart can affect your life. Fill your birth details and talk lovingly with our Female Astrologer."
+                )}
+              </p>
+            </div>
 
-        {error && (
-          <p role="alert" className="rounded-xl border border-red-400/30 bg-red-950/30 p-4 text-sm text-red-200">
-            {error}
-          </p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-bold">{t("पूरा नाम", "Poora Naam", "Full Name")}</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className={`mt-1 w-full rounded-xl border px-4 py-2 text-sm ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+                  placeholder={t("अपना नाम लिखें", "Apna naam likhein", "Enter your name")}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-bold">{t("जन्म तिथि", "Janm Tithi", "Date of Birth")}</label>
+                  <input
+                    type="date"
+                    value={formData.dob}
+                    onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
+                    className={`mt-1 w-full rounded-xl border px-4 py-2 text-sm ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-bold">{t("जन्म समय", "Janm Samay", "Time of Birth")}</label>
+                  <input
+                    type="time"
+                    value={formData.tob}
+                    onChange={(e) => setFormData({ ...formData, tob: e.target.value })}
+                    className={`mt-1 w-full rounded-xl border px-4 py-2 text-sm ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-bold">{t("जन्म स्थान", "Janm Sthan", "Place of Birth")}</label>
+                <input
+                  type="text"
+                  value={formData.pob}
+                  onChange={(e) => setFormData({ ...formData, pob: e.target.value })}
+                  className={`mt-1 w-full rounded-xl border px-4 py-2 text-sm ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+                  placeholder={t("शहर का नाम", "Sheher ka naam", "City name")}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={() => setStep(2)}
+              className="mt-4 w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-md transition active:scale-[0.99]"
+            >
+              {t("कुंडली बनाएं", "Kundli Banayein", "Generate Kundli")}
+            </button>
+          </section>
         )}
 
-        {chart && (
-          <section aria-live="polite" className="space-y-3 rounded-xl border border-gold-400/20 bg-violet-950/30 p-4">
-            <h2 className="font-display font-bold text-gold-300">आपकी गणना की गई कुंडली</h2>
-            <div className="grid grid-cols-2 gap-3 text-sm">
-              <p>लग्न: {chart.lagna.rashiNameHi} ({chart.lagna.degreeInSign}°)</p>
-              <p>राशि: {chart.moonSign.rashiNameHi}</p>
-              <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
-              {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
-            </div>
-            <ul className="space-y-1 text-sm text-violet-100">
-              {chart.planets.map((planet) => (
-                <li key={planet.planet}>
-                  {planet.planet}: {planet.rashiName}, भाव {planet.house}
-                  {planet.retrograde ? " (वक्री)" : ""}
-                </li>
-              ))}
-            </ul>
-            {facts && (
-              <pre className="whitespace-pre-wrap break-words font-sans text-sm leading-7 text-violet-100">
-                {facts}
-              </pre>
-            )}
-            {interpretation ? (
-              <div className="whitespace-pre-wrap break-words border-t border-gold-400/15 pt-3 text-sm leading-7">
-                {interpretation}
-              </div>
-            ) : (
-              <p className="text-sm text-violet-300">
-                {interpretationStatus === "quota"
-                  ? "गणना पूरी हो गई है। लिखित व्याख्या अभी एआई सेवा की सीमा के कारण नहीं बनी। थोड़ी देर बाद फिर बना सकते हैं।"
-                  : "गणना पूरी हो गई है। लिखित व्याख्या इस समय उपलब्ध नहीं है।"}
+        {step === 2 && (
+          <section className={`space-y-5 rounded-2xl border p-5 text-center ${cardClass}`}>
+            <Scroll size={50} className="mx-auto text-orange-500 animate-pulse" />
+            <h2 className="text-lg font-bold">{t("कुंडली तैयार हो रही है...", "Kundli taiyar ho rahi hai...", "Generating Kundli...")}</h2>
+            <p className="text-sm text-gray-500">
+              {t("कृपया प्रतीक्षा करें, ग्रहों की गणना की जा रही है।", "Kripya pratiksha karein, grahon ki ganana ki ja rahi hai.", "Please wait, planetary calculations are in progress.")}
+            </p>
+            
+            <div className="mt-6 rounded-xl border border-rose-300 bg-rose-50 p-4">
+              <p className="text-sm font-bold text-rose-800 mb-2">
+                {t("जब तक कुंडली बन रही है, महिला ज्योतिषी से बात करें", "Jab tak kundli ban rahi hai, Mahila Jyotishi se baat karein", "While it generates, talk to our Female Astrologer")}
               </p>
-            )}
+              <a href="tel:+919999999999" className="inline-block rounded-full bg-rose-600 px-6 py-2 text-sm font-bold text-white shadow">
+                {t("अभी कॉल करें", "Abhi Call Karein", "Call Now")}
+              </a>
+            </div>
           </section>
         )}
       </div>
 
-      <p className="text-xs leading-relaxed text-violet-300">
-        नोट: Gita AI आपको आपकी जन्म जानकारी के आधार पर व्यक्तिगत ज्योतिषीय मार्गदर्शन और जीवन से जुड़े उपयोगी सुझाव प्रदान करता है। बेहतर अनुभव के लिए अपनी जन्म तिथि, सही समय और जन्म स्थान की जानकारी ध्यानपूर्वक भरें।
-      </p>
-    </div>
+      <a
+        href="tel:+919999999999"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Phone size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {isHindi ? "महिला ज्योतिषी • 24x7 उपलब्ध" : isHinglish ? "Mahila Jyotishi • 24x7 Available" : "Female Astrologer • 24x7 Available"}
+            </p>
+            <p className="text-sm font-black">
+              {isHindi ? "दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Dil Se Baat Karein — Wo Pyaar Se Sab Samjha Dengi" : "Talk from the Heart — She Explains with Love"}
+            </p>
+          </div>
+        </div>
+      </a>
+    </main>
   );
 }
