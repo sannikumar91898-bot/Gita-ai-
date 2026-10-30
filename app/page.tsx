@@ -12,12 +12,12 @@ import {
   Star,
   Eye,
   Settings,
-  Phone,
   Sparkles,
   Hand,
   ScanFace,
   Heart,
   Scroll,
+  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -322,24 +322,24 @@ export default function HomePage() {
       </nav>
 
       <a
-        href="tel:+919999999999"
+        href="sms:+919999999999"
         className="fixed bottom-16 left-0 right-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl mx-auto max-w-xl rounded-t-xl"
       >
         <div className="flex items-center gap-2">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
-            <Phone size={14} />
+            <MessageCircle size={14} />
           </span>
           <div className="leading-tight">
             <p className="text-[9px] font-black uppercase tracking-wider text-rose-100">
-              {isHindi ? "हमारी महिला ज्योतिषी • 24x7" : isHinglish ? "Hamari Mahila Jyotishi • 24x7" : "Our Female Astrologers • 24x7"}
+              {isHindi ? "महिला ज्योतिषी • 24x7 एसएमएस चैट" : isHinglish ? "Mahila Jyotishi • 24x7 SMS Chat" : "Female Astrologer • 24x7 SMS Chat"}
             </p>
             <p className="text-xs font-black">
-              {isHindi ? "किसी एक से दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Kisi ek se dil se baat karein — wo pyaar se sab samjha dengi" : "Talk from the heart with one — she will lovingly explain everything"}
+              {isHindi ? "तुरंत चैट करें — देरी संकट ला सकती है" : isHinglish ? "Turant Chat Karein — Deri Sankat La Sakti Hai" : "Chat Now — Delay Can Bring Crisis"}
             </p>
           </div>
         </div>
         <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-rose-700">
-          {isHindi ? "कॉल" : "Call"}
+          {isHindi ? "चैट" : "Chat"}
         </span>
       </a>
     </main>
