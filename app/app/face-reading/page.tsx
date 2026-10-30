@@ -10,8 +10,9 @@ import {
   RefreshCw,
   Scan,
   Image as ImageIcon,
-  RotateCcw,
-  MessageSquare,
+  Eye,
+  Brain,
+  MessageCircle,
 } from "lucide-react";
 import { useApp } from "../../Providers";
 
@@ -22,50 +23,58 @@ type FeatureOption = {
   type: string;
   label: string;
   analysis: string;
+  timeline: string;
+  remedy: string;
 };
 
-// 👑 100% राजयोग और महा-भाग्यशाली फलादेश मैट्रिक्स (बकवास थ्योरी पूरी साफ़)
+// 👑 100% अकाट्य दावे, पक्के टाइमलाइन और महा-उपाय के साथ सामुद्रिक डेटाबेस
 const FACE_FEATURES: Record<FeatureKey, FeatureOption[]> = {
   forehead: [
     {
       type: "broad",
-      label: "चौड़ा माथा (Broad Forehead) - अत्यंत भाग्यशाली एवं राजसी",
-      analysis:
-        "सामुद्रिक शास्त्र के अनुसार चौड़े माथे वाले व्यक्ति प्रचंड बुद्धिमान और लीडरशिप के धनी होते हैं। आपके जीवन में बड़े धन लाभ, सरकारी मान-सम्मान और अटूट राजयोग के प्रबल संकेत हैं।",
+      label: "चौड़ा माथा (Absolute Ruler Intellect)",
+      analysis: "सामुद्रिक शास्त्र के अनुसार ऐसा चौड़ा माथा साक्षात राजयोग का प्रतीक है। आपके भीतर गजब की लीडरशिप और बड़ा व्यापार साम्राज्य खड़ा करने की क्षमता जन्मजात है। आपके सितारे बुलंद हैं और समाज में आपका नाम और रुतबा सर्वोच्च स्तर पर पहुँचेगा।",
+      timeline: "आगामी 11 महीनों के भीतर आपकी कुंडली में धन का महा-आगमन निश्चित है।",
+      remedy: "रोज सुबह सूर्य देव को तांबे के लोटे से जल चढ़ाएं और सिंदूर का तिलक लगाएं।"
     },
     {
       type: "narrow",
-      label: "छोटा या संकुचित माथा (Narrow Forehead) - व्यावहारिक एवं तीव्र अंतर्ज्ञान",
-      analysis:
-        "आपका माथा दर्शाता है कि आप अपनी तीक्ष्ण अंतरात्मा (Intuition) से बड़े फैसले लेते हैं। आप स्वतंत्र व्यापार में अपार सफलता प्राप्त करेंगे और गुप्त धन अर्जित करेंगे।",
+      label: "छोटा या संकुचित माथा (Sharp Executioner)",
+      analysis: "सामुद्रिक रहस्य के अनुसार छोटा माथा अत्यंत तीव्र बुद्धि और अचूक रणनीतिकार की निशानी है। आप जो ठान लेते हैं, उसे हासिल करके ही दम लेते हैं। आपके जीवन में अचानक और अप्रत्याशित रूप से छप्परफाड़ धन लाभ होगा।",
+      timeline: "अगले 4 महीनों के अंदर आपके करियर में एक बहुत बड़ा और चमत्कारी मोड़ आने वाला है।",
+      remedy: "बुधवार के दिन गाय को हरी घास खिलाएं और अपने पास एक चांदी का सिक्का रखें।"
     },
   ],
   eyes: [
     {
       type: "big",
-      label: "बड़ी आँखें (Big Eyes) - चुंबकीय आकर्षण एवं वैभव",
-      analysis:
-        "आपकी आँखें राजसी आकर्षण का प्रतीक हैं। लोग आपसे पहली मुलाकात में ही अत्यधिक प्रभावित हो जाते हैं। आपकी कुंडली का शुक्र मजबूत है, जिससे विलासिता और आकस्मिक धन लाभ निश्चित है।",
+      label: "बड़ी आँखें (Magnetic Attraction Eyes)",
+      analysis: "बड़ी और सम्मोहक आँखें स्पष्ट करती हैं कि आपके भीतर सम्मोहन शक्ति (Magnetism) कूट-कूट कर भरी है। लोग आपकी तरफ खिंचे चले आते हैं। व्यापार और समाज में आपकी साख इतनी मजबूत होगी कि विरोधी स्वतः ही घुटने टेक देंगे।",
+      timeline: "आगामी अक्टूबर 2027 से पहले आपके जीवन की सबसे बड़ी मनोकामना 100% पूरी होने जा रही है।",
+      remedy: "प्रतिदिन हनुमान चालीसा का पाठ करें और आँखों में नियमित रूप से गुलाब जल डालें।"
     },
     {
       type: "small",
-      label: "छोटी या तीखी आँखें (Small/Sharp Eyes) - फोकस्ड एवं अत्यंत चतुर",
-      analysis:
-        "सामुद्रिक शास्त्र के अनुसार तीखी आँखें अचूक फोकस्ड दिमाग को दर्शाती हैं। किसी भी चाल या बारीकी को पकड़ने में आपको महारत हासिल है। कोई आपको व्यापार या धन के मामले में धोखा नहीं दे सकता।",
+      label: "छोटी या तीखी आँखें (The Eagle Eye Mastermind)",
+      analysis: "तीखी और बाज जैसी निगाहें ये साबित करती हैं कि आप गुप्त शत्रुओं की चालों को समय से पहले भांप लेते हैं। कोई आपको धोखा नहीं दे सकता। धन संचय के मामले में आपका दिमाग बहुत तेज चलता है और आप करोड़ों का साम्राज्य खड़ा करेंगे।",
+      timeline: "आने वाले 45 दिनों के भीतर आपको एक बहुत बड़ी खुशखबरी या गुप्त धन की प्राप्ति होगी।",
+      remedy: "शनिवार की शाम को पीपल के पेड़ के नीचे सरसों के तेल का दीपक प्रज्वलित करें।"
     },
   ],
   lips: [
     {
       type: "full",
-      label: "भरे हुए होंठ (Full Lips) - राजसी संवाद शैली एवं उच्च पद",
-      analysis:
-        "आपके होंठ बताते हैं कि आपकी वाणी में साक्षात सरस्वती का वास है। आप अपनी संवाद शैली से बड़ी से बड़ी बिजनेस डील चुटकियों में पक्की कर लेते हैं। समाज में आपका प्रभाव हमेशा शीर्ष पर रहेगा।",
+      label: "भरे हुए होंठ (Royal Luxury Communicator)",
+      analysis: "भरे हुए और स्पष्ट होंठ सामुद्रिक विज्ञान में ऐश्वर्य और उच्च विलासिता (Luxury Life) का साक्षात प्रमाण हैं। आपकी वाणी में मां सरस्वती का वास है। आप अपनी मीठी जुबान और तर्कों से हर बड़ी डील अपने नाम कर लेते हैं।",
+      timeline: "अगले साल मार्च के महीने में भूमि, भवन या वाहन का सुख आपको निश्चित रूप से मिलने वाला है।",
+      remedy: "शुक्रवार के दिन मां लक्ष्मी को मिश्री और मखाने का भोग लगाएं और गुलाबी वस्त्र धारण करें।"
     },
     {
       type: "thin",
-      label: "पतले होंठ (Thin Lips) - आत्मनिर्भर एवं अकूत धन के स्वामी",
-      analysis:
-        "पतले होंठ साफ दर्शाते हैं कि आप एक सफल रणनीतिकार हैं। आप अपनी गुप्त योजनाओं के बल पर व्यापार जगत में इंडस्ट्री लीडर बनने की क्षमता रखते हैं। धन का आगमन चारों दिशाओं से होगा।",
+      label: "पतले होंठ (Diplomatic Command Lips)",
+      analysis: "पतले होंठ अत्यंत चतुर, कूटनीतिज्ञ और सटीक निर्णय लेने वाले शासक के होते हैं। आप भावनाओं में बहकर कभी अपना नुकसान नहीं करते। आपका यही गुण आपको बहुत जल्द अपने कुल का सबसे अमीर व्यक्ति बनाएगा।",
+      timeline: "अगले 3 महीनों के भीतर आपकी आय के नए और परमानेंट स्रोत (Multiple Income Streams) चालू होंगे।",
+      remedy: "गुरुवार को भगवान विष्णु के मंदिर में चने की दाल और पीले केले का दान करें।"
     },
   ],
 };
@@ -88,25 +97,22 @@ export default function FaceReadingPage() {
 
   const pageClass = isDark
     ? "bg-slate-950 text-white"
-    : "bg-gradient-to-b from-orange-50/40 to-white text-slate-900";
+    : "bg-gradient-to-b from-orange-50 to-white text-slate-900";
 
   const panelClass = isDark
     ? "border-white/10 bg-white/[0.04]"
-    : "border-orange-100 bg-white shadow-xl";
+    : "border-orange-100 bg-white shadow-lg";
 
-  const mutedClass = isDark ? "text-slate-300" : "text-gray-700";
+  const mutedClass = isDark ? "text-slate-300" : "text-gray-600";
 
-  const handleImageChange = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-
     if (!file) return;
 
     setError("");
 
     if (!file.type.startsWith("image/")) {
-      setError("कृपया JPG, PNG या कोई मान्य इमेज चुनें।");
+      setError("कृपया JPG, PNG या मान्य इमेज चुनें।");
       event.target.value = "";
       return;
     }
@@ -118,7 +124,6 @@ export default function FaceReadingPage() {
     }
 
     const reader = new FileReader();
-
     reader.onload = () => {
       if (typeof reader.result === "string") {
         setSelectedImage(reader.result);
@@ -127,24 +132,23 @@ export default function FaceReadingPage() {
         setError("फोटो पढ़ी नहीं जा सकी। दोबारा कोशिश करें।");
       }
     };
-
     reader.onerror = () => {
-      setError("फोटो अपलोड नहीं हो पाई। कृपया फिर कोशिश करें।");
+      setError("फोटो अपलोड नहीं हो पाई। फिर कोशिश करें।");
     };
-
     reader.readAsDataURL(file);
-  };
+  }
 
-  const selectAnswer = (field: FeatureKey, value: string) => {
+  function selectAnswer(field: FeatureKey, value: string) {
     setAnswers((previous) => ({
       ...previous,
       [field]: value,
     }));
-  };
+    setError("");
+  }
 
-  const processReading = () => {
+  function processReading() {
     if (!answers.forehead || !answers.eyes || !answers.lips) {
-      setError("कृपया तीनों सवालों के जवाब चुनें।");
+      setError("कृपया तीनों शारीरिक लक्षणों के सही विकल्पों को चुनें।");
       return;
     }
 
@@ -155,9 +159,9 @@ export default function FaceReadingPage() {
       setIsScanning(false);
       setStep("result");
     }, 1500);
-  };
+  }
 
-  const resetModule = () => {
+  function resetModule() {
     setStep("upload");
     setSelectedImage(null);
     setAnswers({
@@ -170,25 +174,29 @@ export default function FaceReadingPage() {
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-  };
+  }
 
-  const getSelectedFeature = (field: FeatureKey) =>
-    FACE_FEATURES[field].find(
-      (feature) => feature.type === answers[field]
+  function getSelectedFeature(field: FeatureKey) {
+    return FACE_FEATURES[field].find(
+      (feature) => feature.type === answers[field],
     );
+  }
 
   const selectedFeatures = [
     {
-      title: "ललाट फलादेश (Forehead Analysis)",
+      title: "ललाट (माथे) का दिव्य राजयोग फल",
       feature: getSelectedFeature("forehead"),
+      icon: Brain,
     },
     {
-      title: "नेत्र फलादेश (Eyes Insight)",
+      title: "नेत्र (आँखों) का सम्मोहन एवं भाग्य चक्र",
       feature: getSelectedFeature("eyes"),
+      icon: Eye,
     },
     {
-      title: "ओष्ठ फलादेश (Lips Profile)",
+      title: "ओष्ठ (होंठों) का ऐश्वर्य और धन योग फल",
       feature: getSelectedFeature("lips"),
+      icon: MessageCircle,
     },
   ];
 
@@ -209,24 +217,25 @@ export default function FaceReadingPage() {
           </Link>
 
           <div>
-            <h1 className="text-xl font-bold">
-              👤 AI सामुद्रिक शास्त्र (Face Reading)
-            </h1>
-            <p className="mt-1 text-xs text-orange-500 font-bold">
-              चेहरे और आँखों की बनावट से जानिए अपना 100% सटीक भविष्यफल
+            <h1 className="text-xl font-bold">👑 प्रीमियम एआई सामुद्रिक शास्त्र</h1>
+            <p className="mt-1 text-xs font-bold text-orange-500">
+              Face Reading · 100% Authoritative Prediction
             </p>
           </div>
         </header>
 
         {step === "upload" && (
           <section className={`rounded-2xl border p-5 ${panelClass}`}>
-            <div className="mb-5 rounded-xl border border-orange-500/20 bg-orange-500/10 p-4 text-center">
-              <Scan className="mx-auto mb-2 text-orange-500 animate-pulse" size={34} />
-              <h2 className="font-black text-sm uppercase tracking-wider text-orange-600">
-                अपना चेहरा स्कैन करें
+            <div className="mb-5 rounded-xl border border-orange-500/20 bg-orange-500/10 p-5 text-center">
+              <Scan
+                className="mx-auto mb-3 animate-pulse text-orange-500"
+                size={38}
+              />
+              <h2 className="text-sm font-black uppercase tracking-wide text-orange-500">
+                चेहरे की बनावट से जानें अपना संपूर्ण भाग्य
               </h2>
-              <p className="mt-2 text-xs leading-6 font-semibold">
-                सामने से खींची गई एक स्पष्ट फोटो अपलोड करें। हमारा ऑफलाइन सामुद्रिक शास्त्र एल्गोरिदम आपके गुप्त राजयोग और भाग्य का तुरंत विश्लेषण करेगा।
+              <p className={`mt-3 text-xs leading-6 ${mutedClass}`}>
+                सामुद्रिक विज्ञान के गुप्त सूत्रों के अनुसार आपकी आँखें, माथा और होंठ आपके आने वाले कल का पूरा सच बयां करते हैं। अपनी फोटो अपलोड करें और अचूक महा-भविष्यवाणी प्राप्त करें।
               </p>
             </div>
 
@@ -250,59 +259,26 @@ export default function FaceReadingPage() {
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-orange-400/50 p-7 font-bold text-xs uppercase transition hover:bg-orange-500/10"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-orange-400/50 p-7 text-xs font-bold transition hover:bg-orange-500/10"
             >
               <Camera size={20} />
-              फोटो अपलोड करें या कैमरा खोलें
+              चेहरे का महा-स्कैन शुरू करें (कैमरा / गैलरी)
             </button>
 
             <button
               type="button"
               onClick={() => setStep("questions")}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3.5 text-xs font-black uppercase text-white shadow-md"
+              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3.5 text-xs font-black text-white shadow-md transition hover:bg-orange-700"
             >
               <ImageIcon size={16} />
-              बिना फोटो सीधे शुरू करें →
+              मैन्युअली लक्षण चुनकर आगे बढ़ें
             </button>
 
             {error && (
-              <p className="mt-3 text-center text-sm text-red-500 font-bold">
+              <p className="mt-3 text-center text-sm font-bold text-red-500">
                 {error}
               </p>
             )}
-
-            <p className="mt-4 text-center text-[10px] text-gray-400 font-medium">
-              पूरी तरह सुरक्षित। आपकी फोटो आपके डिवाइस पर ही प्रोसेस होती है।
-            </p>
           </section>
         )}
 
-        {step === "questions" && (
-          <section className={`space-y-6 rounded-2xl border p-5 ${panelClass}`}>
-            <div>
-              <h2 className="flex items-center gap-2 font-black text-sm uppercase text-orange-500">
-                <HelpCircle size={16} />
-                चेहरे के लक्षण लॉक करें
-              </h2>
-              <p className="mt-2 text-xs font-semibold">
-                सटीक फलादेश रिपोर्ट के लिए अपनी बनावट के अनुसार सही विकल्प चुनें।
-              </p>
-            </div>
-
-            {selectedImage && (
-              <div className="flex items-center gap-3 rounded-xl bg-orange-500/10 p-3 border border-orange-200">
-                <img
-                  src={selectedImage}
-                  alt="आपकी चुनी हुई फोटो"
-                  className="h-16 w-16 rounded-lg object-cover"
-                />
-                <div className="min-w-0">
-                  <p className="text-xs font-bold text-orange-600">
-                    फोटो सफलतापूर्वक लिंक हो गई
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => fileInputRef.current?.click()}
-                    className="mt-1 text-xs text-gray-500 underline"
-                  >
-                    दूसरी फोटो बदलें
