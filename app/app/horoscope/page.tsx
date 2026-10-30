@@ -2,153 +2,213 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { 
-  ArrowLeft, 
-  Sparkles, 
-  Star, 
-  MessageSquare, 
-  CheckCircle2
+import {
+  ArrowLeft,
+  Sparkles,
+  MessageSquare,
+  RefreshCw,
+  CalendarDays,
+  Star,
 } from "lucide-react";
-
-// ⚠️ पाथ एरर को फिक्स किया गया (../ Providers को ../../Providers किया गया)
 import { useApp } from "../../Providers";
 
-const HOROSCOPE_REVIEWS = [
-  {
-    id: "rev_1",
-    astrologer: "Gita",
-    user: "Riya Sen",
-    rating: 5,
-    comment: "Gita dii se shadi ke matter me pucha tha. Unhone jesa bataya tha thik wesa hi chal rha h relation abhi. Bht caring h vo!",
-  },
-  {
-    id: "rev_2",
-    astrologer: "Acharya Kriti",
-    user: "Alok Dwivedi",
-    rating: 5,
-    comment: "Kriti mam ka behavior bhot to-the-point hai. Faltu time waste nahi karti. Government job ke exam ki exact timing btai unone.",
-  },
-  {
-    id: "rev_3",
-    astrologer: "Dr. Devaki Shastri",
-    user: "Shashi Bhushan",
-    rating: 4,
-    comment: "Dasha analysis bht accurate thi shastri ji ki. Kundli me shani ke dosh ka sasta upay btaya h. Thank u.", 
-  },
-  {
-    id: "rev_4",
-    astrologer: "Gargi Maa",
-    user: "Meenu Sharma",
-    rating: 5,
-    comment: "गार्गी माँ से बात करके मन एकदम शांत हो गया। बिल्कुल माँ की तरह समझाती है और गीता के श्लोक से उपाय बताती हैं। धन्य हो माँ।",
-  },
-];
+type ZodiacSign = {
+  id: string;
+  name: string;
+  english: string;
+  emoji: string;
+  guidance: string;
+  career: string;
+  relationship: string;
+  wellness: string;
+  tip: string;
+  luckyColor: string;
+};
 
-const ZODIAC_SIGNS = [
-  { name: "Mesh (Aries)", emoji: "♈", prediction: "आज आपकी कुंडली के दशम भाव में मंगल का गोचर प्रचंड धन लाभ और करियर में बड़ा प्रमोशन का योग बना रहा है। आचार्य कृति के अनुसार व्यापारिक निवेश के लिए आज का दिन सर्वोत्तम है। विशेष उपाय के लिए चैट शुरू करें।" },
-  { name: "Vrishabh (Taurus)", emoji: "♉", prediction: "लव लाइफ और वैवाहिक जीवन में चल रहा तनाव आज देवगुरु बृहस्पति की कृपा से तुरंत समाप्त होगा। गीता दीदी के अनुसार आज शाम कोई बड़ी खुशखबरी मिलने वाली है। गुप्त उपाय जानने के लिए तुरंत चैट करें।" },
-  { name: "Mithun (Gemini)", emoji: "♊", prediction: "राहु-केतु का गोचर अब आपकी राशि के अनुकूल हो गया है। रुका हुआ सारा पैसा और सरकारी अटके काम 100% गति से पूरे होंगे। स्वास्थ्य उत्तम रहेगा। आज का चमत्कारी उपाय जानने के लिए चैट पर आएं।" },
-  { name: "Karka (Cancer)", emoji: "♋", prediction: "आपकी राशि में आज लक्ष्मी नारायण योग सक्रिय हो चुका है। आकस्मिक धन लाभ और लॉटरी या शेयर मार्केट से भारी मुनाफा मिलने के संकेत हैं। अपनी धन स्थिति मजबूत करने का महा-उपाय तुरंत चैट पर जानें।" },
-  { name: "Simha (Leo)", emoji: "♌", prediction: "सूर्य का अपनी ही राशि में होना आपके आत्मविश्वास और समाज में दबदबे को चार गुना बढ़ा देगा। दुश्मनों का नाश होगा। नया बिजनेस शुरू करने के लिए दिन लकी है। विशेष यंत्र के बारे में पंडित जी से चैट पर पूछें।" },
-  { name: "Kanya (Virgo)", emoji: "♍", prediction: "बुध के प्रभाव से आपकी बुद्धि और वाणी की शक्ति से आज बड़ी से बड़ी डील फाइनल हो जाएगी। लव पार्टनर के साथ यात्रा के योग हैं। कुंडली के दोषों को काटने का सरल उपाय चैट पर उपलब्ध है।" },
-  { name: "Tula (Libra)", emoji: "♎", prediction: "मालव्य राजयोग के कारण आज आपके सुख-साधन और विलासिता की वस्तुओं में भारी वृद्धि होगी। नया मकान या वाहन खरीदने का सपना पूरा होने वाला है। इस राजयोग को एक्टिव करने का उपाय चैट पर जानें।" },
-  { name: "Vrishchik (Scorpio)", emoji: "♏", prediction: "आज आपके पराक्रम और साहस की बदौलत कार्यक्षेत्र में बड़ा सम्मान मिलेगा। नौकरी में ट्रांसफर और वेतन वृद्धि के प्रबल योग हैं। शनि की ढैय्या को शांत करने का अचूक उपाय जानने के लिए तुरंत जुड़ें।" },
-  { name: "Dhanu (Sagittarius)", emoji: "♐", prediction: "कुंडली का द्वितीय भाव धन से भरने वाला है। पैतृक संपत्ति से बड़ा लाभ होगा और परिवार में मांगलिक कार्य संपन्न होंगे। आज का दिन आपके जीवन का टर्निंग पॉइंट है, विशेष गाइडेंस के लिए चैट शुरू करें।" },
-  { name: "Makar (Capricorn)", emoji: "♑", prediction: "आपकी राशि पर बना हुआ शश महापुरुष राजयोग आज आपको व्यापार में इंडस्ट्री लीडर बनाने की क्षमता रखता है। धन का आगमन चारों दिशाओं से होगा। पहली चैट बिल्कुल फ्री है, तुरंत लाभ उठाएं।" },
-  { name: "Kumbh (Aquarius)", emoji: "♒", prediction: "अष्टम भाव के सारे कष्ट अब दूर हो चुके हैं। विदेशी स्रोतों और ऑनलाइन कार्यों से अपार धन कमाने का रास्ता खुलेगा। कोर्ट-कचहरी के मामलों में शत-प्रतिशत विजय मिलेगी। अचूक रेमेडी के लिए चैट करें।" },
-  { name: "Meen (Pisces)", emoji: "♓", prediction: "गुरू का गोचर आपके भाग्य भाव को अत्यधिक शक्तिशाली बना रहा है। कम मेहनत में भी आज आपको दोगुनी सफलता मिलेगी। बिगड़े हुए काम अपने आप बनने लगेंगे। अपनी किस्मत चमकाने का महामंत्र चैट पर प्राप्त करें।" }
+// 👑 100% सॉलिड मार्केटिंग और राजयोग फलादेश मैट्रिक्स (बकवास और ढीली बातें पूरी साफ़)
+const ZODIAC_SIGNS: ZodiacSign[] = [
+  {
+    id: "aries",
+    name: "मेष",
+    english: "Aries",
+    emoji: "♈",
+    guidance: "आज आपकी राशि के कर्म भाव में ग्रहों का महागोचर एक अत्यंत दुर्लभ और शुभ राजयोग का निर्माण कर रहा है! भाग्य सातवें आसमान पर रहेगा।",
+    career: "बिजनेस और करियर में आकस्मिक धन लाभ के महायोग बन रहे हैं। कोई बड़ी डील फाइनल होने वाली है, जिससे धन की स्थिति मजबूत होगी।",
+    relationship: "लव लाइफ और वैवाहिक जीवन में चल रहा तनाव आज पूर्णतः समाप्त होगा। पार्टनर से कोई बहुत बड़ा सरप्राइज मिलने वाला है।",
+    wellness: "मानसिक और शारीरिक ऊर्जा चरम पर रहेगी। पुराना कोई रोग आज पूरी तरह कट जाएगा।",
+    tip: "इस अद्भुत राजयोग कालखंड का पूरा लाभ उठाएं और नया निवेश तुरंत शुरू करें।",
+    luckyColor: "शाही गहरा लाल (प्रचंड भाग्यशाली)",
+  },
+  {
+    id: "taurus",
+    name: "वृषभ",
+    english: "Taurus",
+    emoji: "♉",
+    guidance: "आज धन भाव में देवगुरु बृहस्पति की अमृत दृष्टि पड़ने से आपके बैंक बैलेंस में भारी उछाल आने वाला है। शत्रु परास्त होंगे।",
+    career: "कार्यक्षेत्र में आपका दबदबा चार गुना बढ़ जाएगा। वरिष्ठ अधिकारी आपके सामने झुकेंगे। रुका हुआ सारा पैसा शत-प्रतिशत वापस मिलेगा।",
+    relationship: "रिश्तों में अपार प्रेम और समर्पण बढ़ेगा। विवाह की बात पक्की होने का समय आ चुका है।",
+    wellness: "स्वास्थ्य अत्यंत मजबूत रहेगा, मुखमंडल पर एक नया राजसी तेज दिखाई देगा।",
+    tip: "आज लक्ष्मी जी का दिन है, धन लाभ का एक भी अवसर हाथ से न जाने दें।",
+    luckyColor: "चमकदार सफेद (लक्ष्मी योग)",
+  },
+  {
+    id: "gemini",
+    name: "मिथुन",
+    english: "Gemini",
+    emoji: "♊",
+    guidance: "राहु-केतु का गोचर अब आपकी राशि के लिए स्वर्ण काल की शुरुआत कर रहा है। वर्षों से अटके हुए सरकारी कार्य आज पूरे होंगे।",
+    career: "नौकरीपेशा जातकों को मनचाहा प्रमोशन या ट्रांसफर मिलने का प्रबल योग है। व्यापार में प्रतिद्वंद्वी पूरी तरह शांत रहेंगे।",
+    relationship: "प्रेम जीवन में नया रोमांच आएगा। पुराना रूठा हुआ साथी खुद फोन करके वापस लौट आएगा।",
+    wellness: "तनाव से पूरी तरह मुक्ति मिलेगी और आप खुद को फ्रेश और शक्तिशाली महसूस करेंगे।",
+    tip: "अपनी योजनाओं को गुप्त रखें और सीधे सफलता की ओर कदम बढ़ाएं।",
+    luckyColor: "केसरिया पीला (राजसी योग)",
+  },
+  {
+    id: "cancer",
+    name: "कर्क",
+    english: "Cancer",
+    emoji: "♋",
+    guidance: "आपकी राशि में आज नवग्रहों का विशेष लक्ष्मी नारायण योग सक्रिय हो चुका है। सुख-साधनों और विलासिता में भारी वृद्धि होगी।",
+    career: "शेयर मार्केट, लॉटरी या पैतृक संपत्ति से अचानक बड़ा धन हाथ आ सकता है। नया व्यापार शुरू करने का सबसे लकी दिन है।",
+    relationship: "वैवाहिक जीवन में खुशियाँ लौटेंगी। जीवनसाथी के भाग्य से आपको धन और मान-सम्मान की प्राप्ति होगी।",
+    wellness: "स्वास्थ्य उत्तम रहेगा, पुरानी मानसिक चिंताएं जड़ से खत्म होंगी।",
+    tip: "इस महायोग का लाभ उठाने के लिए आज कोई बड़ा व्यापारिक निर्णय अवश्य लें।",
+    luckyColor: "शाही सुनहरी सफेद",
+  },
+  {
+    id: "leo",
+    name: "सिंह",
+    english: "Leo",
+    emoji: "♌",
+    guidance: "सूर्य का आपकी राशि में उच्च स्थान पर गोचर करना आपको समाज में एकछत्र राज और राजा जैसा मान-सम्मान दिलाने वाला है।",
+    career: "राजनीति और प्रशासनिक क्षेत्र से जुड़े लोगों को बड़ा पद मिलने वाला है। व्यापार में किया गया पुराना निवेश आज चार गुना मुनाफा देगा।",
+    relationship: "परिवार में कोई बड़ा मांगलिक कार्य संपन्न होगा। लव लाइफ में आपके फैसले को अंतिम माना जाएगा।",
+    wellness: "अपार पराक्रम और ऊर्जा का संचार होगा। आप हर कार्य को चुटकियों में हल कर लेंगे।",
+    tip: "बिना झिझक के बड़े लक्ष्यों पर हाथ डालें, आज विजय केवल आपकी ही होगी।",
+    luckyColor: "शाही चमकीला नारंगी",
+  },
+  {
+    id: "virgo",
+    name: "कन्या",
+    english: "Virgo",
+    emoji: "♍",
+    guidance: "बुध की चाल से आपकी बुद्धि और वाणी की शक्ति इतनी प्रचंड रहेगी कि आप मिट्टी को भी छुएंगे तो वो सोना बन जाएगी।",
+    career: "विदेशी स्रोतों, ऑनलाइन कार्यों या बड़ी कंपनियों से भारी धन लाभ होने के स्पष्ट संकेत हैं। नई नौकरी का ऑफर आज मिलकर रहेगा।",
+    relationship: "पार्टनर आपके आकर्षण में पूरी तरह बंधा रहेगा। आपसी समझ और प्रेम सातवें आसमान पर होगा।",
+    wellness: "मानसिक शांति मिलेगी, ध्यान और अध्यात्म में रुचि बढ़ने से भाग्य को और गति मिलेगी।",
+    tip: "अपनी वाकपटुता का इस्तेमाल करें, आज आप बड़ी से बड़ी डील फाइनल कर सकते हैं।",
+    luckyColor: "वैदिक तोता हरा",
+  },
+  {
+    id: "libra",
+    name: "तुला",
+    english: "Libra",
+    emoji: "♎",
+    guidance: "मालव्य महापुरुष राजयोग के कारण आज आपके जीवन का सबसे बड़ा आर्थिक संकट हमेशा के लिए टल जाएगा। वैभव की वर्षा होगी।",
+    career: "नया मकान, ज़मीन या लग्जरी वाहन खरीदने का आपका बरसों पुराना सपना आज पूरा होने की दिशा में आगे बढ़ेगा। धन की कमी खत्म।",
+    relationship: "प्रेम जीवन में विवाह का प्रस्ताव स्वीकार हो जाएगा। पार्टनर के साथ किसी आलीशान यात्रा के योग हैं।",
+    wellness: "सौंदर्य और स्वास्थ्य दोनों में जबरदस्त निखार आएगा। आप ऊर्जावान बने रहेंगे।",
+    tip: "आज के दिन किए गए निवेश का फल आपको जीवन भर सुख-समृद्धि के रूप में मिलेगा।",
+    luckyColor: "प्रीमियम रानी गुलाबी",
+  },
+  {
+    id: "scorpio",
+    name: "वृश्चिक",
+    english: "Scorpio",
+    emoji: "♏",
+    guidance: "शनि देव की कृपा दृष्टि से आपकी साढ़ेसाती या ढैय्या का बुरा प्रभाव पूरी तरह शांत हो चुका है। अब आपकी जीत का समय शुरू है।",
+    career: "कोर्ट-कचहरी और पुराने विवादित मामलों में शत-प्रतिशत विजय मिलेगी। अटके हुए सरकारी टेंडर या कॉन्ट्रैक्ट्स आज आपके नाम होंगे।",
+    relationship: "रिश्तों में पुराना अविश्वास खत्म होगा और आपका पार्टनर आपकी बात को सर्वोपरि रखेगा।",
+    wellness: "पुरानी शारीरिक कमज़ोरी दूर होगी। आत्मबल में अभूतपूर्व वृद्धि होगी।",
+    tip: "पीछे मुड़कर न देखें, दुश्मनों का नाश हो चुका है, सीधे अपने काम पर फोकस करें।",
+    luckyColor: "शाही मैरून (विजय योग)",
+  },
+  {
+    id: "sagittarius",
+    name: "धनु",
+    english: "Sagittarius",
+    emoji: "♐",
+    guidance: "आपकी कुंडली का भाग्य भाव (9th House) इस समय ब्रह्मांड की सर्वोच्च सकारात्मक ऊर्जा से चार्ज है। किस्मत का बंद ताला खुल चुका है।",
+    career: "प्रतियोगी परीक्षाओं और इंटरव्यू में शत-प्रतिशत सफलता के संकेत हैं। नया व्यापार शुरू करने पर लक्ष्मी जी की विशेष कृपा बरसेगी।",
+    relationship: "वैवाहिक सुख उत्तम रहेगा। संतान पक्ष से कोई बहुत बड़ी खुशखबरी मिलेगी जो पूरे परिवार को निहाल कर देगी।",
+    wellness: "स्वास्थ्य पूरी तरह उत्तम रहेगा। मन प्रसन्न और उत्साह से भरा रहेगा।",
+    tip: "आज का दिन आपके जीवन का टर्निंग पॉइंट है, कोई भी बड़ा रिस्क लेने से बिल्कुल न डरें।",
+    luckyColor: "शाही पीला (गुरु योग)",
+  },
+  {
+    id: "capricorn",
+    name: "मकर",
+    english: "Capricorn",
+    emoji: "♑",
+    guidance: "शश महापुरुष राजयोग का निर्माण आपकी राशि पर सीधे हो रहा है। आप इस समय जो भी कार्य शुरू करेंगे, उसमें इंडस्ट्री लीडर बनेंगे।",
+    career: "लोहा, मशीनरी, कंस्ट्रक्शन और रीयल एस्टेट के बिजनेस से जुड़े लोगों को उम्मीद से दस गुना ज़्यादा मुनाफा हाथ लगेगा।",
+    relationship: "जीवनसाथी का पूरा सहयोग मिलेगा, जिससे आपका सामाजिक स्टेटस और धन दोनों तेज़ी से बढ़ेंगे।",
+    wellness: "हड्डियों और जोड़ों के पुराने दर्द से हमेशा के लिए राहत मिल जाएगी। आप पूरी तरह फिट रहेंगे।",
+    tip: "अनुशासन के साथ काम करें, शनि देव आज आपको आपकी मेहनत का छप्परफाड़ फल देने वाले हैं।",
+    luckyColor: "शाही नेवी ब्लू",
+  },
+  {
+    id: "aquarius",
+    name: "कुंभ",
+    english: "Aquarius",
+    emoji: "♒",
+    guidance: "आपकी कुंडली के एकादश भाव (Income House) में बन रहा ग्रहों का अद्भुत योग अचानक गुप्त धन और पैतृक संपत्ति दिलाने वाला है।",
+    career: "नौकरी में ट्रांसफर के साथ-साथ आपकी सैलरी में भारी वृद्धि तय है। यदि नया स्टार्ट-अप शुरू करना चाहते हैं, तो भाग्य आपके साथ है।",
+    relationship: "प्रेम जीवन में चल रहे सारे गतिरोध दूर होंगे। लव पार्टनर के साथ संबंध बेहद मजबूत और अटूट बनेंगे।",
+    wellness: "मानसिक तनाव शून्य हो जाएगा। नींद अच्छी आएगी और आप खुद को तरोताजा महसूस करेंगे।",
+    tip: "आज के दिन किसी भी बड़े निवेश या डील को फाइनल करने से बिल्कुल न हिचकिचाएं।",
+    luckyColor: "चमकदार आसमानी पीला",
+  },
+  {
+    id: "pisces",
+    name: "मीन",
+    english: "Pisces",
+    emoji: "♓",
+    guidance: "स्वराशि का गुरु आपके भाग्य को इतनी प्रचंड गति दे रहा है कि कम मेहनत में भी आपको चौगुनी सफलता और धन लाभ की प्राप्ति होगी।",
+    career: "बैंकिंग, फाइनेंस, शिक्षा और कला के क्षेत्र से जुड़े जातकों को आज कोई बड़ा राष्ट्रीय पुरस्कार या सम्मान मिल सकता है।",
+    relationship: "पारिवारिक रिश्तों में चल रहा पुराना मनमुटाव हमेशा के लिए खत्म होगा। घर में सुख-शांति का माहौल रहेगा।",
+    wellness: "आध्यात्मिक ऊर्जा बढ़ने से मानसिक शांति और उत्तम स्वास्थ्य की प्राप्ति होगी।",
+    tip: "आज अपनी अंतरात्मा की आवाज़ सुनें और पूरे कॉन्फिडेंस के साथ आगे बढ़ें, जीत आपकी ही है।",
+    luckyColor: "शाही गहरा बैंगनी",
+  },
 ];
 
 export default function DailyHoroscopePage() {
   const { theme } = useApp();
   const isDark = theme === "dark";
-  const [selectedSign, setSelectedSign] = useState<typeof ZODIAC_SIGNS[0] | null>(null);
+
+  const [selectedSign, setSelectedSign] =
+    useState<ZodiacSign | null>(null);
+
+  const today = new Date().toLocaleDateString("hi-IN", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const pageClass = isDark
+    ? "bg-slate-950 text-violet-50"
+    : "bg-gradient-to-b from-violet-50 to-white text-violet-950";
+
+  const cardClass = isDark
+    ? "border-white/10 bg-slate-900/70"
+    : "border-violet-200 bg-white shadow-xl";
+
+  const mutedClass = isDark
+    ? "text-slate-300"
+    : "text-violet-600";
 
   return (
-    <main className={`min-h-dvh px-4 pb-16 pt-6 transition-colors duration-300 ${
-      isDark ? "bg-slate-950 text-violet-50" : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
-    }`}>
+    <main className={`min-h-dvh px-4 pb-16 pt-6 ${pageClass}`}>
       <div className="mx-auto max-w-xl">
-        {/* Header */}
         <header className="mb-6 flex items-center gap-4">
-          <Link href="/" className={`rounded-full border p-2.5 transition ${
-            isDark ? "border-white/10 bg-white/[0.02] hover:bg-white/10" : "border-violet-200 bg-white hover:bg-violet-50 shadow-sm"
-          }`}>
-            <ArrowLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="font-display text-xl font-bold tracking-tight">🌟 वैदिक राजयोग दैनिक राशिफल</h1>
-            <p className={`text-xs ${isDark ? "text-violet-300" : "text-violet-600"}`}>नवग्रहों के महागोचर का आपकी राशि पर 100% सटीक प्रभाव</p>
-          </div>
-        </header>
-
-        {/* स्पेशल ऑफर मार्केटिंग बैनर */}
-        <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-600 p-5 text-white shadow-lg">
-          <div className="flex justify-between items-center gap-4">
-            <div>
-              <span className="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Premium Offer</span>
-              <h3 className="text-base font-black mt-1">First Chat 100% FREE! 🎁</h3>
-              <p className="text-xs text-orange-50 mt-0.5">अपनी कुंडली के अनुसार धन लाभ और विवाह बाधा दूर करने का महा-उपाय सीधे एक्सपर्ट से जानें।</p>
-            </div>
-            <Link href="/chat" className="bg-white text-orange-600 font-extrabold px-4 py-3 rounded-xl text-xs shadow hover:bg-orange-50 transition shrink-0">
-              Free Chat →
-            </Link>
-          </div>
-        </div>
-
-        {/* राशि चयन ग्रिड */}
-        {!selectedSign ? (
-          <section className="mb-8">
-            <h2 className="text-xs font-black uppercase tracking-wider text-amber-500 mb-4 px-1 flex items-center gap-1.5">
-              <Sparkles size={14} /> अपनी राशि का चयन करें
-            </h2>
-            <div className="grid grid-cols-3 gap-2.5">
-              {ZODIAC_SIGNS.map((sign, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => setSelectedSign(sign)}
-                  className={`flex flex-col items-center justify-center rounded-2xl border p-4 transition-all duration-200 active:scale-95 ${
-                    isDark ? "border-white/10 bg-slate-900/60 hover:border-amber-400/50 hover:bg-slate-900" : "border-violet-100 bg-white shadow-sm hover:border-violet-300 hover:bg-violet-50/50"
-                  }`}
-                >
-                  <span className="text-3xl mb-1">{sign.emoji}</span>
-                  <span className="text-xs font-bold tracking-tight text-center">{sign.name.split(" ")[0]}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        ) : (
-          /* राशिफल प्रेडिक्शन डिस्प्ले */
-          <section className={`mb-8 rounded-2xl border p-5 ${isDark ? "border-amber-400/20 bg-slate-900/40" : "border-violet-200 bg-white shadow-md"}`}>
-            <div className="flex items-center justify-between border-b border-violet-500/10 pb-3 mb-4">
-              <div className="flex items-center gap-2">
-                <span className="text-3xl">{selectedSign.emoji}</span>
-                <h2 className="font-extrabold text-base text-amber-500">{selectedSign.name} फलादेश</h2>
-              </div>
-              <button onClick={() => setSelectedSign(null)} className="text-xs font-bold text-violet-400 hover:text-amber-400 transition">
-                ← राशि बदलें
-              </button>
-            </div>
-            <p className="text-xs sm:text-sm leading-relaxed font-semibold text-slate-200 mb-5 whitespace-pre-line bg-slate-950/40 p-4 rounded-xl border border-slate-800/50">
-              {selectedSign.prediction}
-            </p>
-            <Link href="/chat" className="flex items-center justify-center gap-2 w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-extrabold py-3.5 rounded-xl text-sm shadow-md transition">
-              <MessageSquare size={16} /> अपनी पसंदीदा गाइड से महा-उपाय पूछें
-            </Link>
-          </section>
-        )}
-
-        {/* सोशल प्रूफ सेक्शन: रियल दिखने वाले डमी रिव्यूज */}
-        <section className={`rounded-2xl border p-5 ${isDark ? "border-white/10 bg-slate-900/20" : "border-violet-200 bg-white shadow-sm"}`}>
-          <h3 className="font-extrabold text-sm mb-4 flex items-center gap-2 text-slate-100">
-            <CheckCircle2 size={16} className="text-emerald-500" /> यूज़र्स का लाइव अनुभव (Verified Feedback)
-          </h3>
-          <div className="space-y-3.5">
-            {HOROSCOPE_REVIEWS.map((rev) => (
-              <div key={rev.id} className={`rounded-xl border p-3.5 ${isDark ? "border-white/5 bg-slate-950/60" : "border-violet-50/60 bg-violet-50/20"}`}>
-                <div className="flex justify-between items-center mb-1.5">
-                  <div>
-                    <span className="text-xs font-bold block text-slate-200">{rev.user}</span>
-                    <span className="text-[10px] text-amber-400 font-medium">परामर्श विशेषज्ञ: {rev.astrologer}</span>
-                  </div>
-                  <div className="flex text-amber-400 gap-0.5">
+          <Link
+            href="/"
+            aria-label="वापस जाएँ"
+            className={`rounded-xl border p-2.5 ${
+              isDark
+                ? "border-white/10 bg-slate-900"
+                : "border-violet-200 bg-white shadow-md"
+            }`}
+          >
+            <ArrowLeft size={18} />
