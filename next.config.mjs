@@ -4,12 +4,12 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "://unsplash.com",
+        hostname: "images.unsplash.com",
       },
     ],
   },
 
-  // ✅ Next.js 14 के अनुसार डायरेक्ट रूट लेवल पर सही कॉन्फ़िगरेशन
+  // ✅ Next.js 14 के अनुसार परफेक्ट रूट लेवल प्लेसमेंट (नो एक्सपेरिमेंटल वार्निंग)
   serverExternalPackages: ["drizzle-orm", "pg"],
 
   typescript: {
