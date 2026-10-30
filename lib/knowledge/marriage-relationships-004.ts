@@ -29,44 +29,7 @@ export const MARRIAGE_RELATIONSHIPS_004: MarriageRelationshipEntry[] = [
 
     source_ids: [],
     confidence: "general_education",
-
     disclaimer: STANDARD_DISCLAIMER,
-
-    aliases: {
-      en: [
-        "Is my partner truthful?",
-        "Can I trust my partner?",
-        "Is my boyfriend honest with me?",
-        "Is my girlfriend honest with me?",
-        "How can I know if my partner is loyal?",
-        "Is my partner cheating on me?",
-        "Does my partner tell me the truth?",
-        "How do I know whether my partner is faithful?",
-      ],
-
-      hi: [
-        "क्या मैं अपने साथी पर भरोसा कर सकता हूँ?",
-        "क्या मेरा बॉयफ्रेंड ईमानदार है?",
-        "क्या मेरी गर्लफ्रेंड मुझसे सच बोलती है?",
-        "क्या मेरा साथी मुझे धोखा दे रहा है?",
-        "मेरा पार्टनर वफादार है या नहीं?",
-        "क्या मेरा साथी मुझसे झूठ बोलता है?",
-      ],
-
-      hinglish: [
-        "Kya mera partner loyal hai?",
-        "Kya mera boyfriend mujhse sach bolta hai?",
-        "Kya meri girlfriend mujhse sach bolti hai?",
-        "Kya woh mujhe dhokha de raha hai?",
-        "Kya woh mujhe cheat kar rahi hai?",
-        "Can I trust my partner?",
-        "Mera partner faithful hai ya nahi?",
-        "Kaise pata chalega mera partner loyal hai?",
-        "Kya mera partner mujhse jhooth bol raha hai?",
-        "Partner ki loyalty kaise check karun?",
-        "Mujhe kaise pata chale ki mera partner sachcha hai?",
-      ],
-    },
 
     tags: [
       "trust",
@@ -77,6 +40,35 @@ export const MARRIAGE_RELATIONSHIPS_004: MarriageRelationshipEntry[] = [
       "relationship",
       "cheating",
       "communication",
+
+      "Is my partner truthful?",
+      "Can I trust my partner?",
+      "Is my boyfriend honest with me?",
+      "Is my girlfriend honest with me?",
+      "How can I know if my partner is loyal?",
+      "Is my partner cheating on me?",
+      "Does my partner tell me the truth?",
+      "How do I know whether my partner is faithful?",
+
+      "क्या मेरा साथी सच्चा है?",
+      "क्या मैं अपने साथी पर भरोसा कर सकता हूँ?",
+      "क्या मेरा बॉयफ्रेंड ईमानदार है?",
+      "क्या मेरी गर्लफ्रेंड मुझसे सच बोलती है?",
+      "क्या मेरा साथी मुझे धोखा दे रहा है?",
+      "मेरा पार्टनर वफादार है या नहीं?",
+      "क्या मेरा साथी मुझसे झूठ बोलता है?",
+
+      "Kya mera partner loyal hai?",
+      "Kya mera boyfriend mujhse sach bolta hai?",
+      "Kya meri girlfriend mujhse sach bolti hai?",
+      "Kya woh mujhe dhokha de raha hai?",
+      "Kya woh mujhe cheat kar rahi hai?",
+      "Can I trust my partner?",
+      "Mera partner faithful hai ya nahi?",
+      "Kaise pata chalega mera partner loyal hai?",
+      "Kya mera partner mujhse jhooth bol raha hai?",
+      "Partner ki loyalty kaise check karun?",
+      "Mujhe kaise pata chale ki mera partner sachcha hai?",
     ],
   },
 ];
