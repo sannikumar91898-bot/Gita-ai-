@@ -1,210 +1,93 @@
+// app/app/horoscope/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Sparkles,
-  MessageSquare,
-  RefreshCw,
-  CalendarDays,
-  Star,
-} from "lucide-react";
+import { ArrowLeft, Sun, Phone, TriangleAlert } from "lucide-react";
 import { useApp } from "../../Providers";
 
-type ZodiacSign = {
-  id: string;
-  name: string;
-  english: string;
-  emoji: string;
-  guidance: string;
-  career: string;
-  relationship: string;
-  wellness: string;
-  tip: string;
-  luckyColor: string;
-};
-
-// 👑 100% सॉलिड मार्केटिंग और राजयोग फलादेश मैट्रिक्स (बकवास और ढीली बातें पूरी साफ़)
-const ZODIAC_SIGNS: ZodiacSign[] = [
-  {
-    id: "aries",
-    name: "मेष",
-    english: "Aries",
-    emoji: "♈",
-    guidance: "आज आपकी राशि के कर्म भाव में ग्रहों का महागोचर एक अत्यंत दुर्लभ और शुभ राजयोग का निर्माण कर रहा है! भाग्य सातवें आसमान पर रहेगा।",
-    career: "बिजनेस और करियर में आकस्मिक धन लाभ के महायोग बन रहे हैं। कोई बड़ी डील फाइनल होने वाली है, जिससे धन की स्थिति मजबूत होगी।",
-    relationship: "लव化 लाइफ और वैवाहिक जीवन में चल रहा तनाव आज पूर्णतः समाप्त होगा। पार्टनर से कोई बहुत बड़ा सरप्राइज मिलने वाला है।",
-    wellness: "मानसिक और शारीरिक ऊर्जा चरम पर रहेगी। पुराना कोई रोग आज पूरी तरह कट जाएगा।",
-    tip: "इस अद्भुत राजयोग कालखंड का पूरा लाभ उठाएं और नया निवेश तुरंत शुरू करें।",
-    luckyColor: "शाही गहरा लाल (प्रचंड भाग्यशाली)",
-  },
-  {
-    id: "taurus",
-    name: "वृषभ",
-    english: "Taurus",
-    emoji: "♉",
-    guidance: "आज धन भाव में देवगुरु बृहस्पति की अमृत दृष्टि पड़ने से आपके बैंक बैलेंस में भारी उछाल आने वाला है। शत्रु परास्त होंगे।",
-    career: "कार्यक्षेत्र में आपका दबदबा चार गुना बढ़ जाएगा। वरिष्ठ अधिकारी आपके सामने झुकेंगे। रुका हुआ सारा पैसा शत-प्रतिशत वापस मिलेगा।",
-    relationship: "रिश्तों में अपार प्रेम और समर्पण बढ़ेगा। विवाह की बात पक्की होने का समय आ चुका है।",
-    wellness: "स्वास्थ्य अत्यंत मजबूत रहेगा, मुखमंडल पर एक नया राजसी तेज दिखाई देगा।",
-    tip: "आज लक्ष्मी जी का दिन है, धन लाभ का एक भी अवसर हाथ से न जाने दें।",
-    luckyColor: "चमकदार सफेद (लक्ष्मी योग)",
-  },
-  {
-    id: "gemini",
-    name: "मिथुन",
-    english: "Gemini",
-    emoji: "♊",
-    guidance: "राहु-केतु का गोचर अब आपकी राशि के लिए स्वर्ण काल की शुरुआत कर रहा है। वर्षों से अटके हुए सरकारी कार्य आज पूरे होंगे।",
-    career: "नौकरीपेशा जातकों को मनचाहा प्रमोशन या ट्रांसफर मिलने का प्रबल योग है। व्यापार में प्रतिद्वंद्वी पूरी तरह शांत रहेंगे।",
-    relationship: "प्रेम जीवन में नया रोमांच आएगा। पुराना रूठा हुआ साथी खुद फोन करके वापस लौट आएगा।",
-    wellness: "तनाव से पूरी तरह मुक्ति मिलेगी और आप खुद को फ्रेश और शक्तिशाली महसूस करेंगे।",
-    tip: "अपनी योजनाओं को गुप्त रखें और सीधे सफलता की ओर कदम बढ़ाएं।",
-    luckyColor: "केसरिया पीला (राजसी योग)",
-  },
-  {
-    id: "cancer",
-    name: "कर्क",
-    english: "Cancer",
-    emoji: "♋",
-    guidance: "आपकी राशि में आज navग्रहों का विशेष लक्ष्मी नारायण योग सक्रिय हो चुका है। सुख-साधनों और विलासिता में भारी वृद्धि होगी।",
-    career: "शेयर मार्केट, लॉटरी या पैतृक संपत्ति से अचानक बड़ा धन हाथ आ सकता है। नया व्यापार शुरू करने का सबसे लकी दिन है।",
-    relationship: "वैवाहिक जीवन में खुशियाँ लौटेंगी। जीवनसाथी के भाग्य से आपको धन और मान-सम्मान की प्राप्ति होगी।",
-    wellness: "स्वास्थ्य उत्तम रहेगा, पुरानी मानसिक चिंताएं जड़ से खत्म होंगी।",
-    tip: "इस महायोग का लाभ उठाने के लिए आज कोई बड़ा व्यापारिक निर्णय अवश्य लें।",
-    luckyColor: "शाही सुनहरी सफेद",
-  },
-  {
-    id: "leo",
-    name: "सिंह",
-    english: "Leo",
-    emoji: "♌",
-    guidance: "सूर्य का आपकी राशि में उच्च स्थान पर गोचर करना आपको समाज में एकछत्र राज और राजा जैसा मान-सम्मान दिलाने वाला है।",
-    career: "राजनीति और प्रशासनिक क्षेत्र से जुड़े लोगों को बड़ा पद मिलने वाला है। व्यापार में किया गया पुराना निवेश आज चार गुना मुनाफा देगा।",
-    relationship: "परिवार में कोई बड़ा मांगलिक कार्य संपन्न होगा। लव लाइफ में आपके फैसले को अंतिम माना जाएगा।",
-    wellness: "अपार पराक्रम और ऊर्जा का संचार होगा। आप हर कार्य को चुटकियों में हल कर लेंगे।",
-    tip: "बिना झिझक के बड़े लक्ष्यों पर हाथ डालें, आज विजय केवल आपकी ही होगी।",
-    luckyColor: "शाही चमकीला नारंगी",
-  },
-  {
-    id: "virgo",
-    name: "कन्या",
-    english: "Virgo",
-    emoji: "♍",
-    guidance: "बुध की चाल से आपकी बुद्धि और वाणी की शक्ति इतनी प्रचंड रहेगी कि आप मिट्टी को भी छुएंगे तो वो सोना बन जाएगी।",
-    career: "विदेशी स्रोतों, ऑनलाइन कार्यों या बड़ी कंपनियों से भारी धन लाभ होने के स्पष्ट संकेत हैं। नई नौकरी का ऑफर आज मिलकर रहेगा।",
-    relationship: "पार्टनर आपके आकर्षण में पूरी तरह बंधा रहेगा। आपसी समझ और प्रेम सातवें आसमान पर होगा।",
-    wellness: "मानसिक शांति मिलेगी, ध्यान और अध्यात्म में रुचि बढ़ने से भाग्य को और गति मिलेगी।",
-    tip: "अपनी वाकपटुता का इस्तेमाल करें, आज आप बड़ी से बड़ी डील फाइनल कर सकते हैं।",
-    luckyColor: "वैदिक तोता हरा",
-  },
-  {
-    id: "libra",
-    name: "तुला",
-    english: "Libra",
-    emoji: "♎",
-    guidance: "मालव्य महापुरुष राजयोग के कारण आज आपके जीवन का सबसे बड़ा आर्थिक संकट हमेशा के लिए टल जाएगा। वैभव की वर्षा होगी।",
-    career: "नया मकान, ज़मीन या लग्जरी वाहन खरीदने का आपका बरसों पुराना सपना आज पूरा होने की दिशा में आगे बढ़ेगा। धन की कमी खत्म।",
-    relationship: "प्रेम जीवन में विवाह का प्रस्ताव स्वीकार हो जाएगा। पार्टनर के साथ किसी आलीशान यात्रा के योग हैं।",
-    wellness: "सौंदर्य और स्वास्थ्य दोनों में जबरदस्त निखार आएगा। आप ऊर्जावान बने रहेंगे।",
-    tip: "आज के दिन किए गए निवेश का फल आपको जीवन भर सुख-समृद्धि के रूप में मिलेगा।",
-    luckyColor: "प्रीमियम रानी गुलाबी",
-  },
-  {
-    id: "scorpio",
-    name: "वृश्चिक",
-    english: "Scorpio",
-    emoji: "♏",
-    guidance: "शनि देव की कृपा दृष्टि से आपकी साढ़ेसाती या ढैय्या का बुरा प्रभाव पूरी तरह शांत हो चुका है। अब आपकी जीत का समय शुरू है।",
-    career: "कोर्ट-कचहरी और पुराने विवादित मामलों में शत-प्रतिशत विजय मिलेगी। अटके हुए सरकारी टेंडर या कॉन्ट्रैक्ट्स आज आपके नाम होंगे।",
-    relationship: "रिश्तों में पुराना अविश्वास खत्म होगा और आपका पार्टनर आपकी बात को सर्वोपरि रखेगा।",
-    wellness: "पुरानी शारीरिक कमज़ोरी दूर होगी। आत्मबल में अभूतपूर्व वृद्धि होगी।",
-    tip: "पीछे मुड़कर न देखें, दुश्मनों का नाश हो चुका है, सीधे अपने काम पर फोकस करें।",
-    luckyColor: "शाही मैरून (विजय योग)",
-  },
-  {
-    id: "sagittarius",
-    name: "धनु",
-    english: "Sagittarius",
-    emoji: "♐",
-    guidance: "आपकी कुंडली का भाग्य भाव (9th House) इस समय ब्रह्मांड की सर्वोच्च सकारात्मक ऊर्जा से चार्ज है। किस्मत का बंद ताला खुल चुका है।",
-    career: "प्रतियोगी परीक्षाओं और इंटरव्यू में शत-प्रतिशत सफलता के संकेत हैं। नया व्यापार शुरू करने पर लक्ष्मी जी की विशेष कृपा बरसेगी।",
-    relationship: "वैवाहिक सुख उत्तम रहेगा। संतान पक्ष से कोई बहुत बड़ी खुशखबरी मिलेगी जो पूरे परिवार को निहाल कर देगी।",
-    wellness: "स्वास्थ्य पूरी तरह उत्तम रहेगा। मन प्रसन्न और उत्साह से भरा रहेगा।",
-    tip: "आज का दिन आपके जीवन का टर्निंग पॉइंट है, कोई भी बड़ा रिस्क लेने से बिल्कुल न डरें।",
-    luckyColor: "शाही पीला (गुरु योग)",
-  },
-  {
-    id: "capricorn",
-    name: "मकर",
-    english: "Capricorn",
-    emoji: "♑",
-    guidance: "शश महापुरुष राजयोग का निर्माण आपकी राशि पर सीधे हो रहा है। आप इस समय जो भी कार्य शुरू करेंगे, उसमें इंडस्ट्री लीडर बनेंगे।",
-    career: "लोहा, मशीनरी, कंस्ट्रक्शन और रीयल एस्टेट के बिजनेस से जुड़े लोगों को उम्मीद से दस गुना ज़्यादा मुनाफा हाथ लगेगा।",
-    relationship: "जीवनसाथी का पूरा सहयोग मिलेगा, जिससे आपका सामाजिक स्टेटस और धन दोनों तेज़ी से बढ़ेंगे।",
-    wellness: "हड्डियों और जोड़ों के पुराने दर्द से हमेशा के लिए राहत मिल जाएगी। आप पूरी तरह फिट रहेंगे।",
-    tip: "अनुशासन के साथ काम करें, शनि देव आज आपको आपकी मेहनत का छप्परफाड़ फल देने वाले हैं।",
-    luckyColor: "शाही नेवीू ब्लू",
-  },
-  {
-    id: "aquarius",
-    name: "कुंभ",
-    english: "Aquarius",
-    emoji: "♒",
-    guidance: "आपकी कुंडली के एकादश भाव (Income House) में बन रहा ग्रहों का अद्भुत योग अचानक गुप्त धन और पैतृक संपत्ति दिलाने वाला है।",
-    career: "नौकरी में ट्रांसफर के साथ-साथ आपकी सैलरी में भारी वृद्धि तय है। यदि नया स्टार्ट-अप शुरू करना चाहते हैं, तो भाग्य आपके साथ है।",
-    relationship: "प्रेम जीवन में चल रहे सारे गतिरोध दूर होंगे। लव पार्टनर के साथ संबंध बेहद मजबूत और अटूट बनेंगे।",
-    wellness: "मानसिक तनाव शून्य हो जाएगा। नींद अच्छी आएगी और आप खुद को तरोताजा महसूस करेंगे।",
-    tip: "आज के दिन किसी भी बड़े निवेश या डील को final करने से बिल्कुल न हिचकिचाएं।",
-    luckyColor: "चमकदार आसमानी पीला",
-  },
-  {
-    id: "pisces",
-    name: "मीन",
-    english: "Pisces",
-    emoji: "♓",
-    guidance: "स्वराशि का गुरु आपके भाग्य को इतनी प्रचंड गति दे रहा है कि कम मेहनत में भी आपको चौगुनी सफलता और धन लाभ की प्राप्ति होगी।",
-    career: "बैंकिंग, फाइनेंस, शिक्षा और कला के क्षेत्र से जुड़े जातकों को आज कोई बड़ा राष्ट्रीय पुरस्कार या सम्मान मिल सकता है।",
-    relationship: "पारिवारिक रिश्तों में चल रहा पुराना मनमुटाव हमेशा के लिए खत्म होगा। घर में सुख-शांति का माहौल रहेगा।",
-    wellness: "आध्यात्मिक ऊर्जा बढ़ने से मानसिक शांति और उत्तम स्वास्थ्य की प्राप्ति होगी।",
-    tip: "आज अपनी अंतरात्मा की आवाज़ सुनें और पूरे कॉन्फिडेंस के साथ आगे बढ़ें, जीत आपकी ही है।",
-    luckyColor: "शाही गहरा बैंगनी",
-  },
-];
-
-export default function DailyHoroscopePage() {
-  const { theme } = useApp();
+export default function HoroscopePage() {
+  const { lang, theme } = useApp();
   const isDark = theme === "dark";
+  const isHindi = lang === "hi";
+  const isHinglish = lang === "hinglish";
 
-  const [selectedSign, setSelectedSign] = useState<ZodiacSign | null>(null);
+  const t = (hi: string, hing: string, en: string) =>
+    isHindi ? hi : isHinglish ? hing : en;
 
-  const today = new Date().toLocaleDateString("hi-IN", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-
-  const pageClass = isDark
-    ? "bg-slate-950 text-violet-50"
-    : "bg-gradient-to-b from-violet-50 to-white text-violet-950";
-
-  const cardClass = isDark
-    ? "border-white/10 bg-slate-900/70"
-    : "border-violet-200 bg-white shadow-xl";
-
+  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-slate-900 shadow-xl" : "border-orange-100 bg-white shadow-xl";
   const mutedClass = isDark ? "text-slate-300" : "text-violet-600";
 
   return (
-    <main className={`min-h-dvh px-4 pb-16 pt-6 ${pageClass}`}>
-      <div className="mx-auto max-w-xl">
-        <header className="mb-6 flex items-center gap-4">
+    <main className={`min-h-dvh px-4 pb-40 pt-6 ${pageClass}`}>
+      <div className="mx-auto max-w-xl space-y-5">
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link
             href="/"
-            aria-label="वापस जाएँ"
-            className={`rounded-xl border p-2.5 ${
-              isDark
-                ? "border-white/10 bg-slate-900"
-                : "border-violet-200 bg-white shadow-md"
-            }`}
+            className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}
           >
+            <ArrowLeft size={18} />
+          </Link>
+          <div>
+            <h1 className="flex items-center gap-1.5 text-base font-black uppercase tracking-tight text-orange-600">
+              <Sun size={18} className="text-amber-500" />
+              {t("राशिफल", "Horoscope", "Horoscope")}
+            </h1>
+            <p className="mt-0.5 text-[11px] font-bold text-gray-400">
+              {t("दैनिक ज्योतिषीय मार्गदर्शन", "Daily Astrological Guidance", "Daily Astrological Guidance")}
+            </p>
+          </div>
+        </header>
+
+        <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
+          <div className="rounded-xl border border-rose-300 bg-rose-50 p-4">
+            <p className="flex items-start gap-2 text-sm font-semibold leading-6 text-rose-800">
+              <TriangleAlert size={18} className="shrink-0 text-rose-600 mt-0.5" />
+              {t(
+                "🌸 राशिफल सामान्य मार्गदर्शन है। आपकी व्यक्तिगत कुंडली में छिपे दोष शारीरिक व आर्थिक संकट ला सकते हैं। तुरंत हमारी महिला ज्योतिषियों में से किसी एक से बात करें।",
+                "🌸 Rashifal samanya margdarshan hai. Aapki vyaktigat kundli mein chhipe dosh sharirik va aarthik sankat la sakte hain. Turant hamari Mahila Jyotishiyon mein se kisi ek se baat karein.",
+                "🌸 Horoscope is general guidance. Hidden doshas in your personal chart can bring physical and financial crisis. Talk to one of our Female Astrologers immediately."
+              )}
+            </p>
+          </div>
+
+          <div className={`rounded-xl border p-4 ${isDark ? "border-slate-700" : "border-orange-200"}`}>
+            <h3 className="mb-2 text-sm font-bold text-orange-500">
+              {t("आज का विशेष संदेश", "Aaj Ka Vishesh Sandesh", "Today's Special Message")}
+            </h3>
+            <p className={`text-sm leading-7 ${mutedClass}`}>
+              {t(
+                "आज का दिन आपके लिए भावनात्मक रूप से महत्वपूर्ण है। परिवार या रिश्तों में किसी बात को लेकर मन में उलझन हो सकती है। इसे अनदेखा न करें। हमारी महिला ज्योतिषियों में से किसी एक से दिल से बात करें, वो प्यार से सही रास्ता दिखा देंगी।",
+                "Aaj ka din aapke liye bhawnatmak roop se mahatvapurn hai. Parivaar ya rishton mein kisi baat ko lekar mann mein uljhan ho sakti hai. Ise andekha na karein. Hamari Mahila Jyotishiyon mein se kisi ek se dil se baat karein, wo pyaar se sahi raasta dikha dengi.",
+                "Today is emotionally significant for you. Some confusion might trouble your mind regarding family or relationships. Do not ignore this. Talk from the heart with one of our Female Astrologers, she will lovingly show you the right path."
+              )}
+            </p>
+          </div>
+        </section>
+      </div>
+
+      <a
+        href="tel:+919999999999"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Phone size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {isHindi ? "हमारी महिला ज्योतिषी • 24x7 उपलब्ध" : isHinglish ? "Hamari Mahila Jyotishi • 24x7 Available" : "Our Female Astrologers • 24x7 Available"}
+            </p>
+            <p className="text-sm font-black">
+              {isHindi ? "किसी एक से दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Kisi ek se dil se baat karein — wo pyaar se sab samjha dengi" : "Talk from the heart with one — she will lovingly explain everything"}
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-rose-700">
+          {isHindi ? "कॉल" : isHinglish ? "Call" : "Call"}
+        </span>
+      </a>
+    </main>
+  );
+}
