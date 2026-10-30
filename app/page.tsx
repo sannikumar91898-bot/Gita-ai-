@@ -17,48 +17,43 @@ const tools = [
 
 const benefits = [
   { emoji: "💬", title: "Personal Chat", detail: "Ask your questions" },
-  { emoji: "🪐", title: "Vedic Guidance", detail: "Astrology insights" },
+  { emoji: "🪐", title: "Vedic Guidance", detail: "Ask astrology insights" },
   { emoji: "🌐", title: "Your Language", detail: "Hindi & English" },
 ];
 
-// HUGE POOL OF HUMAN-LIKE FAKE REVIEWS (REALISTIC HINDI/ENGLISH MIX)
-const REVIEW_POOL = [
-  { name: "Rahul Sharma", city: "Delhi", comment: "Bhai career ko lekar bohot tension thi, gita ji ne jo upay bataye usse man ko bohot shanti mili. Best app." },
-  { name: "Anjali Goel", city: "Mumbai", comment: "Love life ke baare me exact sach bataya aur remedy bhi simple di. Response instant aata hai completely satisfied!" },
-  { name: "Vikram Singh", city: "Jaipur", comment: "Kundli matching bilkul perfect ki. Ek ek dosh ke baare me khul kar samjhaya bina darraye." },
-  { name: "Priya Nair", city: "Bangalore", comment: "I was skeptical about AI astrology but the transit analysis was surprisingly accurate for my job change." },
-  { name: "Amit Patel", city: "Ahmedabad", comment: "Shani ki dasha chal rhi thi bohot pareshan tha, yahan se jo guidance mili life me cheezein behtar hone lagi hain." },
-  { name: "Sneha Reddy", city: "Hyderabad", comment: "Sach me gita talk bohot badhiya hai, instant panchang aur rashifal mil jata hai daily subah ka routine ban gaya hai mera." },
-  { name: "Deepak Mishra", city: "Varanasi", comment: "Vedic astrology ka itna gahra gyan bina kisi lambe intezar ke milna kamaal hai, free chat useful hai." },
-  { name: "Neha Verma", city: "Lucknow", comment: "Sarkari naukri kab lagegi ye pucha tha, time frames bataye hain aur ab thoda confidence aaya hai mehnat karne me." },
-  { name: "Rajesh Kumar", city: "Patna", comment: "Business me lagatar nuksan ho rha tha, yahan guidance mili ki kaun sa gemstone suit karega. Bohot helpful guide hain." },
-  { name: "Pooja Choudhary", city: "Indore", comment: "Mera manglik dosh tha jiske upay ke liye pandit ji bohot paise maang rhe the, yahan free me sahi sahi rasta dikhaya." }
+// HUGE HUMAN-LIKE VERIFIED REVIEWS POOL FOR EACH SPECIFIC ASTROLOGER TYPE
+const HUMAN_REVIEWS = [
+  { name: "Anand Verma", city: "Delhi", comment: "Bhai sach me maza aa gya baat karke, career ka bohot sahi rasta dikhaya gita ji ne." },
+  { name: "Ritu Sharma", city: "Mumbai", comment: "Shadi ke dosh ko lekar bohot clear remedies batayi hain, no fake claims completely natural experience." },
+  { name: "Siddharth Jain", city: "Indore", comment: "Response time is instant. My matching score confusion was solved in just 2 minutes." },
+  { name: "Pooja Hegde", city: "Bangalore", comment: "Love life aur family disputes par jo baatein boli bilkul accurate thi. Recommended guide." },
+  { name: "Manish Joshi", city: "Ahmedabad", comment: "GitaTalk par best features hain, panchang aur kundli ka aasan upchar mil gaya bina bhatke." },
+  { name: "Kiran Reddy", city: "Hyderabad", comment: "Maine pehli baar free chat try kiya aur inka response sunkar wallet topup kar liya. Sahi guide hain." },
+  { name: "Sunita Mishra", city: "Patna", comment: "Naukri lagne ka sahi samay bataya aur unki kahi baatein ab sach ho rhi hain. Thank you!" },
+  { name: "Rajesh Gupta", city: "Varanasi", comment: "Grah gochar ka gahra gyan hai, business remedies bohot saral aur asardari hain inki." }
 ];
 
 export default function HomePage() {
-  // Live fluctuation states
-  const [onlineUsers, setOnlineUsers] = useState(154);
+  const [onlineUsers, setOnlineUsers] = useState(146);
   const [queueNum, setQueueNum] = useState(3);
-  const [activeReviews, setActiveReviews] = useState<typeof REVIEW_POOL>([]);
+  const [randomReviews, setRandomReviews] = useState<typeof HUMAN_REVIEWS>([]);
 
   useEffect(() => {
-    // Generate random mixed reviews from pool on component mount
-    const shuffled = [...REVIEW_POOL].sort(() => 0.5 - Math.random());
-    setActiveReviews(shuffled.slice(0, 4));
+    // Shuffle and pick unique human-like reviews on mount
+    const shuffled = [...HUMAN_REVIEWS].sort(() => 0.5 - Math.random());
+    setRandomReviews(shuffled.slice(0, 4));
 
-    // Live online users fluctuation simulation
     const usersInterval = setInterval(() => {
       setOnlineUsers((prev) => {
-        const delta = Math.floor(Math.random() * 9) - 4; // -4 to +4
+        const delta = Math.floor(Math.random() * 7) - 3;
         const nextUsers = prev + delta;
-        return nextUsers < 130 ? 135 : nextUsers > 180 ? 150 : nextUsers;
+        return nextUsers < 120 ? 128 : nextUsers > 170 ? 148 : nextUsers;
       });
-    }, 3500);
+    }, 4000);
 
-    // Dynamic waitlist timer loop
     const queueInterval = setInterval(() => {
       setQueueNum((prev) => (prev <= 1 ? 4 : prev - 1));
-    }, 14000);
+    }, 13000);
 
     return () => {
       clearInterval(usersInterval);
@@ -82,7 +77,7 @@ export default function HomePage() {
           </div>
         </Link>
 
-        {/* LIVE USERS COUNTER */}
+        {/* REALTIME FAKE CONVERSION CONSOLE */}
         <div className="flex items-center gap-1.5 rounded-full bg-red-50 border border-red-100 px-2.5 py-1 text-[10px] font-bold text-red-600 animate-pulse">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500"></span>
           <span>{onlineUsers} Online</span>
@@ -117,12 +112,12 @@ export default function HomePage() {
                 Start Free Chat <span className="ml-2">→</span>
               </Link>
 
-              {/* OVERALL APP HYPED STATS */}
+              {/* DYNAMIC COUNTER ACCELERATOR */}
               <div className="flex flex-col text-left">
                 <div className="flex items-center text-amber-300 text-xs tracking-tighter">
                   ⭐⭐⭐⭐⭐ <span className="ml-1 font-bold text-white text-[11px]">4.9/5</span>
                 </div>
-                <span className="text-[8px] text-white/85 font-medium">(1,42,817 reviews)</span>
+                <span className="text-[8px] text-white/85 font-medium">(102,419 reviews)</span>
               </div>
             </div>
 
@@ -182,9 +177,16 @@ export default function HomePage() {
 
         <div className="space-y-3">
           {ASTROLOGERS.map((astro, index) => {
-            // Highly optimized conversion factors per astrologer
             const fakeRating = index === 0 ? "4.9" : index === 1 ? "4.8" : index === 2 ? "4.8" : "4.7";
-            const fakeConsultations = index === 0 ? "48,291" : index === 1 ? "32,910" : index === 2 ? "19,540" : "14,812";
+            const fakeConsults = index === 0 ? "42.8K" : index === 1 ? "29.1K" : index === 2 ? "14.5K" : "9.8K";
 
             return (
               <article key={astro.id} className="overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-sm transition hover:shadow-md">
+                <div className="flex gap-3 p-3.5">
+                  <div className="relative h-[76px] w-[76px] flex-shrink-0 overflow-hidden rounded-full border-[3px] border-orange-100 bg-orange-50 shadow-sm">
+                    <Image src={astro.photo} alt={astro.name} fill sizes="76px" className="object-cover" />
+                    <span className="absolute inset-x-0 bottom-0 bg-emerald-600 py-0.5 text-center text-[8px] font-bold text-white">AI GUIDE</span>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
