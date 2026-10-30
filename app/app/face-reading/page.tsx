@@ -10,10 +10,9 @@ import {
   RefreshCw,
   CheckCircle2,
   Scan,
-  User,
   MessageSquare
 } from "lucide-react";
-import { useApp } from "../Providers";
+import { useApp } from "../../Providers"; // पाथ को रूट स्ट्रक्चर के अनुसार एडजस्ट किया गया
 
 // बिना किसी एपीआई के, स्थानीय स्तर पर सटीक और गहन विश्लेषण के लिए प्री-लोडेड डेटा स्ट्रक्चर
 const FACE_FEATURES_POOL = {
@@ -23,7 +22,7 @@ const FACE_FEATURES_POOL = {
   ],
   eyes: [
     { type: "big", label: "बड़ी और गहरी आँखें (Big Eyes)", analysis: "आप खुले विचारों के, उत्साही और दयालु स्वभाव के व्यक्ति हैं। लोग आपकी तरफ बहुत जल्दी आकर्षित हो जाते हैं, लेकिन कभी-कभी आप भावुकता में गलत फैसले ले लेते हैं।" },
-    { type: "small", label: "छोटी और तीखी आँखें (Small/Sharp Eyes)", analysis: "आप बेहद केंद्रित (Focused) और चौकन्ने स्वभाव के हैं। किसी भी चीज़ की बारीकियों को पकड़ने में आपको महारत हासिल है। कोई आपको आसानी से धोखा नहीं दे सकता।" }
+    { type: "small", label: "छोटी और तीखी आँखें (Small/Sharp Eyes)", analysis: "आप बेहद केंद्रित (Focused) og चौकन्ने स्वभाव के हैं। किसी भी चीज़ की बारीकियों को पकड़ने में आपको महारत हासिल है। कोई आपको आसानी से धोखा नहीं दे सकता।" }
   ],
   lips: [
     { type: "full", label: "भरे हुए होंठ (Full Lips)", analysis: "आप दूसरों की परवाह करने वाले और बेहद सामाजिक इंसान हैं। आपकी संवाद शैली इतनी प्रभावशाली है कि लोग आपकी बातों से जल्दी सहमत हो जाते हैं।" },
@@ -84,7 +83,7 @@ export default function FaceReadingPage() {
 
   return (
     <main className={`min-h-dvh px-5 pb-16 pt-6 transition-colors duration-300 ${
-      isDark ? "bg-celestial text-violet-50" : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
+      isDark ? "bg-slate-950 text-violet-50" : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
     }`}>
       <div className="mx-auto max-w-xl">
         {/* Header */}
@@ -104,7 +103,7 @@ export default function FaceReadingPage() {
 
         {/* STEP 1: इमेज अपलोड इंटरफेस */}
         {step === "upload" && (
-          <section className={`rounded-2xl border p-6 ${isDark ? "border-gold-400/15 bg-white/[0.03]" : "border-violet-200 bg-white shadow-md"}`}>
+          <section className={`rounded-2xl border p-6 ${isDark ? "border-amber-500/15 bg-white/[0.03]" : "border-violet-200 bg-white shadow-md"}`}>
             <div className="mb-6 rounded-xl bg-violet-600/10 p-4 border border-violet-500/20 text-center">
               <Scan size={32} className="mx-auto mb-2 text-violet-500 animate-pulse" />
               <p className="text-xs leading-relaxed font-medium">
@@ -116,7 +115,7 @@ export default function FaceReadingPage() {
             <div 
               onClick={() => fileInputRef.current?.click()}
               className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-12 text-center cursor-pointer transition-all ${
-                isDark ? "border-white/20 bg-black/20 hover:border-gold-400/40 hover:bg-white/5" : "border-violet-300 bg-violet-50/30 hover:border-violet-500"
+                isDark ? "border-white/20 bg-black/20 hover:border-amber-400/40 hover:bg-white/5" : "border-violet-300 bg-violet-50/30 hover:border-violet-500"
               }`}
             >
               <Camera size={36} className="text-violet-400 mb-3" />
@@ -133,10 +132,10 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* STEP 2: फीचर्स वैरिएशंस का चयन (तार्किक प्रश्नोत्तरी) */}
+        {/* STEP 2: फीचर्स वैरिएशंस का चयन */}
         {step === "questions" && (
-          <section className={`rounded-2xl border p-6 space-y-6 ${isDark ? "border-gold-400/15 bg-white/[0.03]" : "border-violet-200 bg-white shadow-md"}`}>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-gold-400 flex items-center gap-2">
+          <section className={`rounded-2xl border p-6 space-y-6 ${isDark ? "border-amber-500/15 bg-white/[0.03]" : "border-violet-200 bg-white shadow-md"}`}>
+            <h2 className="text-sm font-bold uppercase tracking-wider text-amber-500 flex items-center gap-2">
               <HelpCircle size={16} /> चेहरे की बनावट की पुष्टि करें
             </h2>
 
@@ -145,7 +144,7 @@ export default function FaceReadingPage() {
               <label className="text-xs font-bold block">1. आपका माथा (Forehead) कैसा है?</label>
               <div className="grid grid-cols-2 gap-3">
                 {FACE_FEATURES_POOL.forehead.map(f => (
-                  <button key={f.type} onClick={() => handleAnswerSelect("forehead", f.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.forehead === f.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30" : "border-white/10 bg-black/10"}`}>{f.label}</button>
+                  <button key={f.type} type="button" onClick={() => handleAnswerSelect("forehead", f.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.forehead === f.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30 font-bold" : "border-gray-200 dark:border-white/10 bg-black/5 dark:bg-black/10"}`}>{f.label}</button>
                 ))}
               </div>
             </div>
@@ -154,8 +153,9 @@ export default function FaceReadingPage() {
             <div className="space-y-2">
               <label className="text-xs font-bold block">2. आपकी आँखों का आकार (Eyes Shape) कैसा है?</label>
               <div className="grid grid-cols-2 gap-3">
+                {/* ✅ यहाँ f.label की गंभीर त्रुटि को e.label से पूरी तरह फिक्स किया गया है */}
                 {FACE_FEATURES_POOL.eyes.map(e => (
-                  <button key={e.type} onClick={() => handleAnswerSelect("eyes", e.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.eyes === e.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30" : "border-white/10 bg-black/10"}`}>{f.label}</button>
+                  <button key={e.type} type="button" onClick={() => handleAnswerSelect("eyes", e.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.eyes === e.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30 font-bold" : "border-gray-200 dark:border-white/10 bg-black/5 dark:bg-black/10"}`}>{e.label}</button>
                 ))}
               </div>
             </div>
@@ -165,12 +165,13 @@ export default function FaceReadingPage() {
               <label className="text-xs font-bold block">3. आपके होंठों की बनावट (Lips Texture) कैसी है?</label>
               <div className="grid grid-cols-2 gap-3">
                 {FACE_FEATURES_POOL.lips.map(l => (
-                  <button key={l.type} onClick={() => handleAnswerSelect("lips", l.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.lips === l.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30" : "border-white/10 bg-black/10"}`}>{l.label}</button>
+                  <button key={l.type} type="button" onClick={() => handleAnswerSelect("lips", l.type)} className={`p-3 text-xs font-semibold rounded-xl border text-center transition-all ${answers.lips === l.type ? "border-violet-500 bg-violet-500/10 ring-2 ring-violet-500/30 font-bold" : "border-gray-200 dark:border-white/10 bg-black/5 dark:bg-black/10"}`}>{l.label}</button>
                 ))}
               </div>
             </div>
 
             <button
+              type="button"
               disabled={!answers.forehead || !answers.eyes || !answers.lips || isScanning}
               onClick={processFaceReading}
               className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-violet-600 to-indigo-600 font-bold text-white py-4 rounded-xl text-sm shadow disabled:opacity-40"
@@ -190,8 +191,5 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* STEP 3: गार्गी माँ की आध्यात्मिक शैली में प्रेडिक्शन आउटपुट */}
+        {/* STEP 3: प्रेडिक्शन आउटपुट डिस्प्ले */}
         {step === "result" && (
-          <section className="space-y-6">
-            <div className={`rounded-2xl border p-6 ${isDark ? "border-gold-400/20 bg-white/[0.04]" : "border-violet-200 bg-white shadow-lg"}`}>
-              <div className="flex items-center justify-between border-b border-violet-500/10 pb-4 mb-5">
