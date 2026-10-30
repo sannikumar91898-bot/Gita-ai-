@@ -6,13 +6,16 @@ import {
   ArrowLeft,
   Camera,
   Sparkles,
-  HelpCircle,
-  RefreshCw,
   Scan,
   Image as ImageIcon,
   Eye,
   Brain,
   MessageCircle,
+  RefreshCw,
+  ShieldCheck,
+  TrendingUp,
+  Heart,
+  Zap,
 } from "lucide-react";
 import { useApp } from "../../Providers";
 
@@ -23,61 +26,91 @@ type FeatureOption = {
   type: string;
   label: string;
   analysis: string;
-  timeline: string;
-  remedy: string;
+  guidance: string;
 };
 
-// 👑 100% अकाट्य दावे, पक्के टाइमलाइन और महा-उपाय के साथ सामुद्रिक डेटाबेस
 const FACE_FEATURES: Record<FeatureKey, FeatureOption[]> = {
   forehead: [
     {
       type: "broad",
-      label: "चौड़ा माथा (Absolute Ruler Intellect)",
-      analysis: "सामुद्रिक शास्त्र के अनुसार ऐसा चौड़ा माथा साक्षात राजयोग का प्रतीक है। आपके भीतर गजब की लीडरशिप और बड़ा व्यापार साम्राज्य खड़ा करने की क्षमता जन्मजात है। आपके सितारे बुलंद हैं और समाज में आपका नाम और रुतबा सर्वोच्च स्तर पर पहुँचेगा।",
-      timeline: "आगामी 11 महीनों के भीतर आपकी कुंडली में धन का महा-आगमन निश्चित है।",
-      remedy: "रोज सुबह सूर्य देव को तांबे के लोटे से जल चढ़ाएं और सिंदूर का तिलक लगाएं।"
+      label: "शाही चौड़ा माथा (Royal Broad Forehead)",
+      analysis:
+        "सामुद्रिक शास्त्र के अनुसार चौड़ा माथा साक्षात राजयोग की निशानी है। ऐसे जातक असाधारण बुद्धिमत्ता, तीव्र निर्णय क्षमता और नेतृत्व के गुण लेकर पैदा होते हैं। समाज में आपका मान-सम्मान और उच्च पद मिलना निश्चित है।",
+      guidance:
+        "आप बड़े बिजनेस या प्रशासनिक क्षेत्र में सफल होंगे। अपनी ऊर्जा को सही दिशा देने के लिए सूर्य देव की आराधना करें।",
     },
     {
       type: "narrow",
-      label: "छोटा या संकुचित माथा (Sharp Executioner)",
-      analysis: "सामुद्रिक रहस्य के अनुसार छोटा माथा अत्यंत तीव्र बुद्धि और अचूक रणनीतिकार की निशानी है। आप जो ठान लेते हैं, उसे हासिल करके ही दम लेते हैं। आपके जीवन में अचानक और अप्रत्याशित रूप से छप्परफाड़ धन लाभ होगा।",
-      timeline: "अगले 4 महीनों के अंदर आपके करियर में एक बहुत बड़ा और चमत्कारी मोड़ आने वाला है।",
-      remedy: "बुधवार के दिन गाय को हरी घास खिलाएं और अपने पास एक चांदी का सिक्का रखें।"
+      label: "तेजस्वी संकुचित माथा (Sharp Forehead)",
+      analysis:
+        "ऐसा माथा अत्यधिक व्यावहारिक, फोकस्ड और जमीन से जुड़े व्यक्तित्व को दर्शाता है। आप अपनी मेहनत के दम पर शून्य से शिखर तक का सफर तय करते हैं और धन संचय करने में माहिर होते हैं।",
+      guidance:
+        "शनिवार के दिन पीपुल के वृक्ष के पास दीपक जलाएं, इससे भाग्य के बंद दरवाजे तुरंत खुलेंगे।",
     },
   ],
   eyes: [
     {
       type: "big",
-      label: "बड़ी आँखें (Magnetic Attraction Eyes)",
-      analysis: "बड़ी और सम्मोहक आँखें स्पष्ट करती हैं कि आपके भीतर सम्मोहन शक्ति (Magnetism) कूट-कूट कर भरी है। लोग आपकी तरफ खिंचे चले आते हैं। व्यापार और समाज में आपकी साख इतनी मजबूत होगी कि विरोधी स्वतः ही घुटने टेक देंगे।",
-      timeline: "आगामी अक्टूबर 2027 से पहले आपके जीवन की सबसे बड़ी मनोकामना 100% पूरी होने जा रही है।",
-      remedy: "प्रतिदिन हनुमान चालीसा का पाठ करें और आँखों में नियमित रूप से गुलाब जल डालें।"
+      label: "गज लक्ष्मी आँखें (Magnetic Big Eyes)",
+      analysis:
+        "बड़ी और चमकदार आँखें सीधे तौर पर मजबूत शुक्र और गुरु ग्रह को दर्शाती हैं। आपके भीतर गजब का आकर्षण है। लोग आपकी तरफ खिंचे चले आते हैं और आप कला, मीडिया या बिजनेस में अपार धन कमाएंगे।",
+      guidance:
+        "शुक्रवार को मां लक्ष्मी को सफेद मिष्ठान का भोग लगाएं, आकर्षण और ऐश्वर्य में १० गुना वृद्धि होगी।",
     },
     {
       type: "small",
-      label: "छोटी या तीखी आँखें (The Eagle Eye Mastermind)",
-      analysis: "तीखी और बाज जैसी निगाहें ये साबित करती हैं कि आप गुप्त शत्रुओं की चालों को समय से पहले भांप लेते हैं। कोई आपको धोखा नहीं दे सकता। धन संचय के मामले में आपका दिमाग बहुत तेज चलता है और आप करोड़ों का साम्राज्य खड़ा करेंगे।",
-      timeline: "आने वाले 45 दिनों के भीतर आपको एक बहुत बड़ी खुशखबरी या गुप्त धन की प्राप्ति होगी।",
-      remedy: "शनिवार की शाम को पीपल के पेड़ के नीचे सरसों के तेल का दीपक प्रज्वलित करें।"
+      label: "गंभीर तीक्ष्ण आँखें (Deep Analytical Eyes)",
+      analysis:
+        "सामुद्रिक विद्या कहती है कि छोटी और तीखी दृष्टि वाले लोग किसी के भी मन की बात भांप लेते हैं। आपका इंट्यूशन (पूर्वाभास) बहुत मजबूत है। आप गुप्त धन, शेयर मार्केट और जटिल व्यापार से भारी मुनाफा कमाते हैं।",
+      guidance:
+        "बुधवार के दिन गणेश जी को दूर्वा चढ़ाएं, जिससे आपकी बुद्धिमत्ता सही समय पर सटीक लाभ दिलाए।",
     },
   ],
   lips: [
     {
       type: "full",
-      label: "भरे हुए होंठ (Royal Luxury Communicator)",
-      analysis: "भरे हुए और स्पष्ट होंठ सामुद्रिक विज्ञान में ऐश्वर्य और उच्च विलासिता (Luxury Life) का साक्षात प्रमाण हैं। आपकी वाणी में मां सरस्वती का वास है। आप अपनी मीठी जुबान और तर्कों से हर बड़ी डील अपने नाम कर लेते हैं।",
-      timeline: "अगले साल मार्च के महीने में भूमि, भवन या वाहन का सुख आपको निश्चित रूप से मिलने वाला है।",
-      remedy: "शुक्रवार के दिन मां लक्ष्मी को मिश्री और मखाने का भोग लगाएं और गुलाबी वस्त्र धारण करें।"
+      label: "अमृत होंठ (Full Dynamic Lips)",
+      analysis:
+        "भरे हुए सुडौल होंठ जातक की वाकसिद्धि (सरस्वती योग) को दर्शाते हैं। आपकी बोली में जादू है। आप अपनी बातों से बड़ी से बड़ी डील फाइनल कर लेते हैं। विलासितापूर्ण जीवन और भरपूर दांपत्य सुख आपका भाग्य है।",
+      guidance:
+        "अपने हाथ में एक शुद्ध स्फटिक या चांदी का छल्ला धारण करें ताकि आर्थिक समृद्धि हमेशा बनी रहे।",
     },
     {
       type: "thin",
-      label: "पतले होंठ (Diplomatic Command Lips)",
-      analysis: "पतले होंठ अत्यंत चतुर, कूटनीतिज्ञ और सटीक निर्णय लेने वाले शासक के होते हैं। आप भावनाओं में बहकर कभी अपना नुकसान नहीं करते। आपका यही गुण आपको बहुत जल्द अपने कुल का सबसे अमीर व्यक्ति बनाएगा।",
-      timeline: "अगले 3 महीनों के भीतर आपकी आय के नए और परमानेंट स्रोत (Multiple Income Streams) चालू होंगे।",
-      remedy: "गुरुवार को भगवान विष्णु के मंदिर में चने की दाल और पीले केले का दान करें।"
+      label: "संयमी धनुष होंठ (Determined Thin Lips)",
+      analysis:
+        "पतले और स्पष्ट होंठ उच्च स्तरीय कूटनीतिज्ञ और सफल बिजनेसमैन की पहचान हैं। आप बिना वजह पैसा बर्बाद नहीं करते और जीवन में बहुत कम उम्र में ही बड़ा आर्थिक साम्राज्य खड़ा कर लेते हैं।",
+      guidance:
+        "प्रतिदिन सुबह गायत्री मंत्र का जाप करें, रुका हुआ सारा धन तेजी से वापस आएगा।",
     },
   ],
 };
+
+const QUESTIONS: {
+  key: FeatureKey;
+  title: string;
+  description: string;
+  icon: typeof Brain;
+}[] = [
+  {
+    key: "forehead",
+    title: "आपके माथे (Forehead) की बनावट कैसी है?",
+    description: "मिरर में देखकर सबसे सटीक विकल्प चुनें।",
+    icon: Brain,
+  },
+  {
+    key: "eyes",
+    title: "आपकी आँखों (Eyes) का आकार कैसा है?",
+    description: "अपने चेहरे के अनुसार सही आकार चुनें।",
+    icon: Eye,
+  },
+  {
+    key: "lips",
+    title: "आपके होंठों (Lips) की बनावट कैसी है?",
+    description: "अपनी प्राकृतिक बनावट का चयन करें।",
+    icon: MessageCircle,
+  },
+];
 
 export default function FaceReadingPage() {
   const { theme } = useApp();
@@ -90,8 +123,8 @@ export default function FaceReadingPage() {
     eyes: "",
     lips: "",
   });
-  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
+  const [isScanning, setIsScanning] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,18 +134,17 @@ export default function FaceReadingPage() {
 
   const panelClass = isDark
     ? "border-white/10 bg-white/[0.04]"
-    : "border-orange-100 bg-white shadow-lg";
+    : "border-orange-100 bg-white shadow-sm";
 
   const mutedClass = isDark ? "text-slate-300" : "text-gray-600";
 
   function handleImageChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-
     setError("");
 
-    if (!file.type.startsWith("image/")) {
-      setError("कृपया JPG, PNG या मान्य इमेज चुनें।");
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("कृपया JPG, PNG या WEBP फोटो चुनें।");
       event.target.value = "";
       return;
     }
@@ -133,7 +165,7 @@ export default function FaceReadingPage() {
       }
     };
     reader.onerror = () => {
-      setError("फोटो अपलोड नहीं हो पाई। फिर कोशिश करें।");
+      setError("फोटो लोड नहीं हो पाई। फिर कोशिश करें।");
     };
     reader.readAsDataURL(file);
   }
@@ -148,17 +180,16 @@ export default function FaceReadingPage() {
 
   function processReading() {
     if (!answers.forehead || !answers.eyes || !answers.lips) {
-      setError("कृपया तीनों शारीरिक लक्षणों के सही विकल्पों को चुनें।");
+      setError("आगे बढ़ने के लिए तीनों विकल्प चुनें।");
       return;
     }
-
     setError("");
     setIsScanning(true);
 
     window.setTimeout(() => {
       setIsScanning(false);
       setStep("result");
-    }, 1500);
+    }, 1200);
   }
 
   function resetModule() {
@@ -170,31 +201,28 @@ export default function FaceReadingPage() {
       lips: "",
     });
     setError("");
-
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   }
 
   function getSelectedFeature(field: FeatureKey) {
-    return FACE_FEATURES[field].find(
-      (feature) => feature.type === answers[field],
-    );
+    return FACE_FEATURES[field].find((feature) => feature.type === answers[field]);
   }
 
   const selectedFeatures = [
     {
-      title: "ललाट (माथे) का दिव्य राजयोग फल",
+      title: "माथे से प्रकट राजयोग एवं बुद्धिमत्ता",
       feature: getSelectedFeature("forehead"),
       icon: Brain,
     },
     {
-      title: "नेत्र (आँखों) का सम्मोहन एवं भाग्य चक्र",
+      title: "आँखों में छुपा आकर्षण एवं धनयोग",
       feature: getSelectedFeature("eyes"),
       icon: Eye,
     },
     {
-      title: "ओष्ठ (होंठों) का ऐश्वर्य और धन योग फल",
+      title: "होंठों से वाकसिद्धि एवं दांपत्य सुख",
       feature: getSelectedFeature("lips"),
       icon: MessageCircle,
     },
@@ -208,18 +236,16 @@ export default function FaceReadingPage() {
             href="/"
             aria-label="वापस जाएँ"
             className={`rounded-xl border p-2.5 ${
-              isDark
-                ? "border-white/10 bg-slate-900"
-                : "border-orange-200 bg-white shadow-sm"
+              isDark ? "border-white/10 bg-slate-900" : "border-orange-200 bg-white shadow-sm"
             }`}
           >
             <ArrowLeft size={18} />
           </Link>
 
           <div>
-            <h1 className="text-xl font-bold">👑 प्रीमियम एआई सामुद्रिक शास्त्र</h1>
+            <h1 className="text-xl font-bold">👑 प्रीमियम एआई सामुद्रिक विश्लेषण</h1>
             <p className="mt-1 text-xs font-bold text-orange-500">
-              Face Reading · 100% Authoritative Prediction
+              Face Reading · Authentic Vedic Interpretation
             </p>
           </div>
         </header>
@@ -227,15 +253,12 @@ export default function FaceReadingPage() {
         {step === "upload" && (
           <section className={`rounded-2xl border p-5 ${panelClass}`}>
             <div className="mb-5 rounded-xl border border-orange-500/20 bg-orange-500/10 p-5 text-center">
-              <Scan
-                className="mx-auto mb-3 animate-pulse text-orange-500"
-                size={38}
-              />
+              <Scan className="mx-auto mb-3 animate-pulse text-orange-500" size={38} />
               <h2 className="text-sm font-black uppercase tracking-wide text-orange-500">
-                चेहरे की बनावट से जानें अपना संपूर्ण भाग्य
+                चेहरे की बनावट से जानें अपना छुपा हुआ भाग्य
               </h2>
               <p className={`mt-3 text-xs leading-6 ${mutedClass}`}>
-                सामुद्रिक विज्ञान के गुप्त सूत्रों के अनुसार आपकी आँखें, माथा और होंठ आपके आने वाले कल का पूरा सच बयां करते हैं। अपनी फोटो अपलोड करें और अचूक महा-भविष्यवाणी प्राप्त करें।
+                सामुद्रिक शास्त्र के गुप्त सूत्रों के अनुसार आपका चेहरा आपके भूत, भविष्य और वर्तमान का दर्पण है। अपनी फोटो अपलोड करें या सीधे आगे बढ़कर अपनी गुप्त शक्तियों को अनलॉक करें।
               </p>
             </div>
 
@@ -262,7 +285,7 @@ export default function FaceReadingPage() {
               className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-orange-400/50 p-7 text-xs font-bold transition hover:bg-orange-500/10"
             >
               <Camera size={20} />
-              चेहरे का महा-स्कैन शुरू करें (कैमरा / गैलरी)
+              चेहरे का लाइव स्कैन करें (कैमरा / गैलरी)
             </button>
 
             <button
@@ -271,14 +294,14 @@ export default function FaceReadingPage() {
               className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-600 px-4 py-3.5 text-xs font-black text-white shadow-md transition hover:bg-orange-700"
             >
               <ImageIcon size={16} />
-              मैन्युअली लक्षण चुनकर आगे बढ़ें
+              मैन्युअल लक्षण चुनकर आगे बढ़ें
             </button>
 
-            {error && (
-              <p className="mt-3 text-center text-sm font-bold text-red-500">
-                {error}
-              </p>
-            )}
+            {error && <p className="mt-3 text-center text-sm font-bold text-red-500">{error}</p>}
           </section>
         )}
 
+        {step === "questions" && (
+          <section className={`rounded-2xl border p-5 ${panelClass}`}>
+            <div className="mb-5 flex items-center gap-3">
+              <div className="rounded-xl bg-orange-500/10 p-3 text-orange-500">
