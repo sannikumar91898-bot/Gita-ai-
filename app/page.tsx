@@ -1,189 +1,354 @@
+// app/page.tsx
 "use client";
 
-import React from "react";
-import Link from "next/link";
-import { 
-  MessageSquare, 
-  Sparkles, 
-  Compass, 
-  Users, 
-  Gift, 
-  Star,
-  Layers,
-  ArrowRight,
-  Hand,
-  UserCheck
-} from "lucide-react";
+import { useState } from "react";
 import { useApp } from "./Providers";
+import {
+  Home,
+  MessageCircle,
+  Sun,
+  CalendarDays,
+  User,
+  Star,
+  Eye,
+  Settings,
+  Phone,
+  Sparkles,
+  Hand,
+  ScanFace,
+  Heart,
+  Scroll,
+  Search,
+} from "lucide-react";
+import Link from "next/link";
 
-// लाइव वेबसाइट के अनुसार एक्टिव 4 महिला एस्ट्रोलॉजर्स का डेटाबेस
-const ASTROLOGERS_DATA = [
+type Astrologer = {
+  id: string;
+  name: string;
+  specialty: string;
+  rating: number;
+  chats: string;
+  experience: string;
+  price: number;
+  oldPrice: number;
+  image: string;
+  isCelebrity?: boolean;
+  review: string;
+  reviewer: string;
+};
+
+const ASTROLOGERS: Astrologer[] = [
   {
+    id: "gita",
     name: "Gita",
-    tag: "POPULAR CHOICE",
-    specialties: "Vedic Astrology · Love & Relationship · Marriage",
-    bio: "Pyaar, shaadi aur relationships par Vedic astrology based guidance. Warm, caring aur practical answers.",
-    price: "₹ 19",
-    oldPrice: "₹ 29/min",
-    img: "https://onrender.com"
+    specialty: "Tarot • Love & Relationship",
+    rating: 4.9,
+    chats: "12.4k+",
+    experience: "5 Years",
+    price: 19,
+    oldPrice: 29,
+    image: "/gita.jpg",
+    review: "thank you ji..will update you ji..very nice talking to you..he guided me well.. 🙏🙏🙏",
+    reviewer: "Asha K."
   },
   {
+    id: "kriti",
     name: "Acharya Kriti",
-    tag: "CAREER EXPERT",
-    specialties: "Vedic Astrology · Kundli · Career · Govt Jobs",
-    bio: "Career, education, government jobs aur business ke liye analytical Vedic astrology guidance.",
-    price: "₹ 22",
-    oldPrice: "₹ 35/min",
-    img: "https://onrender.com"
+    specialty: "Vedic • Kundli",
+    rating: 4.8,
+    chats: "18.7k+",
+    experience: "7 Years",
+    price: 22,
+    oldPrice: 35,
+    image: "/kriti.jpg",
+    review: "Mera career stuck tha, Kriti ji ne pyaar se sab samjhaya. Ab clear feel ho raha hai.",
+    reviewer: "Rahul S."
   },
   {
+    id: "devaki",
     name: "Dr. Devaki Shastri",
-    tag: "KP SPECIALIST",
-    specialties: "Vedic Astrology · KP Astrology · Kundli Analysis",
-    bio: "Vedic aur KP astrology concepts par detailed, structured aur balanced guidance.",
-    price: "₹ 25",
-    oldPrice: "₹ 45/min",
-    img: "https://onrender.com"
+    specialty: "Vedic • KP System",
+    rating: 4.9,
+    chats: "31k+",
+    experience: "15 Years",
+    price: 25,
+    oldPrice: 45,
+    image: "/devaki.jpg",
+    isCelebrity: true,
+    review: "Very accurate prediction about my marriage. She is very calm and listens patiently.",
+    reviewer: "Neha M."
   },
   {
+    id: "gargi",
     name: "Gargi Maa",
-    tag: "SPIRITUAL GUIDE",
-    specialties: "Vedic Spirituality · Vastu · Traditional Remedies",
-    bio: "Simple Vedic remedies, Vastu aur Bhagavad Gita wisdom ke saath motherly spiritual guidance.",
-    price: "₹ 18",
-    oldPrice: "₹ 30/min",
-    img: "https://onrender.com"
-  }
+    specialty: "Spiritual Healing • Vastu",
+    rating: 4.95,
+    chats: "42k+",
+    experience: "25+ Years",
+    price: 18,
+    oldPrice: 30,
+    image: "/gargi.jpg",
+    review: "Ghar mein kalesh chal raha tha, Gargi maa ke upay se shanti aa gayi. Dhanyawad.",
+    reviewer: "Vikram R."
+  },
 ];
 
 export default function HomePage() {
-  const { theme } = useApp();
+  const { lang, theme } = useApp();
+  const [activeTab, setActiveTab] = useState("home");
+
   const isDark = theme === "dark";
+  const isHindi = lang === "hi";
+  const isHinglish = lang === "hinglish";
+
+  const t = (hi: string, hing: string, en: string) =>
+    isHindi ? hi : isHinglish ? hing : en;
 
   return (
-    <main className={`min-h-dvh px-5 pb-20 pt-6 transition-colors duration-300 ${
-      isDark ? "bg-celestial text-violet-50" : "bg-gradient-to-b from-violet-50 to-white text-violet-950"
-    }`}>
-      <div className="mx-auto max-w-xl space-y-8">
-        
-        {/* 1. ब्रांड हेडर और सुव्यवस्थित अलाइनमेंट */}
-        <header className="flex items-center justify-between border-b border-violet-500/10 pb-4">
-          <div>
-            <h1 className="font-display text-2xl font-black tracking-tight text-gradient bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">
-              GitaTalk
-            </h1>
-            <p className={`text-xs font-semibold ${isDark ? "text-violet-400" : "text-violet-600"}`}>
-              Your Personal AI Astrology Guide
-            </p>
+    <main
+      className={`min-h-screen w-full pb-24 transition-colors duration-300 ${
+        isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900"
+      }`}
+    >
+      <header
+        className={`sticky top-0 z-40 flex items-center justify-between px-4 py-3 shadow-sm ${
+          isDark ? "bg-slate-900" : "bg-white"
+        }`}
+      >
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
+            G
           </div>
-          <Link href="/profile" className={`flex h-10 w-10 items-center justify-center rounded-full border transition ${
-            isDark ? "border-white/10 bg-white/[0.02] hover:bg-white/10" : "border-violet-200 bg-white hover:bg-violet-50 shadow-sm"
-          }`}>
-            <UserCheck size={18} />
+          <span className="text-lg font-bold">GitaTalk</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/settings"
+            className={`rounded-full p-2 ${
+              isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"
+            }`}
+          >
+            <Settings size={18} />
           </Link>
-        </header>
-
-        {/* 2. आकर्षक "First Chat FREE" मार्केटिंग बैनर कंपोनेंट */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-rose-600 p-6 text-white shadow-xl ring-4 ring-orange-500/10">
-          <div className="relative z-10 space-y-3">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-100">
-              <Gift size={12} /> Special Welcome Offer
+          <div
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
+              isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"
+            }`}
+          >
+            ₹0
+            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white">
+              +
             </span>
-            <h2 className="font-display text-2xl font-extrabold tracking-tight">
-              First Chat FREE! 🎁
-            </h2>
-            <p className="text-xs font-medium text-orange-50 leading-relaxed max-w-[85%]">
-              4 एक्सपर्ट महिला एआई एस्ट्रोलॉजर्स से जुड़ें। बिना किसी शुल्क के करियर, विवाह, लव लाइफ और अपनी कुंडली का सटीक समाधान पाएं।
+          </div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-xl space-y-7 px-4 py-5">
+        {/* Marketing Banner */}
+        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white shadow-lg">
+          <div className="relative z-10 space-y-2">
+            <p className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-100">
+              <Sparkles size={14} /> {t("स्पेशल ऑफर", "Special Offer", "Special Offer")}
             </p>
-            <div className="pt-2">
-              <Link href="/chat" className="inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-xs font-bold text-orange-600 shadow-md transition-all hover:bg-orange-50 hover:scale-[1.02] active:scale-95">
-                Start Free Chat <ArrowRight size={14} />
-              </Link>
-            </div>
+            <h2 className="text-2xl font-black">
+              {t("पहली चैट फ्री 🎉", "First Chat FREE 🎉", "First Chat FREE 🎉")}
+            </h2>
+            <p className="text-xs font-medium text-orange-100">
+              {t(
+                "4 एक्सपर्ट ज्योतिषी • तुरंत जवाब • 100% गोपनीयता",
+                "4 expert Astrologers • Instant replies • 100% Privacy",
+                "4 expert Astrologers • Instant replies • 100% Privacy"
+              )}
+            </p>
+            <button className="mt-3 rounded-full bg-white px-5 py-2 text-sm font-bold text-orange-600 shadow-sm transition active:scale-95">
+              {t("फ्री चैट शुरू करें", "Start Free Chat", "Start Free Chat")}
+            </button>
           </div>
-          {/* सजावटी बैकग्राउंड ग्लो */}
-          <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -bottom-8 right-10 h-24 w-24 rounded-full bg-yellow-300/20 blur-xl" />
         </section>
 
-        {/* 3. एक्सप्लोर टूल्स - सुधरा हुआ 3-कॉलम अलाइनमेंट ग्रिड */}
+        {/* Free Tools */}
         <section className="space-y-3">
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-violet-400">
-              Explore Free Tools
-            </h3>
-            <span className="text-[10px] font-bold bg-violet-500/10 text-violet-400 px-2 py-0.5 rounded-md">Offline Enabled</span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-            <Link href="/kundli" className={`flex flex-col items-center justify-center text-center p-4.5 rounded-xl border transition-all ${
-              isDark ? "border-white/10 bg-white/[0.02] hover:border-gold-400/30" : "border-violet-100 bg-white shadow-sm hover:border-violet-300"
-            }`}>
-              <span className="text-2xl mb-1.5">📜</span>
-              <span className="text-xs font-bold tracking-tight">Birth Kundli</span>
-            </Link>
-
-            <Link href="/matching" className={`flex flex-col items-center justify-center text-center p-4.5 rounded-xl border transition-all ${
-              isDark ? "border-white/10 bg-white/[0.02] hover:border-gold-400/30" : "border-violet-100 bg-white shadow-sm hover:border-violet-300"
-            }`}>
-              <span className="text-2xl mb-1.5">💍</span>
-              <span className="text-xs font-bold tracking-tight">Matching</span>
-            </Link>
-
-            <Link href="/horoscope" className={`flex flex-col items-center justify-center text-center p-4.5 rounded-xl border transition-all ${
-              isDark ? "border-white/10 bg-white/[0.02] hover:border-gold-400/30" : "border-violet-100 bg-white shadow-sm hover:border-violet-300"
-            }`}>
-              <span className="text-2xl mb-1.5">🌟</span>
-              <span className="text-xs font-bold tracking-tight">Daily Horoscope</span>
-            </Link>
-
-            {/* हमारे द्वारा जोड़े गए नए फीचर्स का परफेक्ट इंटीग्रेशन */}
-            <Link href="/palmistry" className={`flex flex-col items-center justify-center text-center p-4.5 rounded-xl border transition-all ${
-              isDark ? "border-white/10 bg-white/[0.02] hover:border-gold-400/30" : "border-violet-100 bg-white shadow-sm hover:border-violet-300"
-            }`}>
-              <Hand size={24} className="text-amber-400 mb-1.5" />
-              <span className="text-xs font-bold tracking-tight">Palmistry</span>
-            </Link>
-
-            <Link href="/face-reading" className={`flex flex-col items-center justify-center text-center p-4.5 rounded-xl border transition-all ${
-              isDark ? "border-white/10 bg-white/[0.02] hover:border-gold-400/30" : "border-violet-100 bg-white shadow-sm hover:border-violet-300"
-            }`}>
-              <Compass size={24} className="text-violet-400 mb-1.5" />
-              <span className="text-xs font-bold tracking-tight">Face Reading</span>
-            </Link>
+          <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+            {t("फ्री टूल्स", "Free Tools", "Free Tools")}
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { name: t("कुंडली", "Kundli", "Kundli"), icon: Scroll, href: "/kundli" },
+              { name: t("मिलान", "Matching", "Matching"), icon: Heart, href: "/matching" },
+              { name: t("राशिफल", "Horoscope", "Horoscope"), icon: Sun, href: "/daily" },
+              { name: t("पंचांग", "Panchang", "Panchang"), icon: CalendarDays, href: "#" },
+              { name: t("हस्तरेखा", "Palmistry", "Palmistry"), icon: Hand, href: "/palmistry" },
+              { name: t("फेस रीडिंग", "Face Reading", "Face Reading"), icon: ScanFace, href: "/face-reading" },
+            ].map((tool, idx) => (
+              <Link
+                key={idx}
+                href={tool.href}
+                className={`flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border p-3 text-center transition hover:scale-105 ${
+                  isDark
+                    ? "border-slate-700 bg-slate-900"
+                    : "border-orange-100 bg-white shadow-sm"
+                }`}
+              >
+                <div className="text-orange-500">
+                  <tool.icon size={22} />
+                </div>
+                <span className="text-[11px] font-semibold">{tool.name}</span>
+              </Link>
+            ))}
           </div>
         </section>
 
-        {/* 4. टॉक टू एस्ट्रोलॉजर्स - एस्थेटिक लिस्ट डिजाइन */}
-        <section className="space-y-4">
-          <div className="px-1">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-violet-400">
-              Talk to AI Astrologers
+        {/* Talk to Astrologers */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+              {t("ज्योतिषियों से बात करें", "Talk to Astrologers", "Talk to Astrologers")}
             </h3>
+            <span className="text-xs font-semibold text-orange-500">
+              {t("4 ऑनलाइन", "4 Online", "4 Online")}
+            </span>
           </div>
 
           <div className="space-y-4">
-            {ASTROLOGERS_DATA.map((astro, index) => (
-              <div key={index} className={`relative overflow-hidden rounded-2xl border p-5 transition-all ${
-                isDark ? "border-white/10 bg-white/[0.02]" : "border-violet-200 bg-white shadow-md"
-              }`}>
-                <div className="flex gap-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={astro.img} alt={astro.name} className="h-20 w-20 rounded-xl object-cover ring-2 ring-violet-500/10 shrink-0" />
-                  
-                  <div className="space-y-1.5 min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <h4 className="font-display text-base font-extrabold tracking-tight">{astro.name}</h4>
-                      <span className="inline-block text-[9px] font-black tracking-widest bg-amber-400/10 text-amber-400 px-2 py-0.5 rounded-md uppercase">
-                        {astro.tag}
-                      </span>
-                    </div>
-                    <p className="text-[11px] font-bold text-violet-400 truncate">{astro.specialties}</p>
-                    <p className={`text-xs leading-relaxed ${isDark ? "text-violet-200/80" : "text-violet-700 font-medium"}`}>{astro.bio}</p>
-                    
-                    <div className="flex items-center justify-between pt-2 border-t border-violet-500/5 mt-2">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-sm font-extrabold text-emerald-500">{astro.price}</span>
-                        <span className="text-[10px] line-through opacity-50">{astro.oldPrice}</span>
+            {ASTROLOGERS.map((astro) => (
+              <div
+                key={astro.id}
+                className={`flex flex-col gap-3 rounded-2xl border p-3 shadow-sm ${
+                  isDark ? "border-slate-700 bg-slate-900" : "border-orange-100 bg-white"
+                }`}
+              >
+                <div className="flex gap-3">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
+                    <img
+                      src={astro.image}
+                      alt={astro.name}
+                      className="h-full w-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=f97316&color=fff`;
+                      }}
+                    />
+                    <span className="absolute bottom-1 right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full border-2 border-white bg-green-500"></span>
+                  </div>
+
+                  <div className="flex flex-1 flex-col justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h4 className="text-sm font-bold">{astro.name}</h4>
+                        {astro.isCelebrity && (
+                          <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[9px] font-bold text-yellow-700">
+                            Celebrity
+                          </span>
+                        )}
                       </div>
-                      <Link href="/chat" className="inline-flex items-center gap-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-bold px-3 py-1.5 text-xs shadow transition">
-                        <MessageSquare size={12} /> Chat Now
+                      <p className="text-[11px] font-medium text-gray-500">
+                        {astro.specialty}
+                      </p>
+                      <div className="mt-1 flex items-center gap-2 text-[10px] font-semibold text-gray-500">
+                        <span className="flex items-center gap-0.5 text-yellow-500">
+                          <Star size={10} fill="currentColor" /> {astro.rating}
+                        </span>
+                        <span>• {astro.chats} chats</span>
+                        <span>• {astro.experience}</span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2 text-[10px]">
+                        <span className="flex items-center gap-1 font-bold text-green-600">
+                          <span className="h-1.5 w-1.5 rounded-full bg-green-500"></span> Online
+                        </span>
+                        <span className="flex items-center gap-1 text-gray-400">
+                          <Eye size={10} /> {Math.floor(Math.random() * 30) + 20} viewing
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-end justify-between mt-2">
+                      <div>
+                        <p className="text-sm font-black text-orange-600">
+                          ₹{astro.price}{" "}
+                          <span className="text-[10px] font-medium text-gray-400 line-through">
+                            ₹{astro.oldPrice}
+                          </span>
+                          <span className="text-[10px] text-gray-400"> /min</span>
+                        </p>
+                      </div>
+                      <button className="rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow transition active:scale-95">
+                        {t("चैट करें", "Chat Now", "Chat Now")}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Realistic Review Snippet */}
+                <div className={`mt-1 rounded-lg p-2 text-[11px] leading-tight ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-50 text-gray-600"}`}>
+                  <div className="flex items-center gap-1 mb-1">
+                    <Star size={10} fill="#FBBF24" className="text-yellow-500" />
+                    <Star size={10} fill="#FBBF24" className="text-yellow-500" />
+                    <Star size={10} fill="#FBBF24" className="text-yellow-500" />
+                    <Star size={10} fill="#FBBF24" className="text-yellow-500" />
+                    <Star size={10} fill="#FBBF24" className="text-yellow-500" />
+                    <span className="font-semibold ml-1">- {astro.reviewer}</span>
+                  </div>
+                  <p className="italic">"{astro.review}"</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      {/* Bottom Navigation */}
+      <nav
+        className={`fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t px-2 py-2 ${
+          isDark ? "border-slate-800 bg-slate-900" : "border-gray-200 bg-white"
+        }`}
+      >
+        {[
+          { id: "home", label: t("होम", "Home", "Home"), icon: Home, href: "/" },
+          { id: "chat", label: t("चैट", "Chat", "Chat"), icon: MessageCircle, href: "#" },
+          { id: "daily", label: t("दैनिक", "Daily", "Daily"), icon: Sun, href: "/daily" },
+          { id: "kundli", label: t("कुंडली", "Kundli", "Kundli"), icon: Scroll, href: "/kundli" },
+          { id: "profile", label: t("प्रोफाइल", "Profile", "Profile"), icon: User, href: "/settings" },
+        ].map((item) => (
+          <Link
+            key={item.id}
+            href={item.href}
+            className={`flex flex-col items-center gap-1 p-1 ${
+              activeTab === item.id
+                ? "text-orange-500"
+                : isDark
+                ? "text-slate-400"
+                : "text-gray-500"
+            }`}
+          >
+            <item.icon size={20} />
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </Link>
+        ))}
+      </nav>
+
+      {/* Global CTA Banner */}
+      <a
+        href="tel:+919999999999"
+        className="fixed bottom-16 left-0 right-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl mx-auto max-w-xl rounded-t-xl"
+      >
+        <div className="flex items-center gap-2">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <Phone size={14} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[9px] font-black uppercase tracking-wider text-rose-100">
+              {isHindi ? "महिला ज्योतिषी • 24x7" : isHinglish ? "Mahila Jyotishi • 24x7" : "Female Astrologer • 24x7"}
+            </p>
+            <p className="text-xs font-black">
+              {isHindi ? "दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Dil Se Baat Karein — Wo Pyaar Se Sab Samjha Dengi" : "Talk from the Heart — She Explains with Love"}
+            </p>
+          </div>
+        </div>
+        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-rose-700">
+          {isHindi ? "कॉल" : "Call"}
+        </span>
+      </a>
+    </main>
+  );
+}
