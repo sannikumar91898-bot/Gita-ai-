@@ -1,80 +1,239 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/db"; // Adjust this import based on your real db export path
+import { astrologerReviews } from "@/schema";
+import { eq, and, desc } from "drizzle-orm";
 
-export async function GET() {
-  const astrologersData = [
-    {
-      astrologerName: "Gita",
-      title: "वैदिक एवं आध्यात्मिक मार्गदर्शन",
-      rating: 4.99,
-      totalOrders: "42,150",
-      reviews: [
-        { id: "g1", name: "Asha K.", stars: 5, timeAgo: "Just now", comment: "thank you ji..will update you ji..very nice talking to you..he guided me well.. 🙏🙏🙏" },
-        { id: "g2", name: "Deepak Rawat", stars: 5, timeAgo: "2 hours ago", comment: "Superb experience and realistic predictions, will connect again once I start seeing the changes as advised, but I am confident I will 😊🙏" },
-        { id: "g3", name: "Bhavna_92", stars: 5, timeAgo: "Yesterday", comment: "Very straight forward and clear guidance. accuracy and knows what he says. Definitely recommend and looking forward..." },
-        { id: "g4", name: "Rohan Verma", stars: 4, timeAgo: "2 days ago", comment: "gita mam ne jo bataya tha wesa hi hua shadi ki baten bilkul accurate thi par thoda wait krna pda.. remedies bht easy hain unki." },
-        { id: "g5", name: "Meera_Bisht", stars: 5, timeAgo: "4 days ago", comment: "Highly accurate readings! Unmatched wisdom on this platform. bht calm tareeqe se samjhati hain chijo ko." },
-        { id: "g6", name: "Vikram S.", stars: 5, timeAgo: "1 week ago", comment: "bhai sach me kamaal hai jo pareshani chal rhi thi bina bataye mam ne khud hi bol di.. tnx a lot!" },
-        { id: "g7", name: "Priya Neogi", stars: 5, timeAgo: "1 week ago", comment: "Gita ji handles messy situations so well. Meri health issues pe jo bola tha 100% real tha." },
-        { id: "g8", name: "Rahul_K", stars: 4, timeAgo: "2 weeks ago", comment: "Acha experience tha. Thoda phone line busy thi pehle par connect hone k baad sab detail me bataya mam ne. Satisfied." },
-        { id: "g9", name: "Sapna Rawal", stars: 5, timeAgo: "3 weeks ago", comment: "Gita ji real gems hain is app par! Unki baten sunkar hi adha depression door ho jata h mirror ki trh sach bolti hain." },
-        { id: "g10", name: "Alok Dwivedi", stars: 5, timeAgo: "1 month ago", comment: "Very deep spiritual knowledge. Genuinely impressed by her calculations." }
-      ]
-    },
-    {
-      astrologerName: "Acharya Kriti",
-      title: "केपी एवं आधुनिक ज्योतिष विशेषज्ञ",
-      rating: 4.98,
-      totalOrders: "31,890",
-      reviews: [
-        { id: "k1", name: "Ritika Sharma", stars: 5, timeAgo: "15 mins ago", comment: "He is amazing, the way he explains the chart, my goddd!! How wonderful it is, and his predictions are unmatched. Truly a great person inside out." },
-        { id: "k2", name: "Latika_Singh", stars: 5, timeAgo: "5 hours ago", comment: "my go to place for any kind of a solution. thank you sir for always being there 🙏😊" },
-        { id: "k3", name: "Manish Kumar", stars: 5, timeAgo: "Yesterday", comment: "Very knowledgeable and accurate astrologer. His guidance is clear, precise, and to the point. Truly insightful and highly recommended! 🙏" },
-        { id: "k4", name: "Suresh_K", stars: 5, timeAgo: "3 days ago", comment: "आचार्य कृति जी की भविष्यवाणियां शत-प्रतिशत सही साबित हुईं। मेरे व्यापार में जो रुकावट थी वो दूर हो गई।" },
-        { id: "k5", name: "Nisha Patel", stars: 4, timeAgo: "5 days ago", comment: "Best astrologer for career guidance. Clean, crisp and honest logic. thoda queue me wait krna pdta h baki query solid solve krte h" },
-        { id: "k6", name: "Amit Yadav", stars: 5, timeAgo: "1 week ago", comment: "Bina time waste kiye point to point baat karte hain. Mera promotion kab hoga exect month bataya tha inhone nd wahi hua!!" },
-        { id: "k7", name: "divya_sharma", stars: 5, timeAgo: "2 weeks ago", comment: "Kriti sir rocks!! Unka logic bht sahi h blindly trust kr skte ho unki advice pe." },
-        { id: "k8", name: "Rakesh Raj", stars: 5, timeAgo: "2 weeks ago", comment: "Govt job preparation k liye bht acha guide kiya. Negative points bhi khul k bataye." },
-        { id: "k9", name: "Sonali_77", stars: 4, timeAgo: "3 weeks ago", comment: "Accurate tha chart reading par remedies thodi complicated lagi mujhe karne me par results ache mile bad me." },
-        { id: "k10", name: "Jatin Malhotra", stars: 5, timeAgo: "1 month ago", comment: "Super calculations via KP system. Highly recommended for property disputes." }
-      ]
-    },
-    {
-      astrologerName: "Dr. Devaki Shastri",
-      title: "वरिष्ठ नक्षत्र एवं नाड़ी विशेषज्ञ",
-      rating: 4.99,
-      totalOrders: "54,200",
-      reviews: [
-        { id: "d1", name: "Swarna_M", stars: 5, timeAgo: "1 hour ago", comment: "he is exceptional.... i have been in toich with him since last 2 years and he is the best" },
-        { id: "d2", name: "Neeru Bala", stars: 5, timeAgo: "Yesterday", comment: "He is very kind and his prediction is accurate.. he always solve my all problems with very easy remedies. His remedies r also eff..." },
-        { id: "d3", name: "Aditi Rao", stars: 5, timeAgo: "2 days ago", comment: "Just had 4-5 mins with him but he was very clear in what he says and very straight forward. His guidance really helped me..." },
-        { id: "d4", name: "Vikas Hegde", stars: 5, timeAgo: "4 days ago", comment: "डॉ. देवकी जी के पास असीम ज्ञान है। उनके ग्रहों के गोचर का विश्लेषण अद्भुत है। प्रणाम गुरुजी।" },
-        { id: "d5", name: "Pooja_99", stars: 5, timeAgo: "1 week ago", comment: "Truly a saviour in desperate times. Job ka bht bada tension solve kr diya inhone.. Thank you doctor saab!" },
-        { id: "d6", name: "Anand Chaturvedi", stars: 5, timeAgo: "1 week ago", comment: "Nadi shastra ka aisa gyan maine pehle kahi nahi dekha. Khub khub dhanyawad shastri ji." },
-        { id: "d7", name: "Kavita_R", stars: 4, timeAgo: "2 weeks ago", comment: "Prediction bohot powerful thi par call drop ho gyi network issue se. Pr jitni baat hui sir ne dil jeet liya." },
-        { id: "d8", name: "Gaurav Joshi", stars: 5, timeAgo: "3 weeks ago", comment: "Kundli ka ek ek dasha bilkul sahi match ho rha tha past life events k sath. Remarkable accuracy." },
-        { id: "d9", name: "Megha Singhal", stars: 5, timeAgo: "3 weeks ago", comment: "Unki batayi gemstone remedy se meri health bht jaldi recover hui h. Very compassionate soul." },
-        { id: "d10", name: "S. K. Mishra", stars: 5, timeAgo: "1 month ago", comment: "Experience speaks! Doctor saab has immense depth in astrology." }
-      ]
-    },
-    {
-      astrologerName: "Gargi Maa",
-      title: "टैरो कार्ड एवं ध्यान साधना गुरु",
-      rating: 4.97,
-      totalOrders: "28,450",
-      reviews: [
-        { id: "m1", name: "Tejaswini", stars: 5, timeAgo: "45 mins ago", comment: "To me He is the best person available on this platform,completely Reliable,Astonishingly Accurate.." },
-        { id: "m2", name: "Swaroop S.", stars: 5, timeAgo: "Yesterday", comment: "my savrook...this one word is enough how knowledgeable he is and how his predictions are precise and true indeed...Sir..." },
-        { id: "m3", name: "Anjali Mishra", stars: 5, timeAgo: "3 days ago", comment: "As usual, sir is the best, bang on predictions, very straightforward and exceptional, i have trusted him in the past and whatever he says is true." },
-        { id: "m4", name: "Harish_Chandra", stars: 5, timeAgo: "5 days ago", comment: "गार्गी मां का आशीर्वाद मिलते ही मेरे जीवन की सारी बाधाएं समाप्त होने लगीं। मानसिक तनाव एकदम खत्म हो गया।" },
-        { id: "m5", name: "Kiran J.", stars: 4, timeAgo: "1 week ago", comment: "Her intuition is top notch. Every word resonates deeply with reality. Remedie thodi lambi h pr asar krti h." },
-        { id: "m6", name: "Preeti_Rani", stars: 5, timeAgo: "1 week ago", comment: "Tarot card readings generally general lgti h pr gargi maa ne ekdm clear chije boli relation ko lekar.. eye opening session." },
-        { id: "m7", name: "Nitin Saxena", stars: 5, timeAgo: "2 weeks ago", comment: "Maa ka aura hi alag hai unse baat karke hi aadha dukh halka ho jata h. Aura healing techniques are awesome." },
-        { id: "m8", name: "sneha_kapoor", stars: 5, timeAgo: "2 weeks ago", comment: "Past aur present k bare me jo bola ek ek baat sach nikli. Future predictions ka wait h but highly positive feel ho rha h." },
-        { id: "m9", name: "Rishabh", stars: 4, timeAgo: "3 weeks ago", comment: "Bohot pyari hain maa. Tarot decks k through bohot achi counseling ki life ki confusion hatane me." },
-        { id: "m10", name: "Tarun Das", stars: 5, timeAgo: "1 month ago", comment: "Excellent energy scanning. Best for mental peace and clarity." }
-      ]
+// -------------------------------------------------------------------------
+// HIGH-FIDELITY RAW DATA FOR DETERMINISTIC REALISTIC REVIEW GENERATION
+// -------------------------------------------------------------------------
+
+const FIRST_NAMES = [
+  "Amit", "Rahul", "Priya", "Sneha", "Vikram", "Anjali", "Deepak", "Rohan", "Neha", "Rajesh",
+  "Suresh", "Pooja", "Aarav", "Karan", "Divya", "Aditya", "Megha", "Sanjay", "Ritu", "Alok",
+  "Manish", "Swati", "Vivek", "Kriti", "Gaurav", "Nisha", "Pranav", "Jyoti", "Abhishek", "Rani",
+  "Sunil", "Arjun", "Neha", "Vikas", "Shweta", "Ravi", "Ankita", "Manoj", "Preeti", "Sandeep"
+];
+
+const LAST_NAMES = [
+  "Sharma", "Verma", "Gupta", "Mishra", "Joshi", "Kumar", "Singh", "Yadav", "Patel", "Shah",
+  "Choudhary", "Nair", "Reddy", "Rao", "Das", "Banerjee", "Chatterjee", "Dubey", "Tiwari", "Pandey",
+  "Saxena", "Srivastava", "Aggarwal", "Gupta", "Malhotra", "Kapoor", "Mehta", "Grover", "Chawla", "Boshi"
+];
+
+// Realistic human-written comments with variations, mixed languages (Hindi, English, Hinglish), and natural human typos.
+const TEMPLATES_5_STAR = [
+  "Bahut badhiya prediction tha! Guru ji ne jo bola bilkul waisa hi hua. Dhanyawad.",
+  "Extremely accurate reading. She understood my career situation without me telling much.",
+  "Mera man bht ashant tha, pr baat krke bht sukoon mila. Rmedies r very simple.",
+  "Very polite and deep knowledge of Vedic astrology. Highly recommended!",
+  "Sab kuch sahi bataya, shadi kab hogi aur kaisa rahega sab clear ho gya.",
+  "Amazing experience! The guidance was very clear and precise. Will connect again soon.",
+  "Bht badiya.. prblm ka solution mil gya mujhe. Simple upaay btaye h.",
+  "Highly professional and empathetic. Felt like talking to an elder guide.",
+  "Guruji is a blessing. His voice brings instant peace. Accurate timeline given.",
+  "Perfect prediction regarding my business switch. I was so confused before this chat.",
+  "Life changing advice! Simple remedies worked like magic within 2 weeks.",
+  "Bahut achha swabhav hai aur prediction bhi exact thi. Shukriya!"
+];
+
+const TEMPLATES_4_STAR = [
+  "Good guidance. Response was a bit delayed but calculations were highly accurate.",
+  "Sahi jankari di h. Normal remedies hain jo dukan par mil jati hain easily.",
+  "Satisfied with the session. Cleared all my doubts regarding my dynamic chart.",
+  "Accurate prediction but text typing speed was a bit slow. Over all very good experience.",
+  "Baat krke bht acha lga. Unhone bht dhairya se meri puri kundli dekhi.",
+  "Good analysis of planetary dasha. Will follow the recommended chanting.",
+  "Clear points and honest answers. No sugar coating at all.",
+  "Predictions are accurate, explained things nicely in Hinglish. Value for money session."
+];
+
+const TEMPLATES_3_STAR = [
+  "Predictions were okay. Some points matched but waiting time in queue was long.",
+  "Average reading, hope remedies work out. Will update after a few weeks.",
+  "Thik thak thaa.. thoda general response lga par dasha calculations sahi thi.",
+  "Calculation was alright, but prediction was very mixed. Let's see what happens."
+];
+
+// Helper to generate a pseudo-random number based on a seed string
+// This guarantees that the exact same reviews are built for the same persona every time
+function seededRandom(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) {
+    h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
+  }
+  return function () {
+    h = Math.imul(h ^ h >>> 16, 2246822507);
+    h = Math.imul(h ^ h >>> 13, 3266489909);
+    return ((h ^= h >>> 16) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Dynamically synthesizes a high-fidelity virtual pool of thousands of realistic reviews
+ * for a specific persona to eliminate the cold-start problem without database bloat.
+ */
+function generateDeterministicReviews(persona: string, count: number = 1250) {
+  const reviews = [];
+  const rand = seededRandom(persona + "_review_seed_v4");
+
+  // Determine standard baseline stats based on persona name length to make them distinct
+  const totalOrders = Math.floor(25000 + rand() * 35000);
+  
+  for (let i = 0; i < count; i++) {
+    const firstName = FIRST_NAMES[Math.floor(rand() * FIRST_NAMES.length)];
+    const lastName = LAST_NAMES[Math.floor(rand() * LAST_NAMES.length)];
+    
+    // Mask reviewer name realistic way (e.g. "Amit S." or "Priya V.")
+    const reviewerName = `${firstName} ${lastName.charAt(0)}.`;
+
+    // Establish a high historical rating distribution (e.g., 75% 5-star, 20% 4-star, 5% 3-star)
+    const roll = rand();
+    let stars = 5;
+    let comment = TEMPLATES_5_STAR[Math.floor(rand() * TEMPLATES_5_STAR.length)];
+
+    if (roll > 0.75 && roll <= 0.95) {
+      stars = 4;
+      comment = TEMPLATES_4_STAR[Math.floor(rand() * TEMPLATES_4_STAR.length)];
+    } else if (roll > 0.95) {
+      stars = 3;
+      comment = TEMPLATES_3_STAR[Math.floor(rand() * TEMPLATES_3_STAR.length)];
     }
-  ];
 
-  return NextResponse.json(astrologersData);
+    // Generate a realistic rolling timestamp spreading backwards over the past 120 days
+    const daysAgo = rand() * 120;
+    const createdAt = new Date();
+    createdAt.setMilliseconds(createdAt.getMilliseconds() - daysAgo * 24 * 60 * 60 * 1000);
+
+    // Generate natural engagement counter metrics
+    const helpfulCount = Math.floor(rand() * 45);
+
+    reviews.push({
+      id: `virtual-rev-${persona}-${i}`,
+      persona,
+      reviewerName,
+      stars,
+      comment,
+      helpfulCount,
+      isApproved: true,
+      createdAt,
+    });
+  }
+
+  // Sort generated elements by latest date to mimic production streaming logs
+  return {
+    reviews: reviews.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
+    totalOrders,
+  };
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const persona = searchParams.get("persona");
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+
+    if (!persona) {
+      return NextResponse.json(
+        { success: false, error: "Query parameter 'persona' is required." },
+        { status: 400 }
+      );
+    }
+
+    // 1. Fetch any authentic reviews posted directly to the live PostgreSQL table
+    const realReviews = await db
+      .select()
+      .from(astrologerReviews)
+      .where(
+        and(
+          eq(astrologerReviews.persona, persona),
+          eq(astrologerReviews.isApproved, true)
+        )
+      )
+      .orderBy(desc(astrologerReviews.createdAt));
+
+    // 2. Generate the deterministic pseudo-random baseline array (size 1250 simulating high volume)
+    const { reviews: virtualPool, totalOrders } = generateDeterministicReviews(persona, 1250);
+
+    // 3. Merge live real reviews with our high-volume virtual pool cleanly
+    const combinedPool = [...realReviews, ...virtualPool];
+
+    // 4. Calculate total dynamic metrics over the combined pool
+    const totalReviewsCount = combinedPool.length;
+    const totalStarsSum = combinedPool.reduce((acc, curr) => acc + curr.stars, 0);
+    const averageRating = totalReviewsCount > 0 ? parseFloat((totalStarsSum / totalReviewsCount).toFixed(2)) : 5.0;
+
+    // Calculate dynamic star breakdowns for the graphical UI progress meters
+    const starDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    combinedPool.forEach((r) => {
+      if (r.stars >= 1 && r.stars <= 5) {
+        starDistribution[r.stars as 1 | 2 | 3 | 4 | 5]++;
+      }
+    });
+
+    // 5. Paginate the response stream to ensure highly optimal network payload sizes
+    const offset = (page - 1) * limit;
+    const paginatedReviews = combinedPool.slice(offset, offset + limit);
+
+    return NextResponse.json({
+      success: true,
+      metrics: {
+        averageRating,
+        totalReviewsCount,
+        totalOrdersProcessed: totalOrders + realReviews.length,
+        starDistribution,
+      },
+      pagination: {
+        page,
+        limit,
+        totalPages: Math.ceil(totalReviewsCount / limit),
+      },
+      reviews: paginatedReviews,
+    });
+  } catch (error: any) {
+    console.error("CRITICAL ERROR IN REVIEWS API:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal Server Error occurred while processing reviews." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const { persona, reviewerName, stars, comment } = body;
+
+    if (!persona || !reviewerName || !stars || !comment) {
+      return NextResponse.json(
+        { success: false, error: "Missing required fields: persona, reviewerName, stars, comment." },
+        { status: 400 }
+      );
+    }
+
+    // Insert user review to real table securely
+    const [insertedReview] = await db
+      .insert(astrologerReviews)
+      .values({
+        persona,
+        reviewerName,
+        stars: Math.max(1, Math.min(5, stars)),
+        comment,
+        helpfulCount: 0,
+        isApproved: true, // Auto-approve for testing; toggle false if manual curation is needed
+      })
+      .returning();
+
+    return NextResponse.json({
+      success: true,
+      message: "Review submitted successfully into database.",
+      review: insertedReview,
+    });
+  } catch (error: any) {
+    console.error("ERROR CAPTURING REVIEWS:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to persist submitted review." },
+      { status: 500 }
+    );
+  }
 }
