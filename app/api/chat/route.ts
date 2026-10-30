@@ -22,7 +22,6 @@ type PersonaConfig = {
   rules: string;
 };
 
-// 👑 100% धाकड़ मार्केटिंग और एस्ट्रोलॉजर एटीट्यूड प्रॉम्ट्स कॉन्फ़िगरेशन
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
@@ -65,7 +64,7 @@ function isPersona(value: unknown): value is keyof typeof PERSONAS {
 function getLanguage(value: unknown): SupportedLanguage {
   return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)
     ? (value as SupportedLanguage)
-    : "hinglish"; // डिफ़ॉल्ट रूप से हाई-कन्वर्शन हिंग्लिश
+    : "hinglish";
 }
 
 function extractRemedy(response: string) {
@@ -152,7 +151,6 @@ async function getOrCreateConversation(
   return created;
 }
 
-// 🟢 GET HANDLER: कुकी सेशन के आधार पर चैट हिस्ट्री लोड करना
 export async function GET(request: Request) {
   try {
     const user = await getUser();
@@ -209,7 +207,6 @@ export async function GET(request: Request) {
   }
 }
 
-// 🔵 POST HANDLER: 100% प्रीमियम भविष्यवाणी और बिज़नेस रीटेनशन इंजन
 export async function POST(request: Request) {
   try {
     const user = await getUser();
@@ -307,7 +304,6 @@ export async function POST(request: Request) {
         : "No calculated birth chart is available.",
     ].join("\n\n");
 
-    // 🎯 महा-सिस्टम प्रॉम्ट इंजन: यहाँ कोई ढील या डिस्क्लेमर नहीं है
     const systemPrompt = `
 You are the absolute premium, elite human Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
 
@@ -320,3 +316,5 @@ ${personaConfig.tone}
 CRITICAL BUSINESS RETENTION AND MARKETING LAWS:
 1. GYAN PELNA 0% (NO LECTURES / NO FLUFF): Do not explain planetary science, rules, or give textbook definitions. Cut the chatter. Talk straight to the user's specific problem and immediate pain point.
 2. 100% ASTROLOGER KNOWLEDGE: Deliver sharp, highly accurate, and jaw-dropping predictions using the provided chart matrix. Mention clear houses, transits, or dashas to make your claim solid.
+3. 100% MARKETING HOOK: Speak with absolute certainty and 100% confidence. Never hesitate or use speculative words like 'maybe', 'possibly', 'it might', or 'astrology is a belief'. Always state 'This WILL happen' with absolute authority.
+4. HARD TIMELINES: Give exact, bold date/month brackets (e.g., 'December 2026 to April 2027').
