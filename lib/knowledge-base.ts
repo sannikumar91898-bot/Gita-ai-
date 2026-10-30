@@ -24,14 +24,16 @@ export interface KnowledgeEntry {
 }
 
 const STOP_WORDS = new Set([
-  "meri", "mera", "mere", "mujhe", "mujh", "kya", "kaise",
-  "kyun", "kyon", "kab", "tak", "hai", "hain", "ho", "hoga",
-  "hogi", "batao", "bataye", "please", "tell", "me", "my",
-  "is", "are", "the", "when", "will", "what", "how", "can",
-  "you", "about", "does", "do", "ki", "ka", "ke", "ko", "se",
-  "par", "aur", "क्या", "कैसे", "क्यों", "कब", "होगा", "होगी",
-  "हैं", "है", "मेरा", "मेरी", "मेरे", "बताएं", "बताओ", "मुझे",
-  "हूँ", "हूं",
+  "meri", "mera", "mere", "mujhe", "mujh",
+  "kya", "kaise", "kyun", "kyon", "kab",
+  "tak", "hai", "hain", "ho", "hoga", "hogi",
+  "batao", "bataye", "please", "tell", "me",
+  "my", "is", "are", "the", "when", "will",
+  "what", "how", "can", "you", "about", "does",
+  "do", "ki", "ka", "ke", "ko", "se", "par",
+  "aur", "क्या", "कैसे", "क्यों", "कब", "होगा",
+  "होगी", "हैं", "है", "मेरा", "मेरी", "मेरे",
+  "बताएं", "बताओ", "मुझे", "हूँ", "हूं",
 ]);
 
 export function normalizeKnowledgeText(value: string): string {
@@ -48,7 +50,9 @@ function tokens(value: string): string[] {
   return normalizeKnowledgeText(value)
     .split(" ")
     .filter(
-      (token) => token.length > 1 && !STOP_WORDS.has(token),
+      (token) =>
+        token.length > 1 &&
+        !STOP_WORDS.has(token),
     );
 }
 
@@ -59,30 +63,85 @@ function topicRelevance(
   const topic = normalizeKnowledgeText(entryTopic);
   const requested = normalizeKnowledgeText(requestedTopic);
 
-  if (!requested || requested === "general") return 0;
-  if (topic === requested) return 3;
+  if (!requested || requested === "general") {
+    return 0;
+  }
+
+  if (topic === requested) {
+    return 8;
+  }
 
   const groups: Record<string, string[]> = {
-    love: ["marriage", "relationship", "relationships", "family"],
-    family: ["marriage", "relationship", "relationships", "love"],
-    career: ["career business", "career-business", "business"],
-    money: ["wealth property", "wealth-property", "finance"],
-    health: ["wellbeing", "health age", "health-age"],
-    remedies: ["planetary doshas", "planetary-doshas", "vastu"],
-    palm: ["palm reading", "palm"],
+    love: [
+      "marriage",
+      "relationship",
+      "relationships",
+      "family",
+      "marriage relationships",
+    ],
+    family: [
+      "marriage",
+      "relationship",
+      "relationships",
+      "love",
+    ],
+    career: [
+      "career business",
+      "career-business",
+      "business",
+    ],
+    money: [
+      "wealth property",
+      "wealth-property",
+      "finance",
+    ],
+    health: [
+      "wellbeing",
+      "health age",
+      "health-age",
+    ],
+    remedies: [
+      "planetary doshas",
+      "planetary-doshas",
+      "vastu",
+    ],
+    palm: [
+      "palm reading",
+      "palm",
+    ],
   };
 
   const related = groups[requested] ?? [];
 
   if (
     related.some(
-      (item) => topic.includes(item) || item.includes(topic),
+      (item) =>
+        topic.includes(item) ||
+        item.includes(topic),
     )
   ) {
-    return 2;
+    return 5;
   }
 
   return 0;
+}
+
+function getSearchPhrases(
+  entry: KnowledgeEntry,
+): string[] {
+  return [
+    entry.question,
+    ...Object.values(entry.questions ?? {}),
+    ...entry.aliases,
+    ...(entry.keywords ?? []),
+    ...(entry.tags ?? []),
+  ]
+    .filter(
+      (value): value is string =>
+        typeof value === "string" &&
+        value.trim().length > 0,
+    )
+    .map((value) => value.trim());
 }
 
 function scorePhrase(
@@ -92,40 +151,57 @@ function scorePhrase(
 ): number {
   const candidate = normalizeKnowledgeText(phrase);
 
-  if (!candidate) return 0;
+  if (!candidate || !query) {
+    return 0;
+  }
 
-  // Exact question or alias.
-  if (candidate === query) return 120;
+  // Exact question, alias or keyword match.
+  if (candidate === query) {
+    return 125;
+  }
 
-  const candidateTokens = [...new Set(tokens(candidate))];
+  const candidateTokens = [
+    ...new Set(tokens(candidate)),
+  ];
 
-  if (candidateTokens.length === 0) return 0;
+  if (candidateTokens.length === 0) {
+    return 0;
+  }
 
-  // Strong match when a complete saved question or alias
-  // appears inside the user's longer message.
+  // A complete saved phrase appears in the user's question.
   if (
-    candidate.length >= 7 &&
+    candidate.length >= 8 &&
     candidateTokens.length >= 2 &&
     query.includes(candidate)
   ) {
-    return 100;
+    return 105;
   }
 
-  // User's complete question appears inside a saved phrase.
+  // The user's complete phrase appears in a saved question.
   if (
     query.length >= 8 &&
-    queryTokens.size >= 2 &&
+    queryTokens.size >= 1 &&
     candidate.includes(query)
   ) {
-    return 82;
+    return 90;
+  }
+
+  /*
+   * One meaningful word should not match an arbitrary entry.
+   * For example, "shaadi" alone should not select an unrelated
+   * marriage-timing answer.
+   */
+  if (queryTokens.size < 2) {
+    return 0;
   }
 
   const shared = candidateTokens.filter(
     (token) => queryTokens.has(token),
   );
 
-  // One common word is never enough.
-  if (shared.length < 2) return 0;
+  if (shared.length < 2) {
+    return 0;
+  }
 
   const candidateCoverage =
     shared.length / candidateTokens.length;
@@ -133,10 +209,9 @@ function scorePhrase(
   const queryCoverage =
     shared.length / Math.max(queryTokens.size, 1);
 
-  // Require meaningful overlap.
   if (
-    candidateCoverage < 0.65 ||
-    queryCoverage < 0.25
+    candidateCoverage < 0.60 ||
+    queryCoverage < 0.30
   ) {
     return 0;
   }
@@ -144,7 +219,7 @@ function scorePhrase(
   return (
     58 +
     candidateCoverage * 25 +
-    queryCoverage * 8
+    queryCoverage * 12
   );
 }
 
@@ -153,19 +228,18 @@ function scoreEntry(
   query: string,
   queryTokens: Set<string>,
 ): number {
-  const phrases = [
-    entry.question,
-    ...Object.values(entry.questions ?? {}),
-    ...entry.aliases,
-    ...(entry.keywords ?? []),
-  ];
+  const phrases = getSearchPhrases(entry);
 
   let best = 0;
 
   for (const phrase of phrases) {
     best = Math.max(
       best,
-      scorePhrase(phrase, query, queryTokens),
+      scorePhrase(
+        phrase,
+        query,
+        queryTokens,
+      ),
     );
   }
 
@@ -185,12 +259,11 @@ export function findKnowledgeMatch(
 ): KnowledgeMatch | null {
   const query = normalizeKnowledgeText(question);
 
-  if (!query) return null;
+  if (!query) {
+    return null;
+  }
 
   const queryTokens = new Set(tokens(query));
-
-  // Avoid uncertain matches for extremely short questions.
-  if (queryTokens.size < 2) return null;
 
   const entries = getExtendedKnowledgeEntries();
 
@@ -205,10 +278,13 @@ export function findKnowledgeMatch(
       queryTokens,
     );
 
-    if (lexicalScore < 72) continue;
+    if (lexicalScore < 72) {
+      continue;
+    }
 
     const finalScore =
-      lexicalScore + topicRelevance(entry.topic, topic);
+      lexicalScore +
+      topicRelevance(entry.topic, topic);
 
     if (finalScore > bestScore) {
       secondBestScore = bestScore;
@@ -219,12 +295,13 @@ export function findKnowledgeMatch(
     }
   }
 
-  // If two answers are almost equally likely, do not guess.
-  if (
-    !best ||
-    bestScore < 72 ||
-    bestScore - secondBestScore < 4
-  ) {
+  // Do not guess if no strong match exists.
+  if (!best || bestScore < 72) {
+    return null;
+  }
+
+  // Ambiguous matches should go to Gemini instead.
+  if (bestScore - secondBestScore < 4) {
     return null;
   }
 
@@ -234,7 +311,9 @@ export function findKnowledgeMatch(
     best.answers.hi ||
     best.answers.en;
 
-  if (!answer) return null;
+  if (!answer) {
+    return null;
+  }
 
   return {
     entry: best,
@@ -249,6 +328,10 @@ export function getKnowledgeAnswerText(
   topic = "general",
 ): string | null {
   return (
-    findKnowledgeMatch(question, language, topic)?.answer ?? null
+    findKnowledgeMatch(
+      question,
+      language,
+      topic,
+    )?.answer ?? null
   );
 }
