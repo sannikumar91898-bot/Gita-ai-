@@ -1,102 +1,136 @@
+// app/matching/page.tsx
 "use client";
 
-import React, { useState } from "react";
-import { Sparkles, Heart, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { MessageCircle, TriangleAlert } from "lucide-react";
 
-export default function GunMilanPage() {
+export default function MatchingPage() {
   const [p1Name, setP1Name] = useState("");
   const [p2Name, setP2Name] = useState("");
-  const [score, setScore] = useState<number | null>(null);
-  const [verdict, setVerdict] = useState("");
-  const [isCalculating, setIsCalculating] = useState(false);
+  const [isHindi, setIsHindi] = useState(false);
+  const [isHinglish, setIsHinglish] = useState(true);
+  const [result, setResult] = useState<{ score: number; verdict: string } | null>(null);
 
-  const calculateMatchingScore = (e: React.FormEvent) => {
-    e.preventDefault();
+  const t = (hi: string, hing: string, en: string) =>
+    isHindi ? hi : isHinglish ? hing : en;
+
+  const handleMatch = () => {
     if (!p1Name.trim() || !p2Name.trim()) return;
 
-    setIsCalculating(true);
+    const combinedLength = p1Name.trim().length + p2Name.trim().length;
 
-    setTimeout(() => {
-      const combinedLength = p1Name.trim().length + p2Name.trim().length;
-      
-      // [FIXED] कंपाइलर क्रैश रोकने के लिए 36 गुणों का डिटरमिनिस्टिक पूल सेट किया
-      const scoresPool =;
-      const finalScore = scoresPool[combinedLength % scoresPool.length];
-      
-      let finalVerdict = "";
-      if (finalScore >= 25) {
-        finalVerdict = "उत्तम मिलान! वैवाहिक जीवन अत्यंत सुखद और समृद्धि से परिपूर्ण रहेगा। (100% Highly Compatible)";
-      } else if (finalScore >= 18) {
-        finalVerdict = "मध्यम मिलान। कुछ सामान्य ग्रह दोष हैं, लेकिन पंडित जी के उपायों से शांति संभव है।";
-      } else {
-        finalVerdict = "गंभीर नाड़ी या भकूट दोष! विवाह से पूर्व विशेष महापूजा अनिवार्य है।";
-      }
+    const scoresPool = [
+      36, 48, 56, 64, 72, 78, 84, 88, 92, 96, 68, 74,
+      82, 86, 90, 94, 52, 60, 66, 70, 76, 80, 98, 44,
+      58, 62, 54, 42, 38, 34, 32, 28, 88, 96, 92, 84,
+    ];
+    const finalScore = scoresPool[combinedLength % scoresPool.length];
 
-      setScore(finalScore);
-      setVerdict(finalVerdict);
-      setIsCalculating(false);
-    }, 1200);
+    let finalVerdict = "";
+    if (finalScore >= 85) {
+      finalVerdict = t(
+        "बहुत सुंदर मिलान है — बस एक बार हमारी महिला ज्योतिषियों में से किसी एक से चैट कर लें, वो प्यार से आपके रिश्ते की छिपी बातें समझा देंगी।",
+        "Bahut sundar milan hai — bas ek baar hamari Mahila Jyotishiyon mein se kisi ek se chat kar lein, wo pyaar se aapke rishte ki chhipi baatein samjha dengi.",
+        "A beautiful match — just chat once with one of our Female Astrologers, she will lovingly explain the hidden aspects of your relationship."
+      );
+    } else if (finalScore >= 65) {
+      finalVerdict = t(
+        "अच्छा मिलान है — पर पूरा भरोसा तब होगा जब हमारी महिला ज्योतिषियों में से किसी एक से एक बार चैट कर लें। वो प्यार से सब समझा देंगी।",
+        "Achha milan hai — par poora bharosa tab hoga jab hamari Mahila Jyotishiyon mein se kisi ek se chat kar lein. Wo pyaar se sab samjha dengi.",
+        "A good match — but full clarity comes when you chat once with one of our Female Astrologers. She explains everything with love."
+      );
+    } else {
+      finalVerdict = t(
+        "थोड़ा ध्यान देने वाला मिलान है — घबराएं नहीं, बस हमारी महिला ज्योतिषियों में से किसी एक से प्यार से चैट कर लें, वो सही मार्गदर्शन देंगी।",
+        "Thoda dhyan dene wala milan hai — ghabrayein nahi, bas hamari Mahila Jyotishiyon mein se kisi ek se pyaar se chat kar lein, wo sahi margdarshan dengi.",
+        "A match that needs gentle attention — don't worry, just chat lovingly with one of our Female Astrologers, she will guide you right."
+      );
+    }
+
+    setResult({ score: finalScore, verdict: finalVerdict });
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-white border border-amber-100 rounded-2xl shadow-xl p-6 mt-8 space-y-6">
-      <div className="text-center space-y-1">
-        <h2 className="text-xl font-black text-amber-950 flex items-center justify-center gap-1.5">
-          <Heart className="w-5 h-5 text-red-500 fill-current" /> वैदिक अष्टकूट गुण मिलान
-        </h2>
-        <p className="text-xs text-amber-600/80 font-medium">36 गुणों के आधार पर वैवाहिक अनुकूलता की जांच करें</p>
-      </div>
+    <main className="min-h-dvh bg-gradient-to-b from-rose-50 to-white px-5 pb-32 pt-6 text-violet-950">
+      <div className="mx-auto max-w-xl space-y-6">
+        <h1 className="text-2xl font-bold">
+          {t(
+            "कुंडली मिलान — हमारी महिला ज्योतिषियों से प्यार भरा परामर्श",
+            "Kundli Milan — Hamari Mahila Jyotishiyon se pyaar bhara paramarsh",
+            "Kundli Matching — Loving Guidance from our Female Astrologers"
+          )}
+        </h1>
+        <p className="flex items-start gap-2 rounded-lg bg-rose-100 p-3 text-sm font-medium text-rose-700">
+          <TriangleAlert size={18} className="shrink-0 text-rose-600 mt-0.5" />
+          {t(
+            "🌸 रिश्ता जीवन का सबसे सुंदर हिस्सा है — इसे समझने के लिए एक बार हमारी महिला ज्योतिषियों से दिल से चैट करें। देरी संकट ला सकती है।",
+            "🌸 Rishta jeevan ka sabse sundar hissa hai — ise samajhne ke liye ek baar hamari Mahila Jyotishiyon se dil se chat karein. Deri sankat la sakti hai.",
+            "🌸 A relationship is life's most beautiful part — chat once from the heart with one of our Female Astrologers to understand it fully. Delay can bring crisis."
+          )}
+        </p>
 
-      <form onSubmit={calculateMatchingScore} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-amber-950">लड़के का नाम</label>
-            <input
-              type="text"
-              value={p1Name}
-              onChange={(e) => setP1Name(e.target.value)}
-              placeholder="Name"
-              className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-          </div>
-          <div className="space-y-1">
-            <label className="text-xs font-bold text-amber-950">लड़की का नाम</label>
-            <input
-              type="text"
-              value={p2Name}
-              onChange={(e) => setP2Name(e.target.value)}
-              placeholder="Name"
-              className="w-full px-3 py-2 bg-amber-50/40 border border-amber-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
-            />
-          </div>
+        <input
+          value={p1Name}
+          onChange={(e) => setP1Name(e.target.value)}
+          placeholder={t("वर का नाम", "Var ka naam", "Groom's name")}
+          className="w-full rounded-lg border border-violet-300 px-4 py-2"
+        />
+        <input
+          value={p2Name}
+          onChange={(e) => setP2Name(e.target.value)}
+          placeholder={t("वधू का नाम", "Vadhu ka naam", "Bride's name")}
+          className="w-full rounded-lg border border-violet-300 px-4 py-2"
+        />
+
+        <div className="flex gap-2 text-sm">
+          <button
+            onClick={() => { setIsHindi(true); setIsHinglish(false); }}
+            className={`rounded border px-3 py-1 ${isHindi ? "bg-violet-600 text-white" : "border-violet-300"}`}
+          >
+            हिंदी
+          </button>
+          <button
+            onClick={() => { setIsHindi(false); setIsHinglish(true); }}
+            className={`rounded border px-3 py-1 ${isHinglish ? "bg-violet-600 text-white" : "border-violet-300"}`}
+          >
+            Hinglish
+          </button>
+          <button
+            onClick={() => { setIsHindi(false); setIsHinglish(false); }}
+            className={`rounded border px-3 py-1 ${!isHindi && !isHinglish ? "bg-violet-600 text-white" : "border-violet-300"}`}
+          >
+            English
+          </button>
         </div>
 
         <button
-          type="submit"
-          disabled={isCalculating || !p1Name.trim() || !p2Name.trim()}
-          className="w-full py-3 bg-gradient-to-r from-orange-600 to-amber-500 text-white font-bold text-sm rounded-xl shadow transition-all active:scale-[0.99] flex items-center justify-center gap-2"
+          onClick={handleMatch}
+          className="w-full rounded-lg bg-rose-600 px-4 py-3 font-semibold text-white shadow-lg shadow-rose-600/30"
         >
-          {isCalculating ? (
-            <>
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              ग्रहों का मिलान जारी है...
-            </>
-          ) : (
-            <>
-              <Sparkles className="w-4 h-4" />
-              गुण मिलान स्कोर देखें
-            </>
-          )}
+          {t("मिलान करें", "Milan karein", "Match Now")}
         </button>
-      </form>
 
-      {score !== null && (
-        <div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 text-center space-y-2 animate-fadeIn">
-          <span className="text-xs font-bold text-amber-800 uppercase tracking-wider block">प्राप्त गुण मिलान स्कोर</span>
-          <div className="text-4xl font-black text-orange-600">{score} <span className="text-sm text-amber-950/50 font-bold">/ 36</span></div>
-          <p className="text-xs font-bold text-amber-950 leading-relaxed max-w-sm mx-auto">{verdict}</p>
-        </div>
-      )}
-    </div>
+        {result && (
+          <div className="rounded-lg border border-rose-300 bg-white p-4 shadow">
+            <p className="text-lg font-bold">
+              {t("स्कोर", "Score", "Score")}: {result.score}%
+            </p>
+            <p className="mt-1 text-sm text-rose-700">{result.verdict}</p>
+          </div>
+        )}
+      </div>
+
+      <a
+        href="sms:+919999999999"
+        className="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-2 bg-rose-700 px-4 py-4 text-center font-bold text-white shadow-2xl"
+      >
+        <MessageCircle size={18} />
+        {t(
+          "हमारी महिला ज्योतिषियों में से किसी एक से दिल से चैट करें — वो प्यार से सब समझा देंगी",
+          "Hamari Mahila Jyotishiyon mein se kisi ek se dil se chat karein — wo pyaar se sab samjha dengi",
+          "Chat with one of our Female Astrologers — she explains everything with love"
+        )}
+      </a>
+    </main>
   );
 }
