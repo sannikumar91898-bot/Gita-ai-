@@ -12,6 +12,10 @@ import {
   RefreshCw,
   MessageSquare,
   CalendarDays,
+  TrendingUp,
+  Heart,
+  ShieldCheck,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -268,6 +272,7 @@ export default function DailyPage() {
   return (
     <main className={`min-h-screen w-full px-4 pb-28 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
+        {/* Header Block */}
         <header className={`flex items-center justify-between gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <div className="flex min-w-0 items-center gap-3">
             <Link
@@ -293,4 +298,4 @@ export default function DailyPage() {
             </div>
           </div>
           <button
-            onClick={() => setRefreshKey((prev) => prev + 1)}
+            type="button"
