@@ -18,7 +18,6 @@ import {
   ScanFace,
   Heart,
   Scroll,
-  Search,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -48,8 +47,8 @@ const ASTROLOGERS: Astrologer[] = [
     price: 19,
     oldPrice: 29,
     image: "/gita.jpg",
-    review: "thank you ji..will update you ji..very nice talking to you..he guided me well.. 🙏🙏🙏",
-    reviewer: "Asha K."
+    review: "Bohot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️",
+    reviewer: "Priya S."
   },
   {
     id: "kriti",
@@ -61,8 +60,8 @@ const ASTROLOGERS: Astrologer[] = [
     price: 22,
     oldPrice: 35,
     image: "/kriti.jpg",
-    review: "Mera career stuck tha, Kriti ji ne pyaar se sab samjhaya. Ab clear feel ho raha hai.",
-    reviewer: "Rahul S."
+    review: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟",
+    reviewer: "Rahul Verma"
   },
   {
     id: "devaki",
@@ -75,7 +74,7 @@ const ASTROLOGERS: Astrologer[] = [
     oldPrice: 45,
     image: "/devaki.jpg",
     isCelebrity: true,
-    review: "Very accurate prediction about my marriage. She is very calm and listens patiently.",
+    review: "Devaki ma'am is really an expert. Rishta tootne wala tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended for serious issues.",
     reviewer: "Neha M."
   },
   {
@@ -88,7 +87,7 @@ const ASTROLOGERS: Astrologer[] = [
     price: 18,
     oldPrice: 30,
     image: "/gargi.jpg",
-    review: "Ghar mein kalesh chal raha tha, Gargi maa ke upay se shanti aa gayi. Dhanyawad.",
+    review: "Ghar me pichle 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏",
     reviewer: "Vikram R."
   },
 ];
@@ -144,7 +143,6 @@ export default function HomePage() {
       </header>
 
       <div className="mx-auto max-w-xl space-y-7 px-4 py-5">
-        {/* Marketing Banner */}
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white shadow-lg">
           <div className="relative z-10 space-y-2">
             <p className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-100">
@@ -168,7 +166,6 @@ export default function HomePage() {
           <div className="absolute -bottom-8 right-10 h-24 w-24 rounded-full bg-yellow-300/20 blur-xl" />
         </section>
 
-        {/* Free Tools */}
         <section className="space-y-3">
           <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
             {t("फ्री टूल्स", "Free Tools", "Free Tools")}
@@ -200,7 +197,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* Talk to Astrologers */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
@@ -279,7 +275,6 @@ export default function HomePage() {
                   </div>
                 </div>
                 
-                {/* Realistic Review Snippet */}
                 <div className={`mt-1 rounded-lg p-2 text-[11px] leading-tight ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-50 text-gray-600"}`}>
                   <div className="flex items-center gap-1 mb-1">
                     <Star size={10} fill="#FBBF24" className="text-yellow-500" />
@@ -297,7 +292,6 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Bottom Navigation */}
       <nav
         className={`fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t px-2 py-2 ${
           isDark ? "border-slate-800 bg-slate-900" : "border-gray-200 bg-white"
@@ -327,7 +321,6 @@ export default function HomePage() {
         ))}
       </nav>
 
-      {/* Global CTA Banner */}
       <a
         href="tel:+919999999999"
         className="fixed bottom-16 left-0 right-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl mx-auto max-w-xl rounded-t-xl"
@@ -338,10 +331,10 @@ export default function HomePage() {
           </span>
           <div className="leading-tight">
             <p className="text-[9px] font-black uppercase tracking-wider text-rose-100">
-              {isHindi ? "महिला ज्योतिषी • 24x7" : isHinglish ? "Mahila Jyotishi • 24x7" : "Female Astrologer • 24x7"}
+              {isHindi ? "हमारी महिला ज्योतिषी • 24x7" : isHinglish ? "Hamari Mahila Jyotishi • 24x7" : "Our Female Astrologers • 24x7"}
             </p>
             <p className="text-xs font-black">
-              {isHindi ? "दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Dil Se Baat Karein — Wo Pyaar Se Sab Samjha Dengi" : "Talk from the Heart — She Explains with Love"}
+              {isHindi ? "किसी एक से दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Kisi ek se dil se baat karein — wo pyaar se sab samjha dengi" : "Talk from the heart with one — she will lovingly explain everything"}
             </p>
           </div>
         </div>
