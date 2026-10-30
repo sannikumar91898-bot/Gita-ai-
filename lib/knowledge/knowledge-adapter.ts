@@ -11,13 +11,14 @@ import { MARRIAGE_RELATIONSHIPS } from "./marriage-relationships";
 import { SEED_ENTRIES } from "./wealth-property";
 import { careerBusinessKnowledge } from "./career-business";
 
-type LocalizedText = Record<KnowledgeLanguage, string>;
 type RawEntry = Record<string, unknown>;
 
-const LANGUAGES: KnowledgeLanguage[] = ["hi", "hinglish", "en"];
-
 function asRecord(value: unknown): RawEntry {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
+  if (
+    value &&
+    typeof value === "object" &&
+    !Array.isArray(value)
+  ) {
     return value as RawEntry;
   }
 
@@ -30,22 +31,35 @@ function asText(value: unknown): string {
 
 function localizedText(
   value: unknown,
-  fallback = "",
-): LocalizedText {
+): Partial<Record<KnowledgeLanguage, string>> {
   const record = asRecord(value);
 
-  return {
-    hi: asText(record.hi) || fallback,
-    hinglish: asText(record.hinglish) || fallback,
-    en: asText(record.en) || fallback,
-  };
+  const result: Partial<
+    Record<KnowledgeLanguage, string>
+  > = {};
+
+  for (const language of [
+    "hi",
+    "hinglish",
+    "en",
+  ] as const) {
+    const text = asText(record[language]);
+
+    if (text) {
+      result[language] = text;
+    }
+  }
+
+  return result;
 }
 
-function localizedQuestion(
+function localizedQuestions(
   value: unknown,
-): LocalizedText {
+): Partial<Record<KnowledgeLanguage, string>> {
   if (typeof value === "string") {
-    return localizedText(null, value);
+    return value.trim()
+      ? { hinglish: value.trim() }
+      : {};
   }
 
   return localizedText(value);
@@ -53,10 +67,13 @@ function localizedQuestion(
 
 function toAliases(value: unknown): string[] {
   if (Array.isArray(value)) {
-    return value.filter(
-      (item): item is string =>
-        typeof item === "string" && item.trim().length > 0,
-    );
+    return value
+      .filter(
+        (item): item is string =>
+          typeof item === "string" &&
+          item.trim().length > 0,
+      )
+      .map((item) => item.trim());
   }
 
   if (typeof value === "string" && value.trim()) {
@@ -65,14 +82,19 @@ function toAliases(value: unknown): string[] {
 
   const record = asRecord(value);
 
-  return LANGUAGES.flatMap((language) => {
+  return (
+    ["hi", "hinglish", "en"] as const
+  ).flatMap((language) => {
     const item = record[language];
 
     if (Array.isArray(item)) {
-      return item.filter(
-        (alias): alias is string =>
-          typeof alias === "string" && alias.trim().length > 0,
-      );
+      return item
+        .filter(
+          (alias): alias is string =>
+            typeof alias === "string" &&
+            alias.trim().length > 0,
+        )
+        .map((alias) => alias.trim());
     }
 
     return typeof item === "string" && item.trim()
@@ -81,25 +103,16 @@ function toAliases(value: unknown): string[] {
   });
 }
 
-function firstQuestion(value: unknown): string {
-  if (typeof value === "string") {
-    return value.trim();
-  }
-
-  if (Array.isArray(value)) {
-    const first = value.find(
-      (item) => typeof item === "string" && item.trim(),
-    );
-
-    return typeof first === "string" ? first.trim() : "";
-  }
-
-  const record = asRecord(value);
-
+function firstQuestion(
+  questions: Partial<
+    Record<KnowledgeLanguage, string>
+  >,
+): string {
   return (
-    asText(record.hinglish) ||
-    asText(record.hi) ||
-    asText(record.en)
+    questions.hinglish ||
+    questions.hi ||
+    questions.en ||
+    ""
   );
 }
 
@@ -107,25 +120,20 @@ function normalizeEntry(
   source: RawEntry,
   topicOverride?: string,
 ): KnowledgeEntry | null {
-  const id = asText(source.id);
-  const topic =
-    topicOverride ||
-    asText(source.subcategory) ||
-    asText(source.category) ||
-    asText(source.topic) ||
-    "general";
+  const questions = localizedQuestions(
+    source.questions ?? source.question,
+  );
 
-  const questionSource =
-    source.question ?? source.questions;
+  const question = firstQuestion(questions);
 
-  const question = firstQuestion(questionSource);
+  const answers = localizedText(
+    source.answers ?? source.answer,
+  );
 
-  const answerSource =
-    source.answers ?? source.answer;
-
-  const answers = localizedText(answerSource);
-
-  if (!question || !answers.hi && !answers.hinglish && !answers.en) {
+  if (
+    !question ||
+    !Object.values(answers).some(Boolean)
+  ) {
     return null;
   }
 
@@ -133,15 +141,69 @@ function normalizeEntry(
     ...toAliases(source.aliases),
     ...toAliases(source.keywords),
     ...toAliases(source.tags),
-    ...toAliases(source.questions),
-  ].filter((item) => item.toLowerCase() !== question.toLowerCase());
+  ].filter(
+    (item) =>
+      item.toLowerCase() !== question.toLowerCase(),
+  );
 
+  const topic =
+    topicOverride ||
+    asText(source.subcategory) ||
+    asText(source.category) ||
+    asText(source.topic) ||
+    "general";
+
+  // Keep original metadata available to the matching layer.
+  // The original question-answer source files are never modified.
   return {
-    id: id || `${topic}-${question.slice(0, 40)}`,
+    ...source,
+
+    id:
+      asText(source.id) ||
+      `${topic}-${question.slice(0, 40)}`,
+
     topic,
+
+    category:
+      asText(source.category) || topic,
+
+    subcategory:
+      asText(source.subcategory) || "",
+
     question,
+    questions,
+
     aliases: [...new Set(aliases)],
+
     answers,
+
+    answer_type:
+      asText(source.answer_type) || undefined,
+
+    requires_personal_chart:
+      typeof source.requires_personal_chart === "boolean"
+        ? source.requires_personal_chart
+        : undefined,
+
+    requires_calculation:
+      typeof source.requires_calculation === "boolean"
+        ? source.requires_calculation
+        : undefined,
+
+    keywords: toAliases(source.keywords),
+    tags: toAliases(source.tags),
+
+    disclaimer: source.disclaimer,
+
+    confidence:
+      asText(source.confidence) || undefined,
+
+    source_ids: Array.isArray(source.source_ids)
+      ? source.source_ids.filter(
+          (item): item is string =>
+            typeof item === "string",
+        )
+      : undefined,
   };
 }
 
@@ -152,7 +214,10 @@ function normalizeCollection(
   const normalized: KnowledgeEntry[] = [];
 
   for (const item of entries) {
-    const entry = normalizeEntry(asRecord(item), topicOverride);
+    const entry = normalizeEntry(
+      asRecord(item),
+      topicOverride,
+    );
 
     if (entry) {
       normalized.push(entry);
@@ -163,19 +228,36 @@ function normalizeCollection(
 }
 
 /**
- * Converts the specialized knowledge datasets into the shared
- * KnowledgeEntry format used by Gita AI.
- *
- * This function only adapts the data; it does not call Gemini,
- * perform chart calculations, or make medical/financial predictions.
+ * Adapts all existing knowledge datasets into one common format.
+ * Original question-answer files remain untouched.
  */
 export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
   return [
-    ...normalizeCollection(HEALTH_AGE_ENTRIES, "wellbeing"),
-    ...normalizeCollection(FAVORABLE_PERIODS, "favorable-periods"),
-    ...normalizeCollection(PLANETARY_DOSHAS, "planetary-doshas"),
-    ...normalizeCollection(MARRIAGE_RELATIONSHIPS, "marriage-relationships"),
-    ...normalizeCollection(SEED_ENTRIES, "wealth-property"),
+    ...normalizeCollection(
+      HEALTH_AGE_ENTRIES,
+      "wellbeing",
+    ),
+
+    ...normalizeCollection(
+      FAVORABLE_PERIODS,
+      "favorable-periods",
+    ),
+
+    ...normalizeCollection(
+      PLANETARY_DOSHAS,
+      "planetary-doshas",
+    ),
+
+    ...normalizeCollection(
+      MARRIAGE_RELATIONSHIPS,
+      "marriage-relationships",
+    ),
+
+    ...normalizeCollection(
+      SEED_ENTRIES,
+      "wealth-property",
+    ),
+
     ...normalizeCollection(
       careerBusinessKnowledge as unknown as RawEntry[],
       "career-business",
@@ -184,50 +266,51 @@ export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
 }
 
 /**
- * Finds entries that have a usable answer in the requested language.
+ * Compatibility helper for older callers.
  */
 export function getExtendedKnowledgeAnswer(
   question: string,
   language: KnowledgeLanguage = "hinglish",
   topic?: string,
 ): string | null {
-  const normalizedQuestion = question.toLowerCase().trim();
+  const normalizedQuestion = question
+    .toLowerCase()
+    .trim();
 
-  if (!normalizedQuestion) {
-    return null;
-  }
+  if (!normalizedQuestion) return null;
 
   const entries = getExtendedKnowledgeEntries();
 
-  const matchingEntry = entries.find((entry) => {
+  const match = entries.find((entry) => {
     if (
       topic &&
       topic !== "general" &&
-      !entry.topic.toLowerCase().includes(topic.toLowerCase())
+      !entry.topic
+        .toLowerCase()
+        .includes(topic.toLowerCase())
     ) {
       return false;
     }
 
     const searchableText = [
       entry.question,
+      ...Object.values(entry.questions ?? {}),
       ...entry.aliases,
-    ].join(" ").toLowerCase();
+      ...(entry.keywords ?? []),
+    ]
+      .join(" ")
+      .toLowerCase();
 
-    return (
-      searchableText.includes(normalizedQuestion) ||
-      normalizedQuestion.includes(entry.question.toLowerCase())
-    );
+    return searchableText.includes(normalizedQuestion);
   });
 
-  if (!matchingEntry) {
-    return null;
-  }
+  if (!match) return null;
 
   return (
-    matchingEntry.answers[language] ||
-    matchingEntry.answers.hinglish ||
-    matchingEntry.answers.hi ||
-    matchingEntry.answers.en ||
+    match.answers[language] ||
+    match.answers.hinglish ||
+    match.answers.hi ||
+    match.answers.en ||
     null
   );
 }
