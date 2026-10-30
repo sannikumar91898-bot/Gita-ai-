@@ -9,8 +9,10 @@ const nextConfig = {
     ],
   },
 
-  // Drizzle और Postgres को प्रोडक्शन में सुरक्षित रखने के लिए
-  serverExternalPackages: ["drizzle-orm", "pg"],
+  // ⚠️ सुधारा गया: serverExternalPackages को सही ढंग से experimental ऑब्जेक्ट के अंदर रखा गया है
+  experimental: {
+    serverExternalPackages: ["drizzle-orm", "pg"],
+  },
 
   typescript: {
     ignoreBuildErrors: false,
