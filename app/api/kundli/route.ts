@@ -1,3 +1,4 @@
+// app/api/kundli/route.ts
 import { NextResponse } from "next/server";
 import { and, desc, eq } from "drizzle-orm";
 
