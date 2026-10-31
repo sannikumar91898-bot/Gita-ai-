@@ -56,8 +56,13 @@ export default function AstrologerChatPage() {
       setHistoryLoading(true);
 
       try {
-        // 🔥 FIX: Guest Login call karo history fetch karne se pehle
-        await fetch("/api/auth/guest", { method: "POST" });
+        // 🔥 FIX: Guest Login call karo aur check karo ki successful hua ya nahi
+        const guestRes = await fetch("/api/auth/guest", { method: "POST" });
+        
+        if (!guestRes.ok) {
+          const guestData = await guestRes.json().catch(() => ({}));
+          throw new Error(guestData.error || "Guest session could not be created. Database error.");
+        }
 
         const query = new URLSearchParams({ persona: id });
         const response = await fetch(`/api/chat?${query.toString()}`, {
@@ -89,8 +94,16 @@ export default function AstrologerChatPage() {
       } catch (error) {
         if (signal?.aborted) return;
         console.error("Astrologer history load failed:", error);
+        
         if (activePersonaRef.current === id) {
-          setMessages([]);
+          // Agar error aata hai, toh chat mein hi dikha do
+          setMessages([
+            {
+              id: createMessageId(),
+              role: "assistant",
+              content: error instanceof Error ? error.message : "Session not found. Please refresh the page."
+            }
+          ]);
           setConversationId(null);
         }
       } finally {
@@ -201,7 +214,7 @@ export default function AstrologerChatPage() {
   return (
     <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
       
-      {/* HEADER (No AI word, Dark mode fixed) */}
+      {/* HEADER */}
       <header className={`sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b px-3 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
         <Link href="/" aria-label="Back" className={`text-2xl leading-none ${isDark ? "text-white" : "text-black"}`}>
           ←
