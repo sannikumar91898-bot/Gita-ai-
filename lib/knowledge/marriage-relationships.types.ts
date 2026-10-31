@@ -1,3 +1,4 @@
+// lib/knowledge/marriage-relationships.types.ts
 
 export type Language = "en" | "hi" | "hinglish";
 
@@ -8,7 +9,7 @@ export type AnswerType =
   | "financial_education"
   | "safety_information"
   | "reflective_exploration"
-  | "psychoeducation"
+  | "astrological_remedy" // Replaced psychoeducation
   | "empathic_guidance"
   | "practical_steps"
   | "safety_and_referral";
@@ -31,7 +32,7 @@ export type EmotionalTone =
   | "gentle"
   | "reassuring"
   | "empathetic"
-  | "neutral"
+  | "authoritative" // Added for Astrologer
   | "serious";
 
 export type GuidanceDomain =
@@ -55,11 +56,11 @@ export interface LocalizedText {
 }
 
 export interface FemaleAstrologerStyle {
-  voice: "warm_female";
+  voice: "warm_female_astrologer"; // Updated voice type
   tone: EmotionalTone;
   empathy_required: boolean;
   avoid_judgment: boolean;
-  avoid_fear_based_predictions: boolean;
+  controlled_fear_required: boolean; // Changed from avoid_fear_based_predictions
   encourage_user_autonomy: boolean;
 }
 
