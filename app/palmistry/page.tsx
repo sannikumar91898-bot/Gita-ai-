@@ -16,6 +16,35 @@ import {
 import Link from "next/link";
 import { useApp } from "../Providers";
 
+// 🔥 ALAG-ALAG RESULTS KA ARRAY 🔥
+const PALMISTRY_RESULTS = [
+  {
+    title: "आपकी हथेली की रेखाएँ बहुत कुछ कह रही हैं...",
+    insight: "आपकी हथेली में जीवन रेखा (Life Line) और भाग्य रेखा (Fate Line) के बीच एक अंतराल दिख रहा है। यह बताता है कि पिछले 6-7 महीनों से आपके जीवन में एक ऐसी रुकावट आ रही है, जिसकी वजह से आपके मेहनत के बावजूद आपको उसका पूरा फल नहीं मिल रहा।",
+    hook: "यह रुकावट क्यों आ रही है और इसे कैसे दूर करें, यह जानने के लिए हमारी ज्योतिषी से बात करें। पहली बात FREE है।"
+  },
+  {
+    title: "आपके करियर में एक बड़ी रुकावट है...",
+    insight: "आपकी हथेली में भाग्य रेखा (Fate Line) कुछ जगहों से टूटी हुई या कटी हुई दिख रही है। यह संकेत है कि आपके करियर या व्यापार में बार-बार अड़चनें आ रही हैं। आप मेहनत बहुत करते हैं, लेकिन सफलता हाथ से फिसलती जा रही है।",
+    hook: "इस टूटी हुई रेखा का असर आपके धन पर भी पड़ रहा है। इसका सही उपाय जानने के लिए ज्योतिषी से बात करें।"
+  },
+  {
+    title: "आपकी शादी या रिश्ते में रुकावट...",
+    insight: "आपकी हथेली में विवाह रेखा (Marriage Line) पर एक हल्का सा दोष या क्रॉस (Cross) दिख रहा है। यह बताता है कि आपके रिश्ते में या शादी की बात में कोई तीसरा व्यक्ति या कुंडली का दोष रुकावट डाल रहा है।",
+    hook: "क्या आपके रिश्ते में कोई गलतफहमी है? इसका सटीक कारण जानने के लिए अभी ज्योतिषी से बात करें।"
+  },
+  {
+    title: "आपके मन में बहुत अशांति है...",
+    insight: "आपकी हथेली में जीवन रेखा (Life Line) पर एक गांठ (Knot) या निशान दिख रहा है। यह दर्शाता है कि आप पिछले कुछ समय से मानसिक तनाव और अशांति से गुजर रहे हैं। आपकी नींद और सेहत पर भी इसका असर पड़ रहा है।",
+    hook: "यह सिर्फ मानसिक तनाव नहीं, आपकी कुंडली में एक ग्रह-दोष है। इससे मुक्ति पाने के लिए ज्योतिषी से परामर्श लें।"
+  },
+  {
+    title: "आपका धन रुक रहा है...",
+    insight: "आपकी हथेली में सूर्य रेखा (Sun Line) या धन रेखा बहुत हल्की दिख रही है। इसका मतलब है कि आपको सम्मान और पैसा दोनों देर से मिल रहे हैं। जो पैसा आता है, वो अचानक खर्च में बदल जाता है।",
+    hook: "धन को रोकने और भाग्य को जगाने का एक विशेष उपाय है। अपनी कुंडली दिखाने के लिए ज्योतिषी से अभी चैट करें।"
+  }
+];
+
 export default function PalmistryPage() {
   const { lang, theme } = useApp();
   const isDark = theme === "dark";
@@ -48,7 +77,6 @@ export default function PalmistryPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Photo Validation (Max 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError(
         t(
@@ -78,25 +106,11 @@ export default function PalmistryPage() {
       setResult(null);
       setLoading(true);
 
-      // Marketing Magic: 2.2 sec delay
+      // 2.2 sec delay
       window.setTimeout(() => {
-        setResult({
-          title: t(
-            "आपकी हथेली की रेखाएँ बहुत कुछ कह रही हैं...",
-            "Aapki hatheli ki rekhaayein bahut kuch keh rahi hain...",
-            "Your palm lines are saying a lot..."
-          ),
-          insight: t(
-            "आपकी हथेली में जीवन रेखा (Life Line) और भाग्य रेखा (Fate Line) के बीच एक अंतराल दिख रहा है। यह बताता है कि पिछले 6-7 महीनों से आपके जीवन में एक ऐसी रुकावट आ रही है, जिसकी वजह से आपके मेहनत के बावजूद आपको उसका पूरा फल नहीं मिल रहा।",
-            "Aapki hatheli mein Life Line aur Fate Line ke beech ek antaral dikh raha hai. Yeh batata hai ki pichhle 6-7 mahino se aapke jeevan mein ek aisi rukawat aa rahi hai, jiski wajah se aapke mehnat ke bawajood aapko usaka poora phal nahi mil raha.",
-            "There is a gap between your Life Line and Fate Line. This indicates a blockage in the last 6-7 months, causing you to not get full results despite your hard work."
-          ),
-          hook: t(
-            "यह रुकावट क्यों आ रही है और इसे कैसे दूर करें, यह जानने के लिए हमारी ज्योतिषी से बात करें। पहली बात FREE है।",
-            "Yeh rukawat kyun aa rahi hai aur ise kaise door karein, yeh jaanne ke liye hamari jyotishi se baat karein. Pehli baat FREE hai.",
-            "Talk to our astrologer to know why this blockage is happening and how to remove it. First chat is FREE."
-          ),
-        });
+        // 🔥 RANDOM RESULT SELECTION 🔥
+        const randomIndex = Math.floor(Math.random() * PALMISTRY_RESULTS.length);
+        setResult(PALMISTRY_RESULTS[randomIndex]);
         setLoading(false);
       }, 2200);
     };
