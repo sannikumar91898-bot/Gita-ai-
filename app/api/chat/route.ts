@@ -383,7 +383,7 @@ ${astrologyContext}
       if (remedy) {
         await db.insert(remedies).values({
           userId: user.id,
-          conversationId: conversation.id,
+          // conversationId: conversation.id, // <--- YEH LINE HATA DI GAYI HAI
           title: remedy.title,
           description: remedy.description,
         });
