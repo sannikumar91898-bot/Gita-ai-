@@ -1,12 +1,12 @@
 // app/profile/page.tsx
 "use client";
 
-import { useState } from "react";
-import { ArrowLeft, Camera, Check, X, Save, User, Calendar, Clock, MapPin, Search } from "lucide-react";
+import { useState, useEffect } from "react";
+import { ArrowLeft, Camera, X, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
-// Zodiac Avatars List (Using DiceBear API for realistic illustrations)
+// Zodiac Avatars List
 const AVATARS = [
   { id: "aries-f", name: "Aries", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=AriesFemale&backgroundColor=FFD700" },
   { id: "aries-m", name: "Aries", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=AriesMale&backgroundColor=FFD700" },
@@ -35,11 +35,34 @@ const AVATARS = [
 ];
 
 export default function ProfilePage() {
-  const { lang, theme } = useApp();
+  const { me, loading, lang, theme } = useApp();
   const isDark = theme === "dark";
   
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0].img);
+  const [success, setSuccess] = useState(false);
+  
+  // Name state (Default empty for Guest)
+  const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
+  const [tob, setTob] = useState("");
+
+  // Load saved data from local storage when page opens
+  useEffect(() => {
+    try {
+      const savedName = localStorage.getItem("gita_profile_name");
+      const savedAvatar = localStorage.getItem("gita_profile_avatar");
+      const savedDob = localStorage.getItem("gita_profile_dob");
+      const savedTob = localStorage.getItem("gita_profile_tob");
+
+      if (savedName) setName(savedName);
+      else if (me?.user?.name) setName(me.user.name); // Agar login hai toh API se lo
+      
+      if (savedAvatar) setSelectedAvatar(savedAvatar);
+      if (savedDob) setDob(savedDob);
+      if (savedTob) setTob(savedTob);
+    } catch (e) {}
+  }, [me]);
 
   const t = (hi: string, hing: string, en: string) =>
     lang === "hi" ? hi : lang === "hinglish" ? hing : en;
@@ -47,6 +70,21 @@ export default function ProfilePage() {
   const inputClass = `w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 ${
     isDark ? "border-slate-700 bg-slate-800 text-white" : "border-gray-200 bg-white text-gray-900 shadow-sm"
   }`;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Save to local storage
+    try {
+      localStorage.setItem("gita_profile_name", name);
+      localStorage.setItem("gita_profile_avatar", selectedAvatar);
+      localStorage.setItem("gita_profile_dob", dob);
+      localStorage.setItem("gita_profile_tob", tob);
+    } catch (err) {}
+
+    setSuccess(true);
+    setTimeout(() => setSuccess(false), 3000);
+  };
 
   return (
     <main className={`min-h-screen w-full px-4 pb-10 pt-5 ${isDark ? "bg-slate-950 text-violet-50" : "bg-[#F8F9FA] text-slate-900"}`}>
@@ -56,7 +94,9 @@ export default function ProfilePage() {
         <Link href="/" className={`rounded-full p-2 ${isDark ? "bg-slate-800" : "bg-white shadow-sm"}`}>
           <ArrowLeft size={20} />
         </Link>
-        <h1 className="text-xl font-bold">{t("प्रोफाइल", "Profile", "Profile")}</h1>
+        <h1 className="text-xl font-bold">
+          {loading ? "Loading..." : (name ? name : t("गेस्ट प्रोफाइल", "Guest Profile", "Guest Profile"))}
+        </h1>
       </header>
 
       <div className="mx-auto max-w-xl space-y-6">
@@ -64,7 +104,7 @@ export default function ProfilePage() {
         {/* AVATAR SECTION */}
         <section className="flex flex-col items-center justify-center">
           <div className="relative">
-            <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-yellow-400 bg-yellow-400">
+            <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-yellow-400 bg-yellow-400 shadow-md">
               <img src={selectedAvatar} alt="Profile" className="h-full w-full object-cover" />
             </div>
             <button
@@ -75,16 +115,23 @@ export default function ProfilePage() {
             </button>
           </div>
           <p className="mt-3 text-sm font-semibold text-gray-500">
-            {t("प्रोफाइल फोटो बदलें", "Change Profile Pic", "Change Profile Pic")}
+            {t("अपना अवतार चुनें", "Choose Avatar", "Choose Avatar")}
           </p>
         </section>
 
-        {/* BIRTH DETAILS FORM (Exactly as in screenshot) */}
-        <section className={`rounded-2xl p-5 space-y-4 ${isDark ? "bg-slate-900" : "bg-white shadow-sm"}`}>
+        {/* BIRTH DETAILS FORM */}
+        <form onSubmit={handleSubmit} className={`rounded-2xl p-5 space-y-4 ${isDark ? "bg-slate-900" : "bg-white shadow-sm"}`}>
           
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-500">{t("नाम", "Name", "Name")}</label>
-            <input type="text" defaultValue="SANNI KUMAR" className={inputClass} placeholder="Enter Name" />
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)}
+              className={inputClass} 
+              placeholder={t("अपना नाम लिखें", "Apna naam likhein", "Enter your name")} 
+              required 
+            />
           </div>
 
           <div>
@@ -99,42 +146,54 @@ export default function ProfilePage() {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="mb-1 block text-sm font-semibold text-gray-500">{t("जन्म तिथि", "Date of Birth", "Date")}</label>
-              <input type="date" defaultValue="2000-01-01" className={inputClass} />
+              <input 
+                type="date" 
+                value={dob}
+                onChange={(e) => setDob(e.target.value)}
+                className={inputClass} 
+                required 
+              />
             </div>
             <div>
               <label className="mb-1 block text-sm font-semibold text-gray-500">{t("जन्म समय", "Time of Birth", "Time")}</label>
-              <input type="time" defaultValue="12:00" className={inputClass} />
+              <input 
+                type="time" 
+                value={tob}
+                onChange={(e) => setTob(e.target.value)}
+                className={inputClass} 
+                required 
+              />
             </div>
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-semibold text-gray-500">{t("जन्म स्थान", "Place of Birth", "Place")}</label>
-            <input type="text" placeholder="Enter Place of Birth" className={inputClass} />
+            <input type="text" placeholder={t("शहर का नाम", "Sheher ka naam", "City name")} className={inputClass} />
           </div>
 
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-500">{t("शहर", "City", "City")}</label>
-            <input type="text" placeholder="Enter City" className={inputClass} />
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-semibold text-gray-500">{t("पिनकोड", "Pincode", "Pincode")}</label>
-            <input type="text" placeholder="Enter Pincode" className={inputClass} />
-          </div>
-
-          <button className="mt-4 w-full rounded-xl bg-slate-800 py-3 text-sm font-bold text-white transition hover:bg-slate-700">
-            Submit
+          <button type="submit" className="mt-4 w-full rounded-xl bg-gradient-to-r from-orange-500 to-red-500 py-3 text-sm font-bold text-white transition hover:opacity-90 shadow-md">
+            {t("प्रोफाइल सेव करें", "Save Profile", "Save Profile")}
           </button>
-        </section>
+
+          {success && (
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-green-50 border border-green-200 p-3 text-sm font-bold text-green-700 mt-4 animate-in fade-in slide-in-from-bottom-2">
+              <CheckCircle2 size={18} />
+              {t("प्रोफाइल सफलतापूर्वक सेव हो गई!", "Profile saved successfully!", "Profile saved successfully!")}
+            </div>
+          )}
+        </form>
       </div>
 
-      {/* AVATAR PICKER MODAL (Exactly like screenshot) */}
+      {/* AVATAR PICKER MODAL */}
       {pickerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
             
-            <div className="border-b border-gray-200 px-5 py-4 text-center">
-              <h2 className="text-lg font-bold text-gray-800">Change Profile Pic</h2>
+            <div className="border-b border-gray-200 px-5 py-4 text-center flex items-center justify-between">
+              <h2 className="text-lg font-bold text-gray-800 flex-1">Change Profile Pic</h2>
+              <button onClick={() => setPickerOpen(false)} className="text-gray-500 hover:text-gray-800">
+                <X size={20} />
+              </button>
             </div>
 
             <div className="p-4 max-h-[60vh] overflow-y-auto">
@@ -144,11 +203,12 @@ export default function ProfilePage() {
                 {AVATARS.map((avatar) => (
                   <button
                     key={avatar.id}
+                    type="button"
                     onClick={() => {
                       setSelectedAvatar(avatar.img);
                       setPickerOpen(false);
                     }}
-                    className="flex flex-col items-center gap-1 group"
+                    className={`flex flex-col items-center gap-1 group p-1 rounded-xl transition ${selectedAvatar === avatar.img ? "bg-orange-50 border border-orange-300" : "border border-transparent"}`}
                   >
                     <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-transparent bg-yellow-400 transition group-hover:border-orange-500">
                       <img src={avatar.img} alt={avatar.name} className="h-full w-full object-cover" />
@@ -159,15 +219,6 @@ export default function ProfilePage() {
                   </button>
                 ))}
               </div>
-            </div>
-
-            <div className="border-t border-gray-200 p-4">
-              <button
-                onClick={() => setPickerOpen(false)}
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-slate-100 py-2.5 text-sm font-bold text-slate-600 transition hover:bg-slate-200"
-              >
-                <X size={16} /> Close
-              </button>
             </div>
           </div>
         </div>
