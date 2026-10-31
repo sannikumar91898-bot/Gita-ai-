@@ -24,7 +24,7 @@ export default function FaceReadingPage() {
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Error handling state
+  const [error, setError] = useState<string | null>(null); 
   const [result, setResult] = useState<{
     title: string;
     insight: string;
@@ -156,7 +156,7 @@ export default function FaceReadingPage() {
               {t("अपना फोटो अपलोड करें", "Apna photo upload karein", "Upload your photo")}
             </h2>
 
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               {t(
                 "आपके चेहरे के लक्षण आपके भाग्य की दिशा बताते हैं",
                 "Aapke chehre ke lakshan aapke bhagya ki disha batate hain",
@@ -218,8 +218,8 @@ export default function FaceReadingPage() {
             </div>
 
             {loading && (
-              <div className="rounded-xl bg-orange-50 p-4 text-center">
-                <p className="flex items-center justify-center gap-2 text-sm font-semibold text-orange-700">
+              <div className="rounded-xl bg-orange-50 p-4 text-center dark:bg-slate-800">
+                <p className="flex items-center justify-center gap-2 text-sm font-semibold text-orange-700 dark:text-orange-400">
                   <Sparkles size={16} />
                   {t(
                     "माथा, आँखें, होंठ पढ़े जा रहे हैं...",
@@ -241,15 +241,19 @@ export default function FaceReadingPage() {
           >
             <div className="flex items-center gap-2">
               <Star className="text-amber-500" size={18} fill="currentColor" />
-              <p className="text-sm font-black text-orange-700">{result.title}</p>
+              <p className="text-sm font-black text-orange-700 dark:text-orange-400">{result.title}</p>
             </div>
 
-            <p className="text-sm font-medium leading-6 text-slate-800 dark:text-slate-200">
+            {/* Fixed text color */}
+            <p className={`text-sm font-medium leading-6 ${isDark ? "text-slate-200" : "text-gray-900"}`}>
               {result.insight}
             </p>
 
-            <div className="rounded-xl border border-rose-300 bg-rose-50 p-4 dark:bg-rose-950/30 dark:border-rose-900">
-              <p className="text-xs font-semibold leading-5 text-rose-800 dark:text-rose-200">
+            {/* Fixed text color */}
+            <div className={`rounded-xl border p-4 ${
+              isDark ? "border-rose-900 bg-rose-950/40" : "border-rose-300 bg-rose-50"
+            }`}>
+              <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-950"}`}>
                 {result.hook}
               </p>
             </div>
@@ -268,7 +272,11 @@ export default function FaceReadingPage() {
 
             <button
               onClick={reset}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
+              className={`w-full rounded-xl border px-4 py-2 text-xs font-bold ${
+                isDark 
+                  ? "border-slate-700 bg-slate-800 text-slate-300" 
+                  : "border-gray-300 bg-white text-gray-700"
+              }`}
             >
               {t("दूसरी फोटो अपलोड करें", "Try another photo", "Try another photo")}
             </button>
