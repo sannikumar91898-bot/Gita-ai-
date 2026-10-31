@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -60,6 +59,11 @@ export default function AstrologerChatPage() {
       setHistoryLoading(true);
 
       try {
+        // ==========================================
+        // FIX: Guest Login call karo history fetch karne se pehle
+        // ==========================================
+        await fetch("/api/auth/guest", { method: "POST" });
+
         const query = new URLSearchParams({ persona: id });
 
         const response = await fetch(`/api/chat?${query.toString()}`, {
