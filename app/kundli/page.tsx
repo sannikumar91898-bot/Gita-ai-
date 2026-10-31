@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Scroll, Sparkles, Phone, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Scroll, Sparkles, Phone, TriangleAlert, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -44,9 +44,9 @@ export default function KundliPage() {
               <p className="flex items-start gap-2 text-xs font-semibold leading-5">
                 <TriangleAlert size={16} className="shrink-0 text-rose-600 mt-0.5" />
                 {t(
-                  "🌸 कुंडली में छिपे दोष आपके जीवन को प्रभावित कर सकते हैं। जन्म विवरण भरें और महिला ज्योतिषी से प्यार से बात करें।",
-                  "🌸 Kundli mein chhipe dosh aapke jeevan ko prabhavit kar sakte hain. Janm vivaran bharein aur Mahila Jyotishi se pyaar se baat karein.",
-                  "🌸 Hidden doshas in your chart can affect your life. Fill your birth details and talk lovingly with our Female Astrologer."
+                  "🌸 कुंडली में छिपे दोष आपके जीवन को प्रभावित कर सकते हैं। जन्म विवरण भरें और सही समय पर उपाय जानें।",
+                  "🌸 Kundli mein chhipe dosh aapke jeevan ko prabhavit kar sakte hain. Janm vivaran bharein aur sahi samay par upay jaanें.",
+                  "🌸 Hidden doshas in your chart can affect your life. Fill your birth details and know the right remedies at the right time."
                 )}
               </p>
             </div>
@@ -112,19 +112,24 @@ export default function KundliPage() {
             </p>
             
             <div className="mt-6 rounded-xl border border-rose-300 bg-rose-50 p-4">
-              <p className="text-sm font-bold text-rose-800 mb-2">
-                {t("जब तक कुंडली बन रही है, महिला ज्योतिषी से बात करें", "Jab tak kundli ban rahi hai, Mahila Jyotishi se baat karein", "While it generates, talk to our Female Astrologer")}
+              <p className="text-sm font-bold text-rose-800 mb-3">
+                {t("जब तक कुंडली बन रही है, ज्योतिषी से बात करें", "Jab tak kundli ban rahi hai, jyotishi se baat karein", "While it generates, talk to our Astrologer")}
               </p>
-              <a href="tel:+919999999999" className="inline-block rounded-full bg-rose-600 px-6 py-2 text-sm font-bold text-white shadow">
-                {t("अभी कॉल करें", "Abhi Call Karein", "Call Now")}
-              </a>
+              <Link 
+                href="/chat"
+                className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-6 py-2 text-sm font-bold text-white shadow transition active:scale-95"
+              >
+                <MessageCircle size={16} />
+                {t("अभी चैट करें", "Chat Now", "Chat Now")}
+              </Link>
             </div>
           </section>
         )}
       </div>
 
-      <a
-        href="tel:+919999999999"
+      {/* BOTTOM RED BAR (Linked to Chat) */}
+      <Link
+        href="/chat"
         className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
       >
         <div className="flex items-center gap-3">
@@ -133,14 +138,18 @@ export default function KundliPage() {
           </span>
           <div className="leading-tight">
             <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
-              {isHindi ? "महिला ज्योतिषी • 24x7 उपलब्ध" : isHinglish ? "Mahila Jyotishi • 24x7 Available" : "Female Astrologer • 24x7 Available"}
+              {t("ज्योतिषी • 24x7 उपलब्ध", "Astrologer • 24x7 Available", "Astrologer • 24x7 Available")}
             </p>
             <p className="text-sm font-black">
-              {isHindi ? "दिल से बात करें — वो प्यार से सब समझा देंगी" : isHinglish ? "Dil Se Baat Karein — Wo Pyaar Se Sab Samjha Dengi" : "Talk from the Heart — She Explains with Love"}
+              {t(
+                "अभी बात करें — पहली चैट FREE",
+                "Talk Now — First Chat FREE",
+                "Talk Now — First Chat FREE"
+              )}
             </p>
           </div>
         </div>
-      </a>
+      </Link>
     </main>
   );
 }
