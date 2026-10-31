@@ -11,23 +11,16 @@ import {
   type ReactNode,
 } from "react";
 
-import { translate, type Lang } from "../i18n";
+// 🔥 APNE I18N KA PATH CHECK KAR LENA. AGAR i18n.ts ROOT MEIN HAI TOH ../i18n RAKHNA, AGAR APP MEIN HAI TOH ./i18n RAKHNA 🔥
+import { translate, type Lang } from "../i18n"; 
 import type { Entitlement } from "../entitlement";
 
 export type Theme = "dark" | "light";
 
-const SUPPORTED_LANGUAGES: readonly Lang[] = [
-  "en",
-  "hi",
-  "hinglish",
-];
+const SUPPORTED_LANGUAGES: readonly Lang[] = ["en", "hi", "hinglish"];
 
 function isLang(value: unknown): value is Lang {
-  return (
-    value === "en" ||
-    value === "hi" ||
-    value === "hinglish"
-  );
+  return value === "en" || value === "hi" || value === "hinglish";
 }
 
 function readSavedLanguage(): Lang | null {
@@ -41,9 +34,7 @@ function readSavedLanguage(): Lang | null {
 
 function readSavedTheme(): Theme {
   try {
-    return localStorage.getItem("gita_theme") === "light"
-      ? "light"
-      : "dark";
+    return localStorage.getItem("gita_theme") === "light" ? "light" : "dark";
   } catch {
     return "dark";
   }
@@ -87,11 +78,7 @@ type Ctx = {
 
 const AppContext = createContext<Ctx | null>(null);
 
-export function AppProvider({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export function AppProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<Me | null>(null);
   const [loading, setLoading] = useState(true);
   const [localLang, setLocalLang] = useState<Lang>("en");
@@ -124,25 +111,19 @@ export function AppProvider({
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-
     try {
       localStorage.setItem("gita_theme", theme);
-    } catch {
-      // Theme still works for the current session.
-    }
+    } catch {}
   }, [theme]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
-    if (nextTheme !== "dark" && nextTheme !== "light") {
-      return;
+    if (nextTheme === "dark" || nextTheme === "light") {
+      setThemeState(nextTheme);
     }
-
-    setThemeState(nextTheme);
   }, []);
 
   const refresh = useCallback(async () => {
     if (refreshInProgressRef.current) return;
-
     refreshInProgressRef.current = true;
 
     try {
@@ -150,20 +131,13 @@ export function AppProvider({
       const response = await fetch("/api/me", {
         method: "GET",
         cache: "no-store",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" },
       });
 
-      if (!response.ok) {
-        throw new Error(`/api/me failed: ${response.status}`);
-      }
+      if (!response.ok) throw new Error(`/api/me failed: ${response.status}`);
 
       const data = await response.json();
-
-      const serverLanguage = isLang(data?.user?.language)
-        ? data.user.language
-        : "en";
+      const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
 
       // Agar user nahi hai, toh null set karo. Chat page khud guest banayega.
       if (!data?.user) {
@@ -174,7 +148,7 @@ export function AppProvider({
             birth: null,
             hasChart: false,
             googleAuthConfigured: false,
-            sessionError: false,
+            sessionError: false, // Guest login chat page handle karega
           });
         }
         return;
@@ -182,14 +156,8 @@ export function AppProvider({
 
       const user: MeUser = {
         id: data.user.id,
-        name:
-          typeof data.user.name === "string"
-            ? data.user.name
-            : null,
-        email:
-          typeof data.user.email === "string"
-            ? data.user.email
-            : null,
+        name: typeof data.user.name === "string" ? data.user.name : null,
+        email: typeof data.user.email === "string" ? data.user.email : null,
         language: serverLanguage,
         isGuest: data.user.isGuest === true,
       };
@@ -197,11 +165,8 @@ export function AppProvider({
       if (!languageLoadedRef.current) {
         await new Promise<void>((resolve) => {
           const check = () => {
-            if (languageLoadedRef.current) {
-              resolve();
-            } else {
-              queueMicrotask(check);
-            }
+            if (languageLoadedRef.current) resolve();
+            else queueMicrotask(check);
           };
           check();
         });
@@ -209,12 +174,7 @@ export function AppProvider({
 
       if (!hasLocalLanguageRef.current) {
         setLocalLang(serverLanguage);
-
-        try {
-          localStorage.setItem("gita_lang", serverLanguage);
-        } catch {
-          // Keep server language in memory.
-        }
+        try { localStorage.setItem("gita_lang", serverLanguage); } catch {}
       }
 
       if (!mountedRef.current) return;
@@ -228,11 +188,7 @@ export function AppProvider({
         sessionError: false,
       });
     } catch (error) {
-      console.error(
-        "App session refresh failed:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
-
+      console.error("App session refresh failed:", error instanceof Error ? error.message : "Unknown error");
       if (mountedRef.current) {
         setMe({
           user: null,
@@ -245,10 +201,7 @@ export function AppProvider({
       }
     } finally {
       refreshInProgressRef.current = false;
-
-      if (mountedRef.current) {
-        setLoading(false);
-      }
+      if (mountedRef.current) setLoading(false);
     }
   }, []);
 
@@ -262,100 +215,44 @@ export function AppProvider({
 
     hasLocalLanguageRef.current = true;
     setLocalLang(language);
-
-    try {
-      localStorage.setItem("gita_lang", language);
-    } catch {
-      // Continue with in-memory preference.
-    }
+    try { localStorage.setItem("gita_lang", language); } catch {}
 
     setMe((current) =>
-      current?.user
-        ? {
-            ...current,
-            user: {
-              ...current.user,
-              language,
-            },
-          }
-        : current
+      current?.user ? { ...current, user: { ...current.user, language } } : current
     );
 
     try {
       const response = await fetch("/api/profile", {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({ language }),
         cache: "no-store",
       });
-
-      if (!response.ok) {
-        console.warn(
-          `Language preference was not saved (${response.status}).`
-        );
-      }
+      if (!response.ok) console.warn(`Language preference was not saved (${response.status}).`);
     } catch (error) {
-      console.warn(
-        "Could not sync language preference:",
-        error instanceof Error ? error.message : "Unknown error"
-      );
+      console.warn("Could not sync language preference:", error instanceof Error ? error.message : "Unknown error");
     }
   }, []);
 
   const setEntitlement = useCallback((entitlement: Entitlement) => {
-    setMe((current) =>
-      current ? { ...current, entitlement } : current
-    );
+    setMe((current) => (current ? { ...current, entitlement } : current));
   }, []);
 
   const lang: Lang = isLang(localLang) ? localLang : "en";
-
-  const t = useCallback(
-    (key: string) => translate(lang, key),
-    [lang]
-  );
+  const t = useCallback((key: string) => translate(lang, key), [lang]);
 
   const value = useMemo<Ctx>(
     () => ({
-      me,
-      loading,
-      lang,
-      t,
-      setLanguage,
-      refresh,
-      setEntitlement,
-      theme,
-      setTheme,
+      me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme,
     }),
-    [
-      me,
-      loading,
-      lang,
-      t,
-      setLanguage,
-      refresh,
-      setEntitlement,
-      theme,
-      setTheme,
-    ]
+    [me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme]
   );
 
-  return (
-    <AppContext.Provider value={value}>
-      {children}
-    </AppContext.Provider>
-  );
+  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }
 
 export function useApp(): Ctx {
   const context = useContext(AppContext);
-
-  if (!context) {
-    throw new Error("useApp must be used inside AppProvider");
-  }
-
+  if (!context) throw new Error("useApp must be used inside AppProvider");
   return context;
 }
