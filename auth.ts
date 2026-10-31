@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto"; // 🔥 randomUUID add kiya
 import { eq, and, gt } from "drizzle-orm";
 
 import { db } from "@/index";
@@ -14,26 +14,31 @@ export type User = typeof users.$inferSelect;
  * Get the currently authenticated user from the session cookie.
  */
 export async function getUser(): Promise<User | null> {
-  const store = await cookies();
-  const token = store.get(SESSION_COOKIE)?.value;
+  try {
+    const store = await cookies();
+    const token = store.get(SESSION_COOKIE)?.value;
 
-  if (!token) {
+    if (!token) {
+      return null;
+    }
+
+    const rows = await db
+      .select({ user: users })
+      .from(sessions)
+      .innerJoin(users, eq(users.id, sessions.userId))
+      .where(
+        and(
+          eq(sessions.token, token),
+          gt(sessions.expiresAt, new Date())
+        )
+      )
+      .limit(1);
+
+    return rows[0]?.user ?? null;
+  } catch (error) {
+    console.error("Error in getUser:", error);
     return null;
   }
-
-  const rows = await db
-    .select({ user: users })
-    .from(sessions)
-    .innerJoin(users, eq(users.id, sessions.userId))
-    .where(
-      and(
-        eq(sessions.token, token),
-        gt(sessions.expiresAt, new Date())
-      )
-    )
-    .limit(1);
-
-  return rows[0]?.user ?? null;
 }
 
 /**
@@ -65,43 +70,12 @@ export async function setSessionCookie(
   expires: Date
 ): Promise<void> {
   const store = await cookies();
-  const requestHeaders = await headers();
 
-  const proto = requestHeaders
-    .get("x-forwarded-proto")
-    ?.split(",")[0]
-    .trim();
-
-  const host = (
-    requestHeaders.get("x-forwarded-host") ??
-    requestHeaders.get("host") ??
-    ""
-  )
-    .split(",")[0]
-    .trim()
-    .toLowerCase();
-
-  const isLocal =
-    /^(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?$/.test(
-      host
-    );
-
-  const viaHttpsPage = /^https:\/\//i.test(
-    requestHeaders.get("origin") ??
-      requestHeaders.get("referer") ??
-      ""
-  );
-
-  // यदि लोकलहोस्ट (Localhost) नहीं है, तो हमेशा इसे true ही रखें ताकि Render पर कभी फेल न हो
-  const https = isLocal ? false : true;
-
+  // 🔥 FIX: Cookie settings ko simple aur standard banaya hai
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    // Render (HTTPS) पर हमेशा 'none' और लोकल पर 'lax'
-    sameSite: https ? "none" : "lax",
-    // Render पर हमेशा true और लोकल पर false
-    secure: https,
-    ...(https ? { partitioned: true } : {}),
+    secure: process.env.NODE_ENV === "production", // Production (Render) par true, Local par false
+    sameSite: "lax", // 'lax' standard hai aur redirects ke sath perfectly kaam karta hai
     path: "/",
     expires,
   });
@@ -113,9 +87,13 @@ export async function setSessionCookie(
 export async function createGuestUser(
   language = "en"
 ): Promise<User> {
+  // 🔥 FIX: ID manually generate karo taaki database error na de
+  const guestId = randomUUID(); 
+
   const [user] = await db
     .insert(users)
     .values({
+      id: guestId, // 🔥 Yeh line sabse zaroori hai
       isGuest: true,
       language,
     })
