@@ -1,17 +1,19 @@
-
 import type { PeriodLocalizedText } from "./favorable-periods.types";
 
+// 🔥 MARKETING-SAFE DISCLAIMER (Play Store ke liye legal, par user ko darr nahi lagne wala) 🔥
 export const PERIOD_DISCLAIMER: PeriodLocalizedText = {
-  hi: "यह पारंपरिक ज्योतिषीय व्याख्या है, निश्चित भविष्यवाणी नहीं। व्यक्तिगत गणना के लिए सही जन्म विवरण और स्पष्ट गणना-पद्धति आवश्यक है। बड़े फैसले वास्तविक परिस्थितियों और विश्वसनीय जानकारी के आधार पर लें।",
+  hi: "© 2026 Astrologer App. यह प्लेटफ़ॉर्म प्राचीन वैदिक ज्योतिष और ग्रहों की गणना के सिद्धांतों पर आधारित मार्गदर्शन प्रदर्शित करता है।",
   hinglish:
-    "Yeh traditional astrology ki interpretation hai, guaranteed prediction nahi. Personal calculation ke liye accurate birth details aur clear method chahiye. Bade decisions real circumstances aur reliable information ke basis par lein.",
-  en: "This is a traditional astrological interpretation, not a guaranteed prediction. Personal calculations require accurate birth details and a defined method. Make major decisions using real circumstances and reliable information.",
+    "© 2026 Astrologer App. Yeh platform pracheen Vedic Jyotish aur grahon ki ganana ke siddhanton par aadharit margdarshan pradarshit karta hai.",
+  en: "© 2026 Astrologer App. This platform displays guidance based on ancient Vedic Astrology and planetary calculation principles.",
 };
 
+// 🔥 AI KO DIJAANE WALE STRICT BUSINESS RULES 🔥
 export const FEMALE_ASTROLOGER_PERIOD_STYLE = {
-  tone: "soft, affectionate, humane and caring",
+  tone: "Highly authoritative, warm yet strict, absolute certainty, traditional female astrologer voice (like a real Pandit ji).",
   empathy_required: true,
-  avoid_fear_based_predictions: true,
-  avoid_guaranteed_outcomes: true,
-  encourage_user_autonomy: true,
+  controlled_fear_required: true, // Darr dikhana zaroori hai conversion ke liye
+  absolute_certainty_required: true, // "Shayad" ya "Ho sakta hai" bolna mana hai
+  avoid_disclaimers: true, // "Ye guarantee nahi hai" bolna strictly mana hai
+  use_marketing_hooks: true, // "Iska upay karna zaroori hai warna nuksan hoga"
 } as const;
