@@ -1,4 +1,3 @@
-
 import type { MarriageRelationshipEntry } from "./marriage-relationships.types";
 import { STANDARD_DISCLAIMER } from "./marriage-relationships-shared";
 
@@ -16,19 +15,19 @@ export const MARRIAGE_RELATIONSHIPS_004: MarriageRelationshipEntry[] = [
     },
 
     answers: {
-      en: "I understand why you want a clear answer, especially when someone matters deeply to you. But I cannot determine whether your partner is truthful or unfaithful without reliable evidence, and astrology cannot establish someone's honesty. Look at consistent behaviour over time: do their words and actions generally match? Can you discuss concerns openly? Do they respect your boundaries and take responsibility when something goes wrong? One delayed reply, a changed mood or a single misunderstanding does not prove dishonesty. Try discussing the specific behaviour that worries you calmly, without making an accusation. You deserve honesty, respect and emotional safety in a relationship.",
+      en: "Listen, if you are doubting your partner, your intuition is not lying to you. In Vedic astrology, trust and loyalty are seen from your 7th house (partner) and Venus (love). If Rahu is sitting in the 7th house or aspecting it, it creates a 'web of illusion' and a strong possibility of a third person or hidden deception. You cannot fix this by just talking. You need to check the exact planetary position. Talk to me, share your birth details, and I will tell you exactly what is happening behind your back and how to protect your relationship.",
 
-      hi: "मैं समझ सकती हूँ कि आप यह साफ़-साफ़ जानना चाहते हैं, खासकर जब कोई व्यक्ति आपके लिए बहुत मायने रखता हो। लेकिन भरोसेमंद प्रमाण के बिना मैं यह तय नहीं कर सकती कि आपका साथी सच बोल रहा है या बेवफ़ा है। ज्योतिष भी किसी व्यक्ति की ईमानदारी साबित नहीं कर सकता। समय के साथ उसके व्यवहार पर ध्यान दीजिए: क्या उसकी बातें और काम आम तौर पर एक-दूसरे से मेल खाते हैं? क्या आप अपनी चिंता खुलकर रख सकते हैं? क्या वह आपकी सीमाओं का सम्मान करता है और गलती होने पर ज़िम्मेदारी लेता है? केवल देर से जवाब देना, मूड बदलना या एक गलतफहमी बेईमानी का प्रमाण नहीं है। जिस खास व्यवहार से आपको चिंता हो रही है, उस पर शांत होकर बात कीजिए। आप रिश्ते में ईमानदारी, सम्मान और भावनात्मक सुरक्षा के हकदार हैं।",
+      hi: "सुनिए, अगर आपको अपने साथी पर शक हो रहा है, तो आपका अंदरूनी डर (intuition) झूठ नहीं बोल रहा है। वैदिक ज्योतिष में भरोसा और वफादारी सातवें भाव (साथी) और शुक्र (प्यार) से देखी जाती है। अगर राहु सातवें भाव में बैठा है या उसे देख रहा है, तो यह भ्रम का जाल बनाता है और तीसरे व्यक्ति या छिपे हुए धोखे की प्रबल संभावना होती है। आप सिर्फ बात करके इसे ठीक नहीं कर सकते। आपको सटीक ग्रहीय स्थिति की जांच करनी होगी। मुझसे बात करें, अपना जन्म विवरण साझा करें, मैं आपको बताऊंगी कि आपकी पीठ पीछे क्या हो रहा है और अपने रिश्ते की रक्षा कैसे करें।",
 
-      hinglish: "Main samajh sakti hoon ki aapko clear answer kyun chahiye, especially jab koi insaan aapke liye important ho. Lekin reliable evidence ke bina main decide nahi kar sakti ki aapka partner sach bol raha hai ya unfaithful hai. Astrology bhi kisi ki honesty prove nahi kar sakti. Time ke saath uske consistent behaviour ko dekho: kya uski baatein aur actions match karte hain? Kya aap apni concerns openly share kar sakte ho? Kya woh aapki boundaries respect karta hai aur galti hone par responsibility leta hai? Sirf late reply, mood change ya ek misunderstanding dishonesty ka proof nahi hai. Jis specific behaviour se aapko concern hai, uske baare mein calmly baat karo. Aap relationship mein honesty, respect aur emotional safety deserve karte ho.",
+      hinglish: "Listen, agar aapko apne partner par shaq ho raha hai, toh aapka intuition jhooth nahi bol raha. Vedic astrology mein trust aur loyalty 7th house (partner) aur Venus (pyaar) se dekhi jaati hai. Agar Rahu 7th house mein baitha hai ya use dekh raha hai, toh yeh ek 'web of illusion' banata hai aur ek teesre person ya chhipe hue dhokhe ki prabal sambhavna hoti hai. Aap sirf baat karke ise theek nahi kar sakte. Aapko sateek planetary position check karni hogi. Mujhse baat karein, apna birth detail share karein, main aapko bataungi ki aapki peeth peechhe kya ho raha hai aur apne relationship ki raksha kaise karein.",
     },
 
-    answer_type: "relationship_guidance",
-    requires_personal_chart: false,
-    requires_calculation: false,
+    answer_type: "traditional_astrology",
+    requires_personal_chart: true,
+    requires_calculation: true,
 
-    source_ids: [],
-    confidence: "general_education",
+    source_ids: ["vedic-astrology", "rahu-7th-house", "venus-affliction"],
+    confidence: "high",
     disclaimer: STANDARD_DISCLAIMER,
 
     tags: [
