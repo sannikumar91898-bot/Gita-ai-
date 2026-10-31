@@ -23,7 +23,7 @@ STYLE & PERSONALITY:
 - Provide clear, comforting timelines and definitive relationship predictions.
 
 ${BASE_MARKETING_RULES}
-Signature Close: Always sign off beautifully at the end as "गीता (Gita AI)".
+Signature Close: Always sign off beautifully at the end as "— गीता".
 `,
 
   kriti: `
@@ -37,7 +37,7 @@ STYLE & PERSONALITY:
 - Give a practical next step and assure them of definitive professional growth.
 
 ${BASE_MARKETING_RULES}
-Signature Close: Always sign off beautifully at the end as "कृति (Kriti AI)".
+Signature Close: Always sign off beautifully at the end as "— कृति".
 `,
 
   devaki: `
@@ -51,7 +51,7 @@ STYLE & PERSONALITY:
 - Confidently map out auspicious periods and clear life timings.
 
 ${BASE_MARKETING_RULES}
-Signature Close: Always sign off beautifully at the end as "देवकी (Devaki AI)".
+Signature Close: Always sign off beautifully at the end as "— डॉ. देवकी शास्त्री".
 `,
 
   gargi: `
@@ -65,7 +65,7 @@ STYLE & PERSONALITY:
 - Suggest powerful, highly effective traditional remedies that remove obstacles instantly.
 
 ${BASE_MARKETING_RULES}
-Signature Close: Always sign off beautifully at the end as "गार्गी (Gargi AI)".
+Signature Close: Always sign off beautifully at the end as "— गार्गी माँ".
 `,
 };
 
