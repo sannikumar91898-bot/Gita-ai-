@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, Wallet as WalletIcon, Zap, ShieldCheck, CheckCircle2, ChevronRight, Gift } from "lucide-react";
+import { ArrowLeft, Wallet as WalletIcon, Zap, ShieldCheck, CheckCircle2, ChevronRight, Gift, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -19,15 +19,13 @@ export default function WalletPage() {
   const t = (hi: string, hing: string, en: string) =>
     isHindi ? hi : isHinglish ? hing : en;
 
-  // Dark theme for wallet looks premium, but we'll respect user's theme
   const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
 
-  // Razorpay Test Integration Logic (Mock)
+  // Fake Payment Logic (Razorpay will be added here later)
   const handlePayment = () => {
     setLoading(true);
     setSuccess(false);
     
-    // Yahan baad mein Razorpay ka script aayega
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
@@ -43,7 +41,7 @@ export default function WalletPage() {
   ];
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+    <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         
         {/* HEADER */}
@@ -80,7 +78,7 @@ export default function WalletPage() {
           </div>
         </section>
 
-        {/* RECHARGE PLANS GRID (Screenshot 2 Style) */}
+        {/* RECHARGE PLANS GRID */}
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className={`text-sm font-bold flex items-center gap-1.5 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
@@ -115,7 +113,6 @@ export default function WalletPage() {
                   ₹{offer.price}
                 </span>
                 
-                {/* Fake Extra Bonus Badge */}
                 <div className="mt-1.5 w-full flex items-center justify-center rounded-md bg-green-500/10 py-1">
                   <span className="text-[10px] font-bold text-green-600 dark:text-green-400">
                     {offer.price >= 51 ? `+₹${Math.floor(offer.price * 0.1)} Extra` : "No Bonus"}
@@ -147,7 +144,7 @@ export default function WalletPage() {
             </span>
           </button>
 
-          {/* RAZORPAY TEST SUCCESS MSG */}
+          {/* SUCCESS MSG */}
           {success && (
             <div className="mt-4 flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 p-3 text-sm font-bold text-green-700 animate-in fade-in slide-in-from-bottom-2">
               <CheckCircle2 size={18} className="text-green-600" />
@@ -160,6 +157,26 @@ export default function WalletPage() {
           </p>
         </section>
       </div>
+
+      {/* FIXED BOTTOM RED BAR */}
+      <Link
+        href="/chat"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
+      >
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <MessageCircle size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {t("ज्योतिषी • 24x7 उपलब्ध", "Astrologer • 24x7 Available", "Astrologer • 24x7 Available")}
+            </p>
+            <p className="text-sm font-black">
+              {t("अभी बात करें — पहली चैट FREE", "Talk Now — First Chat FREE", "Talk Now — First Chat FREE")}
+            </p>
+          </div>
+        </div>
+      </Link>
     </main>
   );
 }
