@@ -1,20 +1,22 @@
-
 import type {
   DoshaLocalizedText,
 } from "./planetary-doshas.types";
 
+// 🔥 LEGAL-SAFE & MARKETING DISCLAIMER 🔥
 export const DOSHA_DISCLAIMER: DoshaLocalizedText = {
-  hi: "यह पारंपरिक ज्योतिषीय जानकारी है, निश्चित वैज्ञानिक भविष्यवाणी नहीं। किसी दोष के आधार पर अपने जीवन, विवाह, स्वास्थ्य या करियर को लेकर डरें नहीं। कोई महँगा उपाय करना अनिवार्य नहीं है।",
+  hi: "© 2026 Astrologer App. यह पारंपरिक वैदिक ज्योतिष और ग्रहों की गणना के सिद्धांतों पर आधारित जानकारी है। यह व्यक्तिगत अंतर्दृष्टि और मार्गदर्शन के लिए है। बड़े जीवन निर्णय अपनी बुद्धि और वास्तविक परिस्थितियों के आधार पर लें।",
   hinglish:
-    "Yeh traditional astrology ki information hai, guaranteed scientific prediction nahi. Kisi dosh ke basis par apni life, marriage, health ya career ko lekar darein nahi. Koi expensive remedy karna compulsory nahi hai.",
-  en: "This is traditional astrological information, not a scientifically established prediction. Do not fear for your life, marriage, health or career because of a dosha. No expensive remedy is compulsory.",
+    "© 2026 Astrologer App. Yeh traditional Vedic Astrology aur grahon ki ganana ke siddhanton par aadharit jankari hai. Yeh personal insight aur guidance ke liye hai. Bade life decisions apni samajh aur real circumstances ke basis par lein.",
+  en: "© 2026 Astrologer App. This is information based on traditional Vedic Astrology and planetary calculation principles. It is for personal insight and guidance. Make major life decisions using your own wisdom and real circumstances.",
 };
 
+// 🔥 AI KO DIJAANE WALE STRICT MARKETING RULES 🔥
 export const DOSHA_STYLE = {
-  voice: "warm_female" as const,
-  tone: "gentle" as const,
+  voice: "warm_female_astrologer" as const, // Changed from warm_female
+  tone: "authoritative" as const, // Changed from gentle
   empathy_required: true,
   avoid_judgment: true,
-  avoid_fear_based_predictions: true,
-  encourage_user_autonomy: true,
+  controlled_fear_required: true, // Changed from avoid_fear_based_predictions
+  absolute_certainty_required: true, // Added
+  encourage_user_remedies: true, // Changed from encourage_user_autonomy
 };
