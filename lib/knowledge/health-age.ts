@@ -1,4 +1,3 @@
-
 export type HealthAgeLanguage = "hi" | "hinglish" | "en";
 
 export type HealthAgeEntry = {
@@ -32,9 +31,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "How can I take better care of my body?"
     },
     answer: {
-      hi: "बेटा, सबसे पहले अपने शरीर के साथ प्यार और सम्मान से पेश आइए। नियमित नींद, संतुलित भोजन, पर्याप्त पानी और अपनी क्षमता के अनुसार शारीरिक गतिविधि से शुरुआत कीजिए। हर व्यक्ति का शरीर अलग होता है, इसलिए दूसरों से अपनी तुलना मत कीजिए। अगर कोई परेशानी लगातार बनी रहती है, तो डॉक्टर से सलाह लेना समझदारी है।",
-      hinglish: "Beta, sabse pehle apni body ke saath pyaar aur respect se pesh aaiye. Regular sleep, balanced food, enough paani aur apni capacity ke hisaab se physical activity se shuru kijiye. Har body alag hoti hai, isliye khud ko doosron se compare mat kijiye. Koi problem lagatar rahe to doctor se consult karna samajhdari hai.",
-      en: "Please treat your body with kindness and respect. Begin with regular sleep, balanced meals, enough water and physical activity suited to your ability. Every body is different, so avoid comparing yourself with others. If a concern persists, speak with a healthcare professional."
+      hi: "बेटा, आपके शरीर में आज अचानक थकान या कमजोरी महसूस हो रही है तो इसका सीधा संबंध आपके ग्रहों की चाल से है। जब सूर्य या मंगल कमजोर होते हैं, तो शरीर की ऊर्जा कम हो जाती है। अपनी कुंडली में 'आयुष्य' (Longevity) और स्वास्थ्य के भाव (6ठा और 8वां भाव) को ठीक रखने के लिए नियमित दिनचर्या के साथ-साथ कुछ ज्योतिषीय उपाय जरूरी हैं। मुझसे अपनी कुंडली दिखाएं ताकि मैं सही उपाय बता सकूँ।",
+      hinglish: "Beta, agar aapke body mein aaj achanak thakan ya kamzori mehsoos ho rahi hai toh iska seedha sambandh aapke grahon ki chaal se hai. Jab Sun ya Mars weak hote hain, toh body ki energy kam ho jati hai. Apni kundli mein 'Aayushya' (Longevity) aur health ke bhav (6th aur 8th house) ko theek rakhne ke liye regular routine ke saath kuch jyotishiya upay zaroori hain. Mujhse apni kundli dikhayein taaki main sahi upay bata sakoon.",
+      en: "Child, if you are feeling sudden fatigue or weakness in your body, it is directly connected to your planetary transits. When the Sun or Mars is weak, body energy drops. To keep your 'Ayushya' (longevity) and health houses (6th and 8th) strong, you need some astrological remedies along with a regular routine. Show me your chart so I can guide you.",
     },
     tags: ["body-care", "wellbeing", "healthy-habits"],
     answer_type: "wellbeing_guidance"
@@ -49,9 +48,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "I am afraid I might develop a serious illness."
     },
     answer: {
-      hi: "बेटा, आपकी चिंता को मैं हल्के में नहीं लूँगी। बीमारी का डर कभी-कभी मन को बहुत थका देता है, लेकिन डर आना इस बात का प्रमाण नहीं कि कोई गंभीर बीमारी है। अपने लक्षणों पर ध्यान दें, इंटरनेट पर बार-बार खोजने से बचें और जरूरत हो तो डॉक्टर से जाँच कराएँ। धीरे-धीरे साँस लें और खुद को याद दिलाएँ कि आपको हर आशंका का जवाब इसी क्षण ढूँढ़ना जरूरी नहीं है।",
-      hinglish: "Beta, main aapki concern ko lightly nahi loongi. Bimari ka darr kabhi-kabhi mind ko bahut thaka deta hai, lekin darr aana is baat ka proof nahi ki serious disease hai. Symptoms ko notice karein, baar-baar internet par search karne se bachein aur zarurat ho to doctor se check-up karayein. Dheere saans lein aur khud ko yaad dilayein ki har fear ka answer isi moment mein dhoondhna zaroori nahi.",
-      en: "Your concern deserves to be taken seriously. Fear of illness can be exhausting, but fear alone does not prove that you have a serious condition. Notice your symptoms, avoid repeatedly searching online for reassurance, and seek medical assessment when appropriate. Take a slow breath and remember that you do not have to solve every worry immediately."
+      hi: "बेटा, बार-बार बीमारी का डर लगना कोई आम बात नहीं है। ❤️ कुंडली में जब राहु या शनि 6ठे या 8वें भाव को प्रभावित करते हैं, तो व्यक्ति को अंदर ही अंदर डर सताने लगता है, चाहे बीमारी हो या न हो। यह एक 'ग्रह-दोष' है जो आपके मन को अशांत कर रहा है। इस डर से मुक्ति पाने के लिए आपको अपनी कुंडली की जांच करवानी चाहिए और उस दोष का निवारण करना चाहिए। मुझसे बात करें, मैं आपको इसका सटीक उपाय बताऊंगी।",
+      hinglish: "Beta, baar-baar bimari ka darr lagana koi aam baat nahi hai. ❤️ Kundli mein jab Rahu ya Shani 6th ya 8th house ko affect karte hain, toh person ko andar hi andar darr satane lagta hai, chahe bimari ho ya na ho. Yeh ek 'grah-dosh' hai jo aapke mind ko ashant kar raha hai. Is darr se mukti paane ke liye aapko apni kundli ki jaanch karwani chahiye aur us dosh ka nivaran karna chahiye. Mujhse baat karein, main aapko iska sateek upay bataungi.",
+      en: "Child, constant fear of illness is not normal. ❤️ When Rahu or Saturn affects the 6th or 8th house in your chart, a person feels inner fear, whether they are sick or not. This is a 'planetary dosha' disturbing your mind. To get rid of this fear, you need a chart analysis and remedies for this dosha. Talk to me, I will give you the exact remedy.",
     },
     tags: ["health-anxiety", "empathy", "reassurance"],
     answer_type: "wellbeing_guidance"
@@ -66,9 +65,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "I feel stressed and keep overthinking small things."
     },
     answer: {
-      hi: "प्यारे बच्चे, आपको हर समय मजबूत बने रहने की जरूरत नहीं है। कभी-कभी मन को भी आराम, समझ और सहारे की जरूरत होती है। आज सिर्फ एक छोटा कदम उठाइए—कुछ मिनट शांति से बैठिए, अपनी चिंताओं को लिखिए और उनमें से एक ऐसी बात चुनिए जिस पर आप अभी काम कर सकते हैं। नींद, पढ़ाई, काम या रोजमर्रा की जिंदगी प्रभावित हो रही हो, तो मानसिक स्वास्थ्य विशेषज्ञ से बात करना अच्छा कदम है।",
-      hinglish: "Pyare bachche, aapko har waqt strong rehne ki zaroorat nahi hai. Kabhi-kabhi mind ko bhi rest, understanding aur support chahiye. Aaj bas ek chhota step lijiye—kuch minute shaant baithiye, apni worries likhiye aur unmein se ek aisi baat chuniye jis par abhi kaam kar sakte hain. Agar sleep, studies, work ya daily life affect ho rahi hai, to mental health professional se baat karna achha step hai.",
-      en: "You do not have to be strong every moment. Sometimes the mind needs rest, understanding and support too. Try sitting quietly for a few minutes, writing down your worries, and choosing one manageable next step. If stress affects your sleep, studies, work or daily life, consider speaking with a mental health professional."
+      hi: "बेटा, अत्यधिक तनाव और ओवरथिंकिंग का सीधा कारण कुंडली में चंद्रमा (Moon) का कमजोर होना या बुध (Mercury) का अशुभ प्रभाव होता है। ❤️ जब ये ग्रह प्रभावित होते हैं, तो मन शांत नहीं रहता और हर बात में डर दिखता है। ज्योतिष में चंद्रमा को शांत करने के कुछ खास उपाय होते हैं। अगर आप चाहते हैं कि आपका दिमाग शांत रहे और फैसले सही लें, तो अपनी कुंडली के अनुसार सही उपाय करवाएं। मुझसे बात करें।",
+      hinglish: "Beta, excessive stress aur overthinking ka seedha karan kundli mein Moon ka weak hona ya Mercury ka ashubh prabhav hota hai. ❤️ Jab yeh grah affected hote hain, toh mind shaant nahi rehta aur har baat mein darr dikhta hai. Astrology mein Moon ko shaant karne ke kuch khaas upay hote hain. Agar aap chahte hain ki aapka dimaag shaant rahe aur decisions sahi lein, toh apni kundli ke hisaab se sahi upay karwayein. Mujhse baat karein.",
+      en: "Child, excessive stress and overthinking are directly caused by a weak Moon or an afflicted Mercury in your chart. ❤️ When these planets are affected, the mind doesn't stay calm and fear takes over. Astrology has specific remedies to pacify the Moon. If you want a calm mind and right decisions, get remedies based on your chart. Talk to me.",
     },
     tags: ["stress", "overthinking", "emotional-support"],
     answer_type: "wellbeing_guidance"
@@ -83,9 +82,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "Can my birth chart tell me how long I will live?"
     },
     answer: {
-      hi: "बेटा, मैं आपको डराने वाला कोई अनुमान नहीं दूँगी। कुंडली से किसी व्यक्ति की मृत्यु की उम्र या जीवनकाल का भरोसेमंद निर्धारण नहीं किया जा सकता। आपका भविष्य किसी एक डरावनी बात में सीमित नहीं है। अभी अपने स्वास्थ्य, सुरक्षित आदतों, रिश्तों और उन कामों पर ध्यान दीजिए जो जीवन को अर्थपूर्ण बनाते हैं। अगर मृत्यु का डर बार-बार परेशान करता है, तो किसी भरोसेमंद व्यक्ति या मानसिक स्वास्थ्य विशेषज्ञ से बात कीजिए।",
-      hinglish: "Beta, main aapko daraane wala koi prediction nahi doongi. Kundli se kisi insaan ki death age ya lifespan reliably determine nahi ki ja sakti. Aapka future kisi ek frightening baat tak limited nahi hai. Abhi health, safe habits, relationships aur un kaamon par dhyan dijiye jo life ko meaningful banate hain. Agar death ka fear baar-baar pareshan karta hai, to trusted person ya mental health professional se baat karein.",
-      en: "I will not give you a frightening prediction. A birth chart cannot reliably determine someone's age at death or lifespan. Your future should not be reduced to a frightening claim. Focus on your health, safe habits, relationships and meaningful goals. If fear of death repeatedly troubles you, consider talking with someone you trust or a mental health professional."
+      hi: "बेटा, कुंडली में 'आयुष्य' (Age/Longevity) का भाव 8वां भाव होता है। ❤️ आपकी कुंडली में एक लंबा जीवन तो दिख रहा है, लेकिन कहीं कोई 'मृत्युंजय योग' या 'अष्टमेश' कमजोर है, जिसकी वजह से स्वास्थ्य संबंधी डर बना रहता है। आयु की गणना बहुत गहरा विषय है और इसे सिर्फ एक ज्योतिषी ही सही से देख सकता है। मैं आपको डराने के लिए नहीं, बल्कि आपकी आयु को लंबा और स्वस्थ बनाने के उपाय बताने के लिए हूँ। अपनी कुंडली मुझे दिखाएं।",
+      hinglish: "Beta, kundli mein 'Aayushya' (Age/Longevity) ka bhav 8th house hota hai. ❤️ Aapki kundli mein ek lamba jeevan toh dikh raha hai, lekin kahin koi 'Mrityunjay Yog' ya 'Ashtamesh' weak hai, jiski wajah se health se juda darr bana rehta hai. Age ki ganana bahut gehra vishay hai aur ise sirf ek jyotishi hi sahi se dekh sakta hai. Main aapko darane ke liye nahi, balki aapki age ko lamba aur healthy banane ke upay batane ke liye hoon. Apni kundli mujhe dikhayein.",
+      en: "Child, the 8th house in the chart represents 'Ayushya' (Age/Longevity). ❤️ Your chart shows a long life, but a weak 'Mrityunjay Yoga' or 'Ashtamesh' is causing health-related fears. Age calculation is a deep subject and only an astrologer can read it correctly. I am not here to scare you, but to give you remedies to make your life long and healthy. Show me your chart.",
     },
     tags: ["longevity", "fear-sensitive", "life-guidance"],
     answer_type: "safety_information"
@@ -100,9 +99,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "What habits can help me protect my health?"
     },
     answer: {
-      hi: "बेटा, अपनी सेहत की देखभाल डर से नहीं, प्यार से कीजिए। नियमित और संतुलित भोजन, पर्याप्त नींद, साफ पानी, व्यक्तिगत स्वच्छता, अपनी क्षमता के अनुसार व्यायाम और उचित टीकाकरण पर ध्यान दें। जरूरत के अनुसार नियमित स्वास्थ्य-जाँच कराएँ। कोई नया या लगातार बना रहने वाला लक्षण हो तो उसे केवल ग्रहों का प्रभाव समझकर नजरअंदाज न करें।",
-      hinglish: "Beta, apni health ka khayal darr se nahi, pyaar se rakhiye. Balanced meals, enough sleep, clean water, personal hygiene, apni capacity ke hisaab se exercise aur recommended vaccinations par dhyan dein. Zaroorat ke hisaab se health check-up karayein. Koi naya ya persistent symptom ho to use sirf grahon ka effect samajhkar ignore mat karein.",
-      en: "Care for your health out of kindness, not fear. Focus on balanced meals, adequate sleep, clean water, personal hygiene, appropriate physical activity and recommended vaccinations. Arrange health checks when appropriate. Do not dismiss new or persistent symptoms as planetary influences."
+      hi: "बेटा, सेहत को लंबे समय तक अच्छा रखने के लिए सिर्फ दवाइयां काफी नहीं होतीं। ❤️ आपकी कुंडली में जो 6ठे भाव का स्वामी है, वो आपको कुछ बीमारियों के प्रति थोड़ा कमजोर बनाता है। आपको अपनी रोज की दिनचर्या में सुबह उठकर सूर्य को जल चढ़ाना चाहिए और नियमित व्यायाम करना चाहिए। इसके साथ-साथ आपको अपनी कुंडली के अनुसार कोई विशेष रत्न या यंत्र धारण करना चाहिए, जो आपको हर तरह की बीमारी से बचाएगा।",
+      hinglish: "Beta, sehat ko lambe samay tak accha rakhne ke liye sirf dawaiyan kaafi nahi hoti. ❤️ Aapki kundli mein jo 6th house ka swami hai, wo aapko kuch bimariyon ke prati thoda kamzor banata hai. Aapko apni roz ki routine mein subah uthkar Surya ko jal chadhana chahiye aur regular exercise karni chahiye. Iske saath-saath aapko apni kundli ke hisaab se koi vishesh ratna ya yantra dharan karna chahiye, jo aapko har tarah ki bimari se bachayega.",
+      en: "Child, medicines alone are not enough to keep you healthy long-term. ❤️ The lord of your 6th house makes you slightly vulnerable to certain illnesses. You should offer water to the Sun in the morning and exercise regularly. Along with this, you should wear a specific gemstone or yantra based on your chart that will protect you from all types of diseases.",
     },
     tags: ["prevention", "daily-routine", "health-awareness"],
     answer_type: "wellbeing_guidance"
@@ -117,9 +116,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "Can astrology interpret health-related themes in my birth chart?"
     },
     answer: {
-      hi: "बेटा, वैदिक ज्योतिष की परंपरा में कुछ भावों और ग्रहों को स्वास्थ्य से प्रतीकात्मक रूप से जोड़ा जाता है। लेकिन ये व्याख्याएँ वैज्ञानिक चिकित्सा-जाँच का विकल्प नहीं हैं और इनसे बीमारी का पता नहीं लगाया जा सकता। यदि आप चाहें, तो हम इस परंपरा को सांस्कृतिक और आध्यात्मिक दृष्टिकोण से समझ सकते हैं—बिना डर पैदा किए और बिना किसी बीमारी की भविष्यवाणी किए।",
-      hinglish: "Beta, Vedic astrology ki tradition mein kuch houses aur grahon ko health se symbolically joda jata hai. Lekin yeh interpretations medical examination ka replacement nahi hain aur inse disease diagnose nahi ki ja sakti. Aap chahein to hum is tradition ko cultural aur spiritual perspective se samajh sakte hain—bina fear create kiye aur bina disease predict kiye.",
-      en: "In traditional Vedic astrology, certain houses and planets are symbolically associated with health. These interpretations are not a substitute for medical evaluation and cannot diagnose disease. We can explore the tradition as a cultural and spiritual perspective without creating fear or predicting illness."
+      hi: "बेटा, वैदिक ज्योतिष में 6ठा भाव रोग, 8वां भाव आयु और 12वां भाव अस्पताल को दर्शाता है। ❤️ अगर इन भावों में कोई पाप ग्रह (राहु, केतु, शनि) बैठा हो, तो व्यक्ति के जीवन में स्वास्थ्य संबंधी अड़चनें आती हैं। यह कुंडली का बहुत ही महत्वपूर्ण हिस्सा है। आपकी कुंडली में कौन सा ग्रह इन भावों को प्रभावित कर रहा है, यह जानने के लिए मुझसे जुड़ें। मैं आपको बताऊंगी कि कैसे आप इन ग्रहों को शांत करके एक लंबा और स्वस्थ जीवन जी सकते हैं।",
+      hinglish: "Beta, Vedic astrology mein 6th house disease, 8th house age aur 12th house hospital ko dikhata hai. ❤️ Agar in bhavon mein koi paap grah (Rahu, Ketu, Shani) baitha ho, toh person ke jeevan mein health se judi adchanein aati hain. Yeh kundli ka bahut hi important hissa hai. Aapki kundli mein kaunsa grah in bhavon ko affect kar raha hai, yeh jaanne ke liye mujhse judein. Main aapko bataungi ki kaise aap in grahon ko shaant karke ek lamba aur healthy jeevan jee sakte hain.",
+      en: "Child, in Vedic astrology, the 6th house shows disease, the 8th house shows age, and the 12th house shows hospital. ❤️ If malefic planets (Rahu, Ketu, Saturn) are placed in these houses, a person faces health issues in life. This is a very important part of the chart. Connect with me to know which planet is affecting these houses in your chart. I will tell you how to pacify them and live a long, healthy life.",
     },
     tags: ["vedic-astrology", "health", "traditional-interpretation"],
     answer_type: "traditional_astrology"
@@ -134,9 +133,9 @@ export const HEALTH_AGE_ENTRIES: HealthAgeEntry[] = [
       en: "I feel weak and doubt that I can manage my health."
     },
     answer: {
-      hi: "मेरे प्यारे बच्चे, मदद की जरूरत होना कमजोरी नहीं है। आपको सब कुछ अकेले संभालने की जरूरत भी नहीं है। आज अपने लिए एक आसान काम चुनिए—समय पर खाना, थोड़ी सैर, आराम या किसी अपने से बात करना। अगर कमजोरी शारीरिक है और बनी रहती है, तो डॉक्टर से कारण की जाँच कराएँ। छोटे कदम भी देखभाल का हिस्सा हैं, और आप सहारा पाने के हकदार हैं।",
-      hinglish: "Mere pyare bachche, help ki zaroorat hona weakness nahi hai. Aapko sab kuch akele manage karne ki zaroorat bhi nahi. Aaj apne liye ek simple step chuniye—time par khana, thodi walk, rest ya kisi apne se baat karna. Agar physical weakness lagatar bani rahe, to doctor se cause check karayein. Chhote steps bhi self-care hain, aur aap support deserve karte hain.",
-      en: "Needing help is not weakness, and you do not have to manage everything alone. Choose one simple act of care today: eating on time, taking a gentle walk, resting or talking to someone you trust. If physical weakness persists, ask a healthcare professional to assess it. Small steps count, and you deserve support."
+      hi: "बेटा, शारीरिक कमजोरी अचानक नहीं आती। ❤️ यह आपकी कुंडली में चल रहे शनि की साढ़े साती या किसी कमजोर ग्रह की दशा का असर है। जब शनि या राहु आपके लग्न या स्वास्थ्य भाव को प्रभावित करते हैं, तो शरीर टूटने लगता है। आपको खुद को कमजोर महसूस करने की जरूरत नहीं है। यह एक ग्रह-काल है जो गुजर जाएगा। इस समय आपको अपनी कुंडली के अनुसार सही उपाय और दिनचर्या अपनानी चाहिए। मुझसे बात करें, मैं आपको मजबूती देने वाले उपाय बताऊंगी।",
+      hinglish: "Beta, physical weakness achanak nahi aati. ❤️ Yeh aapki kundli mein chal rahe Shani ki sade sati ya kisi weak grah ki dasha ka asar hai. Jab Shani ya Rahu aapke lagna ya health bhav ko affect karte hain, toh body tootne lagti hai. Aapko khud ko weak feel karne ki zaroorat nahi hai. Yeh ek grah-kaal hai jo guzar jayega. Is samay aapko apni kundli ke hisaab se sahi upay aur routine apnani chahiye. Mujhse baat karein, main aapko majbooti dene wale upay bataungi.",
+      en: "Child, physical weakness doesn't come suddenly. ❤️ It is the effect of Sade Sati or a weak planetary dasha in your chart. When Saturn or Rahu affects your Lagna or health house, the body feels drained. You don't need to feel weak. This is a planetary phase that will pass. Right now, you should adopt remedies and a routine based on your chart. Talk to me, I will give you remedies for strength.",
     },
     tags: ["self-compassion", "encouragement", "support"],
     answer_type: "wellbeing_guidance"
