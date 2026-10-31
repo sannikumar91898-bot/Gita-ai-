@@ -1,13 +1,12 @@
-
 /* Gita AI service worker — offline shell only. API calls always hit the network. */
 
-const CACHE = "gita-shell-v4";
+const CACHE = "gita-shell-v5"; // Version bumped for update
 
 const SHELL = [
   "/",
-  "/icon-512.png",
-  "/gita-portrait.jpg",
-  "/manifest.webmanifest",
+  "/manifest.webmanifest"
+  // Note: Images (icon-512.png / gita-portrait.jpg) ko yahan se hata diya hai 
+  // taaki install fail na ho agar file ka naam alag ho.
 ];
 
 self.addEventListener("install", (event) => {
