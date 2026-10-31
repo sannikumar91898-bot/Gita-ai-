@@ -1,5 +1,5 @@
 import { cookies, headers } from "next/headers";
-import { randomBytes, randomUUID } from "crypto"; // 🔥 randomUUID add kiya
+import { randomBytes, randomUUID } from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 
 import { db } from "@/index";
@@ -36,8 +36,9 @@ export async function getUser(): Promise<User | null> {
 
     return rows[0]?.user ?? null;
   } catch (error) {
-    console.error("Error in getUser:", error);
-    return null;
+    // 🔥 FIX: Database error ko chupao mat, throw karo taaki API ko pata chale
+    console.error("Database error in getUser:", error);
+    throw new Error("Database connection failed during auth");
   }
 }
 
@@ -71,11 +72,10 @@ export async function setSessionCookie(
 ): Promise<void> {
   const store = await cookies();
 
-  // 🔥 FIX: Cookie settings ko simple aur standard banaya hai
   store.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production", // Production (Render) par true, Local par false
-    sameSite: "lax", // 'lax' standard hai aur redirects ke sath perfectly kaam karta hai
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
     path: "/",
     expires,
   });
@@ -87,13 +87,12 @@ export async function setSessionCookie(
 export async function createGuestUser(
   language = "en"
 ): Promise<User> {
-  // 🔥 FIX: ID manually generate karo taaki database error na de
-  const guestId = randomUUID(); 
+  const guestId = randomUUID();
 
   const [user] = await db
     .insert(users)
     .values({
-      id: guestId, // 🔥 Yeh line sabse zaroori hai
+      id: guestId,
       isGuest: true,
       language,
     })
