@@ -288,12 +288,12 @@ Description
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
     let rawReply = "";
-    let remedy = null;
+    let isError = false; // 🔥 Error tracking add ki hai
 
     try {
-      // 🔥 MODEL UPDATE KIYA HAI (1.5-FLASH) 🔥
+      // 🔥 MODEL UPDATE (2.5-FLASH) 🔥
       const response = await ai.models.generateContent({
-        model: "gemini-1.5-flash", 
+        model: "gemini-2.5-flash", 
         contents: contents,
         config: {
           systemInstruction: systemPrompt,
@@ -304,6 +304,7 @@ Description
       rawReply = response.text || "";
     } catch (apiError: any) {
       console.error("Gemini API Limit Error:", apiError);
+      isError = true; // 🔥 Agar error aaya toh true
       
       if (apiError?.status === 429 || apiError?.message?.includes("quota") || apiError?.message?.includes("limit")) {
          rawReply = "बेटा, अभी ग्रहों की चाल का गहराई से हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद दोबारा अपना प्रश्न पूछें, ताकि मैं आपको सटीक उपाय बता सकूँ। 🙏";
@@ -312,21 +313,35 @@ Description
       }
     }
 
-    if (!rawReply) rawReply = "अभी जवाब तैयार नहीं हो पाया। कृपया दोबारा पूछें।";
+    if (!rawReply) {
+      rawReply = "अभी जवाब तैयार नहीं हो पाया। कृपया दोबारा पूछें।";
+      isError = true; // 🔥 Empty response bhi error hai
+    }
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
-    remedy = extracted.remedy;
+    const remedy = extracted.remedy;
 
-    try {
-      await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
-      await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
+    // 🔥 FIX: Agar error hua hai, toh database mein save mat karo 🔥
+    if (!isError) {
+      try {
+        await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
+        await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
 
-      if (remedy) {
-        await db.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
+        if (remedy) {
+          await db.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
+        }
+      } catch (saveError) {
+        console.error("Failed to save chat messages:", saveError);
       }
-    } catch (saveError) {
-      console.error("Failed to save chat messages:", saveError);
+    }
+
+    // 🔥 Agar error hai, toh frontend ko error status bhejo 🔥
+    if (isError) {
+      return NextResponse.json(
+        { success: false, error: finalMessage, conversationId: conversation.id },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
