@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -147,7 +146,8 @@ export function AppProvider({
     refreshInProgressRef.current = true;
 
     try {
-      let response = await fetch("/api/me", {
+      // 🔥 SIRF /api/me CHECK KARO, GUEST CREATE MAT KARO 🔥
+      const response = await fetch("/api/me", {
         method: "GET",
         cache: "no-store",
         headers: {
@@ -159,44 +159,26 @@ export function AppProvider({
         throw new Error(`/api/me failed: ${response.status}`);
       }
 
-      let data = await response.json();
+      const data = await response.json();
 
-      if (!data?.user) {
-        const guestResponse = await fetch("/api/auth/guest", {
-          method: "POST",
-          cache: "no-store",
-        });
-
-        if (!guestResponse.ok) {
-          throw new Error(
-            `Guest session creation failed: ${guestResponse.status}`
-          );
-        }
-
-        response = await fetch("/api/me", {
-          method: "GET",
-          cache: "no-store",
-          headers: {
-            Accept: "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          throw new Error(
-            `Refreshing session failed: ${response.status}`
-          );
-        }
-
-        data = await response.json();
-      }
-
-      if (!data?.user || typeof data.user.id !== "string") {
-        throw new Error("Invalid user session response.");
-      }
-
-      const serverLanguage = isLang(data.user.language)
+      const serverLanguage = isLang(data?.user?.language)
         ? data.user.language
         : "en";
+
+      // Agar user nahi hai, toh null set karo. Chat page khud guest banayega.
+      if (!data?.user) {
+        if (mountedRef.current) {
+          setMe({
+            user: null,
+            entitlement: null,
+            birth: null,
+            hasChart: false,
+            googleAuthConfigured: false,
+            sessionError: false,
+          });
+        }
+        return;
+      }
 
       const user: MeUser = {
         id: data.user.id,
@@ -221,7 +203,6 @@ export function AppProvider({
               queueMicrotask(check);
             }
           };
-
           check();
         });
       }
@@ -272,19 +253,8 @@ export function AppProvider({
   }, []);
 
   useEffect(() => {
+    // 🔥 SIRF REFRESH CALL KARO, SERVICE WORKER YAHAN SE HATA DIYA HAI 🔥
     void refresh();
-
-    if (
-      "serviceWorker" in navigator &&
-      process.env.NODE_ENV === "production"
-    ) {
-      navigator.serviceWorker.register("/sw.js").catch((error: unknown) => {
-        console.warn(
-          "Service worker registration failed:",
-          error instanceof Error ? error.message : "Unknown error"
-        );
-      });
-    }
   }, [refresh]);
 
   const setLanguage = useCallback(async (language: Lang) => {
