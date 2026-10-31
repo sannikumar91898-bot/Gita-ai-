@@ -32,7 +32,7 @@ function createMessageId(): string {
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang, theme } = useApp(); // Added theme
+  const { lang, theme } = useApp();
 
   const isDark = theme === "dark";
   const id = typeof params?.id === "string" ? params.id : "";
@@ -56,10 +56,9 @@ export default function AstrologerChatPage() {
       setHistoryLoading(true);
 
       try {
-        // 1. SABSE PEHLE GUEST LOGIN (Session banayega)
+        // 🔥 FIX: Guest Login call karo history fetch karne se pehle
         await fetch("/api/auth/guest", { method: "POST" });
 
-        // 2. USKE BAAD CHAT HISTORY FETCH KARO
         const query = new URLSearchParams({ persona: id });
         const response = await fetch(`/api/chat?${query.toString()}`, {
           method: "GET",
@@ -209,7 +208,6 @@ export default function AstrologerChatPage() {
         </Link>
 
         <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
-          {/* Standard img tag to avoid Next.js Image errors on Render */}
           <img
             src={astrologer.photo}
             alt={astrologer.name}
