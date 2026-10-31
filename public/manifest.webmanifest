@@ -2,22 +2,22 @@
   "id": "/",
   "name": "Gita AI — Your Personal AI Astrologer",
   "short_name": "Gita AI",
-  "description": "Your personal AI astrologer inspired by the wisdom of the Bhagavad Gita.",
+  "description": "Personalised Vedic kundli, daily horoscope, palm reading and heartfelt AI astrology guidance.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0b0618",
+  "background_color": "#0a0517",
   "theme_color": "#ea580c",
   "icons": [
     {
-      "src": "/icon-192.png",
+      "src": "/icons/geeta_ai_icon_192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icon-512.png",
+      "src": "/icons/geeta_ai_icon_512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
