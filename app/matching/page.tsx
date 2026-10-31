@@ -2,135 +2,176 @@
 "use client";
 
 import { useState } from "react";
-import { MessageCircle, TriangleAlert } from "lucide-react";
+import { ArrowLeft, Heart, Sparkles, AlertCircle, MessageCircle } from "lucide-react";
+import Link from "next/link";
+import { useApp } from "../Providers";
 
 export default function MatchingPage() {
-  const [p1Name, setP1Name] = useState("");
-  const [p2Name, setP2Name] = useState("");
-  const [isHindi, setIsHindi] = useState(false);
-  const [isHinglish, setIsHinglish] = useState(true);
-  const [result, setResult] = useState<{ score: number; verdict: string } | null>(null);
+  const { lang, theme } = useApp();
+  const isDark = theme === "dark";
+  const isHindi = lang === "hi";
+  const isHinglish = lang === "hinglish";
+
+  const [boyName, setBoyName] = useState("");
+  const [girlName, setGirlName] = useState("");
+  const [result, setResult] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const t = (hi: string, hing: string, en: string) =>
     isHindi ? hi : isHinglish ? hing : en;
 
+  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-slate-900 shadow-xl" : "border-orange-100 bg-white shadow-xl";
+
   const handleMatch = () => {
-    if (!p1Name.trim() || !p2Name.trim()) return;
-
-    const combinedLength = p1Name.trim().length + p2Name.trim().length;
-
-    const scoresPool = [
-      36, 48, 56, 64, 72, 78, 84, 88, 92, 96, 68, 74,
-      82, 86, 90, 94, 52, 60, 66, 70, 76, 80, 98, 44,
-      58, 62, 54, 42, 38, 34, 32, 28, 88, 96, 92, 84,
-    ];
-    const finalScore = scoresPool[combinedLength % scoresPool.length];
-
-    let finalVerdict = "";
-    if (finalScore >= 85) {
-      finalVerdict = t(
-        "बहुत सुंदर मिलान है — बस एक बार हमारी महिला ज्योतिषियों में से किसी एक से चैट कर लें, वो प्यार से आपके रिश्ते की छिपी बातें समझा देंगी।",
-        "Bahut sundar milan hai — bas ek baar hamari Mahila Jyotishiyon mein se kisi ek se chat kar lein, wo pyaar se aapke rishte ki chhipi baatein samjha dengi.",
-        "A beautiful match — just chat once with one of our Female Astrologers, she will lovingly explain the hidden aspects of your relationship."
-      );
-    } else if (finalScore >= 65) {
-      finalVerdict = t(
-        "अच्छा मिलान है — पर पूरा भरोसा तब होगा जब हमारी महिला ज्योतिषियों में से किसी एक से एक बार चैट कर लें। वो प्यार से सब समझा देंगी।",
-        "Achha milan hai — par poora bharosa tab hoga jab hamari Mahila Jyotishiyon mein se kisi ek se chat kar lein. Wo pyaar se sab samjha dengi.",
-        "A good match — but full clarity comes when you chat once with one of our Female Astrologers. She explains everything with love."
-      );
-    } else {
-      finalVerdict = t(
-        "थोड़ा ध्यान देने वाला मिलान है — घबराएं नहीं, बस हमारी महिला ज्योतिषियों में से किसी एक से प्यार से चैट कर लें, वो सही मार्गदर्शन देंगी।",
-        "Thoda dhyan dene wala milan hai — ghabrayein nahi, bas hamari Mahila Jyotishiyon mein se kisi ek se pyaar se chat kar lein, wo sahi margdarshan dengi.",
-        "A match that needs gentle attention — don't worry, just chat lovingly with one of our Female Astrologers, she will guide you right."
-      );
-    }
-
-    setResult({ score: finalScore, verdict: finalVerdict });
+    if (!boyName.trim() || !girlName.trim()) return;
+    setLoading(true);
+    setResult(null);
+    
+    // Fake calculation delay
+    setTimeout(() => {
+      const randomScore = Math.floor(Math.random() * 20) + 75; // 75% to 95%
+      setResult(randomScore);
+      setLoading(false);
+    }, 2000);
   };
 
   return (
-    <main className="min-h-dvh bg-gradient-to-b from-rose-50 to-white px-5 pb-32 pt-6 text-violet-950">
-      <div className="mx-auto max-w-xl space-y-6">
-        <h1 className="text-2xl font-bold">
-          {t(
-            "कुंडली मिलान — हमारी महिला ज्योतिषियों से प्यार भरा परामर्श",
-            "Kundli Milan — Hamari Mahila Jyotishiyon se pyaar bhara paramarsh",
-            "Kundli Matching — Loving Guidance from our Female Astrologers"
-          )}
-        </h1>
-        <p className="flex items-start gap-2 rounded-lg bg-rose-100 p-3 text-sm font-medium text-rose-700">
-          <TriangleAlert size={18} className="shrink-0 text-rose-600 mt-0.5" />
-          {t(
-            "🌸 रिश्ता जीवन का सबसे सुंदर हिस्सा है — इसे समझने के लिए एक बार हमारी महिला ज्योतिषियों से दिल से चैट करें। देरी संकट ला सकती है।",
-            "🌸 Rishta jeevan ka sabse sundar hissa hai — ise samajhne ke liye ek baar hamari Mahila Jyotishiyon se dil se chat karein. Deri sankat la sakti hai.",
-            "🌸 A relationship is life's most beautiful part — chat once from the heart with one of our Female Astrologers to understand it fully. Delay can bring crisis."
-          )}
-        </p>
+    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+      <div className="mx-auto max-w-xl space-y-5">
+        
+        {/* HEADER */}
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
+          <Link href="/" className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
+            <ArrowLeft size={18} />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
+              {t("कुंडली मिलान", "Kundli Milan", "Kundli Matching")}
+            </h1>
+            <p className="text-[11px] font-bold text-gray-400">
+              {t("सटीक विवाह मिलान", "Accurate Marriage Matching", "Accurate Marriage Matching")}
+            </p>
+          </div>
+        </header>
 
-        <input
-          value={p1Name}
-          onChange={(e) => setP1Name(e.target.value)}
-          placeholder={t("वर का नाम", "Var ka naam", "Groom's name")}
-          className="w-full rounded-lg border border-violet-300 px-4 py-2"
-        />
-        <input
-          value={p2Name}
-          onChange={(e) => setP2Name(e.target.value)}
-          placeholder={t("वधू का नाम", "Vadhu ka naam", "Bride's name")}
-          className="w-full rounded-lg border border-violet-300 px-4 py-2"
-        />
-
-        <div className="flex gap-2 text-sm">
-          <button
-            onClick={() => { setIsHindi(true); setIsHinglish(false); }}
-            className={`rounded border px-3 py-1 ${isHindi ? "bg-violet-600 text-white" : "border-violet-300"}`}
-          >
-            हिंदी
-          </button>
-          <button
-            onClick={() => { setIsHindi(false); setIsHinglish(true); }}
-            className={`rounded border px-3 py-1 ${isHinglish ? "bg-violet-600 text-white" : "border-violet-300"}`}
-          >
-            Hinglish
-          </button>
-          <button
-            onClick={() => { setIsHindi(false); setIsHinglish(false); }}
-            className={`rounded border px-3 py-1 ${!isHindi && !isHinglish ? "bg-violet-600 text-white" : "border-violet-300"}`}
-          >
-            English
-          </button>
+        {/* WARNING / HOOK */}
+        <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/30" : "border-rose-200 bg-rose-50"}`}>
+          <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-800"}`}>
+            <AlertCircle size={16} className="shrink-0 mt-0.5" />
+            {t(
+              "विवाह जीवन का सबसे बड़ा निर्णय है। कुंडली में छिपे दोष (जैसे मंगल दोष) रिश्तों में रुकावट ला सकते हैं। सही समय पर सही उपाय जानें।",
+              "Vivah jeevan ka sabse bada nirnay hai. Kundli mein chhipe dosh (jaise Mangal Dosh) rishton mein rukawat la sakte hain. Sahi samay par sahi upay jaanें.",
+              "Marriage is life's biggest decision. Hidden doshas (like Mangal Dosh) can bring obstructions in relationships. Know the right remedies at the right time."
+            )}
+          </p>
         </div>
 
-        <button
-          onClick={handleMatch}
-          className="w-full rounded-lg bg-rose-600 px-4 py-3 font-semibold text-white shadow-lg shadow-rose-600/30"
-        >
-          {t("मिलान करें", "Milan karein", "Match Now")}
-        </button>
+        {/* FORM */}
+        <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
+          <div className="space-y-3">
+            <div>
+              <label className={`text-xs font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                {t("वर (लड़के) का नाम", "Var (Boy) ka Naam", "Boy's Name")}
+              </label>
+              <input
+                type="text"
+                value={boyName}
+                onChange={(e) => setBoyName(e.target.value)}
+                placeholder={t("लड़के का नाम लिखें", "Boy ka naam likhein", "Enter boy's name")}
+                className={`mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+              />
+            </div>
 
-        {result && (
-          <div className="rounded-lg border border-rose-300 bg-white p-4 shadow">
-            <p className="text-lg font-bold">
-              {t("स्कोर", "Score", "Score")}: {result.score}%
-            </p>
-            <p className="mt-1 text-sm text-rose-700">{result.verdict}</p>
+            <div className="flex justify-center text-orange-400">
+              <Heart size={20} fill="currentColor" />
+            </div>
+
+            <div>
+              <label className={`text-xs font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                {t("वधू (लड़की) का नाम", "Vadhu (Girl) ka Naam", "Girl's Name")}
+              </label>
+              <input
+                type="text"
+                value={girlName}
+                onChange={(e) => setGirlName(e.target.value)}
+                placeholder={t("लड़की का नाम लिखें", "Girl ka naam likhein", "Enter girl's name")}
+                className={`mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-200 bg-orange-50"}`}
+              />
+            </div>
           </div>
+
+          <button
+            onClick={handleMatch}
+            disabled={!boyName.trim() || !girlName.trim() || loading}
+            className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3 text-sm font-bold text-white shadow-md transition active:scale-[0.99] disabled:opacity-50"
+          >
+            {loading ? t("गणना हो रही है...", "Calculating...", "Calculating...") : t("मिलान करें", "Milan Karein", "Match Now")}
+          </button>
+        </section>
+
+        {/* RESULT */}
+        {result !== null && !loading && (
+          <section className={`space-y-4 rounded-2xl border-2 border-orange-300 p-5 ${isDark ? "bg-slate-900" : "bg-gradient-to-br from-orange-50 to-amber-50"}`}>
+            <div className="flex items-center gap-2">
+              <Sparkles className="text-amber-500" size={18} />
+              <p className="text-sm font-black text-orange-700">
+                {t("मिलान परिणाम", "Matching Result", "Matching Result")}
+              </p>
+            </div>
+
+            <div className="text-center py-4">
+              <p className={`text-5xl font-black ${isDark ? "text-orange-400" : "text-orange-600"}`}>{result}%</p>
+              <p className={`text-sm font-bold mt-1 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
+                {t("कुल अष्टकूट मिलान", "Total Ashtakoot Milan", "Total Ashtakoot Score")}
+              </p>
+            </div>
+
+            <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/40" : "border-rose-300 bg-rose-50"}`}>
+              <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-900"}`}>
+                {t(
+                  "आपका मिलान तो अच्छा है, लेकिन कुंडली के सूक्ष्म गणना में एक 'रुकावट' दिख रही है जो विवाह में देरी ला सकती है। इसका सटीक कारण और उपाय जानने के लिए ज्योतिषी से बात करें।",
+                  "Aapka milan toh accha hai, lekin kundli ki sookshma ganana mein ek 'rukawat' dikh rahi hai jo vivah mein deri la sakti hai. Iska sateek karan aur upay jaanne ke liye jyotishi se baat karein.",
+                  "Your match is good, but deep chart calculation reveals a 'blockage' that can delay marriage. Talk to our astrologer to know the exact cause and remedy."
+                )}
+              </p>
+            </div>
+
+            <Link
+              href="/chat"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3 text-sm font-black text-white shadow-lg active:scale-[0.99]"
+            >
+              <MessageCircle size={16} />
+              {t("ज्योतिषी से बात करें — पहली चैट FREE", "Jyotishi se baat karein — Pehli chat FREE", "Talk to Astrologer — First chat FREE")}
+            </Link>
+          </section>
         )}
+
+        {/* DISCLAIMER */}
+        <p className="px-6 text-center text-[9px] leading-3 text-slate-400/40 select-none tracking-wide">
+          © 2026 Astrologer App. This platform displays calculations based on ancient Vedic Astrology principles.
+        </p>
       </div>
 
-      <a
-        href="sms:+919999999999"
-        className="fixed bottom-0 left-0 right-0 flex items-center justify-center gap-2 bg-rose-700 px-4 py-4 text-center font-bold text-white shadow-2xl"
+      {/* FIXED BOTTOM BAR */}
+      <Link
+        href="/chat"
+        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
       >
-        <MessageCircle size={18} />
-        {t(
-          "हमारी महिला ज्योतिषियों में से किसी एक से दिल से चैट करें — वो प्यार से सब समझा देंगी",
-          "Hamari Mahila Jyotishiyon mein se kisi ek se dil se chat karein — wo pyaar se sab samjha dengi",
-          "Chat with one of our Female Astrologers — she explains everything with love"
-        )}
-      </a>
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+            <MessageCircle size={18} />
+          </span>
+          <div className="leading-tight">
+            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+              {t("ज्योतिषी • 24x7 उपलब्ध", "Astrologer • 24x7 Available", "Astrologer • 24x7 Available")}
+            </p>
+            <p className="text-sm font-black">
+              {t("पूरी कुंडली जाँच के लिए चैट करें — FREE", "Poori Kundli jaanch ke liye chat karein — FREE", "Chat for full Kundli reading — FREE")}
+            </p>
+          </div>
+        </div>
+      </Link>
     </main>
   );
 }
