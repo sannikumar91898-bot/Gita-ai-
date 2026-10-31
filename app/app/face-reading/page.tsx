@@ -1,4 +1,4 @@
-// app/app/face-reading/page.tsx
+// app/face-reading/page.tsx
 "use client";
 
 import { useRef, useState, ChangeEvent } from "react";
@@ -14,7 +14,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
-import { useApp } from "../../Providers";
+import { useApp } from "../Providers";
 
 export default function FaceReadingPage() {
   const { lang, theme } = useApp();
@@ -24,6 +24,7 @@ export default function FaceReadingPage() {
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Error handling state
   const [result, setResult] = useState<{
     title: string;
     insight: string;
@@ -47,12 +48,38 @@ export default function FaceReadingPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Photo Validation (Max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError(
+        t(
+          "फोटो 5MB से बड़ी नहीं होनी चाहिए। कृपया छोटी फोटो चुनें।",
+          "Photo 5MB se badi nahi honi chahiye. Kripya chhoti photo chunein.",
+          "Photo must be smaller than 5MB. Please choose a smaller photo."
+        )
+      );
+      return;
+    }
+
+    setError(null);
     const reader = new FileReader();
+    
+    // FileReader Error Handling
+    reader.onerror = () => {
+      setError(
+        t(
+          "फोटो पढ़ने में समस्या आई। कृपया दोबारा कोशिश करें।",
+          "Photo padhne mein samasya aayi. Kripya dobara koshish karein.",
+          "Error reading photo. Please try again."
+        )
+      );
+    };
+
     reader.onload = () => {
       setPhoto(reader.result as string);
       setResult(null);
       setLoading(true);
 
+      // Marketing Magic: 2.2 sec delay
       window.setTimeout(() => {
         setResult({
           title: t(
@@ -80,6 +107,7 @@ export default function FaceReadingPage() {
   const reset = () => {
     setPhoto(null);
     setResult(null);
+    setError(null);
     setLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
@@ -87,16 +115,12 @@ export default function FaceReadingPage() {
   return (
     <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
-        {/* ================= HEADER ================= */}
-        <header
-          className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}
-        >
+        {/* HEADER */}
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link
             href="/"
             className={`rounded-xl p-2 ${
-              isDark
-                ? "bg-slate-800 text-violet-200"
-                : "bg-orange-50 text-orange-600"
+              isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"
             }`}
           >
             <ArrowLeft size={18} />
@@ -106,11 +130,7 @@ export default function FaceReadingPage() {
               {t("फेस रीडिंग", "Face Reading", "Face Reading")}
             </h1>
             <p className="text-[11px] font-semibold text-slate-500">
-              {t(
-                "वैदिक + AI विश्लेषण",
-                "Vedic + AI Analysis",
-                "Vedic + AI Analysis"
-              )}
+              {t("वैदिक + AI विश्लेषण", "Vedic + AI Analysis", "Vedic + AI Analysis")}
             </p>
           </div>
           <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-bold text-emerald-700">
@@ -118,21 +138,22 @@ export default function FaceReadingPage() {
           </span>
         </header>
 
-        {/* ================= UPLOAD ================= */}
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="rounded-xl border border-red-300 bg-red-50 p-3 text-center text-sm font-bold text-red-700">
+            {error}
+          </div>
+        )}
+
+        {/* UPLOAD */}
         {!photo && (
-          <section
-            className={`space-y-4 rounded-2xl border p-5 text-center ${cardClass}`}
-          >
+          <section className={`space-y-4 rounded-2xl border p-5 text-center ${cardClass}`}>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-400 text-white shadow-lg">
               <ScanFace size={42} />
             </div>
 
             <h2 className="text-lg font-bold">
-              {t(
-                "अपना फोटो अपलोड करें",
-                "Apna photo upload karein",
-                "Upload your photo"
-              )}
+              {t("अपना फोटो अपलोड करें", "Apna photo upload karein", "Upload your photo")}
             </h2>
 
             <p className="text-sm text-slate-600">
@@ -146,7 +167,7 @@ export default function FaceReadingPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg, image/png, image/webp"
               onChange={handleFile}
               className="hidden"
               id="face-upload"
@@ -171,7 +192,7 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* ================= PREVIEW + LOADING ================= */}
+        {/* PREVIEW + LOADING */}
         {photo && (
           <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
             <div className="flex items-center gap-4">
@@ -184,34 +205,16 @@ export default function FaceReadingPage() {
               <div className="flex-1">
                 <p className="text-sm font-bold">
                   {loading
-                    ? t(
-                        "विश्लेषण हो रहा है...",
-                        "Analysing...",
-                        "Analysing..."
-                      )
-                    : t(
-                        "विश्लेषण पूरा हुआ",
-                        "Analysis Complete",
-                        "Analysis Complete"
-                      )}
+                    ? t("विश्लेषण हो रहा है...", "Analysing...", "Analysing...")
+                    : t("विश्लेषण पूरा हुआ", "Analysis Complete", "Analysis Complete")}
                 </p>
                 <p className="text-xs text-slate-500">
                   {loading
-                    ? t(
-                        "कृपया 2 सेकंड रुकें",
-                        "Please wait 2 seconds",
-                        "Please wait 2 seconds"
-                      )
-                    : t(
-                        "नीचे परिणाम देखें",
-                        "See result below",
-                        "See result below"
-                      )}
+                    ? t("कृपया 2 सेकंड रुकें", "Please wait 2 seconds", "Please wait 2 seconds")
+                    : t("नीचे परिणाम देखें", "See result below", "See result below")}
                 </p>
               </div>
-              {loading && (
-                <Loader2 className="animate-spin text-orange-500" size={24} />
-              )}
+              {loading && <Loader2 className="animate-spin text-orange-500" size={24} />}
             </div>
 
             {loading && (
@@ -229,32 +232,24 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* ================= RESULT ================= */}
+        {/* RESULT */}
         {result && !loading && (
           <section
             className={`space-y-4 rounded-2xl border-2 border-orange-300 p-5 ${
-              isDark
-                ? "bg-slate-900"
-                : "bg-gradient-to-br from-orange-50 to-amber-50"
+              isDark ? "bg-slate-900" : "bg-gradient-to-br from-orange-50 to-amber-50"
             }`}
           >
             <div className="flex items-center gap-2">
-              <Star
-                className="text-amber-500"
-                size={18}
-                fill="currentColor"
-              />
-              <p className="text-sm font-black text-orange-700">
-                {result.title}
-              </p>
+              <Star className="text-amber-500" size={18} fill="currentColor" />
+              <p className="text-sm font-black text-orange-700">{result.title}</p>
             </div>
 
-            <p className="text-sm font-medium leading-6 text-slate-800">
+            <p className="text-sm font-medium leading-6 text-slate-800 dark:text-slate-200">
               {result.insight}
             </p>
 
-            <div className="rounded-xl border border-rose-300 bg-rose-50 p-4">
-              <p className="text-xs font-semibold leading-5 text-rose-800">
+            <div className="rounded-xl border border-rose-300 bg-rose-50 p-4 dark:bg-rose-950/30 dark:border-rose-900">
+              <p className="text-xs font-semibold leading-5 text-rose-800 dark:text-rose-200">
                 {result.hook}
               </p>
             </div>
@@ -273,21 +268,15 @@ export default function FaceReadingPage() {
 
             <button
               onClick={reset}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300"
             >
-              {t(
-                "दूसरी फोटो अपलोड करें",
-                "Try another photo",
-                "Try another photo"
-              )}
+              {t("दूसरी फोटो अपलोड करें", "Try another photo", "Try another photo")}
             </button>
           </section>
         )}
 
-        {/* ================= TRUST STRIP ================= */}
-        <div
-          className={`grid grid-cols-3 gap-2 rounded-2xl border p-3 text-center ${cardClass}`}
-        >
+        {/* TRUST STRIP */}
+        <div className={`grid grid-cols-3 gap-2 rounded-2xl border p-3 text-center ${cardClass}`}>
           <div>
             <p className="text-base font-black text-orange-600">50K+</p>
             <p className="text-[10px] font-bold text-slate-500">
@@ -308,7 +297,7 @@ export default function FaceReadingPage() {
           </div>
         </div>
 
-        {/* ================= DISCLAIMER (marketing-safe) ================= */}
+        {/* DISCLAIMER */}
         <p className="px-6 text-center text-[9px] leading-3 text-slate-400/40 dark:text-slate-500/30 select-none tracking-wide">
           {t(
             "© 2026 Astrologer App. यह प्लेटफ़ॉर्म प्राचीन वैदिक ज्योतिष एवं मुखाकृति विज्ञान (Face Reading) के सिद्धांतों पर आधारित गणनाएँ प्रदर्शित करता है।",
@@ -318,7 +307,7 @@ export default function FaceReadingPage() {
         </p>
       </div>
 
-      {/* ================= STICKY CTA → /chat ================= */}
+      {/* STICKY CTA */}
       <Link
         href="/chat"
         className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
@@ -329,11 +318,7 @@ export default function FaceReadingPage() {
           </span>
           <div className="leading-tight">
             <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
-              {t(
-                "ज्योतिषी • 24x7 उपलब्ध",
-                "Jyotishi • 24x7 Available",
-                "Astrologers • 24x7 Available"
-              )}
+              {t("ज्योतिषी • 24x7 उपलब्ध", "Jyotishi • 24x7 Available", "Astrologers • 24x7 Available")}
             </p>
             <p className="text-sm font-black">
               {t(
