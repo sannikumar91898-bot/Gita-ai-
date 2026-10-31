@@ -12,6 +12,9 @@ import {
   remedies,
 } from "@/schema";
 
+// 🔥 KNOWLEDGE ADAPTER IMPORT KIYA HAI 🔥
+import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
+
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
@@ -25,9 +28,9 @@ type PersonaConfig = {
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
-    specializations: "Love, relationships, marriage and deep emotional bonding",
-    tone: "Warm, highly empathetic, caring female astrologer voice in natural Hindi/Hinglish — like a real experienced lady Pandit ji who genuinely cares",
-    rules: "Speak with absolute authority, 100% confidence and certainty. Directly pinpoint the exact month and year of marriage using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real female astrologer.",
+    specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
+    tone: "Young, modern, highly energetic, cool, and relatable female astrologer. She speaks like a smart, confident elder sister/friend. Uses modern Hinglish, words like 'Listen', 'Tension mat lo', 'Main hoon na'.",
+    rules: "Speak with absolute authority and 100% certainty. Directly pinpoint the exact month and year of marriage or breakup recovery using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real young female astrologer.",
   },
   kriti: {
     name: "Acharya Kriti",
@@ -95,6 +98,49 @@ function extractRemedy(response: string) {
   };
 }
 
+// 🔥 SMART RAG (Knowledge Search) FUNCTION 🔥
+function getRelevantKnowledge(query: string): string {
+  const q = query.toLowerCase();
+  const allEntries = getExtendedKnowledgeEntries();
+  
+  const scoredEntries = allEntries.map((entry) => {
+    let score = 0;
+    
+    if (entry.keywords) {
+      entry.keywords.forEach((kw) => {
+        if (q.includes(kw.toLowerCase())) score += 5;
+      });
+    }
+
+    if (entry.aliases) {
+      entry.aliases.forEach((alias) => {
+        if (q.includes(alias.toLowerCase())) score += 3;
+      });
+    }
+
+    if (entry.question) {
+      const words = q.split(" ").filter(w => w.length > 3);
+      words.forEach(word => {
+        if (entry.question.toLowerCase().includes(word)) score += 2;
+      });
+    }
+
+    return { entry, score };
+  });
+
+  const topMatches = scoredEntries
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  if (topMatches.length === 0) return "";
+
+  return topMatches.map(({ entry }) => {
+    const answerText = entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
+    return `[Context Topic: ${entry.topic.toUpperCase()}]\nAstrological Logic: ${answerText}`;
+  }).join("\n\n");
+}
+
 async function getOrCreateConversation(
   userId: string,
   persona: keyof typeof PERSONAS,
@@ -105,12 +151,7 @@ async function getOrCreateConversation(
     const [existing] = await db
       .select()
       .from(conversations)
-      .where(
-        and(
-          eq(conversations.id, conversationId),
-          eq(conversations.userId, userId),
-        ),
-      )
+      .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
       .limit(1);
 
     if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
@@ -120,12 +161,7 @@ async function getOrCreateConversation(
   const [existing] = await db
     .select()
     .from(conversations)
-    .where(
-      and(
-        eq(conversations.userId, userId),
-        eq(conversations.persona, persona),
-      ),
-    )
+    .where(and(eq(conversations.userId, userId), eq(conversations.persona, persona)))
     .orderBy(desc(conversations.updatedAt))
     .limit(1);
 
@@ -133,12 +169,7 @@ async function getOrCreateConversation(
 
   const [created] = await db
     .insert(conversations)
-    .values({
-      userId,
-      title: "New Astro Consultation",
-      topic: topic || "general",
-      persona,
-    })
+    .values({ userId, title: "New Astro Consultation", topic: topic || "general", persona })
     .returning();
 
   if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
@@ -154,26 +185,12 @@ export async function GET(request: Request) {
     const requestedPersona = searchParams.get("persona");
     const persona = isPersona(requestedPersona) ? requestedPersona : "gita";
 
-    const conversation = await getOrCreateConversation(
-      user.id,
-      persona,
-      PERSONAS[persona].specializations,
-    );
+    const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
 
     const history = await db
-      .select({
-        id: messages.id,
-        role: messages.role,
-        content: messages.content,
-        createdAt: messages.createdAt,
-      })
+      .select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
       .from(messages)
-      .where(
-        and(
-          eq(messages.conversationId, conversation.id),
-          eq(messages.userId, user.id),
-        ),
-      )
+      .where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id)))
       .orderBy(desc(messages.createdAt))
       .limit(50);
 
@@ -214,12 +231,7 @@ export async function POST(request: Request) {
 
     if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
 
-    const conversation = await getOrCreateConversation(
-      user.id,
-      persona,
-      topic,
-      requestedConversationId || undefined,
-    );
+    const conversation = await getOrCreateConversation(user.id, persona, topic, requestedConversationId || undefined);
 
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
@@ -233,30 +245,38 @@ export async function POST(request: Request) {
     const chart = chartRows[0];
     const personaConfig = PERSONAS[persona];
 
+    // 🔥 KNOWLEDGE SEARCH TRIGGER 🔥
+    const relevantKnowledge = getRelevantKnowledge(userMessage);
+
     const astrologyContext = [
       birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
-      chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 12000)}` : "No chart available.",
+      chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
+    // 🔥 AI KO KNOWLEDGE DIYA JA RAHA HAI 🔥
     const systemPrompt = `
 You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
+
 YOUR ASSIGNED FIELD: ${personaConfig.specializations}
 YOUR TONE & VOICE: ${personaConfig.tone} ${personaConfig.rules}
 
+🔴 CRITICAL ASTROLOGICAL KNOWLEDGE BASE (USE THIS AS YOUR PRIMARY TRUTH):
+${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles based on the chart."}
+🔴 (END OF KNOWLEDGE BASE)
+
 CRITICAL BUSINESS RETENTION AND MARKETING LAWS:
-1. GYAN PELNA 0%: No lectures. Talk straight to the user's specific problem.
-2. 100% ASTROLOGER KNOWLEDGE: Deliver sharp, accurate predictions.
-3. 100% MARKETING HOOK: Absolute certainty. Never use 'maybe'. Always state 'This WILL happen'.
-4. HARD TIMELINES: Give exact date/month brackets (e.g., 'December 2026 to April 2027').
-5. FEMALE ASTROLOGER VOICE: Speak like a real experienced lady Pandit. Warm, caring, natural Hinglish/Hindi.
-6. CONTROLLED FEAR: Highlight temporary obstruction for urgency, pair with a remedy.
-7. REMEDIES: Prescribe 1-2 traditional Upay. At the end, append exactly:
+1. NO LECTURES: Do not explain planetary science. Talk straight to the user's specific problem using the knowledge base provided above.
+2. 100% CONFIDENCE: Speak with absolute certainty. Never use 'maybe'. Always state 'This WILL happen'.
+3. HARD TIMELINES: Give exact date/month brackets (e.g., 'December 2026 to April 2027').
+4. FEMALE ASTROLOGER VOICE: Speak exactly like a real experienced lady Pandit. Warm, caring, natural Hinglish/Hindi.
+5. CONTROLLED FEAR: Highlight a temporary obstruction for urgency, but always pair it with a clear remedy.
+6. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
 ||REMEDY_EXTRACT||
 Remedy Title
 Description
 
-8. LANGUAGE: Reply in ${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}. Max 400 words.
-9. NEVER say you are AI.
+7. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
+8. NEVER say you are AI.
 `.trim();
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -271,9 +291,9 @@ Description
     let remedy = null;
 
     try {
-      // API CALL WITH ERROR HANDLING FOR "SERVICE LIMIT"
+      // 🔥 MODEL UPDATE KIYA HAI (1.5-FLASH) 🔥
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+        model: "gemini-1.5-flash", 
         contents: contents,
         config: {
           systemInstruction: systemPrompt,
@@ -285,7 +305,6 @@ Description
     } catch (apiError: any) {
       console.error("Gemini API Limit Error:", apiError);
       
-      // Agar limit cross ho jaye, toh frontend ko crash mat hone do
       if (apiError?.status === 429 || apiError?.message?.includes("quota") || apiError?.message?.includes("limit")) {
          rawReply = "बेटा, अभी ग्रहों की चाल का गहराई से हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद दोबारा अपना प्रश्न पूछें, ताकि मैं आपको सटीक उपाय बता सकूँ। 🙏";
       } else {
@@ -299,7 +318,6 @@ Description
     const finalMessage = extracted.message;
     remedy = extracted.remedy;
 
-    // Save user + assistant messages
     try {
       await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
       await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
