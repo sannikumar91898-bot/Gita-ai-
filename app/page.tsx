@@ -17,7 +17,6 @@ import {
   ScanFace,
   Heart,
   Scroll,
-  AlertCircle,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -46,7 +45,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "5 Years",
     price: 19,
     oldPrice: 29,
-    image: "/gita.jpg",
+    image: "/astrologers/riya.jpg", // Gita uses Riya's photo from your folder
     review: "Bohot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️",
     reviewer: "Priya S."
   },
@@ -59,7 +58,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "7 Years",
     price: 22,
     oldPrice: 35,
-    image: "/kriti.jpg",
+    image: "/astrologers/kriti.jpg",
     review: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟",
     reviewer: "Rahul Verma"
   },
@@ -72,7 +71,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "15 Years",
     price: 25,
     oldPrice: 45,
-    image: "/devaki.jpg",
+    image: "/astrologers/devaki.jpg",
     isCelebrity: true,
     review: "Devaki ma'am is really an expert. Rishta tootne wala tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended for serious issues.",
     reviewer: "Neha M."
@@ -86,7 +85,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "25+ Years",
     price: 18,
     oldPrice: 30,
-    image: "/gargi.jpg",
+    image: "/astrologers/gargi.jpg",
     review: "Ghar me pichle 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏",
     reviewer: "Vikram R."
   },
@@ -105,10 +104,11 @@ export default function HomePage() {
 
   return (
     <main
-      className={`min-h-screen w-full pb-24 transition-colors duration-300 ${
+      className={`min-h-screen w-full pb-32 transition-colors duration-300 ${
         isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900"
       }`}
     >
+      {/* HEADER */}
       <header
         className={`sticky top-0 z-40 flex items-center justify-between px-4 py-3 shadow-sm ${
           isDark ? "bg-slate-900" : "bg-white"
@@ -143,6 +143,7 @@ export default function HomePage() {
       </header>
 
       <div className="mx-auto max-w-xl space-y-7 px-4 py-5">
+        {/* HERO BANNER */}
         <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white shadow-lg">
           <div className="relative z-10 space-y-2">
             <p className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-100">
@@ -158,14 +159,18 @@ export default function HomePage() {
                 "4 expert Astrologers • Instant replies • 100% Privacy"
               )}
             </p>
-            <button className="mt-3 rounded-full bg-white px-5 py-2 text-sm font-bold text-orange-600 shadow-sm transition active:scale-95">
+            <Link 
+              href="/chat"
+              className="mt-3 inline-block rounded-full bg-white px-5 py-2 text-sm font-bold text-orange-600 shadow-sm transition hover:bg-orange-50 active:scale-95"
+            >
               {t("फ्री चैट शुरू करें", "Start Free Chat", "Start Free Chat")}
-            </button>
+            </Link>
           </div>
           <div className="absolute -right-4 -top-4 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
           <div className="absolute -bottom-8 right-10 h-24 w-24 rounded-full bg-yellow-300/20 blur-xl" />
         </section>
 
+        {/* FREE TOOLS */}
         <section className="space-y-3">
           <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
             {t("फ्री टूल्स", "Free Tools", "Free Tools")}
@@ -197,6 +202,7 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* ASTROLOGER LIST */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
@@ -268,13 +274,18 @@ export default function HomePage() {
                           <span className="text-[10px] text-gray-400"> /min</span>
                         </p>
                       </div>
-                      <button className="rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow transition active:scale-95">
+                      {/* YAHAN LINK LAGA HAI */}
+                      <Link 
+                        href={`/chat/${astro.id}`}
+                        className="rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow transition hover:bg-orange-600 active:scale-95"
+                      >
                         {t("चैट करें", "Chat Now", "Chat Now")}
-                      </button>
+                      </Link>
                     </div>
                   </div>
                 </div>
                 
+                {/* REVIEW */}
                 <div className={`mt-1 rounded-lg p-2 text-[11px] leading-tight ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-50 text-gray-600"}`}>
                   <div className="flex items-center gap-1 mb-1">
                     <Star size={10} fill="#FBBF24" className="text-yellow-500" />
@@ -292,6 +303,7 @@ export default function HomePage() {
         </section>
       </div>
 
+      {/* BOTTOM NAVIGATION */}
       <nav
         className={`fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t px-2 py-2 ${
           isDark ? "border-slate-800 bg-slate-900" : "border-gray-200 bg-white"
@@ -299,7 +311,7 @@ export default function HomePage() {
       >
         {[
           { id: "home", label: t("होम", "Home", "Home"), icon: Home, href: "/" },
-          { id: "chat", label: t("चैट", "Chat", "Chat"), icon: MessageCircle, href: "#" },
+          { id: "chat", label: t("चैट", "Chat", "Chat"), icon: MessageCircle, href: "/chat" },
           { id: "daily", label: t("दैनिक", "Daily", "Daily"), icon: Sun, href: "/daily" },
           { id: "kundli", label: t("कुंडली", "Kundli", "Kundli"), icon: Scroll, href: "/kundli" },
           { id: "profile", label: t("प्रोफाइल", "Profile", "Profile"), icon: User, href: "/settings" },
@@ -321,27 +333,30 @@ export default function HomePage() {
         ))}
       </nav>
 
-      <a
-        href="sms:+919999999999"
-        className="fixed bottom-16 left-0 right-0 z-40 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl mx-auto max-w-xl rounded-t-xl"
-      >
-        <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
-            <MessageCircle size={14} />
-          </span>
-          <div className="leading-tight">
-            <p className="text-[9px] font-black uppercase tracking-wider text-rose-100">
-              {isHindi ? "महिला ज्योतिषी • 24x7 एसएमएस चैट" : isHinglish ? "Mahila Jyotishi • 24x7 SMS Chat" : "Female Astrologer • 24x7 SMS Chat"}
-            </p>
-            <p className="text-xs font-black">
-              {isHindi ? "तुरंत चैट करें — देरी संकट ला सकती है" : isHinglish ? "Turant Chat Karein — Deri Sankat La Sakti Hai" : "Chat Now — Delay Can Bring Crisis"}
-            </p>
+      {/* FIXED RED BAR (Changed text & Linked to Chat) */}
+      <div className="fixed bottom-[60px] left-0 right-0 z-40 mx-auto max-w-xl px-2">
+        <Link
+          href="/chat"
+          className="flex items-center justify-between gap-3 rounded-t-xl bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl"
+        >
+          <div className="flex items-center gap-2">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
+              <MessageCircle size={14} />
+            </span>
+            <div className="leading-tight">
+              <p className="text-[9px] font-black uppercase tracking-wider text-rose-100">
+                {isHindi ? "ज्योतिषी • 24x7 उपलब्ध" : "Astrologer • 24x7 Available"}
+              </p>
+              <p className="text-xs font-black">
+                {isHindi ? "अभी बात करें — पहली चैट FREE" : "Talk Now — First Chat FREE"}
+              </p>
+            </div>
           </div>
-        </div>
-        <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-rose-700">
-          {isHindi ? "चैट" : "Chat"}
-        </span>
-      </a>
+          <span className="rounded-full bg-white px-2 py-1 text-[10px] font-black text-rose-700">
+            {isHindi ? "चैट" : "Chat"}
+          </span>
+        </Link>
+      </div>
     </main>
   );
 }
