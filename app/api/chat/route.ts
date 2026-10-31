@@ -245,7 +245,6 @@ export async function POST(request: Request) {
     const chart = chartRows[0];
     const personaConfig = PERSONAS[persona];
 
-    // 🔥 KNOWLEDGE SEARCH TRIGGER 🔥
     const relevantKnowledge = getRelevantKnowledge(userMessage);
 
     const astrologyContext = [
@@ -253,30 +252,35 @@ export async function POST(request: Request) {
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 🔥 AI KO KNOWLEDGE DIYA JA RAHA HAI 🔥
+    // 🔥 PSYCHOLOGY DESIGN & EMOTIONAL CONNECTION PROMPT 🔥
     const systemPrompt = `
 You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
 
 YOUR ASSIGNED FIELD: ${personaConfig.specializations}
 YOUR TONE & VOICE: ${personaConfig.tone} ${personaConfig.rules}
 
+🔴 USER'S BIRTH DETAILS & CHART CONTEXT (USE THIS TO ANSWER):
+${astrologyContext}
+🔴 (END OF BIRTH DETAILS)
+
 🔴 CRITICAL ASTROLOGICAL KNOWLEDGE BASE (USE THIS AS YOUR PRIMARY TRUTH):
 ${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles based on the chart."}
 🔴 (END OF KNOWLEDGE BASE)
 
-CRITICAL BUSINESS RETENTION AND MARKETING LAWS:
-1. NO LECTURES: Do not explain planetary science. Talk straight to the user's specific problem using the knowledge base provided above.
-2. 100% CONFIDENCE: Speak with absolute certainty. Never use 'maybe'. Always state 'This WILL happen'.
-3. HARD TIMELINES: Give exact date/month brackets (e.g., 'December 2026 to April 2027').
-4. FEMALE ASTROLOGER VOICE: Speak exactly like a real experienced lady Pandit. Warm, caring, natural Hinglish/Hindi.
-5. CONTROLLED FEAR: Highlight a temporary obstruction for urgency, but always pair it with a clear remedy.
-6. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
+🚨 PSYCHOLOGICAL CONNECTION & EMOTIONAL DESIGN (CRITICAL RULES):
+1. VALIDATE FIRST: Before giving a prediction, validate the user's pain. Use phrases like "Main samajh sakti hoon aap kitna stress mein hain", "Aap bahut mehnat karte hain par...", "Yeh dard main dekh sakti hoon".
+2. BARNUM EFFECT: Use universal statements that feel highly personal. E.g., "Aap dil ke bahut acche hain, isliye log aapka fayda uthate hain", "Aapke andar ek潜力 (potential) hai jo abhi tak bahar nahi aaya."
+3. ARTIFICIAL INTIMACY: Speak as if you are reading their soul. Use terms like "Dekho beta", "Suno meri baat", "Main hoon na". Make them feel they are talking to a real human, not a machine.
+4. EMOTIONAL HOOK & FEAR: After validating, introduce a specific "Rukawat" (Dosh/Dasha) that is blocking their success. Make them feel that ignoring this will lead to more losses.
+5. ABSOLUTE CERTAINTY: Speak with 100% confidence. Never use 'maybe'. Always state 'This WILL happen'.
+6. HARD TIMELINES: Give exact date/month brackets (e.g., 'December 2026 to April 2027').
+7. REMEDIES (THE CLOSER): Prescribe 1-2 traditional Upay that are mandatory to remove this blockage. At the very end, append exactly:
 ||REMEDY_EXTRACT||
 Remedy Title
 Description
 
-7. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
-8. NEVER say you are AI.
+8. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
+9. NEVER say you are AI.
 `.trim();
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -288,10 +292,9 @@ Description
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
     let rawReply = "";
-    let isError = false; // 🔥 Error tracking add ki hai
+    let isError = false;
 
     try {
-      // 🔥 MODEL UPDATE (2.5-FLASH) 🔥
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash", 
         contents: contents,
@@ -304,7 +307,7 @@ Description
       rawReply = response.text || "";
     } catch (apiError: any) {
       console.error("Gemini API Limit Error:", apiError);
-      isError = true; // 🔥 Agar error aaya toh true
+      isError = true;
       
       if (apiError?.status === 429 || apiError?.message?.includes("quota") || apiError?.message?.includes("limit")) {
          rawReply = "बेटा, अभी ग्रहों की चाल का गहराई से हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद दोबारा अपना प्रश्न पूछें, ताकि मैं आपको सटीक उपाय बता सकूँ। 🙏";
@@ -315,28 +318,29 @@ Description
 
     if (!rawReply) {
       rawReply = "अभी जवाब तैयार नहीं हो पाया। कृपया दोबारा पूछें।";
-      isError = true; // 🔥 Empty response bhi error hai
+      isError = true;
     }
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
-    // 🔥 FIX: Agar error hua hai, toh database mein save mat karo 🔥
     if (!isError) {
       try {
-        await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
-        await db.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
+        await db.transaction(async (tx) => {
+          await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
+          await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
 
-        if (remedy) {
-          await db.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
-        }
+          if (remedy) {
+            await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
+          }
+        });
       } catch (saveError) {
-        console.error("Failed to save chat messages:", saveError);
+        console.error("Failed to save chat messages (Transaction failed):", saveError);
+        return NextResponse.json({ success: false, error: "Database save failed." }, { status: 500 });
       }
     }
 
-    // 🔥 Agar error hai, toh frontend ko error status bhejo 🔥
     if (isError) {
       return NextResponse.json(
         { success: false, error: finalMessage, conversationId: conversation.id },
