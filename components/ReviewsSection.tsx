@@ -86,7 +86,8 @@ export default function CompatibilityPage() {
             <div className="bg-blue-50/30 p-5 rounded-2xl border border-blue-100/50 space-y-4">
               <h3 className="text-sm font-black text-blue-700 flex items-center">🙋‍♂️ वर का विवरण (Groom)</h3>
               <div className="space-y-3">
-                <input type="text" placeholder="नाम लिखें" className="w-full text-xs p-3 border border-gray-200 rounded-xl outline-none" value={groom.name} onChange={(e) => set開room => setGroom({ ...groom, name: e.target.value })} />
+                {/* 🔥 FIXED: Yahan typo theek kar diya gaya hai 🔥 */}
+                <input type="text" placeholder="नाम लिखें" className="w-full text-xs p-3 border border-gray-200 rounded-xl outline-none" value={groom.name} onChange={(e) => setGroom({ ...groom, name: e.target.value })} />
                 <input type="date" className="w-full text-xs p-3 border border-gray-200 rounded-xl outline-none" value={groom.dateOfBirth} onChange={(e) => setGroom({ ...groom, dateOfBirth: e.target.value })} />
                 <input type="time" className="w-full text-xs p-3 border border-gray-200 rounded-xl outline-none" value={groom.timeOfBirth} onChange={(e) => setGroom({ ...groom, timeOfBirth: e.target.value })} />
                 <input type="text" placeholder="जन्म स्थान (शहर/राज्य)" className="w-full text-xs p-3 border border-gray-200 rounded-xl outline-none" value={groom.placeOfBirth} onChange={(e) => setGroom({ ...groom, placeOfBirth: e.target.value })} />
