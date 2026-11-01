@@ -2,7 +2,7 @@
 import React from "react";
 import "./globals.css";
 import { AppProvider } from "./Providers";
-import ServiceWorkerRegister from "./ServiceWorkerRegister"; // Naya component import kiya
+import ServiceWorkerRegister from "./ServiceWorkerRegister";
 
 export const metadata = {
   title: "Gita AI — Your Favorite Astrologer",
