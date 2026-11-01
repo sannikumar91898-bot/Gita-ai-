@@ -1,4 +1,3 @@
-
 import type { KnowledgeEntry, KnowledgeLanguage } from "../knowledge-base";
 import { HEALTH_AGE_ENTRIES } from "./health-age";
 import { FAVORABLE_PERIODS } from "./favorable-periods";
@@ -6,6 +5,11 @@ import { PLANETARY_DOSHAS } from "./planetary-doshas";
 import { MARRIAGE_RELATIONSHIPS } from "./marriage-relationships";
 import { WEALTH_PROPERTY_ENTRIES } from "./wealth-property";
 import { careerBusinessKnowledge } from "./career-business";
+
+// 🔥 NAYE IMPORTS 🔥
+import { FACE_READING_ENTRIES } from "./face-reading";
+import { PALMISTRY_ENTRIES } from "./palmistry";
+import { PANCHANG_ENTRIES } from "./panchang";
 
 type LocalizedText = Record<KnowledgeLanguage, string>;
 
@@ -102,6 +106,37 @@ export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
     ),
   );
 
+  // 🔥 NAYE MAPPINGS (Face, Palm, Panchang) 🔥
+  const faceReading = FACE_READING_ENTRIES.map((entry) =>
+    toKnowledgeEntry(
+      `face-${entry.id}`,
+      "face-reading",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.keywords, ...entry.tags],
+    ),
+  );
+
+  const palmistry = PALMISTRY_ENTRIES.map((entry) =>
+    toKnowledgeEntry(
+      `palm-${entry.id}`,
+      "palmistry",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.keywords, ...entry.tags],
+    ),
+  );
+
+  const panchang = PANCHANG_ENTRIES.map((entry) =>
+    toKnowledgeEntry(
+      `panchang-${entry.id}`,
+      "panchang",
+      entry.questions,
+      entry.answers,
+      [entry.category, entry.subcategory, ...entry.keywords, ...entry.tags],
+    ),
+  );
+
   return [
     ...health,
     ...periods,
@@ -109,5 +144,8 @@ export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
     ...relationships,
     ...wealth,
     ...careers,
+    ...faceReading, // 🔥 Added
+    ...palmistry,   // 🔥 Added
+    ...panchang,    // 🔥 Added
   ];
 }
