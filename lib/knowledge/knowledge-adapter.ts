@@ -1,4 +1,3 @@
-
 import type {
   KnowledgeEntry,
   KnowledgeLanguage,
@@ -10,6 +9,11 @@ import { PLANETARY_DOSHAS } from "./planetary-doshas";
 import { MARRIAGE_RELATIONSHIPS } from "./marriage-relationships";
 import { SEED_ENTRIES } from "./wealth-property";
 import { careerBusinessKnowledge } from "./career-business";
+
+// 🔥 NAYE IMPORTS (Face, Palm, Panchang) 🔥
+import { FACE_READING_ENTRIES } from "./face-reading";
+import { PALMISTRY_ENTRIES } from "./palmistry";
+import { PANCHANG_ENTRIES } from "./panchang";
 
 type RawEntry = Record<string, unknown>;
 
@@ -153,8 +157,6 @@ function normalizeEntry(
     asText(source.topic) ||
     "general";
 
-  // Keep original metadata available to the matching layer.
-  // The original question-answer source files are never modified.
   return {
     ...source,
 
@@ -261,6 +263,22 @@ export function getExtendedKnowledgeEntries(): KnowledgeEntry[] {
     ...normalizeCollection(
       careerBusinessKnowledge as unknown as RawEntry[],
       "career-business",
+    ),
+
+    // 🔥 NAYE COLLECTIONS ADD KIYE 🔥
+    ...normalizeCollection(
+      FACE_READING_ENTRIES,
+      "face-reading",
+    ),
+
+    ...normalizeCollection(
+      PALMISTRY_ENTRIES,
+      "palmistry",
+    ),
+
+    ...normalizeCollection(
+      PANCHANG_ENTRIES,
+      "panchang",
     ),
   ];
 }
