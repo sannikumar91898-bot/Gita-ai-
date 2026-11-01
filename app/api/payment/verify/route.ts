@@ -1,3 +1,4 @@
+// app/api/payment/verify/route.ts
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import Razorpay from "razorpay";
@@ -9,11 +10,17 @@ import { getUser } from "@/auth";
 export async function POST(req: Request) {
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = await req.json();
 
-    // 1. Signature Verify
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return NextResponse.json({ error: "Missing payment details" }, { status: 400 });
+    }
+
+    // 1. HMAC Signature Verify
     const body = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET!)
@@ -26,11 +33,16 @@ export async function POST(req: Request) {
 
     // 2. Database se order dhundo (status must be 'created')
     const paymentRecord = await db.select().from(payments)
-      .where(and(eq(payments.orderId, razorpay_order_id), eq(payments.userId, user.id), eq(payments.status, "created")))
+      .where(and(
+        eq(payments.orderId, razorpay_order_id), 
+        eq(payments.userId, user.id), 
+        eq(payments.status, "created")
+      ))
       .limit(1);
 
     const payment = paymentRecord[0];
     if (!payment) {
+      // Agar order nahi mila ya pehle se paid hai
       return NextResponse.json({ error: "Order not found or already processed." }, { status: 400 });
     }
 
@@ -42,12 +54,22 @@ export async function POST(req: Request) {
 
     const rzpPayment: any = await razorpay.payments.fetch(razorpay_payment_id);
 
-    // Kya Razorpay kehta hai ki paisa aaya?
-    if (rzpPayment.status !== "captured" && rzpPayment.status !== "authorized") {
-      return NextResponse.json({ error: "Payment not captured by Razorpay." }, { status: 400 });
+    // ChatGPT Point 1: Sirf 'captured' accept karein, 'authorized' nahi
+    if (rzpPayment.status !== "captured") {
+      return NextResponse.json({ error: "Payment is not captured yet." }, { status: 400 });
     }
 
-    // Kya amount match kar raha hai?
+    // ChatGPT Point 2: Currency match karein
+    if (rzpPayment.currency !== "INR") {
+      return NextResponse.json({ error: "Currency mismatch." }, { status: 400 });
+    }
+
+    // ChatGPT Point 3: Order ID match karein
+    if (rzpPayment.order_id !== razorpay_order_id) {
+      return NextResponse.json({ error: "Order ID mismatch." }, { status: 400 });
+    }
+
+    // Amount match karein (Database vs Razorpay)
     if (rzpPayment.amount !== payment.amountPaise) {
       return NextResponse.json({ error: "Amount mismatch." }, { status: 400 });
     }
@@ -61,15 +83,22 @@ export async function POST(req: Request) {
 
     // 5. 🔥 ATOMIC TRANSACTION & DUPLICATE PROTECTION 🔥
     await db.transaction(async (tx) => {
-      // Update payment status from 'created' to 'paid'
-      // Agar yeh return empty array hua, matlab koi aur process ne isko pehle hi 'paid' kar diya hai.
+      // ChatGPT Point 4 & 5: Status update ke sath hi condition lagayein
       const updatedPayment = await tx.update(payments)
-        .set({ paymentId: razorpay_payment_id, status: "paid", paidAt: new Date() })
-        .where(and(eq(payments.id, payment.id), eq(payments.status, "created")))
+        .set({ 
+          paymentId: razorpay_payment_id, 
+          status: "paid", 
+          paidAt: new Date() 
+        })
+        .where(and(
+          eq(payments.id, payment.id), 
+          eq(payments.status, "created") // Double spending rokne ke liye
+        ))
         .returning();
 
+      // Agar updatedPayment khali hua, matlab koi aur request pehle hi isko process kar chuki hai
       if (updatedPayment.length === 0) {
-        throw new Error("Payment already processed"); // Rokein taaki double paisa na mile
+        throw new Error("PAYMENT_ALREADY_PROCESSED");
       }
 
       // Add to Wallet
@@ -86,6 +115,12 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Verify Error:", error.message);
-    return NextResponse.json({ error: "Verification failed or payment already processed." }, { status: 500 });
+    
+    // Agar error duplicate processing ka hai, toh clear message bhejein
+    if (error.message === "PAYMENT_ALREADY_PROCESSED") {
+      return NextResponse.json({ error: "This payment has already been processed." }, { status: 409 }); // 409 Conflict
+    }
+    
+    return NextResponse.json({ error: "Verification failed. Please contact support." }, { status: 500 });
   }
 }
