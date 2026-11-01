@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
 import { useApp } from "../../Providers";
-import { Wallet, Lock } from "lucide-react"; // 🔥 Naye icons add kiye
+import { Wallet, Lock } from "lucide-react"; 
 
 type Message = {
   id: string;
@@ -46,7 +46,7 @@ export default function AstrologerChatPage() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   
-  // 🔥 NAYE STATES: Wallet aur Paywall ke liye
+  // 🔥 Wallet aur Paywall ke liye states
   const [walletBalance, setWalletBalance] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -266,11 +266,14 @@ export default function AstrologerChatPage() {
           <p className="text-[11px] font-semibold text-green-600">● Online</p>
         </div>
 
-        {/* 🔥 WALLET CRYSTAL (Upar Balance Dikhane ke liye) 🔥 */}
-        <div className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-100 text-orange-600"}`}>
+        {/* 🔥 FIXED: WALLET AB CLICKABLE HAI 🔥 */}
+        <Link 
+          href="/wallet" 
+          className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold transition hover:scale-105 cursor-pointer ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}
+        >
           <Wallet size={12} />
           ₹{walletBalance / 100}
-        </div>
+        </Link>
       </header>
 
       <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
