@@ -1,4 +1,4 @@
-import type { KnowledgeEntry, KnowledgeLanguage } from "../knowledge-base";
+ import type { KnowledgeEntry, KnowledgeLanguage } from "../knowledge-base";
 import { HEALTH_AGE_ENTRIES } from "./health-age";
 import { FAVORABLE_PERIODS } from "./favorable-periods";
 import { PLANETARY_DOSHAS } from "./planetary-doshas";
