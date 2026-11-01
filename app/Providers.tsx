@@ -127,7 +127,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshInProgressRef.current = true;
 
     try {
-      // 🔥 SIRF /api/me CHECK KARO, GUEST CREATE MAT KARO 🔥
+      // 1. Pehle check karo /api/me
       const response = await fetch("/api/me", {
         method: "GET",
         cache: "no-store",
@@ -136,23 +136,34 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (!response.ok) throw new Error(`/api/me failed: ${response.status}`);
 
-      const data = await response.json();
-      const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
+      let data = await response.json();
 
-      // Agar user nahi hai, toh null set karo. Chat page khud guest banayega.
+      // 🔥 2. AGAR USER NAHI HAI, TOH GUEST CREATE KARO 🔥
       if (!data?.user) {
-        if (mountedRef.current) {
-          setMe({
-            user: null,
-            entitlement: null,
-            birth: null,
-            hasChart: false,
-            googleAuthConfigured: false,
-            sessionError: false, // Guest login chat page handle karega
-          });
+        console.log("No session found, creating guest user...");
+        
+        const guestRes = await fetch("/api/auth/guest", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json" },
+        });
+
+        if (!guestRes.ok) {
+          throw new Error("Failed to create guest session");
         }
-        return;
+
+        // 3. Guest banne ke baad wapas /api/me call karo taaki naya user mil jaye
+        const meRes = await fetch("/api/me", {
+          method: "GET",
+          cache: "no-store",
+          headers: { Accept: "application/json" },
+        });
+
+        if (!meRes.ok) throw new Error("Failed to fetch user after guest creation");
+        
+        data = await meRes.json(); // Data ko update kar diya naye guest user ke data se
       }
+
+      const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
 
       const user: MeUser = {
         id: data.user.id,
@@ -187,6 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         googleAuthConfigured: data.googleAuthConfigured === true,
         sessionError: false,
       });
+      
     } catch (error) {
       console.error("App session refresh failed:", error instanceof Error ? error.message : "Unknown error");
       if (mountedRef.current) {
@@ -196,7 +208,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           birth: null,
           hasChart: false,
           googleAuthConfigured: false,
-          sessionError: true,
+          sessionError: true, // Ab error true hoga agar guest create bhi fail ho jaye
         });
       }
     } finally {
@@ -206,7 +218,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // 🔥 SIRF REFRESH CALL KARO, SERVICE WORKER YAHAN SE HATA DIYA HAI 🔥
     void refresh();
   }, [refresh]);
 
@@ -255,4 +266,4 @@ export function useApp(): Ctx {
   const context = useContext(AppContext);
   if (!context) throw new Error("useApp must be used inside AppProvider");
   return context;
-}
+} 
