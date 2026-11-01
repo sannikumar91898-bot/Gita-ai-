@@ -19,6 +19,16 @@ const CATEGORIES = [
   "other",
 ] as const;
 
+// Type define kiya taaki TypeScript ko koi confusion na ho
+type SupportTicketData = {
+  id: string;
+  email: string | null;
+  category: string;
+  subject: string;
+  message: string;
+  userId: string | null;
+};
+
 function jsonError(error: string, status: number) {
   return NextResponse.json(
     { error },
@@ -29,66 +39,63 @@ function jsonError(error: string, status: number) {
   );
 }
 
-async function sendSupportEmail(ticket: {
-  id: string;
-  email: string | null;
-  category: string;
-  subject: string;
-  message: string;
-  userId: string | null;
-}) {
-  const apiKey = process.env.RESEND_API_KEY;
-  const to = process.env.SUPPORT_EMAIL || "micsal91898@gmail.com";
-  const from = process.env.SUPPORT_FROM_EMAIL;
+// 🔥 FIXED FUNCTION 🔥
+async function sendSupportEmail(ticket: SupportTicketData): Promise<boolean> {
+  try {
+    const apiKey = process.env.RESEND_API_KEY;
+    const to = process.env.SUPPORT_EMAIL || "micsal91898@gmail.com";
+    const from = process.env.SUPPORT_FROM_EMAIL || "onboarding@resend.dev"; // Fallback
 
-  if (!apiKey || !from) {
-    console.error(
-      "Support email not configured. Ticket is still saved in database.",
-    );
+    // Agar API key nahi hai, toh email mat bhejo par ticket save rahega
+    if (!apiKey) {
+      console.warn("RESEND_API_KEY is missing. Email not sent.");
+      return false;
+    }
+
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: `[Gita AI Support] ${ticket.category.toUpperCase()}: ${ticket.subject}`,
+        text: [
+          "New Gita AI support ticket",
+          "",
+          `Ticket ID: ${ticket.id}`,
+          `Category: ${ticket.category}`,
+          `Customer email: ${ticket.email || "Not provided"}`,
+          `Customer reference: ${ticket.userId || "Unavailable"}`,
+          "",
+          "Customer message:",
+          ticket.message,
+          "",
+          "Reply through your configured support workflow. Do not share private account data.",
+        ].join("\n"),
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+
+    if (!response.ok) {
+      const details = await response.text().catch(() => "");
+      console.error("Support email provider failed:", response.status, details);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error inside sendSupportEmail:", error);
     return false;
   }
-
-  const response = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-    body: JSON.stringify({
-      from,
-      to: [to],
-      subject: `[Gita AI Support] ${ticket.category}: ${ticket.subject}`,
-      text: [
-        "New Gita AI support ticket",
-        "",
-        `Ticket ID: ${ticket.id}`,
-        `Category: ${ticket.category}`,
-        `Customer email: ${ticket.email || "Not provided"}`,
-        `Customer reference: ${ticket.userId || "Unavailable"}`,
-        "",
-        "Customer message:",
-        ticket.message,
-        "",
-        "Reply through your configured support workflow. Do not share private account data.",
-      ].join("\n"),
-    }),
-    signal: AbortSignal.timeout(10000),
-  });
-
-  if (!response.ok) {
-    const details = await response.text().catch(() => "");
-    console.error("Support email provider failed:", response.status, details);
-    return false;
-  }
-
-  return true;
 }
 
 export async function POST(request: Request) {
   try {
     const user = await getUser();
-
     const body: unknown = await request.json().catch(() => null);
 
     if (!body || typeof body !== "object") {
@@ -97,24 +104,15 @@ export async function POST(request: Request) {
 
     const data = body as Record<string, unknown>;
 
-    // Hidden honeypot field: bots that fill it are rejected.
-    if (
-      typeof data.website === "string" &&
-      data.website.trim().length > 0
-    ) {
+    // Honeypot field for bots
+    if (typeof data.website === "string" && data.website.trim().length > 0) {
       return NextResponse.json({ success: true });
     }
 
-    const category =
-      typeof data.category === "string" ? data.category : "";
-    const subject =
-      typeof data.subject === "string" ? data.subject.trim() : "";
-    const message =
-      typeof data.message === "string" ? data.message.trim() : "";
-    const suppliedEmail =
-      typeof data.email === "string"
-        ? data.email.trim().toLowerCase()
-        : "";
+    const category = typeof data.category === "string" ? data.category : "";
+    const subject = typeof data.subject === "string" ? data.subject.trim() : "";
+    const message = typeof data.message === "string" ? data.message.trim() : "";
+    const suppliedEmail = typeof data.email === "string" ? data.email.trim().toLowerCase() : "";
 
     if (!CATEGORIES.includes(category as (typeof CATEGORIES)[number])) {
       return jsonError("Please select a valid issue category.", 400);
@@ -128,17 +126,13 @@ export async function POST(request: Request) {
       return jsonError("Message must be between 10 and 4000 characters.", 400);
     }
 
-    if (
-      suppliedEmail.length > 254 ||
-      (suppliedEmail &&
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(suppliedEmail))
-    ) {
+    if (suppliedEmail.length > 254 || (suppliedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(suppliedEmail))) {
       return jsonError("Please enter a valid email address.", 400);
     }
 
-    // Prefer the email already associated with the session.
     const email = user?.email || suppliedEmail || null;
 
+    // Database mein save karo
     const [ticket] = await db
       .insert(supportTickets)
       .values({
@@ -162,7 +156,7 @@ export async function POST(request: Request) {
       return jsonError("Unable to save your support request.", 500);
     }
 
-    // Database save succeeds independently of email delivery.
+    // Email bhejo (agar fail bhi ho jaye toh ticket save ho chuka hai)
     const emailSent = await sendSupportEmail(ticket);
 
     return NextResponse.json(
@@ -172,16 +166,12 @@ export async function POST(request: Request) {
         notificationSent: emailSent,
         message: emailSent
           ? "Your request has been sent to support."
-          : "Your request has been saved. Email notification is not configured or temporarily unavailable.",
+          : "Your request has been saved. Email notification is temporarily unavailable.",
       },
       { status: 201 },
     );
   } catch (error) {
-    console.error(
-      "POST /api/support failed:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
-
+    console.error("POST /api/support failed:", error instanceof Error ? error.message : "Unknown error");
     return jsonError("Unable to submit your request right now.", 500);
   }
 }
@@ -189,17 +179,9 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     const user = await getUser();
-    const adminEmail = process.env.SUPPORT_ADMIN_EMAIL
-      ?.trim()
-      .toLowerCase();
+    const adminEmail = process.env.SUPPORT_ADMIN_EMAIL?.trim().toLowerCase();
 
-    if (
-      !user ||
-      user.isGuest ||
-      !user.email ||
-      !adminEmail ||
-      user.email.toLowerCase() !== adminEmail
-    ) {
+    if (!user || user.isGuest || !user.email || !adminEmail || user.email.toLowerCase() !== adminEmail) {
       return jsonError("Forbidden.", 403);
     }
 
@@ -223,11 +205,7 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {
-    console.error(
-      "GET /api/support failed:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
-
+    console.error("GET /api/support failed:", error instanceof Error ? error.message : "Unknown error");
     return jsonError("Unable to load support requests.", 500);
   }
 }
