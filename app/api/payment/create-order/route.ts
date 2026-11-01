@@ -1,3 +1,4 @@
+// app/api/payment/create-order/route.ts
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { getUser } from "@/auth";
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     });
 
     const options = {
-      amount: amount * 100, // Convert to paise
+      amount: Number(amount) * 100, // 🔥 FIX: Number me convert kiya
       currency: "INR",
       receipt: `rcpt_${Date.now()}`,
     };
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
     await db.insert(payments).values({
       userId: user.id,
       orderId: order.id,
-      amountPaise: order.amount,
+      amountPaise: Number(order.amount), // 🔥 FIX: Yahan Number() laga diya taaki Type Error khatam ho
       status: "created",
     });
 
