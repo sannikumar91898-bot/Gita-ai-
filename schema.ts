@@ -14,9 +14,9 @@ import {
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   googleId: text("google_id").unique(),
-  email: text("email").unique(), // 🔥 Unique Email
+  email: text("email").unique(), 
   name: text("name"),
-  password: text("password"), // 🔥 Password Column
+  password: text("password"), 
   language: text("language").notNull().default("en"),
   isGuest: boolean("is_guest").notNull().default(true),
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
@@ -76,7 +76,7 @@ export const payments = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   orderId: text("order_id").notNull().unique(),
-  paymentId: text("payment_id"),
+  paymentId: text("payment_id").unique(), // 🔥 YEH UNIQUE HO GAYA HAI 🔥
   amountPaise: integer("amount_paise").notNull(),
   currency: text("currency").notNull().default("INR"),
   status: text("status").notNull().default("created"),
@@ -84,4 +84,79 @@ export const payments = pgTable("payments", {
   paidAt: timestamp("paid_at", { withTimezone: true }),
 });
 
-// ... Baaki tables (remedies, palmReadings, supportTickets, etc.) waisi hi rahengi
+// Baaki tables (remedies, palmReadings, supportTickets, etc.)
+export const webhookEvents = pgTable("webhook_events", {
+  eventId: text("event_id").primaryKey(),
+  processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const remedies = pgTable("remedies", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull().default(""),
+  category: text("category").notNull().default("general"),
+  completedDates: jsonb("completed_dates").notNull().$type<string[]>().default([]),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const palmReadings = pgTable("palm_readings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  interpretation: text("interpretation").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const aiResponseCache = pgTable(
+  "ai_response_cache",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    questionKey: text("question_key").notNull().unique(),
+    originalQuestion: text("original_question").notNull(),
+    aiAnswer: text("ai_answer").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("question_key_idx").on(table.questionKey)]
+);
+
+export const astrologyKnowledgeBase = pgTable(
+  "astrology_knowledge_base",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    category: text("category").notNull(),
+    searchKey: text("search_key").notNull().unique(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("search_key_idx").on(table.searchKey)]
+);
+
+export const supportTickets = pgTable("support_tickets", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  email: text("email"),
+  category: text("category").notNull(),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const astrologerReviews = pgTable(
+  "astrologer_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    persona: text("persona").notNull(),
+    reviewerName: text("reviewer_name").notNull(),
+    stars: integer("stars").notNull().default(5),
+    comment: text("comment").notNull(),
+    helpfulCount: integer("helpful_count").notNull().default(0),
+    isApproved: boolean("is_approved").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("persona_idx").on(table.persona),
+    index("is_approved_idx").on(table.isApproved),
+  ]
+);
