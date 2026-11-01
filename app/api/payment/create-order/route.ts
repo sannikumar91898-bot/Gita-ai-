@@ -1,6 +1,9 @@
+// app/api/payment/create-order/route.ts
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { getUser } from "@/auth";
+import { db } from "@/index";
+import { payments } from "@/schema"; // 🔥 Database schema import kiya
 
 export async function POST(req: Request) {
   try {
@@ -26,6 +29,14 @@ export async function POST(req: Request) {
     };
 
     const order = await razorpay.orders.create(options);
+
+    // 🔥 SABSE ZAROORI STEP: Order ko database mein save karo 🔥
+    await db.insert(payments).values({
+      userId: user.id,
+      orderId: order.id,
+      amountPaise: order.amount, // Razorpay ne jo paise mein amount diya (e.g., 1100)
+      status: "created",
+    });
 
     return NextResponse.json({
       orderId: order.id,
