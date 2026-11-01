@@ -45,7 +45,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "5 Years",
     price: 19,
     oldPrice: 29,
-    image: "/astrologers/riya.jpg", // Gita uses Riya's photo from your folder
+    image: "/astrologers/riya.jpg", 
     review: "Bohot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️",
     reviewer: "Priya S."
   },
@@ -129,8 +129,11 @@ export default function HomePage() {
           >
             <Settings size={18} />
           </Link>
-          <div
-            className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold ${
+          
+          {/* 🔥 FIXED: Wallet Div ko Link banaya gaya hai 🔥 */}
+          <Link
+            href="/wallet"
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold cursor-pointer transition hover:scale-105 ${
               isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"
             }`}
           >
@@ -138,7 +141,7 @@ export default function HomePage() {
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white">
               +
             </span>
-          </div>
+          </Link>
         </div>
       </header>
 
@@ -180,7 +183,8 @@ export default function HomePage() {
               { name: t("कुंडली", "Kundli", "Kundli"), icon: Scroll, href: "/kundli" },
               { name: t("मिलान", "Matching", "Matching"), icon: Heart, href: "/matching" },
               { name: t("राशिफल", "Horoscope", "Horoscope"), icon: Sun, href: "/daily" },
-              { name: t("पंचांग", "Panchang", "Panchang"), icon: CalendarDays, href: "#" },
+              // 🔥 FIXED: Panchang href changed from "#" to "/panchang" 🔥
+              { name: t("पंचांग", "Panchang", "Panchang"), icon: CalendarDays, href: "/panchang" },
               { name: t("हस्तरेखा", "Palmistry", "Palmistry"), icon: Hand, href: "/palmistry" },
               { name: t("फेस रीडिंग", "Face Reading", "Face Reading"), icon: ScanFace, href: "/face-reading" },
             ].map((tool, idx) => (
@@ -274,7 +278,6 @@ export default function HomePage() {
                           <span className="text-[10px] text-gray-400"> /min</span>
                         </p>
                       </div>
-                      {/* YAHAN LINK LAGA HAI */}
                       <Link 
                         href={`/chat/${astro.id}`}
                         className="rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow transition hover:bg-orange-600 active:scale-95"
@@ -333,7 +336,7 @@ export default function HomePage() {
         ))}
       </nav>
 
-      {/* FIXED RED BAR (Changed text & Linked to Chat) */}
+      {/* FIXED RED BAR */}
       <div className="fixed bottom-[60px] left-0 right-0 z-40 mx-auto max-w-xl px-2">
         <Link
           href="/chat"
