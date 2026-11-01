@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
 import { useApp } from "../../Providers";
+import { Wallet, Lock } from "lucide-react"; // 🔥 Naye icons add kiye
 
 type Message = {
   id: string;
@@ -44,10 +45,31 @@ export default function AstrologerChatPage() {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  
+  // 🔥 NAYE STATES: Wallet aur Paywall ke liye
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const endRef = useRef<HTMLDivElement>(null);
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
+
+  // 🔥 Wallet Balance fetch karne ka function
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me", { cache: "no-store" });
+      const data = await res.json();
+      if (data.user) {
+        setWalletBalance(data.user.walletBalancePaise || 0);
+      }
+    } catch (e) {
+      console.error("Failed to fetch wallet balance", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchProfile();
+  }, [fetchProfile]);
 
   const loadHistory = useCallback(
     async (signal?: AbortSignal) => {
@@ -56,7 +78,6 @@ export default function AstrologerChatPage() {
       setHistoryLoading(true);
 
       try {
-        // 🔥 FIX: Guest Login call karo aur check karo ki successful hua ya nahi
         const guestRes = await fetch("/api/auth/guest", { method: "POST" });
         
         if (!guestRes.ok) {
@@ -96,7 +117,6 @@ export default function AstrologerChatPage() {
         console.error("Astrologer history load failed:", error);
         
         if (activePersonaRef.current === id) {
-          // Agar error aata hai, toh chat mein hi dikha do
           setMessages([
             {
               id: createMessageId(),
@@ -168,6 +188,14 @@ export default function AstrologerChatPage() {
 
       if (activePersonaRef.current !== selectedPersona) return;
 
+      // 🔥 FIX: Agar backend se 402 (Payment Required) aata hai, toh Paywall dikhao
+      if (response.status === 402) {
+        setShowPaywall(true);
+        setLoading(false);
+        requestInProgress.current = false;
+        return;
+      }
+
       if (!response.ok) {
         setMessages((previous) => [
           ...previous,
@@ -183,6 +211,9 @@ export default function AstrologerChatPage() {
           ...previous,
           { id: createMessageId(), role: "assistant", content: data.reply },
         ]);
+        
+        // 🔥 Message successful hone par wallet balance update karo
+        void fetchProfile(); 
       } else {
         setMessages((previous) => [
           ...previous,
@@ -233,6 +264,12 @@ export default function AstrologerChatPage() {
             {astrologer.name}
           </h1>
           <p className="text-[11px] font-semibold text-green-600">● Online</p>
+        </div>
+
+        {/* 🔥 WALLET CRYSTAL (Upar Balance Dikhane ke liye) 🔥 */}
+        <div className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-100 text-orange-600"}`}>
+          <Wallet size={12} />
+          ₹{walletBalance / 100}
         </div>
       </header>
 
@@ -324,6 +361,45 @@ export default function AstrologerChatPage() {
           →
         </button>
       </form>
+
+      {/* 🔥 SHAGUN PAYWALL MODAL 🔥 */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
+          <div className={`w-full max-w-sm rounded-3xl p-6 text-center ${isDark ? "bg-slate-900 text-white" : "bg-white text-gray-900"}`}>
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-600">
+              <Lock size={32} />
+            </div>
+            <h2 className="text-xl font-black text-orange-600 mb-2">
+              Aapka Free Session Samapt Hua
+            </h2>
+            <p className={`text-sm mb-6 ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+              {astrologer?.name} ji ne aapki kundli mein jo "Rukawat" dekhi hai, usko door karne ka samay aa gaya hai. Aage ki baat karne ke liye shagun dakshina arpit karein.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-2 mb-6">
+              <Link href="/wallet" className="rounded-xl border-2 border-orange-500 bg-orange-50 p-3 text-center transition hover:bg-orange-100">
+                <p className="text-lg font-black text-orange-600">₹11</p>
+                <p className="text-[10px] font-bold text-gray-500">Quick Answer</p>
+              </Link>
+              <Link href="/wallet" className="rounded-xl border-2 border-orange-500 bg-orange-50 p-3 text-center transition hover:bg-orange-100">
+                <p className="text-lg font-black text-orange-600">₹51</p>
+                <p className="text-[10px] font-bold text-gray-500">Full Solution</p>
+              </Link>
+            </div>
+
+            <Link
+              href="/wallet"
+              className="block w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3 text-sm font-black text-white shadow-lg active:scale-95"
+            >
+              Dakshina Dein & Solution Payein
+            </Link>
+            
+            <button onClick={() => setShowPaywall(false)} className="mt-4 text-xs font-bold text-gray-400">
+              Abhi Nahi
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
