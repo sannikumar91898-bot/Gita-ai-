@@ -21,6 +21,11 @@ export async function POST(req: Request) {
       .update(rawBody)
       .digest("hex");
 
+    // 🔥 CRITICAL FIX: Length check (Server crash se bachne ke liye) 🔥
+    if (expectedSignature.length !== signature.length) {
+      return NextResponse.json({ error: "Invalid webhook signature length" }, { status: 400 });
+    }
+
     const isSignatureValid = crypto.timingSafeEqual(
       Buffer.from(expectedSignature, "utf-8"),
       Buffer.from(signature, "utf-8")
@@ -43,6 +48,12 @@ export async function POST(req: Request) {
     const razorpay_order_id = paymentEntity.order_id;
     const razorpay_payment_id = paymentEntity.id;
     const amountPaise = paymentEntity.amount;
+
+    // 🔥 NEW FIX: Currency Validation 🔥
+    if (paymentEntity.currency !== "INR") {
+      console.error("Webhook currency mismatch");
+      return NextResponse.json({ error: "Currency mismatch" }, { status: 400 });
+    }
 
     // 4. Database mein order dhundein
     const paymentRecord = await db.select().from(payments)
@@ -91,9 +102,10 @@ export async function POST(req: Request) {
       }
 
       // User ke wallet me paise add karein
+      // Yahan payment.userId use karenge kyunki getUser() webhook me kaam nahi karega (webhook me user session nahi hota)
       await tx.update(users)
         .set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${finalAmountToAdd}` })
-        .where(eq(users.id, payment.userId)); // Yahan payment.userId use karenge kyunki getUser() webhook me kaam nahi karega
+        .where(eq(users.id, payment.userId)); 
     });
 
     return NextResponse.json({ status: "success" }, { status: 200 });
