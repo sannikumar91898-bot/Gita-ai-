@@ -9,6 +9,9 @@
   "orientation": "portrait",
   "background_color": "#0a0517",
   "theme_color": "#ea580c",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["lifestyle", "education"],
   "icons": [
     {
       "src": "/icons/geeta_ai_icon_192.png",
@@ -21,6 +24,38 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/home.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Gita AI Home Screen"
+    },
+    {
+      "src": "/screenshots/chat.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Chat with Astrologer"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Chat with Astrologer",
+      "short_name": "Chat",
+      "description": "Talk to our expert female astrologers",
+      "url": "/chat",
+      "icons": [{ "src": "/icons/geeta_ai_icon_192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Free Kundli",
+      "short_name": "Kundli",
+      "description": "Check your Vedic birth chart",
+      "url": "/kundli",
+      "icons": [{ "src": "/icons/geeta_ai_icon_192.png", "sizes": "192x192" }]
     }
   ]
 }
