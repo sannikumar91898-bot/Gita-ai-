@@ -1,12 +1,11 @@
 // app/settings/page.tsx
 "use client";
 
-import { ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Flame, Star, Gem, Clock, Wallet, Headphones, Gift, List, UserPlus, Video, ShoppingBag, BookOpen, MessageCircle, Scroll, Settings, Phone } from "lucide-react";
+import { ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, Star } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
 export default function SettingsPage() {
-  // 🔥 FIX: setLang ki jagah setLanguage kar diya hai 🔥
   const { lang, setLanguage, theme, setTheme } = useApp();
 
   const isDark = theme === "dark";
@@ -20,28 +19,18 @@ export default function SettingsPage() {
   const cardClass = isDark ? "border-slate-800 bg-[#1e293b]" : "border-orange-100 bg-white shadow-sm";
   const mutedClass = isDark ? "text-slate-400" : "text-gray-500";
 
+  // ✅ Sirf kaam ke features
   const exploreItems = [
     { name: t("होम", "Home", "Home"), icon: Home, href: "/" },
-    { name: t("पूजा बुक करें", "Book a Pooja", "Book a Pooja"), icon: Flame, href: "#" },
-    { name: t("फ्री सर्विसेज", "Free Services", "Free Services"), icon: Star, href: "#" },
-    { name: t("रत्न", "Gemstones", "Gemstones"), icon: Gem, href: "#" },
-    { name: t("फ्री सेशन", "Free Session", "Free Session"), icon: Clock, href: "#" },
+    { name: t("गीता AI से चैट करें", "Chat with Gita AI", "Chat with Gita AI"), icon: MessageCircle, href: "/chat" },
+    { name: t("मेरी कुंडली", "My Kundli", "My Kundli"), icon: Scroll, href: "/kundli" },
   ];
 
   const accountItems = [
-    { name: t("कस्टमर सपोर्ट चैट", "Customer Support Chat", "Customer Support Chat"), icon: Headphones, href: "#" },
-    { name: t("वॉलेट ट्रांजैक्शन", "Wallet Transactions", "Wallet Transactions"), icon: Wallet, href: "#" },
-    { name: t("गिफ्ट कार्ड रिडीम करें", "Redeem Gift Card", "Redeem Gift Card"), icon: Gift, href: "#" },
-    { name: t("ऑर्डर हिस्ट्री", "Order History", "Order History"), icon: List, href: "#" },
-    { name: t("मेरी फॉलोइंग", "My Following", "My Following"), icon: UserPlus, href: "#" },
-    { name: t("वीडियो टेस्टीमोनियल", "Video Testimonials", "Video Testimonials"), icon: Video, href: "#" },
-  ];
-
-  const serviceItems = [
-    { name: t("एस्ट्रो रेमेडी", "AstroRemedy", "AstroRemedy"), icon: ShoppingBag, href: "#" },
-    { name: t("ज्योतिष ब्लॉग", "Astrology Blog", "Astrology Blog"), icon: BookOpen, href: "#" },
-    { name: t("ज्योतिषियों से चैट करें", "Chat with Astrologers", "Chat with Astrologers"), icon: MessageCircle, href: "/chat" },
-    { name: t("मेरी कुंडली", "My Kundli", "My Kundli"), icon: Scroll, href: "/kundli" },
+    { name: t("हेल्प सेंटर (FAQ)", "Help Center (FAQ)", "Help Center (FAQ)"), icon: HelpCircle, href: "/help" },
+    { name: t("सपोर्ट टिकट", "Support Ticket", "Support Ticket"), icon: Headphones, href: "/support" },
+    { name: t("वॉलेट ट्रांजैक्शन", "Wallet Transactions", "Wallet Transactions"), icon: Wallet, href: "/wallet" },
+    { name: t("ऑर्डर हिस्ट्री", "Order History", "Order History"), icon: List, href: "/orders" },
   ];
 
   return (
@@ -81,9 +70,9 @@ export default function SettingsPage() {
             <Wallet size={22} className="text-orange-500" />
             <span className="text-xs font-bold">{t("वॉलेट", "Wallet", "Wallet")}</span>
           </Link>
-          <Link href="/chat" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass} active:scale-95 transition-transform`}>
+          <Link href="/help" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass} active:scale-95 transition-transform`}>
             <Headphones size={22} className="text-orange-500" />
-            <span className="text-xs font-bold">{t("सपोर्ट चैट", "Support Chat", "Support Chat")}</span>
+            <span className="text-xs font-bold">{t("सपोर्ट", "Support", "Support")}</span>
           </Link>
         </section>
 
@@ -113,24 +102,6 @@ export default function SettingsPage() {
           <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
             {accountItems.map((item, idx) => (
               <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 ${idx !== accountItems.length - 1 ? (isDark ? "border-b border-slate-700" : "border-b border-gray-100") : ""}`}>
-                <div className="flex items-center gap-3">
-                  <item.icon size={18} className="text-orange-500" />
-                  <span className="text-sm font-semibold">{item.name}</span>
-                </div>
-                <ChevronRight size={16} className={mutedClass} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* SERVICES SECTION */}
-        <section className="space-y-2">
-          <h3 className={`px-1 text-xs font-bold uppercase tracking-wider ${mutedClass}`}>
-            {t("सर्विसेज", "Services", "Services")}
-          </h3>
-          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-            {serviceItems.map((item, idx) => (
-              <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 ${idx !== serviceItems.length - 1 ? (isDark ? "border-b border-slate-700" : "border-b border-gray-100") : ""}`}>
                 <div className="flex items-center gap-3">
                   <item.icon size={18} className="text-orange-500" />
                   <span className="text-sm font-semibold">{item.name}</span>
@@ -171,7 +142,6 @@ export default function SettingsPage() {
                 {t("भाषा", "Language", "Language")}
               </h4>
               <div className="flex gap-2">
-                {/* 🔥 FIXED: setLang se setLanguage kar diya 🔥 */}
                 <button onClick={() => setLanguage("hi")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHindi ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>हिंदी</button>
                 <button onClick={() => setLanguage("hinglish")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>Hinglish</button>
                 <button onClick={() => setLanguage("en")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${!isHindi && !isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>English</button>
