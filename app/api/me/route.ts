@@ -1,3 +1,4 @@
+// app/api/me/route.ts
 import { NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
 
@@ -58,6 +59,9 @@ export async function GET() {
         email: user.email,
         language: user.language,
         isGuest: user.isGuest,
+        // 🔥 YAHAN ADD KAREIN 🔥
+        walletBalancePaise: user.walletBalancePaise, 
+        freeMessagesUsed: user.freeMessagesUsed,
       },
       entitlement: {
         trialStartedAt: user.trialStartedAt,
