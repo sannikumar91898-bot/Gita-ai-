@@ -84,7 +84,9 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
 }
 
 export default function ChatPage() {
-  const { lang, me, setLanguage, refresh } = useApp();
+  // 🔥 Yahan humne loading aur sessionError add kar diya hai 🔥
+  const { lang, me, setLanguage, refresh, loading, sessionError } = useApp();
+  
   const [topic, setTopic] = useState("general");
   const [step, setStep] = useState<Step>("language");
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -299,7 +301,7 @@ export default function ChatPage() {
       const next = { ...draft, dob };
       remember(next, "time");
       push("assistant", questionFor("time", lang));
-      return;
+      return; 
     }
 
     if (step === "time") {
@@ -329,6 +331,34 @@ export default function ChatPage() {
     await sendToAi(text);
   }
 
+  // 🔥 1. LOADING STATE: Jab tak Providers guest user nahi bana leta, tab tak yeh dikhega 🔥
+  if (loading) {
+    return (
+      <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 text-violet-50">
+        <Sparkles size={32} className="animate-spin text-gold-300 mb-4" />
+        <p className="text-sm font-semibold text-violet-300">Setting up your session...</p>
+      </div>
+    );
+  }
+
+  // 🔥 2. ERROR STATE: Agar guest session banane mein fail ho jaye 🔥
+  if (sessionError || !me?.user) {
+    return (
+      <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 px-4 text-center">
+        <p className="text-3xl mb-4">⚠️</p>
+        <h2 className="text-lg font-bold text-red-400">Connection Failed</h2>
+        <p className="text-sm text-violet-300 mt-2">Could not start your session. Please check your internet or try again.</p>
+        <button
+          onClick={() => refresh()}
+          className="mt-6 rounded-lg bg-gold-400 px-6 py-2 text-sm font-bold text-black hover:bg-gold-300 transition-all"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Baaki poora aapka chat code waise hi chalega
   const shownMessages =
     messages.length > 0
       ? messages
