@@ -64,6 +64,7 @@ export type Me = {
   sessionError?: boolean;
 };
 
+// 🔥 FIX: Yahan Ctx mein sessionError add kiya gaya hai 🔥
 type Ctx = {
   me: Me | null;
   loading: boolean;
@@ -74,6 +75,7 @@ type Ctx = {
   setEntitlement: (entitlement: Entitlement) => void;
   theme: Theme;
   setTheme: (theme: Theme) => void;
+  sessionError: boolean; 
 };
 
 const AppContext = createContext<Ctx | null>(null);
@@ -252,9 +254,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const lang: Lang = isLang(localLang) ? localLang : "en";
   const t = useCallback((key: string) => translate(lang, key), [lang]);
 
+  // 🔥 FIX: Value object mein sessionError pass kiya gaya hai 🔥
   const value = useMemo<Ctx>(
     () => ({
-      me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme,
+      me, 
+      loading, 
+      lang, 
+      t, 
+      setLanguage, 
+      refresh, 
+      setEntitlement, 
+      theme, 
+      setTheme,
+      sessionError: me?.sessionError ?? false, // Yeh line add ki gayi hai
     }),
     [me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme]
   );
