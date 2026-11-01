@@ -1,6 +1,6 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql } from "drizzle-orm"; // 🔥 sql import kiya
+import { and, desc, eq, sql, gte } from "drizzle-orm"; // 🔥 gte import kiya (Atomic deduction ke liye)
 import { GoogleGenAI } from "@google/genai";
 
 import { getUser } from "@/auth";
@@ -11,7 +11,7 @@ import {
   conversations,
   messages,
   remedies,
-  users, // 🔥 users table import kiya
+  users // 🔥 Users import kiya
 } from "@/schema";
 
 import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
@@ -280,16 +280,25 @@ Description
             await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
           }
 
-          // 🔥 3. WALLET DEDUCTION / FREE COUNT 🔥
+          // 🔥 3. SECURE ATOMIC WALLET DEDUCTION / FREE COUNT 🔥
           if (isPaidUser) {
-            await tx.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, user.id));
+            // Sirf tabhi deduct karo jab balance >= 200 ho (Race condition se bachne ke liye)
+            const updated = await tx.update(users)
+              .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
+              .where(and(
+                eq(users.id, user.id),
+                gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE) // 🔥 SECURITY CHECK
+              ))
+              .returning();
+            
+            if (updated.length === 0) throw new Error("Insufficient balance during deduction");
           } else {
             await tx.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(eq(users.id, user.id));
           }
         });
       } catch (saveError) {
-        console.error("Failed to save chat messages:", saveError);
-        return NextResponse.json({ success: false, error: "Database save failed." }, { status: 500 });
+        console.error("Failed to save chat messages or deduct balance:", saveError);
+        return NextResponse.json({ success: false, error: "Database error or insufficient balance." }, { status: 500 });
       }
     }
 
