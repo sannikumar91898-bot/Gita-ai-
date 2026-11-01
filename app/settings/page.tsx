@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useApp } from "../Providers";
 
 export default function SettingsPage() {
-  const { lang, setLang, theme, setTheme } = useApp();
+  // 🔥 FIX: setLang ki jagah setLanguage kar diya hai 🔥
+  const { lang, setLanguage, theme, setTheme } = useApp();
 
   const isDark = theme === "dark";
   const isHindi = lang === "hi";
@@ -59,8 +60,8 @@ export default function SettingsPage() {
           </div>
         </header>
 
-        {/* PROFILE CARD */}
-        <section className={`flex items-center gap-4 rounded-2xl border p-4 ${cardClass}`}>
+        {/* PROFILE CARD (Tap to Login) */}
+        <Link href="/login" className={`flex items-center gap-4 rounded-2xl border p-4 ${cardClass} active:scale-95 transition-transform`}>
           <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-500 border-2 border-orange-300">
             <User size={32} />
           </div>
@@ -68,19 +69,19 @@ export default function SettingsPage() {
             <h2 className="text-lg font-bold">{t("अतिथि उपयोगकर्ता", "Guest User", "Guest User")}</h2>
             <p className={`text-xs ${mutedClass}`}>{t("लॉगिन करने के लिए टैप करें", "Login karne ke liye tap karein", "Tap to login")}</p>
           </div>
-        </section>
+        </Link>
 
         {/* QUICK ACTIONS */}
         <section className="grid grid-cols-3 gap-3">
-          <div className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass}`}>
+          <Link href="/orders" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass} active:scale-95 transition-transform`}>
             <Clock size={22} className="text-orange-500" />
             <span className="text-xs font-bold">{t("मेरे ऑर्डर्स", "My Orders", "My Orders")}</span>
-          </div>
-          <div className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass}`}>
+          </Link>
+          <Link href="/wallet" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass} active:scale-95 transition-transform`}>
             <Wallet size={22} className="text-orange-500" />
             <span className="text-xs font-bold">{t("वॉलेट", "Wallet", "Wallet")}</span>
-          </div>
-          <Link href="/chat" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass}`}>
+          </Link>
+          <Link href="/chat" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${cardClass} active:scale-95 transition-transform`}>
             <Headphones size={22} className="text-orange-500" />
             <span className="text-xs font-bold">{t("सपोर्ट चैट", "Support Chat", "Support Chat")}</span>
           </Link>
@@ -170,9 +171,10 @@ export default function SettingsPage() {
                 {t("भाषा", "Language", "Language")}
               </h4>
               <div className="flex gap-2">
-                <button onClick={() => setLang("hi")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHindi ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>हिंदी</button>
-                <button onClick={() => setLang("hinglish")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>Hinglish</button>
-                <button onClick={() => setLang("en")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${!isHindi && !isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>English</button>
+                {/* 🔥 FIXED: setLang se setLanguage kar diya 🔥 */}
+                <button onClick={() => setLanguage("hi")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHindi ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>हिंदी</button>
+                <button onClick={() => setLanguage("hinglish")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>Hinglish</button>
+                <button onClick={() => setLanguage("en")} className={`flex-1 rounded-xl border py-2 text-xs font-bold ${!isHindi && !isHinglish ? "border-orange-500 bg-orange-50 text-orange-600" : isDark ? "border-slate-700 text-slate-400" : "border-gray-200 text-gray-500"}`}>English</button>
               </div>
             </div>
 
