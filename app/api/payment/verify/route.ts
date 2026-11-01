@@ -27,7 +27,13 @@ export async function POST(req: Request) {
       .update(body.toString())
       .digest("hex");
 
-    if (expectedSignature !== razorpay_signature) {
+    // 🔥 SECURITY FIX: Timing Attack se bachne ke liye timingSafeEqual use karein 🔥
+    const isSignatureValid = crypto.timingSafeEqual(
+      Buffer.from(expectedSignature, "utf-8"),
+      Buffer.from(razorpay_signature, "utf-8")
+    );
+
+    if (!isSignatureValid) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
@@ -54,17 +60,17 @@ export async function POST(req: Request) {
 
     const rzpPayment: any = await razorpay.payments.fetch(razorpay_payment_id);
 
-    // ChatGPT Point 1: Sirf 'captured' accept karein, 'authorized' nahi
+    // Sirf 'captured' accept karein, 'authorized' nahi
     if (rzpPayment.status !== "captured") {
       return NextResponse.json({ error: "Payment is not captured yet." }, { status: 400 });
     }
 
-    // ChatGPT Point 2: Currency match karein
+    // Currency match karein
     if (rzpPayment.currency !== "INR") {
       return NextResponse.json({ error: "Currency mismatch." }, { status: 400 });
     }
 
-    // ChatGPT Point 3: Order ID match karein
+    // Order ID match karein
     if (rzpPayment.order_id !== razorpay_order_id) {
       return NextResponse.json({ error: "Order ID mismatch." }, { status: 400 });
     }
@@ -83,7 +89,7 @@ export async function POST(req: Request) {
 
     // 5. 🔥 ATOMIC TRANSACTION & DUPLICATE PROTECTION 🔥
     await db.transaction(async (tx) => {
-      // ChatGPT Point 4 & 5: Status update ke sath hi condition lagayein
+      // Status update ke sath hi condition lagayein
       const updatedPayment = await tx.update(payments)
         .set({ 
           paymentId: razorpay_payment_id, 
