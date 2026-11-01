@@ -12,7 +12,10 @@ export const metadata = {
 
 // 🔥 FIX: Viewport ko metadata se bahar nikal diya (Next.js 14 requirement) taaki warning na aaye
 export const viewport = {
-  width: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
