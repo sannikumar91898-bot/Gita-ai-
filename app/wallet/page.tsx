@@ -1,10 +1,16 @@
 // app/wallet/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { ArrowLeft, Wallet as WalletIcon, Zap, ShieldCheck, CheckCircle2, ChevronRight, Gift, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export default function WalletPage() {
   const { lang, theme } = useApp();
@@ -15,28 +21,133 @@ export default function WalletPage() {
   const [amount, setAmount] = useState(11); 
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
 
   const t = (hi: string, hing: string, en: string) =>
     isHindi ? hi : isHinglish ? hing : en;
 
   const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
 
-  // Fake Payment Logic (Razorpay will be added here later)
-  const handlePayment = () => {
+  // 🔥 Wallet balance fetch karo (DB se)
+  const fetchProfile = useCallback(async () => {
+    try {
+      const res = await fetch("/api/me", { cache: "no-store" });
+      const data = await res.json();
+      if (data.user) {
+        setWalletBalance(data.user.walletBalancePaise || 0);
+      }
+    } catch (e) {
+      console.error("Failed to fetch wallet balance", e);
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchProfile();
+  }, [fetchProfile]);
+
+  // 🔥 Razorpay script load karo
+  useEffect(() => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  // 🔥 Real Razorpay Payment
+  const handlePayment = async () => {
+    if (typeof window === "undefined" || !window.Razorpay) {
+      alert("Razorpay is loading. Please wait 2 seconds and try again.");
+      return;
+    }
+
     setLoading(true);
     setSuccess(false);
-    
-    setTimeout(() => {
+
+    try {
+      // 1. Server par order create karo
+      const orderRes = await fetch("/api/payment/create-order", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount }),
+      });
+
+      const orderData = await orderRes.json();
+
+      if (!orderRes.ok || !orderData.orderId) {
+        throw new Error(orderData.error || "Order creation failed");
+      }
+
+      // 2. Razorpay popup kholo
+      const options = {
+        key: orderData.key,
+        amount: orderData.amount,
+        currency: "INR",
+        name: "Gita AI Astrologer",
+        description: `Dakshina - ₹${amount}`,
+        order_id: orderData.orderId,
+        image: "/icons/geeta_ai_icon_192.png",
+        handler: async function (response: any) {
+          // 3. Server par verify karo
+          const verifyRes = await fetch("/api/payment/verify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+              amount: amount,
+            }),
+          });
+
+          const verifyData = await verifyRes.json();
+
+          if (verifyRes.ok && verifyData.success) {
+            setSuccess(true);
+            void fetchProfile(); // Wallet balance refresh
+            setTimeout(() => setSuccess(false), 5000);
+          } else {
+            alert("Payment verification failed. Please contact support.");
+          }
+          setLoading(false);
+        },
+        prefill: {
+          name: "Guest User",
+          email: "guest@example.com",
+          contact: "9999999999",
+        },
+        theme: {
+          color: "#f97316",
+        },
+        modal: {
+          ondismiss: function () {
+            setLoading(false);
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.on("payment.failed", function () {
+        alert("Payment failed. Please try again.");
+        setLoading(false);
+      });
+      rzp.open();
+    } catch (err: any) {
+      console.error("Payment error:", err);
+      alert(err.message || "Payment failed. Please try again.");
       setLoading(false);
-      setSuccess(true);
-    }, 2000);
+    }
   };
 
   const offers = [
     { price: 11, desc: "1 Question", tag: "Trial" },
     { price: 21, desc: "5 Mins Chat", tag: "Budget" },
-    { price: 51, desc: "15 Mins Chat", tag: "Popular" },
-    { price: 99, desc: "Detailed Chat", tag: "" },
+    { price: 51, desc: "Full Solution", tag: "Popular" },
+    { price: 99, desc: "Detailed Reading", tag: "" },
     { price: 121, desc: "Full Kundli + Upay", tag: "Premium" },
   ];
 
@@ -67,7 +178,7 @@ export default function WalletPage() {
               {t("कुल बैलेंस", "Total Balance", "Total Balance")}
             </p>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-4xl font-black">₹0</span>
+              <span className="text-4xl font-black">₹{walletBalance / 100}</span>
               <span className="text-sm font-medium text-slate-400">INR</span>
             </div>
             <div className="mt-4 flex gap-2">
@@ -82,7 +193,7 @@ export default function WalletPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className={`text-sm font-bold flex items-center gap-1.5 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              <Zap size={16} className="text-orange-500" /> {t("रिचार्ज प्लान चुनें", "Choose Recharge Plan", "Choose Recharge Plan")}
+              <Zap size={16} className="text-orange-500" /> {t("शगुन दक्षिणा चुनें", "Choose Shagun Dakshina", "Choose Shagun Dakshina")}
             </h2>
             <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200">
               <Gift size={12} /> {t("एक्स्ट्रा बोनस", "Extra Bonus", "Extra Bonus")}
@@ -129,7 +240,9 @@ export default function WalletPage() {
         {/* PAYMENT BUTTON SECTION */}
         <section className={`rounded-2xl border p-5 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white shadow-lg"}`}>
           <div className="flex items-center justify-between mb-4">
-            <span className={`text-sm font-semibold ${isDark ? "text-slate-300" : "text-gray-600"}`}>{t("कुल भुगतान", "Total Payable", "Total Payable")}</span>
+            <span className={`text-sm font-semibold ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+              {t("कुल दक्षिणा", "Total Dakshina", "Total Dakshina")}
+            </span>
             <span className="text-xl font-black text-orange-600 dark:text-orange-400">₹{amount}</span>
           </div>
 
@@ -139,7 +252,9 @@ export default function WalletPage() {
             className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3.5 text-sm font-black text-white shadow-[0_0_20px_rgba(249,115,22,0.3)] transition-all hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] active:scale-95 disabled:opacity-70"
           >
             <span className="relative z-10 flex items-center justify-center gap-2">
-              {loading ? t("प्रोसेस हो रहा है...", "Processing...", "Processing...") : t(`UPI से ₹${amount} का पेमेंट करें`, `Pay ₹${amount} via UPI`, `Pay ₹${amount} via UPI`)}
+              {loading 
+                ? t("प्रोसेस हो रहा है...", "Processing...", "Processing...") 
+                : t(`₹${amount} की दक्षिणा दें`, `Pay ₹${amount} Dakshina`, `Pay ₹${amount} Dakshina`)}
               {!loading && <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />}
             </span>
           </button>
@@ -148,12 +263,12 @@ export default function WalletPage() {
           {success && (
             <div className="mt-4 flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 p-3 text-sm font-bold text-green-700 animate-in fade-in slide-in-from-bottom-2">
               <CheckCircle2 size={18} className="text-green-600" />
-              {t("टेस्ट पेमेंट सफल! (रोज़रपे जल्द जुड़ेगा)", "Test Payment Successful! (Razorpay soon)", "Test Payment Successful! (Razorpay soon)")}
+              {t("दक्षिणा सफल! अब आप चैट कर सकते हैं।", "Dakshina successful! You can chat now.", "Dakshina successful! You can chat now.")}
             </div>
           )}
 
           <p className="mt-4 text-center text-[10px] text-gray-400">
-            Secure payments powered by Razorpay (Test Mode)
+            {t("100% सुरक्षित भुगतान • UPI / कार्ड", "100% Secure Payments • UPI / Card", "100% Secure Payments • UPI / Card")}
           </p>
         </section>
       </div>
