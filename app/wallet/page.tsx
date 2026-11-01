@@ -28,7 +28,6 @@ export default function WalletPage() {
 
   const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
 
-  // 🔥 Wallet balance fetch karo (DB se)
   const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/me", { cache: "no-store" });
@@ -45,7 +44,6 @@ export default function WalletPage() {
     void fetchProfile();
   }, [fetchProfile]);
 
-  // 🔥 Razorpay script load karo
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
@@ -58,10 +56,9 @@ export default function WalletPage() {
     };
   }, []);
 
-  // 🔥 Real Razorpay Payment
   const handlePayment = async () => {
     if (typeof window === "undefined" || !window.Razorpay) {
-      alert("Razorpay is loading. Please wait 2 seconds and try again.");
+      alert("Razorpay is loading. Please wait 2 seconds.");
       return;
     }
 
@@ -69,7 +66,7 @@ export default function WalletPage() {
     setSuccess(false);
 
     try {
-      // 1. Server par order create karo
+      // 1. Server par order create karo (Amount bhej rahe hain Rs. mein)
       const orderRes = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,15 +81,15 @@ export default function WalletPage() {
 
       // 2. Razorpay popup kholo
       const options = {
-        key: orderData.key,
-        amount: orderData.amount,
+        key: orderData.key, // Backend se aayega
+        amount: orderData.amount, // Backend se paise mein aayega (e.g. 1100)
         currency: "INR",
         name: "Gita AI Astrologer",
         description: `Dakshina - ₹${amount}`,
         order_id: orderData.orderId,
         image: "/icons/geeta_ai_icon_192.png",
         handler: async function (response: any) {
-          // 3. Server par verify karo
+          // 3. Server par verify karo (Amount NAHI bhej rahe, security ke liye)
           const verifyRes = await fetch("/api/payment/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -100,7 +97,6 @@ export default function WalletPage() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
-              amount: amount,
             }),
           });
 
@@ -108,10 +104,10 @@ export default function WalletPage() {
 
           if (verifyRes.ok && verifyData.success) {
             setSuccess(true);
-            void fetchProfile(); // Wallet balance refresh
+            void fetchProfile();
             setTimeout(() => setSuccess(false), 5000);
           } else {
-            alert("Payment verification failed. Please contact support.");
+            alert("Payment verification failed. Contact support.");
           }
           setLoading(false);
         },
@@ -120,14 +116,8 @@ export default function WalletPage() {
           email: "guest@example.com",
           contact: "9999999999",
         },
-        theme: {
-          color: "#f97316",
-        },
-        modal: {
-          ondismiss: function () {
-            setLoading(false);
-          },
-        },
+        theme: { color: "#f97316" },
+        modal: { ondismiss: function () { setLoading(false); } },
       };
 
       const rzp = new window.Razorpay(options);
@@ -138,17 +128,19 @@ export default function WalletPage() {
       rzp.open();
     } catch (err: any) {
       console.error("Payment error:", err);
-      alert(err.message || "Payment failed. Please try again.");
+      alert(err.message || "Payment failed.");
       setLoading(false);
     }
   };
 
+  // 🔥 NAYE PACKAGES (11, 21, 51, 101, 121, 151) 🔥
   const offers = [
     { price: 11, desc: "1 Question", tag: "Trial" },
     { price: 21, desc: "5 Mins Chat", tag: "Budget" },
     { price: 51, desc: "Full Solution", tag: "Popular" },
-    { price: 99, desc: "Detailed Reading", tag: "" },
+    { price: 101, desc: "Detailed Reading", tag: "Value" },
     { price: 121, desc: "Full Kundli + Upay", tag: "Premium" },
+    { price: 151, desc: "Ultimate Consultation", tag: "Best" },
   ];
 
   return (
@@ -168,7 +160,7 @@ export default function WalletPage() {
           <WalletIcon className="text-orange-500" size={22} />
         </header>
 
-        {/* PREMIUM BALANCE CARD */}
+        {/* BALANCE CARD */}
         <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 to-slate-800 p-6 text-white shadow-2xl border border-slate-700">
           <div className="absolute top-0 right-0 p-4 opacity-10">
             <WalletIcon size={120} />
@@ -193,10 +185,10 @@ export default function WalletPage() {
         <section className="space-y-3">
           <div className="flex items-center justify-between px-1">
             <h2 className={`text-sm font-bold flex items-center gap-1.5 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              <Zap size={16} className="text-orange-500" /> {t("शगुन दक्षिणा चुनें", "Choose Shagun Dakshina", "Choose Shagun Dakshina")}
+              <Zap size={16} className="text-orange-500" /> {t("दक्षिणा चुनें", "Choose Dakshina", "Choose Dakshina")}
             </h2>
             <span className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-200">
-              <Gift size={12} /> {t("एक्स्ट्रा बोनस", "Extra Bonus", "Extra Bonus")}
+              <Gift size={12} /> {t("10% एक्स्ट्रा बोनस", "10% Extra Bonus", "10% Extra Bonus")}
             </span>
           </div>
 
@@ -213,7 +205,7 @@ export default function WalletPage() {
               >
                 {offer.tag && (
                   <span className={`absolute -top-2.5 rounded-md px-2 py-0.5 text-[9px] font-black uppercase tracking-wider text-white shadow-sm ${
-                    offer.tag === "Popular" ? "bg-gradient-to-r from-rose-500 to-red-500" : 
+                    offer.tag === "Popular" || offer.tag === "Best" ? "bg-gradient-to-r from-rose-500 to-red-500" : 
                     offer.tag === "Premium" ? "bg-gradient-to-r from-amber-500 to-orange-500" : 
                     "bg-slate-800"
                   }`}>
@@ -226,7 +218,7 @@ export default function WalletPage() {
                 
                 <div className="mt-1.5 w-full flex items-center justify-center rounded-md bg-green-500/10 py-1">
                   <span className="text-[10px] font-bold text-green-600 dark:text-green-400">
-                    {offer.price >= 51 ? `+₹${Math.floor(offer.price * 0.1)} Extra` : "No Bonus"}
+                    {offer.price >= 51 ? `+₹${Math.floor(offer.price * 0.1)} Bonus` : "No Bonus"}
                   </span>
                 </div>
                 <span className={`text-[10px] font-bold mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
@@ -254,12 +246,11 @@ export default function WalletPage() {
             <span className="relative z-10 flex items-center justify-center gap-2">
               {loading 
                 ? t("प्रोसेस हो रहा है...", "Processing...", "Processing...") 
-                : t(`₹${amount} की दक्षिणा दें`, `Pay ₹${amount} Dakshina`, `Pay ₹${amount} Dakshina`)}
+                : t(`₹${amount} दक्षिणा दें`, `Pay ₹${amount} Dakshina`, `Pay ₹${amount} Dakshina`)}
               {!loading && <ChevronRight size={18} className="transition-transform group-hover:translate-x-1" />}
             </span>
           </button>
 
-          {/* SUCCESS MSG */}
           {success && (
             <div className="mt-4 flex items-center gap-2 rounded-xl border border-green-300 bg-green-50 p-3 text-sm font-bold text-green-700 animate-in fade-in slide-in-from-bottom-2">
               <CheckCircle2 size={18} className="text-green-600" />
