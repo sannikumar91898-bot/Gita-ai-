@@ -18,9 +18,9 @@ export const pool =
   globalForDb.__arenaNextJsPostgresqlPool ??
   new Pool({
     connectionString: databaseUrl,
-    max: 10, // Ek time par max 10 connections (Render/Serverless ke liye safe)
-    idleTimeoutMillis: 30000, // 30 sec tak inactive rahe toh connection band kar do
-    connectionTimeoutMillis: 10000, // Agar DB 10 sec mein connect na ho toh error do
+    max: 10, // Ek time par max 10 connections (Serverless safe)
+    idleTimeoutMillis: 30000, 
+    connectionTimeoutMillis: 10000, 
   });
 
 if (process.env.NODE_ENV !== "production") {
