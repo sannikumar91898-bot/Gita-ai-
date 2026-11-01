@@ -27,7 +27,12 @@ export async function POST(req: Request) {
       .update(body.toString())
       .digest("hex");
 
-    // 🔥 SECURITY FIX: Timing Attack se bachne ke liye timingSafeEqual use karein 🔥
+    // 🔥 CRITICAL FIX: Length check karein, warna timingSafeEqual server crash kar dega 🔥
+    if (expectedSignature.length !== razorpay_signature.length) {
+      return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
+    }
+
+    // Timing Attack se bachne ke liye timingSafeEqual use karein
     const isSignatureValid = crypto.timingSafeEqual(
       Buffer.from(expectedSignature, "utf-8"),
       Buffer.from(razorpay_signature, "utf-8")
