@@ -1,6 +1,6 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql, gte } from "drizzle-orm"; // 🔥 gte import kiya (Atomic deduction ke liye)
+import { and, desc, eq, sql, gte, lt } from "drizzle-orm";
 import { GoogleGenAI } from "@google/genai";
 
 import { getUser } from "@/auth";
@@ -11,7 +11,7 @@ import {
   conversations,
   messages,
   remedies,
-  users // 🔥 Users import kiya
+  users 
 } from "@/schema";
 
 import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
@@ -147,18 +147,14 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI service not configured." }, { status: 503 });
 
-    // 🔥 1. PAID USER CHECK & FREE MESSAGE LIMIT 🔥
-    const isPaidUser = user.walletBalancePaise > 0;
-    const COST_PER_MESSAGE_PAISE = 200; // ₹2 per message
+    const COST_PER_MESSAGE_PAISE = 200; // ₹2
+    const isPremium = user.premiumUntil && new Date(user.premiumUntil) > new Date();
+    const canAffordWallet = user.walletBalancePaise >= COST_PER_MESSAGE_PAISE;
+    const hasFreeMessages = user.freeMessagesUsed < 3;
 
-    // Agar Free user hai aur 3 message cross ho gaye
-    if (!isPaidUser && user.isGuest && user.freeMessagesUsed >= 3) {
-      return NextResponse.json({ code: "FREE_LIMIT_REACHED", error: "Aapke 3 free messages khatam ho gaye hain." }, { status: 402 });
-    }
-
-    // Agar Paid user hai par balance ₹2 se kam hai
-    if (!user.isGuest && user.walletBalancePaise < COST_PER_MESSAGE_PAISE) {
-      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka wallet balance khatam ho gaya hai." }, { status: 402 });
+    // 1. Initial Check
+    if (!isPremium && !canAffordWallet && !hasFreeMessages) {
+      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein." }, { status: 402 });
     }
 
     let body: Record<string, unknown>;
@@ -178,6 +174,28 @@ export async function POST(request: Request) {
 
     if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
 
+    // 2. 🔥 PRE-DEDUCTION (Paisa pehle katega, race condition se bacho) 🔥
+    let deductedType = "none";
+    if (!isPremium) {
+      if (canAffordWallet) {
+        const updated = await db.update(users)
+          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
+          .where(and(eq(users.id, user.id), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)))
+          .returning();
+        
+        if (updated.length === 0) return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Balance insufficient due to concurrent request." }, { status: 402 });
+        deductedType = "wallet";
+      } else if (hasFreeMessages) {
+        const updated = await db.update(users)
+          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
+          .where(and(eq(users.id, user.id), lt(users.freeMessagesUsed, 3)))
+          .returning();
+        
+        if (updated.length === 0) return NextResponse.json({ code: "FREE_LIMIT_REACHED", error: "Free limit reached due to concurrent request." }, { status: 402 });
+        deductedType = "free";
+      }
+    }
+
     const conversation = await getOrCreateConversation(user.id, persona, topic, requestedConversationId || undefined);
 
     const [birthRows, chartRows, previousMessages] = await Promise.all([
@@ -196,23 +214,22 @@ export async function POST(request: Request) {
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 🔥 2. DYNAMIC PROMPT (FREE VS PAID) 🔥
+    // 3. 🔥 ETHICAL & VALUE-BASED PROMPT 🔥
     let instructionPrompt = "";
     const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
 
-    if (!isPaidUser && user.isGuest) {
+    if (!isPremium && !canAffordWallet) { 
       if (freeMessagesLeft === 1) {
-        instructionPrompt = `🚨 CRITICAL: THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
-YOUR GOAL: Validate their pain, identify a specific "Rukawat" (Dosh/Dasha), and tell them that the solution is very close. BUT DO NOT GIVE THE FULL SOLUTION. 
-End your message exactly with a CLIFFHANGER. Example: "Aapki kundli mein ek bada badlav aane wala hai jo agle 11 din mein aapki life badal sakta hai, lekin uske liye..." 
-Make them feel they MUST pay to unlock the rest of the sentence.`;
+        instructionPrompt = `🚨 THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
+YOUR GOAL: Provide an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame. 
+Then, tell them gently that for the detailed remedy and full roadmap to solve this, they need to recharge their wallet. Do NOT use fear. Use value. Make them feel that paying for the full solution is the obvious next step.`;
       } else {
         instructionPrompt = `🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain. Tell them they are hardworking but a specific grah is blocking them. Give them a 10% hint of the problem, but do NOT give the remedy. Keep them curious.`;
+YOUR GOAL: Validate their pain with deep empathy. Give them an accurate astrological reason for their problem. Give them a small, free remedy that helps them immediately, but save the "Maha-Upay" (Master Remedy) for the paid version.`;
       }
     } else {
-      instructionPrompt = `🚨 USER IS A PAID CUSTOMER. DO NOT CREATE FEAR. 
-YOUR GOAL: Give the user the ACTUAL SOLUTION. Analyze their chart, find the dosha, and give exact remedies. Tell them exactly when their problem will be solved. Give them their money's worth.`;
+      instructionPrompt = `🚨 USER IS A PAID/PREMIUM CUSTOMER. 
+YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply, find the exact dosha, and give exact remedies. Tell them exactly when their problem will be solved. Give them 10x the value of what they paid.`;
     }
 
     const systemPrompt = `
@@ -261,49 +278,39 @@ Description
     } catch (apiError: any) {
       console.error("Gemini API Limit Error:", apiError);
       isError = true;
-      rawReply = apiError?.status === 429 ? "बेटा, अभी ग्रहों की चाल का हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद पूछें।" : "कुछ तकनीकी कारणों से जवाब नहीं आ पाया।";
     }
 
-    if (!rawReply) { rawReply = "अभी जवाब तैयार नहीं हो पाया।"; isError = true; }
+    if (!rawReply) { isError = true; }
+
+    // 4. 🔥 REFUND LOGIC (Agar AI fail hua, toh paise wapas karo) 🔥
+    if (isError) {
+      if (deductedType === "wallet") {
+        await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, user.id));
+      } else if (deductedType === "free") {
+        await db.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} - 1` }).where(eq(users.id, user.id));
+      }
+      
+      const errorMsg = "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa/msg wapas kar diya gaya hai. Kripya thodi der baad try karein.";
+      return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
+    }
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
-    if (!isError) {
-      try {
-        await db.transaction(async (tx) => {
-          await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
-          await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
+    // 5. Save Messages & Remedy
+    try {
+      await db.transaction(async (tx) => {
+        await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
+        await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
 
-          if (remedy) {
-            await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
-          }
-
-          // 🔥 3. SECURE ATOMIC WALLET DEDUCTION / FREE COUNT 🔥
-          if (isPaidUser) {
-            // Sirf tabhi deduct karo jab balance >= 200 ho (Race condition se bachne ke liye)
-            const updated = await tx.update(users)
-              .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
-              .where(and(
-                eq(users.id, user.id),
-                gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE) // 🔥 SECURITY CHECK
-              ))
-              .returning();
-            
-            if (updated.length === 0) throw new Error("Insufficient balance during deduction");
-          } else {
-            await tx.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(eq(users.id, user.id));
-          }
-        });
-      } catch (saveError) {
-        console.error("Failed to save chat messages or deduct balance:", saveError);
-        return NextResponse.json({ success: false, error: "Database error or insufficient balance." }, { status: 500 });
-      }
-    }
-
-    if (isError) {
-      return NextResponse.json({ success: false, error: finalMessage, conversationId: conversation.id }, { status: 500 });
+        if (remedy) {
+          await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
+        }
+      });
+    } catch (saveError) {
+      console.error("Failed to save chat messages:", saveError);
+      return NextResponse.json({ success: false, error: "Database save failed." }, { status: 500 });
     }
 
     return NextResponse.json({
@@ -312,6 +319,7 @@ Description
       reply: finalMessage,
       remedy: remedy ? { title: remedy.title, description: remedy.description } : null,
     });
+
   } catch (error) {
     console.error("POST /api/chat error:", error);
     return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
