@@ -9,7 +9,9 @@ import {
   doublePrecision,
   date,
   index,
+  check, // 🔥 Naya import
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm"; // 🔥 Naya import
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -24,7 +26,10 @@ export const users = pgTable("users", {
   freeMessagesUsed: integer("free_messages_used").notNull().default(0),
   walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => ({
+  // 🔥 CHECK CONSTRAINT: Balance kabhi negative nahi hoga
+  walletBalanceCheck: check("wallet_balance_check", sql`${table.walletBalancePaise} >= 0`),
+}));
 
 export const sessions = pgTable("sessions", {
   token: text("token").primaryKey(),
@@ -76,15 +81,19 @@ export const payments = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   orderId: text("order_id").notNull().unique(),
-  paymentId: text("payment_id").unique(), // 🔥 YEH UNIQUE HO GAYA HAI 🔥
+  paymentId: text("payment_id").unique(),
   amountPaise: integer("amount_paise").notNull(),
   currency: text("currency").notNull().default("INR"),
   status: text("status").notNull().default("created"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
-});
+}, (table) => ({
+  // 🔥 CHECK CONSTRAINT: Amount hamesha positive hoga
+  amountCheck: check("amount_check", sql`${table.amountPaise} > 0`),
+  // 🔥 CHECK CONSTRAINT: Status sirf specific words ho sakte hain
+  statusCheck: check("status_check", sql`${table.status} IN ('created', 'paid', 'failed')`),
+}));
 
-// Baaki tables (remedies, palmReadings, supportTickets, etc.)
 export const webhookEvents = pgTable("webhook_events", {
   eventId: text("event_id").primaryKey(),
   processedAt: timestamp("processed_at", { withTimezone: true }).notNull().defaultNow(),
