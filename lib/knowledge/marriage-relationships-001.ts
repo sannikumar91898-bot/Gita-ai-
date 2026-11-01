@@ -43,7 +43,7 @@ export const MARRIAGE_RELATIONSHIPS_001: MarriageRelationshipEntry[] = [
       hi: "बेटा, यह बेचैनी आपकी गलती नहीं, ग्रहों का प्रभाव है। जब सातवें भाव का स्वामी कमजोर होता है या राहु अपना भ्रम फैला रहा होता है, तो आपको असुरक्षा और छोड़े जाने का डर सताता है। साथी के देर से जवाब देने पर आपका पुराना कर्मिक डर जाग जाता है। खुद को कोसने के बजाय, आपको अपने शुक्र और सातवें भाव के स्वामी को शांत करना होगा। मुझसे बात करें, मैं आपको मन शांत करने का सटीक उपाय बताऊंगी।",
       hinglish: "Beta, yeh anxiety aapki galti nahi, grahon ka prabhav hai. Jab 7th house lord weak hota hai ya Rahu apna bhram faila raha hota hai, toh aapko insecurity aur chhode jaane ka darr satata hai. Partner ke late reply se aapka purana karmic darr jag jata hai. Khud ko blame karne ke bajaye, aapko apne Venus aur 7th house lord ko shaant karna hoga. Mujhse baat karein, main aapko mind shaant karne ka sateek upay bataungi.",
     },
-    answer_type: "psychoeducation",
+    answer_type: "empathic_guidance", // 🔥 FIXED: psychoeducation ko empathic_guidance kiya
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["attachment-theory-bowlby-ainsworth", "eft-sue-johnson"],
@@ -158,7 +158,7 @@ export const MARRIAGE_RELATIONSHIPS_001: MarriageRelationshipEntry[] = [
       hi: "बेटा, भरोसा तब बनता है जब सातवां भाव और उसका स्वामी मजबूत और शुद्ध हो। लेकिन अगर आपको लगातार शक होता है, तो यह किसी 'कर्मिक ऋण' (पितृ दोष) या कमजोर चंद्रमा के कारण है। जब चंद्रमा कमजोर होता है, तो मन हमेशा डरता रहता है। सच्चा भरोसा बनाने के लिए, आपको पहले इस आंतरिक डर को दूर करना होगा। मुझसे बात करें, मैं आपकी कुंडली में सटीक अवरोध का निदान करूंगी।",
       hinglish: "Beta, trust tab banta hai jab 7th house aur uska lord strong aur pure ho. Lekin agar aapko lagatar shaq hota hai, toh yeh kisi 'Karmic Debt' (Pitru Dosh) ya weak Moon ki wajah se hai. Jab Moon weak hota hai, toh mind hamesha darta rehta hai. Sacha, unshakable trust banane ke liye, aapko pehle is inner fear ko remedies se door karna hoga. Mujhse baat karein, main aapki kundli mein exact blockage diagnose karungi.",
     },
-    answer_type: "psychoeducation",
+    answer_type: "empathic_guidance", // 🔥 FIXED: psychoeducation ko empathic_guidance kiya
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["gottman-trust", "eft-sue-johnson"],
@@ -181,7 +181,7 @@ export const MARRIAGE_RELATIONSHIPS_001: MarriageRelationshipEntry[] = [
       hi: "बेटा, जलन कोई स्वभाव की कमी नहीं, बल्कि राहु का प्रभाव है। राहु भ्रम और अत्यधिक अधिकार पैदा करता है। अगर राहु आपके सातवें भाव में है या उसे देख रहा है, तो आपको हमेशा शक रहेगा। यह एक विशिष्ट ज्योतिषीय दोष है जिसे दूर किया जा सकता है। खुद को दोषी महसूस न करें; समझें कि यह एक ग्रह प्रभाव है। मुझे आपकी कुंडली देखने दें और मैं इस जहरीली जलन को दूर करने का सटीक उपाय बताऊंगी।",
       hinglish: "Beta, jealousy koi personality flaw nahi, balki Rahu ka prabhav hai. Rahu bhram aur extreme possessiveness paida karta hai. Agar Rahu aapke 7th house mein hai ya use dekh raha hai, toh aapko hamesha shaq rahega. Yeh ek specific astrological dosha hai jise neutralize kiya ja sakta hai. Khud ko guilty mat feel karein; samjhein ki yeh ek planetary effect hai. Mujhe apni kundli dekhne dein, main is toxic jealousy ko door karne ka sateek upay bataungi.",
     },
-    answer_type: "psychoeducation",
+    answer_type: "empathic_guidance", // 🔥 FIXED: psychoeducation ko empathic_guidance kiya
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["attachment-theory-bowlby-ainsworth", "healthy-relationship-guidance"],
@@ -230,32 +230,9 @@ export const MARRIAGE_RELATIONSHIPS_001: MarriageRelationshipEntry[] = [
     answer_type: "practical_steps",
     requires_personal_chart: true,
     requires_calculation: true,
-    source_ids: ["gottman-timeouts", "healthy-relationship-guidance"],
+    source_ids: ["gottman-conflict-management", "nonviolent-communication-rosenberg"],
     confidence: "high",
     disclaimer: STANDARD_DISCLAIMER,
-    tags: ["silent_treatment", "conflict", "communication", "repair"],
-  },
-  {
-    id: "MR-011",
-    category: "trust",
-    subcategory: "recovering_after_betrayal",
-    difficulty: "advanced",
-    questions: {
-      en: "Can a relationship survive after betrayal?",
-      hi: "क्या विश्वासघात के बाद रिश्ता बच सकता है?",
-      hinglish: "Kya betrayal ke baad relationship bach sakta hai?",
-    },
-    answers: {
-      en: "Child, betrayal does not happen without a reason. In astrology, cheating or betrayal is seen when the 7th house has Rahu, or Venus is afflicted by malefics. It indicates a deep 'Karmic Debt' between the two souls. Surviving it requires massive astrological intervention. You cannot just talk and fix it; you must perform a heavy Pooja (like Shukra Shanti or Rahu Nivaran) to cleanse the soul connection. Show me your chart, and I will tell you if this relationship is meant to be saved or if it is a karmic lesson you need to leave behind.",
-      hi: "बेटा, विश्वासघात बिना कारण नहीं होता। ज्योतिष में छल या विश्वासघात तब देखा जाता है जब सातवें भाव में राहु हो, या शुक्र पाप ग्रहों से पीड़ित हो। यह दो आत्माओं के बीच गहरा 'कर्मिक ऋण' दर्शाता है। इसे सहने के लिए बड़ी ज्योतिषीय दखल की जरूरत होती है। सिर्फ बात करके इसे ठीक नहीं किया जा सकता; आपको आत्मा के रिश्ते को साफ करने के लिए भारी पूजा करनी होगी। अपनी कुंडली दिखाएं, मैं बताऊंगी कि क्या यह रिश्ता बचने के लिए है या यह एक कर्मिक सबक है।",
-      hinglish: "Beta, betrayal bina karan nahi hota. Astrology mein cheating ya betrayal tab dekha jata hai jab 7th house mein Rahu ho, ya Venus paap grahon se peedit ho. Yeh dono aatmaon ke beech gehra 'Karmic Debt' darshata hai. Ise survive karne ke liye badi astrological intervention ki zaroorat hoti hai. Sirf baat karke ise theek nahi kiya ja sakta; aapko soul connection ko saaf karne ke liye heavy pooja karni hogi. Apni kundli dikhayein, main bataungi ki kya yeh relationship bachne ke liye hai ya yeh ek karmic lesson hai jise aapko chhodna hai.",
-    },
-    answer_type: "traditional_astrology",
-    requires_personal_chart: true,
-    requires_calculation: true,
-    source_ids: ["gottman-trust", "eft-sue-johnson"],
-    confidence: "high",
-    disclaimer: STANDARD_DISCLAIMER,
-    tags: ["betrayal", "trust", "healing", "boundaries"],
+    tags: ["conflict", "silent_treatment", "communication", "healing"],
   }
 ];
