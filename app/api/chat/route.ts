@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm"; // 🔥 sql import kiya
 import { GoogleGenAI } from "@google/genai";
 
 import { getUser } from "@/auth";
@@ -10,9 +10,9 @@ import {
   conversations,
   messages,
   remedies,
+  users, // 🔥 users table import kiya
 } from "@/schema";
 
-// 🔥 KNOWLEDGE ADAPTER IMPORT KIYA HAI 🔥
 import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 
 export const runtime = "nodejs";
@@ -29,7 +29,7 @@ const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
     specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
-    tone: "Young, modern, highly energetic, cool, and relatable female astrologer. She speaks like a smart, confident elder sister/friend. Uses modern Hinglish, words like 'Listen', 'Tension mat lo', 'Main hoon na'.",
+    tone: "Young, modern, highly energetic, cool, and relatable female astrologer. She speaks like a smart, confident elder sister/friend. NEVER USE THE WORD 'BETA'. Use terms like 'Suno', 'Dekho', 'Hey', 'Tension mat lo', 'Main hoon na'.",
     rules: "Speak with absolute authority and 100% certainty. Directly pinpoint the exact month and year of marriage or breakup recovery using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real young female astrologer.",
   },
   kriti: {
@@ -98,7 +98,6 @@ function extractRemedy(response: string) {
   };
 }
 
-// 🔥 SMART RAG (Knowledge Search) FUNCTION 🔥
 function getRelevantKnowledge(query: string): string {
   const q = query.toLowerCase();
   const allEntries = getExtendedKnowledgeEntries();
@@ -214,6 +213,32 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI service not configured." }, { status: 503 });
 
+    // 🔥 1. PAID USER CHECK 🔥
+    const isPaidUser = user.walletBalancePaise > 0;
+    const COST_PER_MESSAGE_PAISE = 200; // ₹2 per message
+
+    // 🔥 2. BLOCK FREE USERS AFTER 3 MESSAGES 🔥
+    if (!isPaidUser && user.isGuest && user.freeMessagesUsed >= 3) {
+      return NextResponse.json(
+        { 
+          code: "FREE_LIMIT_REACHED", 
+          error: "Aapke 3 free messages khatam ho gaye hain. Kripya wallet recharge karein." 
+        }, 
+        { status: 402 }
+      );
+    }
+
+    // 🔥 3. BLOCK PAID USERS IF BALANCE IS LOW 🔥
+    if (!user.isGuest && user.walletBalancePaise < COST_PER_MESSAGE_PAISE) {
+      return NextResponse.json(
+        { 
+          code: "INSUFFICIENT_BALANCE", 
+          error: "Aapka wallet balance khatam ho gaya hai. Kripya recharge karein." 
+        }, 
+        { status: 402 }
+      );
+    }
+
     let body: Record<string, unknown>;
     try {
       const parsed: unknown = await request.json();
@@ -252,35 +277,44 @@ export async function POST(request: Request) {
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 🔥 PSYCHOLOGY DESIGN & EMOTIONAL CONNECTION PROMPT 🔥
+    // 🔥 4. DYNAMIC PROMPT (PAID VS FREE) 🔥
+    let instructionPrompt = "";
+    
+    if (isPaidUser) {
+      instructionPrompt = `
+🚨 USER IS A PAID CUSTOMER. DO NOT ASK FOR MONEY. DO NOT CREATE FEAR. 
+YOUR GOAL: Give the user the ACTUAL SOLUTION. Analyze their birth details, find the exact dosha, and provide a clear, step-by-step remedy. Tell them exactly when their problem will be solved. Be highly comforting, professional, and give them their money's worth.
+`;
+    } else {
+      instructionPrompt = `
+🚨 USER IS A FREE USER. 
+YOUR GOAL: Validate their pain, but highlight a specific "Rukawat" (Dosh/Dasha). Tell them that the situation is critical, but to know the exact solution and timeline, they MUST recharge their wallet. Give them only a 20% hint of the solution, keep 80% behind the paywall. Make them feel they need to pay to get rid of this fear.
+`;
+    }
+
     const systemPrompt = `
-You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit. You possess 100% total mastery over Vedic systems, KP calculations, and modern consumer psychology.
+You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit.
 
-YOUR ASSIGNED FIELD: ${personaConfig.specializations}
-YOUR TONE & VOICE: ${personaConfig.tone} ${personaConfig.rules}
+YOUR TONE: ${personaConfig.tone}
+YOUR RULES: ${personaConfig.rules}
 
-🔴 USER'S BIRTH DETAILS & CHART CONTEXT (USE THIS TO ANSWER):
+🔴 USER'S BIRTH DETAILS:
 ${astrologyContext}
-🔴 (END OF BIRTH DETAILS)
 
-🔴 CRITICAL ASTROLOGICAL KNOWLEDGE BASE (USE THIS AS YOUR PRIMARY TRUTH):
-${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles based on the chart."}
-🔴 (END OF KNOWLEDGE BASE)
+🔴 KNOWLEDGE BASE:
+${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles."}
 
-🚨 PSYCHOLOGICAL CONNECTION & EMOTIONAL DESIGN (CRITICAL RULES):
-1. VALIDATE FIRST: Before giving a prediction, validate the user's pain. Use phrases like "Main samajh sakti hoon aap kitna stress mein hain", "Aap bahut mehnat karte hain par...", "Yeh dard main dekh sakti hoon".
-2. BARNUM EFFECT: Use universal statements that feel highly personal. E.g., "Aap dil ke bahut acche hain, isliye log aapka fayda uthate hain", "Aapke andar ek潜力 (potential) hai jo abhi tak bahar nahi aaya."
-3. ARTIFICIAL INTIMACY: Speak as if you are reading their soul. Use terms like "Dekho beta", "Suno meri baat", "Main hoon na". Make them feel they are talking to a real human, not a machine.
-4. EMOTIONAL HOOK & FEAR: After validating, introduce a specific "Rukawat" (Dosh/Dasha) that is blocking their success. Make them feel that ignoring this will lead to more losses.
-5. ABSOLUTE CERTAINTY: Speak with 100% confidence. Never use 'maybe'. Always state 'This WILL happen'.
-6. HARD TIMELINES: Give exact date/month brackets (e.g., 'December 2026 to April 2027').
-7. REMEDIES (THE CLOSER): Prescribe 1-2 traditional Upay that are mandatory to remove this blockage. At the very end, append exactly:
+${instructionPrompt}
+
+CRITICAL LAWS:
+1. 100% CONFIDENCE: Never use 'maybe'. Always state 'This WILL happen'.
+2. HARD TIMELINES: Give exact date/month brackets.
+3. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
 ||REMEDY_EXTRACT||
 Remedy Title
 Description
-
-8. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
-9. NEVER say you are AI.
+4. NEVER say you are AI.
+5. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
 `.trim();
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -301,7 +335,7 @@ Description
         config: {
           systemInstruction: systemPrompt,
           temperature: 0.75,
-          maxOutputTokens: 800,
+          maxOutputTokens: 1500, // 🔥 Tokens badha diye taaki jawab na ruke
         },
       });
       rawReply = response.text || "";
@@ -333,6 +367,19 @@ Description
 
           if (remedy) {
             await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
+          }
+
+          // 🔥 5. WALLET DEDUCTION / FREE MESSAGE COUNT 🔥
+          if (isPaidUser) {
+            // Paid user: Cut ₹2
+            await tx.update(users)
+              .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
+              .where(eq(users.id, user.id));
+          } else {
+            // Free user: Increase free message count
+            await tx.update(users)
+              .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
+              .where(eq(users.id, user.id));
           }
         });
       } catch (saveError) {
