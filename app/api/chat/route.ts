@@ -142,9 +142,15 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let isDeducted = false;
+  let deductedType: "wallet" | "free" | "none" = "none";
+  let userId = "";
+
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    userId = user.id;
+
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI service not configured." }, { status: 503 });
 
     const COST_PER_MESSAGE_PAISE = 200; // ₹2
@@ -174,35 +180,37 @@ export async function POST(request: Request) {
 
     if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
 
-    // 2. 🔥 PRE-DEDUCTION (Paisa pehle katega, race condition se bacho) 🔥
-    let deductedType = "none";
+    // 🔥 2. FETCH DB DATA FIRST (Paisa katne se pehle) 🔥
+    const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
+
+    const [birthRows, chartRows, previousMessages] = await Promise.all([
+      db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
+      db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
+      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
+    ]);
+
+    // 🔥 3. DEDUCT MONEY (Atomic Deduction) 🔥
     if (!isPremium) {
       if (canAffordWallet) {
         const updated = await db.update(users)
           .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
-          .where(and(eq(users.id, user.id), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)))
+          .where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)))
           .returning();
         
         if (updated.length === 0) return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Balance insufficient due to concurrent request." }, { status: 402 });
         deductedType = "wallet";
+        isDeducted = true;
       } else if (hasFreeMessages) {
         const updated = await db.update(users)
           .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
-          .where(and(eq(users.id, user.id), lt(users.freeMessagesUsed, 3)))
+          .where(and(eq(users.id, userId), lt(users.freeMessagesUsed, 3)))
           .returning();
         
         if (updated.length === 0) return NextResponse.json({ code: "FREE_LIMIT_REACHED", error: "Free limit reached due to concurrent request." }, { status: 402 });
         deductedType = "free";
+        isDeducted = true;
       }
     }
-
-    const conversation = await getOrCreateConversation(user.id, persona, topic, requestedConversationId || undefined);
-
-    const [birthRows, chartRows, previousMessages] = await Promise.all([
-      db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
-      db.select().from(charts).where(eq(charts.userId, user.id)).orderBy(desc(charts.createdAt)).limit(1),
-      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
-    ]);
 
     const birth = birthRows[0];
     const chart = chartRows[0];
@@ -214,7 +222,6 @@ export async function POST(request: Request) {
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 3. 🔥 ETHICAL & VALUE-BASED PROMPT 🔥
     let instructionPrompt = "";
     const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
 
@@ -265,53 +272,28 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    let rawReply = "";
-    let isError = false;
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash", 
+      contents: contents,
+      config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
+    });
 
-    try {
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash", 
-        contents: contents,
-        config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
-      });
-      rawReply = response.text || "";
-    } catch (apiError: any) {
-      console.error("Gemini API Limit Error:", apiError);
-      isError = true;
-    }
-
-    if (!rawReply) { isError = true; }
-
-    // 4. 🔥 REFUND LOGIC (Agar AI fail hua, toh paise wapas karo) 🔥
-    if (isError) {
-      if (deductedType === "wallet") {
-        await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, user.id));
-      } else if (deductedType === "free") {
-        await db.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} - 1` }).where(eq(users.id, user.id));
-      }
-      
-      const errorMsg = "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa/msg wapas kar diya gaya hai. Kripya thodi der baad try karein.";
-      return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
-    }
+    const rawReply = response.text || "";
+    if (!rawReply) throw new Error("EMPTY_AI_RESPONSE");
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
-    // 5. Save Messages & Remedy
-    try {
-      await db.transaction(async (tx) => {
-        await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "user", content: userMessage });
-        await tx.insert(messages).values({ conversationId: conversation.id, userId: user.id, role: "assistant", content: finalMessage });
+    // 🔥 4. SAVE MESSAGES (Transaction) 🔥
+    await db.transaction(async (tx) => {
+      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
+      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
 
-        if (remedy) {
-          await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
-        }
-      });
-    } catch (saveError) {
-      console.error("Failed to save chat messages:", saveError);
-      return NextResponse.json({ success: false, error: "Database save failed." }, { status: 500 });
-    }
+      if (remedy) {
+        await tx.insert(remedies).values({ userId: userId, title: remedy.title, description: remedy.description });
+      }
+    });
 
     return NextResponse.json({
       success: true,
@@ -320,8 +302,29 @@ Description
       remedy: remedy ? { title: remedy.title, description: remedy.description } : null,
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("POST /api/chat error:", error);
-    return NextResponse.json({ error: "Something went wrong." }, { status: 500 });
+
+    // 🔥 5. BULLETPROOF REFUND 🔥
+    if (isDeducted && userId) {
+      try {
+        if (deductedType === "wallet") {
+          await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + 200` }).where(eq(users.id, userId));
+        } else if (deductedType === "free") {
+          // GREATEST(..., 0) ensures freeMessagesUsed doesn't drop below 0
+          await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId)); 
+        }
+        console.log(`Refund successful for user ${userId} (Type: ${deductedType})`);
+      } catch (refundError) {
+        console.error("CRITICAL: Refund failed for user", userId, refundError);
+      }
+    }
+
+    if (error.message === "CONVERSATION_NOT_FOUND") {
+      return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
+    }
+
+    const errorMsg = "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa/msg wapas kar diya gaya hai. Kripya thodi der baad try karein.";
+    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
   }
 }
