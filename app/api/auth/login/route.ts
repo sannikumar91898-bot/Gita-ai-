@@ -1,4 +1,3 @@
-// app/api/auth/login/route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/index";
@@ -17,22 +16,24 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Email aur Password daalein." }, { status: 400 });
     }
 
-    // User dhundo
-    const foundUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    // 1. User dhundo database mein
+    const foundUsers = await db.select().from(users).where(eq(users.email, normalizedEmail)).limit(1);
     const user = foundUsers[0];
 
-    // Agar user nahi hai, ya guest hai, ya password nahi hai
+    // 2. Agar user nahi hai, ya wo Guest hai, ya usne password set nahi kiya
     if (!user || user.isGuest || !user.password) {
       return NextResponse.json({ error: "Galat Email ya Password." }, { status: 401 });
     }
 
-    // Password check karo
+    // 3. Password match karo
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) {
       return NextResponse.json({ error: "Galat Email ya Password." }, { status: 401 });
     }
 
-    // Session create karo
+    // 4. Session create karo
     const session = await createSession(user.id);
     await setSessionCookie(session.token, session.expires);
 
