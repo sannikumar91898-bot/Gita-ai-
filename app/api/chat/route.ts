@@ -1,3 +1,4 @@
+// app/api/chat/route.ts
 import { NextResponse } from "next/server";
 import { and, desc, eq, sql } from "drizzle-orm"; // 🔥 sql import kiya
 import { GoogleGenAI } from "@google/genai";
@@ -65,37 +66,20 @@ function isPersona(value: unknown): value is keyof typeof PERSONAS {
 }
 
 function getLanguage(value: unknown): SupportedLanguage {
-  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)
-    ? (value as SupportedLanguage)
-    : "hinglish";
+  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage) ? (value as SupportedLanguage) : "hinglish";
 }
 
 function extractRemedy(response: string) {
   const marker = "||REMEDY_EXTRACT||";
   const index = response.indexOf(marker);
-
-  if (index === -1) {
-    return {
-      message: response.trim(),
-      remedy: null as null | { title: string; description: string },
-    };
-  }
-
+  if (index === -1) return { message: response.trim(), remedy: null as null | { title: string; description: string } };
   const message = response.slice(0, index).trim();
   const payload = response.slice(index + marker.length).trim();
-
-  if (!payload) {
-    return { message, remedy: null };
-  }
-
+  if (!payload) return { message, remedy: null };
   const lines = payload.split("\n");
   const title = lines[0]?.trim() || "ग्रह शांति महा-उपाय";
   const description = lines.slice(1).join("\n").trim();
-
-  return {
-    message,
-    remedy: description ? { title, description } : null,
-  };
+  return { message, remedy: description ? { title, description } : null };
 }
 
 function getRelevantKnowledge(query: string): string {
@@ -104,34 +88,16 @@ function getRelevantKnowledge(query: string): string {
   
   const scoredEntries = allEntries.map((entry) => {
     let score = 0;
-    
-    if (entry.keywords) {
-      entry.keywords.forEach((kw) => {
-        if (q.includes(kw.toLowerCase())) score += 5;
-      });
-    }
-
-    if (entry.aliases) {
-      entry.aliases.forEach((alias) => {
-        if (q.includes(alias.toLowerCase())) score += 3;
-      });
-    }
-
+    if (entry.keywords) entry.keywords.forEach((kw) => { if (q.includes(kw.toLowerCase())) score += 5; });
+    if (entry.aliases) entry.aliases.forEach((alias) => { if (q.includes(alias.toLowerCase())) score += 3; });
     if (entry.question) {
       const words = q.split(" ").filter(w => w.length > 3);
-      words.forEach(word => {
-        if (entry.question.toLowerCase().includes(word)) score += 2;
-      });
+      words.forEach(word => { if (entry.question.toLowerCase().includes(word)) score += 2; });
     }
-
     return { entry, score };
   });
 
-  const topMatches = scoredEntries
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
+  const topMatches = scoredEntries.filter((item) => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
   if (topMatches.length === 0) return "";
 
   return topMatches.map(({ entry }) => {
@@ -140,37 +106,15 @@ function getRelevantKnowledge(query: string): string {
   }).join("\n\n");
 }
 
-async function getOrCreateConversation(
-  userId: string,
-  persona: keyof typeof PERSONAS,
-  topic: string,
-  conversationId?: string,
-) {
+async function getOrCreateConversation(userId: string, persona: keyof typeof PERSONAS, topic: string, conversationId?: string) {
   if (conversationId) {
-    const [existing] = await db
-      .select()
-      .from(conversations)
-      .where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId)))
-      .limit(1);
-
+    const [existing] = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId))).limit(1);
     if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
     return existing;
   }
-
-  const [existing] = await db
-    .select()
-    .from(conversations)
-    .where(and(eq(conversations.userId, userId), eq(conversations.persona, persona)))
-    .orderBy(desc(conversations.updatedAt))
-    .limit(1);
-
+  const [existing] = await db.select().from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
   if (existing) return existing;
-
-  const [created] = await db
-    .insert(conversations)
-    .values({ userId, title: "New Astro Consultation", topic: topic || "general", persona })
-    .returning();
-
+  const [created] = await db.insert(conversations).values({ userId, title: "New Astro Consultation", topic: topic || "general", persona }).returning();
   if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
   return created;
 }
@@ -181,26 +125,16 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-    const requestedPersona = searchParams.get("persona");
-    const persona = isPersona(requestedPersona) ? requestedPersona : "gita";
+    const persona = isPersona(searchParams.get("persona")) ? searchParams.get("persona") as keyof typeof PERSONAS : "gita";
 
     const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
-
-    const history = await db
-      .select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
-      .from(messages)
-      .where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id)))
-      .orderBy(desc(messages.createdAt))
-      .limit(50);
+    const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
+      .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
 
     return NextResponse.json({
       success: true,
       conversationId: conversation.id,
-      messages: history.reverse().map((item) => ({
-        id: item.id,
-        role: item.role === "assistant" ? "assistant" : "user",
-        content: item.content,
-      })),
+      messages: history.reverse().map((item) => ({ id: item.id, role: item.role === "assistant" ? "assistant" : "user", content: item.content })),
     });
   } catch (error) {
     return NextResponse.json({ error: "Chat history could not be loaded." }, { status: 500 });
@@ -213,30 +147,18 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI service not configured." }, { status: 503 });
 
-    // 🔥 1. PAID USER CHECK 🔥
+    // 🔥 1. PAID USER CHECK & FREE MESSAGE LIMIT 🔥
     const isPaidUser = user.walletBalancePaise > 0;
     const COST_PER_MESSAGE_PAISE = 200; // ₹2 per message
 
-    // 🔥 2. BLOCK FREE USERS AFTER 3 MESSAGES 🔥
+    // Agar Free user hai aur 3 message cross ho gaye
     if (!isPaidUser && user.isGuest && user.freeMessagesUsed >= 3) {
-      return NextResponse.json(
-        { 
-          code: "FREE_LIMIT_REACHED", 
-          error: "Aapke 3 free messages khatam ho gaye hain. Kripya wallet recharge karein." 
-        }, 
-        { status: 402 }
-      );
+      return NextResponse.json({ code: "FREE_LIMIT_REACHED", error: "Aapke 3 free messages khatam ho gaye hain." }, { status: 402 });
     }
 
-    // 🔥 3. BLOCK PAID USERS IF BALANCE IS LOW 🔥
+    // Agar Paid user hai par balance ₹2 se kam hai
     if (!user.isGuest && user.walletBalancePaise < COST_PER_MESSAGE_PAISE) {
-      return NextResponse.json(
-        { 
-          code: "INSUFFICIENT_BALANCE", 
-          error: "Aapka wallet balance khatam ho gaya hai. Kripya recharge karein." 
-        }, 
-        { status: 402 }
-      );
+      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka wallet balance khatam ho gaya hai." }, { status: 402 });
     }
 
     let body: Record<string, unknown>;
@@ -261,15 +183,12 @@ export async function POST(request: Request) {
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
       db.select().from(charts).where(eq(charts.userId, user.id)).orderBy(desc(charts.createdAt)).limit(1),
-      db.select({ role: messages.role, content: messages.content })
-        .from(messages).where(eq(messages.conversationId, conversation.id))
-        .orderBy(desc(messages.createdAt)).limit(12),
+      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
     ]);
 
     const birth = birthRows[0];
     const chart = chartRows[0];
     const personaConfig = PERSONAS[persona];
-
     const relevantKnowledge = getRelevantKnowledge(userMessage);
 
     const astrologyContext = [
@@ -277,19 +196,23 @@ export async function POST(request: Request) {
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 🔥 4. DYNAMIC PROMPT (PAID VS FREE) 🔥
+    // 🔥 2. DYNAMIC PROMPT (FREE VS PAID) 🔥
     let instructionPrompt = "";
-    
-    if (isPaidUser) {
-      instructionPrompt = `
-🚨 USER IS A PAID CUSTOMER. DO NOT ASK FOR MONEY. DO NOT CREATE FEAR. 
-YOUR GOAL: Give the user the ACTUAL SOLUTION. Analyze their birth details, find the exact dosha, and provide a clear, step-by-step remedy. Tell them exactly when their problem will be solved. Be highly comforting, professional, and give them their money's worth.
-`;
+    const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
+
+    if (!isPaidUser && user.isGuest) {
+      if (freeMessagesLeft === 1) {
+        instructionPrompt = `🚨 CRITICAL: THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
+YOUR GOAL: Validate their pain, identify a specific "Rukawat" (Dosh/Dasha), and tell them that the solution is very close. BUT DO NOT GIVE THE FULL SOLUTION. 
+End your message exactly with a CLIFFHANGER. Example: "Aapki kundli mein ek bada badlav aane wala hai jo agle 11 din mein aapki life badal sakta hai, lekin uske liye..." 
+Make them feel they MUST pay to unlock the rest of the sentence.`;
+      } else {
+        instructionPrompt = `🚨 USER IS A FREE USER. 
+YOUR GOAL: Validate their pain. Tell them they are hardworking but a specific grah is blocking them. Give them a 10% hint of the problem, but do NOT give the remedy. Keep them curious.`;
+      }
     } else {
-      instructionPrompt = `
-🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain, but highlight a specific "Rukawat" (Dosh/Dasha). Tell them that the situation is critical, but to know the exact solution and timeline, they MUST recharge their wallet. Give them only a 20% hint of the solution, keep 80% behind the paywall. Make them feel they need to pay to get rid of this fear.
-`;
+      instructionPrompt = `🚨 USER IS A PAID CUSTOMER. DO NOT CREATE FEAR. 
+YOUR GOAL: Give the user the ACTUAL SOLUTION. Analyze their chart, find the dosha, and give exact remedies. Tell them exactly when their problem will be solved. Give them their money's worth.`;
     }
 
     const systemPrompt = `
@@ -332,28 +255,16 @@ Description
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash", 
         contents: contents,
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: 0.75,
-          maxOutputTokens: 1500, // 🔥 Tokens badha diye taaki jawab na ruke
-        },
+        config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
       });
       rawReply = response.text || "";
     } catch (apiError: any) {
       console.error("Gemini API Limit Error:", apiError);
       isError = true;
-      
-      if (apiError?.status === 429 || apiError?.message?.includes("quota") || apiError?.message?.includes("limit")) {
-         rawReply = "बेटा, अभी ग्रहों की चाल का गहराई से हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद दोबारा अपना प्रश्न पूछें, ताकि मैं आपको सटीक उपाय बता सकूँ। 🙏";
-      } else {
-         rawReply = "बेटा, कुछ तकनीकी कारणों से जवाब नहीं आ पाया। कृपया दोबारा कोशिश करें।";
-      }
+      rawReply = apiError?.status === 429 ? "बेटा, अभी ग्रहों की चाल का हिसाब लगाया जा रहा है। कृपया 1 मिनट बाद पूछें।" : "कुछ तकनीकी कारणों से जवाब नहीं आ पाया।";
     }
 
-    if (!rawReply) {
-      rawReply = "अभी जवाब तैयार नहीं हो पाया। कृपया दोबारा पूछें।";
-      isError = true;
-    }
+    if (!rawReply) { rawReply = "अभी जवाब तैयार नहीं हो पाया।"; isError = true; }
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
@@ -369,30 +280,21 @@ Description
             await tx.insert(remedies).values({ userId: user.id, title: remedy.title, description: remedy.description });
           }
 
-          // 🔥 5. WALLET DEDUCTION / FREE MESSAGE COUNT 🔥
+          // 🔥 3. WALLET DEDUCTION / FREE COUNT 🔥
           if (isPaidUser) {
-            // Paid user: Cut ₹2
-            await tx.update(users)
-              .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
-              .where(eq(users.id, user.id));
+            await tx.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, user.id));
           } else {
-            // Free user: Increase free message count
-            await tx.update(users)
-              .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
-              .where(eq(users.id, user.id));
+            await tx.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(eq(users.id, user.id));
           }
         });
       } catch (saveError) {
-        console.error("Failed to save chat messages (Transaction failed):", saveError);
+        console.error("Failed to save chat messages:", saveError);
         return NextResponse.json({ success: false, error: "Database save failed." }, { status: 500 });
       }
     }
 
     if (isError) {
-      return NextResponse.json(
-        { success: false, error: finalMessage, conversationId: conversation.id },
-        { status: 500 }
-      );
+      return NextResponse.json({ success: false, error: finalMessage, conversationId: conversation.id }, { status: 500 });
     }
 
     return NextResponse.json({
