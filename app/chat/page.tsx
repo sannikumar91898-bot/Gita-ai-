@@ -84,7 +84,6 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
 }
 
 export default function ChatPage() {
-  // 🔥 Yahan humne loading aur sessionError add kar diya hai 🔥
   const { lang, me, setLanguage, refresh, loading, sessionError } = useApp();
   
   const [topic, setTopic] = useState("general");
@@ -130,8 +129,12 @@ export default function ChatPage() {
     }
   }, [me]);
 
+  // 🔥 FIX: Race condition solve karne ke liye loading aur me?.user add kiya gaya hai 🔥
   useEffect(() => {
+    // Jab tak Providers guest user nahi bana leta, tab tak wait karo
+    if (loading || !me?.user) return; 
     if (!conversationId.current) return;
+
     let cancelled = false;
     fetch("/api/chat?conversationId=" + encodeURIComponent(conversationId.current), {
       cache: "no-store",
@@ -158,7 +161,7 @@ export default function ChatPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loading, me?.user]); // 🔥 Dependencies mein loading aur me?.user add kiya 🔥
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -331,7 +334,6 @@ export default function ChatPage() {
     await sendToAi(text);
   }
 
-  // 🔥 1. LOADING STATE: Jab tak Providers guest user nahi bana leta, tab tak yeh dikhega 🔥
   if (loading) {
     return (
       <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 text-violet-50">
@@ -341,7 +343,6 @@ export default function ChatPage() {
     );
   }
 
-  // 🔥 2. ERROR STATE: Agar guest session banane mein fail ho jaye 🔥
   if (sessionError || !me?.user) {
     return (
       <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 px-4 text-center">
@@ -358,7 +359,6 @@ export default function ChatPage() {
     );
   }
 
-  // Baaki poora aapka chat code waise hi chalega
   const shownMessages =
     messages.length > 0
       ? messages
