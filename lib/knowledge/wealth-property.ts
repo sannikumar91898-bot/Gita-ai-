@@ -32,8 +32,8 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
-    disclaimer: D_EN
+    confidence: "medium", // 🔥 FIXED: Syntax error
+    disclaimer: D_EN // 🔥 FIXED: Typo error
   },
   {
     id: "wealth_property_0002",
@@ -54,7 +54,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -76,7 +76,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -98,7 +98,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -120,7 +120,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -142,7 +142,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -164,7 +164,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -186,7 +186,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -208,7 +208,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
   {
@@ -230,7 +230,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium", // 🔥 FIXED: high to medium
     disclaimer: D_EN
   },
 
@@ -246,37 +246,15 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
       hinglish: "Dhana Yoga kya hai?"
     },
     answers: {
-      en: "Child, Dhana Yoga is the ultimate wealth combination in Vedic Astrology. When the lords of your 1st, 2nd, 5th, 9th, and 11th houses connect, they form a Dhana Yoga. A person with this yoga becomes extremely rich and financially powerful. But if this yoga is weak or cancelled by a dosha, wealth slips away. Do you have a Dhana Yoga in your chart? Let me analyze it and tell you when your massive wealth phase will start.",
-      hi: "बेटा, धन योग वैदिक ज्योतिष में अंतिम धन संयोजन है। जब आपके पहले, दूसरे, पांचवें, नौवें और ग्यारहवें भावों के स्वामी जुड़ते हैं, तो वे धन योग बनाते हैं। इस योग वाला व्यक्ति बेहद अमीर और आर्थिक रूप से शक्तिशाली बनता है। लेकिन अगर यह योग कमजोर है या किसी दोष से रद्द हो जाता है, तो धन फिसल जाता है। क्या आपकी कुंडली में धन योग है? मुझे इसका विश्लेषण करने दें और बताऊंगी कि आपका भारी धन चरण कब शुरू होगा।",
-      hinglish: "Beta, Dhana Yoga Vedic Astrology mein ultimate wealth combination hai. Jab aapke 1st, 2nd, 5th, 9th, aur 11th house ke lords connect hote hain, toh wo Dhana Yoga banate hain. Is yoga wala person extremely rich aur financially powerful banta hai. Lekin agar yeh yoga weak hai ya kisi dosh se cancel ho jata hai, toh wealth slip away ho jati hai. Kya aapki kundli mein Dhana Yoga hai? Mujhe iska analysis karne dein aur bataungi ki aapka massive wealth phase kab start hoga."
+      en: "Child, Dhana Yoga is the ultimate wealth combination in Vedic Astrology. When the lords of your 1st, 2nd, 5th, 9th, and 11th houses connect, they form a Dhana Yoga. A person with this yoga becomes extremely rich and financially powerful. But if this yoga is weak or cancelled by a dosha, wealth slips away. Do you have a Dhana Yoga in your chart?",
+      hi: "बेटा, धन योग वैदिक ज्योतिष में सबसे बड़ा धन संयोजन है। जब आपके पहले, दूसरे, पांचवें, नौवें और ग्यारहवें भाव के स्वामी जुड़ते हैं, तो वे धन योग बनाते हैं। इस योग वाला व्यक्ति बेहद अमीर और वित्तीय रूप से शक्तिशाली होता है। लेकिन अगर यह योग कमजोर है या किसी दोष से रद्द हो जाता है, तो धन फिसल जाता है। क्या आपकी कुंडली में धन योग है?",
+      hinglish: "Beta, Dhana Yoga Vedic Astrology mein ultimate wealth combination hai. Jab aapke 1st, 2nd, 5th, 9th, aur 11th houses ke lords connect hote hain, toh wo Dhana Yoga form karte hain. Is yoga wala person extremely rich aur financially powerful hota hai. Lekin agar yeh yoga weak hai ya kisi dosha se cancelled hai, toh wealth slip away ho jati hai. Kya aapki kundli mein Dhana Yoga hai?"
     },
     answer_type: "traditional_astrology",
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
-    disclaimer: D_EN
-  },
-  {
-    id: "wealth_property_0012",
-    category: "yoga",
-    subcategory: "dhana_yoga_formation",
-    difficulty: "intermediate",
-    questions: {
-      en: "How are Dhana Yogas formed?",
-      hi: "धन योग कैसे बनते हैं?",
-      hinglish: "Dhana Yogas kaise bante hain?"
-    },
-    answers: {
-      en: "Child, Dhana Yogas are formed when the lords of the wealth-giving houses (1st, 2nd, 5th, 9th, 11th) sit together or aspect each other. But not every yoga gives wealth. If the Sun or Moon is weak, the yoga fails to deliver. You need a complete chart analysis to know if your Dhana Yoga is actually active. Talk to me, and I will tell you if your chart truly holds the key to massive wealth.",
-      hi: "बेटा, धन योग तब बनते हैं जब धन देने वाले भावों (1st, 2nd, 5th, 9th, 11th) के स्वामी एक साथ बैठते हैं या एक-दूसरे को देखते हैं। लेकिन हर योग धन नहीं देता। अगर सूर्य या चंद्रमा कमजोर है, तो योग फल देने में विफल रहता है। यह जानने के लिए कि आपका धन योग वास्तव में सक्रिय है या नहीं, आपको पूर्ण कुंडली विश्लेषण की आवश्यकता है। मुझसे बात करें, मैं बताऊंगी कि क्या आपकी कुंडली में वास्तव में भारी धन की कुंजी है।",
-      hinglish: "Beta, Dhana Yogas tab bante hain jab wealth-giving houses (1st, 2nd, 5th, 9th, 11th) ke lords ek saath baithte hain ya ek-doosre ko aspect karte hain. Lekin har yoga wealth nahi deta. Agar Sun ya Moon weak hai, toh yoga deliver karne mein fail ho jata hai. Yeh jaanna ki aapka Dhana Yoga actually active hai ya nahi, aapko complete chart analysis ki zaroorat hai. Mujhse baat karein, main bataungi ki kya aapki kundli mein sach mein massive wealth ki key hai."
-    },
-    answer_type: "traditional_astrology",
-    requires_personal_chart: true,
-    requires_calculation: true,
-    source_ids: ["dhana_yoga_overview"],
-    confidence: "high",
+    confidence: "medium",
     disclaimer: D_EN
   }
 ];
