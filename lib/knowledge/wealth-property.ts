@@ -32,8 +32,8 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: Syntax error
-    disclaimer: D_EN // 🔥 FIXED: Typo error
+    confidence: "traditional_interpretation", // 🔥 FIXED
+    disclaimer: D_EN
   },
   {
     id: "wealth_property_0002",
@@ -54,7 +54,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -76,7 +76,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -98,7 +98,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -120,7 +120,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -142,7 +142,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -164,7 +164,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -186,7 +186,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -208,7 +208,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: [],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
   {
@@ -230,7 +230,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium", // 🔥 FIXED: high to medium
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   },
 
@@ -254,7 +254,7 @@ export const SEED_ENTRIES: WealthPropertyEntry[] = [
     requires_personal_chart: true,
     requires_calculation: true,
     source_ids: ["dhana_yoga_overview"],
-    confidence: "medium",
+    confidence: "traditional_interpretation", // 🔥 FIXED
     disclaimer: D_EN
   }
 ];
