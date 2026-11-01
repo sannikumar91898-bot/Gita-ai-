@@ -24,6 +24,11 @@ export const users = pgTable("users", {
   premiumUntil: timestamp("premium_until", {
     withTimezone: true,
   }),
+  
+  // 🔥 NAYE FIELDS: Free Messages aur Wallet Balance 🔥
+  freeMessagesUsed: integer("free_messages_used").notNull().default(0),
+  walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
+
   createdAt: timestamp("created_at", {
     withTimezone: true,
   }).notNull().defaultNow(),
@@ -77,11 +82,7 @@ export const conversations = pgTable("conversations", {
     .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("New conversation"),
   topic: text("topic").notNull().default("general"),
-
-  // Selected astrologer for this conversation.
-  // Nullable so existing conversations remain compatible.
   persona: text("persona"),
-
   createdAt: timestamp("created_at", {
     withTimezone: true,
   }).notNull().defaultNow(),
@@ -208,32 +209,16 @@ export const supportTickets = pgTable("support_tickets", {
     .defaultNow(),
 });
 
-// ==========================================
-// NEW TABLE: ASTROLOGER REVIEWS (HUMAN-LIKE)
-// ==========================================
 export const astrologerReviews = pgTable(
   "astrologer_reviews",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    
-    // यह फ़ील्ड conversations.persona (जैसे: "Gita", "Acharya Kriti") से जुड़ेगा
     persona: text("persona").notNull(),
-    
-    // यूज़र द्वारा सबमिट होने पर या मार्केटिंग बोट के लिए नाम
     reviewerName: text("reviewer_name").notNull(),
-    
-    // स्टार रेटिंग (1 से 5)
     stars: integer("stars").notNull().default(5),
-    
-    // यूज़र का वास्तविक या मार्केटिंग कमेंट टेक्स्ट
     comment: text("comment").notNull(),
-    
-    // कितने अन्य लोगों को यह रिव्यू काम का लगा (Real human engagement counter)
     helpfulCount: integer("helpful_count").notNull().default(0),
-    
-    // मार्केटिंग सेफ्टी के लिए: केवल स्वीकृत रिव्यूज ही फ्रंटएंड पर दिखेंगे
     isApproved: boolean("is_approved").notNull().default(true),
-    
     createdAt: timestamp("created_at", {
       withTimezone: true,
     }).notNull().defaultNow(),
