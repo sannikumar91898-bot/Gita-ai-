@@ -125,7 +125,9 @@ export const aiResponseCache = pgTable(
     aiAnswer: text("ai_answer").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("question_key_idx").on(table.questionKey)]
+  (table) => ({
+    questionKeyIdx: index("question_key_idx").on(table.questionKey),
+  })
 );
 
 export const astrologyKnowledgeBase = pgTable(
@@ -138,7 +140,9 @@ export const astrologyKnowledgeBase = pgTable(
     content: text("content").notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("search_key_idx").on(table.searchKey)]
+  (table) => ({
+    searchKeyIdx: index("search_key_idx").on(table.searchKey),
+  })
 );
 
 export const supportTickets = pgTable("support_tickets", {
@@ -164,8 +168,8 @@ export const astrologerReviews = pgTable(
     isApproved: boolean("is_approved").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    index("persona_idx").on(table.persona),
-    index("is_approved_idx").on(table.isApproved),
-  ]
+  (table) => ({
+    personaIdx: index("persona_idx").on(table.persona),
+    isApprovedIdx: index("is_approved_idx").on(table.isApproved),
+  })
 );
