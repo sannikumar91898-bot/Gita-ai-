@@ -26,22 +26,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshots/home.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Gita AI Home Screen"
-    },
-    {
-      "src": "/screenshots/chat.png",
-      "sizes": "1080x1920",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Chat with Astrologer"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Chat with Astrologer",
