@@ -9,16 +9,16 @@ import {
   doublePrecision,
   date,
   index,
-  check, // 🔥 Naya import
+  check,
 } from "drizzle-orm/pg-core";
-import { sql } from "drizzle-orm"; // 🔥 Naya import
+import { sql } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   googleId: text("google_id").unique(),
-  email: text("email").unique(), 
+  email: text("email").unique(),
   name: text("name"),
-  password: text("password"), 
+  password: text("password"),
   language: text("language").notNull().default("en"),
   isGuest: boolean("is_guest").notNull().default(true),
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
@@ -27,8 +27,10 @@ export const users = pgTable("users", {
   walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
-  // 🔥 CHECK CONSTRAINT: Balance kabhi negative nahi hoga
-  walletBalanceCheck: check("wallet_balance_check", sql`${table.walletBalancePaise} >= 0`),
+  walletBalanceCheck: check(
+    "wallet_balance_check",
+    sql`${table.walletBalancePaise} >= 0`
+  ),
 }));
 
 export const sessions = pgTable("sessions", {
@@ -88,10 +90,11 @@ export const payments = pgTable("payments", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   paidAt: timestamp("paid_at", { withTimezone: true }),
 }, (table) => ({
-  // 🔥 CHECK CONSTRAINT: Amount hamesha positive hoga
   amountCheck: check("amount_check", sql`${table.amountPaise} > 0`),
-  // 🔥 CHECK CONSTRAINT: Status sirf specific words ho sakte hain
-  statusCheck: check("status_check", sql`${table.status} IN ('created', 'paid', 'failed')`),
+  statusCheck: check(
+    "status_check",
+    sql`${table.status} IN ('created', 'paid', 'failed')`
+  ),
 }));
 
 export const webhookEvents = pgTable("webhook_events", {
