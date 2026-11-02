@@ -56,7 +56,18 @@ export async function POST(request: Request) {
     const session = await createSession(finalUser.id);
     await setSessionCookie(session.token, session.expires);
 
-    return NextResponse.json({ success: true, user: finalUser }, { status: 201 });
+    // Creating a clean and secured user object to filter out password fields
+    const safeUser = {
+      id: finalUser.id,
+      name: finalUser.name,
+      email: finalUser.email,
+      isGuest: finalUser.isGuest,
+      language: finalUser.language,
+      walletBalancePaise: finalUser.walletBalancePaise,
+      freeMessagesUsed: finalUser.freeMessagesUsed,
+    };
+
+    return NextResponse.json({ success: true, user: safeUser }, { status: 201 });
 
   } catch (error: any) {
     console.error("Registration Error:", error);
