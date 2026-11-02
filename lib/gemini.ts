@@ -3,8 +3,8 @@ import { GoogleGenAI } from "@google/genai";
 // 1. पर्यावरण चर (Environment Variables) से API की निकालें
 const apiKey = process.env.GEMINI_API_KEY?.trim();
 
-// 2. सबसे तेज़ और बिल्कुल नया मॉडल जो आपके मार्केटिंग और चैट को सुपरफास्ट बनाएगा
-const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+// 2. सबसे तेज़ और बिल्कुल नया मॉडल (gemini-3.8-flash) जो आपके मार्केटिंग और चैट को सुपरफास्ट बनाएगा
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim() || "gemini-3.8-flash";
 
 if (!apiKey) {
   console.warn("⚠️ Warning: GEMINI_API_KEY is missing in your environment variables.");
