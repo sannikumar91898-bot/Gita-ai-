@@ -13,33 +13,70 @@ if (!apiKey) {
 // 3. नया Google GenAI क्लाइंट इनिशियलाइज़ करें
 const ai = new GoogleGenAI({ apiKey: apiKey || "" });
 
+// TypeScript Export for History Management (Required by chat-service.ts)
+export type GeminiHistoryMessage = {
+  role: "user" | "model";
+  content: string;
+};
+
 /**
- * चैट और ज्योतिषीय सलाह के लिए मुख्य फंक्शन (बिना किसी डिस्क्लेमर या ज्ञानबाज़ी के)
+ * ⚡ Chat Service ke liye Main Function (Supports full conversation history with no safety block)
  */
-export async function generateAstrologyResponse(prompt: string, systemInstruction: string) {
+export async function generateGeminiResponse(options: {
+  systemPrompt: string;
+  message: string;
+  history?: GeminiHistoryMessage[];
+}): Promise<string> {
   if (!apiKey) {
     return fallbackResponse();
   }
 
   try {
+    const contents = [
+      ...(options.history || []).map((item) => ({
+        role: item.role,
+        parts: [{ text: item.content }],
+      })),
+      {
+        role: "user",
+        parts: [{ text: options.message }],
+      },
+    ];
+
     const response = await ai.models.generateContent({
       model: GEMINI_MODEL,
-      contents: prompt,
+      contents,
       config: {
-        // सख्त निर्देश ताकि AI खुद को ज्योतिषी ही समझे और ज्ञान न पेले
-        systemInstruction: systemInstruction,
+        systemInstruction: options.systemPrompt,
         temperature: 0.7,
-        maxOutputTokens: 1000,
+        maxOutputTokens: 1500,
+        // बिज़नेस फ्रेंडली सेटिंग्स: ताकि हमारा 'डर + गारंटी' वाला प्रॉम्ट ब्लॉक न हो
+        safetySettings: [
+          { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+          { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+        ]
       },
     });
 
-    const replyText = response.text?.trim();
-    return replyText || fallbackResponse();
+    const result = response.text?.trim();
+    return result || fallbackResponse();
 
   } catch (error) {
-    console.error("Gemini API Error:", error);
+    console.error("Gemini History API Error:", error);
     return fallbackResponse();
   }
+}
+
+/**
+ * चैट और ज्योतिषीय सलाह के लिए मुख्य फंक्शन (बिना किसी डिस्क्लेमर या ज्ञानबाज़ी के)
+ */
+export async function generateAstrologyResponse(prompt: string, systemInstruction: string): Promise<string> {
+  return generateGeminiResponse({
+    systemPrompt: systemInstruction,
+    message: prompt,
+  });
 }
 
 /**
