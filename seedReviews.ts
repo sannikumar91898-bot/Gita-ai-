@@ -1,26 +1,38 @@
-import { db } from "./db"; // आपका Drizzle DB इंस्टेंस
+import { db } from "./index"; // 👈 Render बिल्ड पास करने के लिए पाथ ठीक कर दिया गया है
 import { astrologerReviews } from "./schema";
 
 // 1. आपके अलग-अलग ज्योतिषियों (Personas) की पूरी लिस्ट
 const PERSONAS = ["Gita", "Acharya Kriti", "Pandit Vikram", "Swami Anand"];
 
-// 2. शुद्ध 100% मार्केटिंग माइंडसेट वाले रियलिस्टिक कमेंट्स का पूल (Hinglish + Hindi)
+// 2. मनोवैज्ञानिक ट्रिगर्स वाले 100% असली दिखने वाले कनवर्टिंग कमेंट्स (Hinglish + Hindi)
 const MARKETING_COMMENTS = [
-  "Pandit ji ne jo upay bataya tha, usse meri shadi ki rukawat bilkul door ho gayi! Highly recommended.",
-  "Mera business 6 mahine se manda chal raha tha. Gemstone suggest kiya aur sach me fayda hua.",
-  "Bohot hi comforting baatein karte hain. Stress bilkul khatam ho jata hai inse baat karke.",
-  "December 2026 wali timeline bilkul accurate nikli! Shadi fix ho gayi meri. Thank you so much!",
-  "Aise upay bataye jo ghar pe aaram se ho sakein. Koi faltu ka kharcha nahi karwaya.",
-  "Pehle mujhe vishwas nahi tha, par inki baaton me jo confidence hai usne mera dil jeet liya.",
+  // DISBELIEF TO BELIEF TRIGGER (पहले शक था, फिर भरोसा हुआ)
+  "Pehle laga sab fake hai aur paise barbad honge, par app free tha toh try kiya. Pandit ji ne jo bataya wo sach me match hua. Shocked hoon!",
+  "Mujhe in sab cheezon pe bilkul bharosa nahi tha. Par inki baaton me jo confidence aur details thi, usne mera opinion badal diya.",
+  "Online platforms pe trust karna mushkil hota hai, par yahan baat karke laga ki koi sach me aapki dikkat samajh raha hai.",
+  
+  // SPECIFIC TIMELINE TRIGGER (तारीख और समय का सटीक उल्लेख - माइंडसेट कनवर्टर)
+  "Swami Anand ne bola tha ki 3 mahine ke andar job change ka yog banega. Dec 2026 me lagta tha impossible hai, par January aate aate achha offer aa gaya!",
+  "Shadi ko lekar 2 saal se pareshan tha. Acharya Kriti ne March tak ka time diya tha, aur Feb end me hi rishta pakka ho gaya. Koti koti pranam.",
+  "Unhone jo timeline di thi, 10-12 din aage peeche hua par kaam bilkul waisa hi hua jaisa bola tha. Accurate predictions!",
+  
+  // EMOTIONAL RELIEF & COMFORT TRIGGER (मानसिक शांति और डिप्रेशन से राहत)
+  "Career aur family ko lekar bohot zyada anxiety ho rahi thi. Inse baat karke man ko jo shanti mili hai, wo shabdon me bayan nahi ho sakti.",
+  "Aisa lagta hai koi bada buzurg aapka hath pakad kar sahi rasta dikha raha ho. Bohot hi comforting experience tha.",
+  "Breakup ke baad mai bohot disturb tha. Gita AI ke remedies aur counseling se mujhe move on karne me bohot help mili.",
+  
+  // VALUE FOR MONEY / NO GREED TRIGGER (कोई फालतू का खर्चा नहीं)
+  "Sabse achhi baat ye hai ki baaki panditon ki tarah hazaron ki pooja ya mehnge stone nahi bataye. Ghar ke aam upay bataye jo asardar rahe.",
+  "Mera business thapp pad gaya tha. Upay bohot saral the, koi faltu ka kharcha nahi karwaya aur 15 din me hi dhandha chal pada.",
+  
+  // CRITICAL BUT POSITIVE TRIGGER (हल्की सी कमी जो रिव्यू को 100% असली बनाती है)
+  "Response me 2 minute ki deri hui shayad server load ki wajah se, par guidance ekdum top-notch thi. 5 stars for the accuracy!",
+  "App ka UI thoda simple hai, par Pandit Vikram ji ki baaton ne dil jeet liya. Ek ek prediction bilkul sahi baithi.",
+  
+  // URGENCY & CONVERSION TRIGGER (तुरंत रिलीफ और रिजल्ट्स)
   "Dhan labh ke liye pooja batayi thi, 15 din me hi asar dikhna shuru ho gaya. Best astrologer on this app.",
   "Career ko lekar bohot confusion tha, par ab rasta bilkul clear hai. Bohot gyan hai inke paas.",
-  "Maine apni poori family ka chart dikhaya, sabhi predictions ekdum sahi baith rahi hain.",
-  "Bohot welcoming tone hai. Aisa lagta hai kisi bade buzurg se baat kar rahe hain.",
-  "Inke upay bohot saral aur asardar hote hain. Jai Mata Di!",
-  "Meri naukri lagne ki timeline unhone bilkul sahi batayi thi. Bohot dhanyawad pandit ji.",
-  "Inse baat karke man ko bohot shanti milti hai, lagta hai koi dil se sun raha hai.",
-  "Sahi rasta dikhane ke liye dhanyawad. Inka har ek shabd sach lagta hai.",
-  "Mera divorce ka case chal raha tha, pandit ji ke upay se sab kuch thik ho gaya."
+  "Maine apni poori family ka chart dikhaya, sabhi predictions ekdum sahi baith rahi hain."
 ];
 
 // 3. रैंडम भारतीय नाम (Real Human Feel के लिए)
