@@ -1,4 +1,4 @@
-import { cookies, headers } from "next/headers";
+import { cookies } from "next/headers";
 import { randomBytes, randomUUID } from "crypto";
 import { eq, and, gt } from "drizzle-orm";
 
@@ -35,10 +35,10 @@ export async function getUser(): Promise<User | null> {
       .limit(1);
 
     return rows[0]?.user ?? null;
-  } catch (error) {
-    // 🔥 FIX: Database error ko chupao mat, throw karo taaki API ko pata chale
+  } catch (error: any) {
+    // 🔥 FIX: Asli error log karo aur wapas throw karo (chhupao mat)
     console.error("Database error in getUser:", error);
-    throw new Error("Database connection failed during auth");
+    throw error; 
   }
 }
 
