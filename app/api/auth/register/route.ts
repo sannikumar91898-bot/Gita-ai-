@@ -71,6 +71,11 @@ export async function POST(request: Request) {
 
   } catch (error: any) {
     console.error("Registration Error:", error);
-    return NextResponse.json({ error: "Registration fail ho gaya." }, { status: 500 });
+    
+    // 🔥 YAHAN HUM ASLI ERROR BHEJ RAHE HAIN 🔥
+    return NextResponse.json({ 
+      error: "Registration fail ho gaya.",
+      details: error.message || String(error) 
+    }, { status: 500 });
   }
 }
