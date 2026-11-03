@@ -10,7 +10,13 @@ export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const { name, email, password } = await request.json();
+    const body = await request.json();
+    const { name, email, password } = body;
+
+    // 🔥 FIX 1: Type check lagaya hai taaki galat input se app crash na ho 🔥
+    if (typeof email !== "string" || typeof password !== "string") {
+      return NextResponse.json({ error: "Invalid input format." }, { status: 400 });
+    }
 
     if (!email || !password || password.length < 6) {
       return NextResponse.json({ error: "Email aur Password zaroori hai (Password min 6 characters)." }, { status: 400 });
@@ -72,10 +78,10 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Registration Error:", error);
     
-    // 🔥 YAHAN HUM ASLI ERROR BHEJ RAHE HAIN 🔥
+    // 🔥 FIX 2: Production (Live) app par database error chhupaya hai 🔥
     return NextResponse.json({ 
       error: "Registration fail ho gaya.",
-      details: error.message || String(error) 
+      details: process.env.NODE_ENV === "development" ? (error.message || String(error)) : undefined
     }, { status: 500 });
   }
 }
