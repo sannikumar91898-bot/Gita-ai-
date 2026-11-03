@@ -77,11 +77,16 @@ export async function GET(request: Request) {
   const sign = searchParams.get("sign") || "General";
   const lang = searchParams.get("lang") || "hinglish";
 
-  const formattedSign = sign.charAt(0).toUpperCase() + sign.slice(1).toLowerCase();
+  // 🔥 FIX 1: Bracket aur case ko normalize kiya (Mesh (Aries) -> Mesh) 🔥
+  const formattedSign = sign.split("(")[0].trim().toLowerCase().replace(/^./, (char) => char.toUpperCase());
+  
+  // 🔥 FIX 2: Language parameter validate kiya taaki undefined error na aaye 🔥
+  const supportedLanguages = ["hi", "hinglish", "en"];
+  const safeLang = supportedLanguages.includes(lang) ? lang : "hinglish";
 
   try {
     const signBucket = FALLBACK_DATA[formattedSign] || FALLBACK_DATA.General;
-    const fallback = signBucket[lang] || signBucket.en;
+    const fallback = signBucket[safeLang] || signBucket.en;
     
     const reading = {
       ...fallback,
@@ -94,7 +99,7 @@ export async function GET(request: Request) {
     console.error("Daily API Error:", error);
     
     const signBucket = FALLBACK_DATA[formattedSign] || FALLBACK_DATA.General;
-    const fallback = signBucket[lang] || signBucket.en;
+    const fallback = signBucket[safeLang] || signBucket.en;
     return NextResponse.json(
       { 
         reading: { ...fallback, signName: sign },
