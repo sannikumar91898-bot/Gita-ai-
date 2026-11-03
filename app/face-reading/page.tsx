@@ -1,7 +1,7 @@
 // app/face-reading/page.tsx
 "use client";
 
-import { useRef, useState, ChangeEvent } from "react";
+import { useRef, useState, useEffect, ChangeEvent } from "react";
 import { ArrowLeft, ScanFace, Loader2, MessageCircle, Upload, Star, AlertCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -25,68 +25,130 @@ export default function FaceReadingPage() {
   const [result, setResult] = useState<FaceResult | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 🔥 FIX: AbortController taaki user baar-baar photo na daale toh purani request cancel ho jaye
+  const abortRef = useRef<AbortController | null>(null);
 
   const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
   const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white shadow-xl";
 
+  // Component unmount hone par request abort karo (Memory Leak Fix)
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
+
   const handleFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg(t("फोटो 5MB से बड़ी नहीं होनी चाहिए।", "Photo 5MB se badi nahi honi chahiye.", "Photo must be smaller than 5MB."));
+    setErrorMsg(null);
+    setResult(null);
+
+    // 🔥 FIX: File size aur type validation 🔥
+    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+      setPhoto(null);
+      setErrorMsg(t("फोटो 5MB से छोटी और खाली नहीं होनी चाहिए।", "Photo 5MB se chhoti aur empty nahi honi chahiye.", "Photo must be non-empty and no larger than 5MB."));
+      e.target.value = "";
       return;
     }
 
-    // Reset states
-    setPhoto(URL.createObjectURL(file));
-    setResult(null);
-    setErrorMsg(null);
-    setLoading(true);
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setPhoto(null);
+      setErrorMsg(t("सिर्फ JPG, PNG या WEBP फोटो अपलोड करें।", "Sirf JPG, PNG ya WEBP photo upload karein.", "Only JPG, PNG or WEBP images are supported."));
+      e.target.value = "";
+      return;
+    }
 
-    try {
-      // 🔥 API CALL TO REAL AI 🔥
-      const formData = new FormData();
-      formData.append("image", file);
+    // Purani request abort karo agar chal rahi hai
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
 
-      const res = await fetch("/api/face-reading", {
-        method: "POST",
-        body: formData,
-      });
+    const reader = new FileReader();
 
-      const data = await res.json();
+    reader.onerror = () => {
+      setLoading(false);
+      setPhoto(null);
+      setErrorMsg(t("फोटो पढ़ने में समस्या हुई।", "Photo read karne mein problem hui.", "Unable to read the image."));
+    };
 
-      if (!res.ok) {
-        // Agar galat photo (bottle, object) upload hui hai
-        if (data.error === "INVALID_IMAGE") {
-          setErrorMsg(data.message);
-          setPhoto(null); // Photo hata do
-          if (fileInputRef.current) fileInputRef.current.value = "";
-          return;
-        }
-        throw new Error(data.error || "Analysis failed");
+    reader.onload = async () => {
+      if (typeof reader.result !== "string") {
+        setLoading(false);
+        setErrorMsg("Unable to preview image.");
+        return;
       }
 
-      // AI ka real result set karo
-      setResult(data.result);
+      setPhoto(reader.result);
+      setLoading(true);
 
-    } catch (error: any) {
-      console.error(error);
-      setErrorMsg(t("विश्लेषण विफल रहा। कृपया पुनः प्रयास करें।", "Analysis fail ho gaya. Kripya dobara try karein.", "Analysis failed. Please try again."));
-      setPhoto(null);
-    } finally {
-      setLoading(false);
-    }
+      try {
+        const formData = new FormData();
+        formData.append("image", file);
+
+        const res = await fetch("/api/face-reading", {
+          method: "POST",
+          body: formData,
+          signal: controller.signal, // 🔥 API call mein signal pass kiya
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          if (data?.error === "INVALID_IMAGE") {
+            setPhoto(null);
+            setErrorMsg(data.message || "Please upload a clear human face.");
+            if (fileInputRef.current) fileInputRef.current.value = "";
+            return;
+          }
+          throw new Error(data?.message || data?.error || "Analysis failed");
+        }
+
+        const r = data?.result;
+
+        // 🔥 FIX: AI ka data sahi format mein aaya ya nahi check karo
+        if (!data?.success || typeof r?.title !== "string" || typeof r?.insight !== "string" || typeof r?.hook !== "string") {
+          throw new Error("Invalid response from AI service");
+        }
+
+        setResult({
+          title: r.title,
+          insight: r.insight,
+          hook: r.hook,
+        });
+
+      } catch (error: any) {
+        // Abort error aaye toh chupchaap ignore karo
+        if (error.name === "AbortError") return;
+
+        console.error("Face reading frontend error:", error);
+        setPhoto(null);
+        setErrorMsg(t("विश्लेषण विफल रहा। कृपया पुनः प्रयास करें।", "Analysis fail ho gaya. Kripya dobara try karein.", "Analysis failed. Please try again."));
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    reader.readAsDataURL(file);
   };
 
   const reset = () => {
+    abortRef.current?.abort();
+    abortRef.current = null;
+
     setPhoto(null);
     setResult(null);
     setErrorMsg(null);
     setLoading(false);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   return (
