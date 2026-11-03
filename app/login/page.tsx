@@ -44,9 +44,12 @@ export default function LoginPage() {
       // 🔥 YAHAN FIX KIYA HAI: data.details ko pehle check karega 🔥
       if (!res.ok) throw new Error(data.details || data.error || "Something went wrong");
 
-      // 🔥 Login/Register success! Ab Providers ko refresh karo taaki naya user load ho
+      // 🔥 Login/Register success! 
       await refresh();
-      router.push("/settings"); // Profile page par bhej do
+      
+      // 🔥 FIX: router.push ki jagah window.location.href use kiya hai taaki guest user hat jaye 🔥
+      window.location.href = "/settings"; 
+      
     } catch (err: any) {
       setError(err.message);
     } finally {
