@@ -41,7 +41,7 @@ const FALLBACK_DATA: Record<string, Record<string, any>> = {
     en: { focus: "A lack of harmony might trouble your personal life or partnership. If you have doubts or confusion, share them with our Female Astrologer for a loving solution.", luckyColour: { name: "Pink", hex: "#EC4899" }, luckyNumber: 6, affirmation: "I bring balance and harmony wherever I go." }
   },
   Vrishchik: {
-    hi: { focus: "अज्ञात भय या तनाव आपको घेरे रह सकता है। कोई पुरानी बात मन को परेशान करेगी। अपनी ऊर्जा को सकारात्मक करने और सटीक उपाय जानने के लिए तुरंत ज्योतिषी से कनेक्ट करें।", luckyColour: { name: "मैरून", hex: "#7F1D1D" }, luckyNumber: 9, affirmation: "मैं सुरक्षित और मानसिक रूप से मजबूत हूँ।" },
+    hi: { focus: "अज्ञान भय या तनाव आपको घेरे रह सकता है। कोई पुरानी बात मन को परेशान करेगी। अपनी ऊर्जा को सकारात्मक करने और सटीक उपाय जानने के लिए तुरंत ज्योतिषी से कनेक्ट करें।", luckyColour: { name: "मैरून", hex: "#7F1D1D" }, luckyNumber: 9, affirmation: "मैं सुरक्षित और मानसिक रूप से मजबूत हूँ।" },
     hinglish: { focus: "Unknown fear ya stress aapko ghere rakh sakta hai. Koi purani baat mann ko pareshan karegi. Satih upaye janne ke liye turant humari Jyotishi se connect karein.", luckyColour: { name: "Maroon", hex: "#7F1D1D" }, luckyNumber: 9, affirmation: "Mein safe aur mentally strong hoon." },
     en: { focus: "An unknown anxiety or past issue might weigh heavily on your mind today. Connect with our astrologer immediately to realign your energies and get accurate remedies.", luckyColour: { name: "Maroon", hex: "#7F1D1D" }, luckyNumber: 9, affirmation: "I am strong, secure, and intuitive." }
   },
