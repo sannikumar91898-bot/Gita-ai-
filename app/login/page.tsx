@@ -44,11 +44,12 @@ export default function LoginPage() {
       // 🔥 YAHAN FIX KIYA HAI: data.details ko pehle check karega 🔥
       if (!res.ok) throw new Error(data.details || data.error || "Something went wrong");
 
-      // 🔥 Login/Register success! 
+      // 🔥 Login/Register success! Ab Providers ko refresh karo taaki naya user load ho
       await refresh();
       
-      // 🔥 FIX: router.push ki jagah window.location.href use kiya hai taaki guest user hat jaye 🔥
-      window.location.href = "/settings"; 
+      // 🔥 STEP 4 FIX: Hard reload ki jagah smooth Next.js navigation 🔥
+      router.replace("/settings"); // URL change karega bina page refresh kiye
+      router.refresh(); // Server se naya user data (cookies) fetch karega
       
     } catch (err: any) {
       setError(err.message);
