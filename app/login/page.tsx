@@ -41,7 +41,8 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      // 🔥 YAHAN FIX KIYA HAI: data.details ko pehle check karega 🔥
+      if (!res.ok) throw new Error(data.details || data.error || "Something went wrong");
 
       // 🔥 Login/Register success! Ab Providers ko refresh karo taaki naya user load ho
       await refresh();
@@ -75,7 +76,7 @@ export default function LoginPage() {
           </div>
 
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500 bg-red-500/10 p-3 text-sm text-red-500">
+            <div className="mb-4 rounded-xl border border-red-500 bg-red-500/10 p-3 text-sm text-red-500 break-words">
               {error}
             </div>
           )}
