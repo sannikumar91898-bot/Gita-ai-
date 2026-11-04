@@ -1,9 +1,10 @@
+// app/chat/page.tsx
 "use client";
 
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Phone } from "lucide-react";
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
@@ -96,14 +97,14 @@ export default function ChatPage() {
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  // THEME LOGIC
+  // THEME LOGIC (Premium Orange/Slate Theme)
   const isDark = theme === "dark";
-  const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const headerClass = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-orange-100 shadow-sm";
-  const inputWrapperClass = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-orange-100";
+  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
+  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]";
   const inputClass = isDark 
-    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" 
-    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-500";
+    ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
+    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("topic") || "";
@@ -358,7 +359,7 @@ export default function ChatPage() {
         <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
         <button
           onClick={() => refresh()}
-          className="mt-6 rounded-lg bg-orange-500 px-6 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+          className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
         >
           Try Again
         </button>
@@ -375,19 +376,26 @@ export default function ChatPage() {
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
       {/* HEADER FIXED */}
-      <header className={`flex shrink-0 items-center gap-3 border-b px-4 py-3 ${headerClass}`}>
-        <Link href="/" aria-label="Back" className={`hover:text-orange-500 transition-colors ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+      <header className={`flex shrink-0 items-center gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
+        <Link href="/" aria-label="Back" className={`rounded-xl p-2 hover:bg-orange-50 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600"}`}>
           <ArrowLeft size={20} />
         </Link>
         <Avatar size={42} glow={false} />
         <div>
           <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
-          <p className={`text-[10px] font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>{topic === "general" ? "AI Assistant" : topic}</p>
+          <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
+          </p>
         </div>
       </header>
 
+      {/* FREE CHAT BANNER */}
+      <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
+        ✨ Pehli Chat 100% FREE ✨
+      </div>
+
       {/* CHAT AREA FIXED */}
-      <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
         {step === "language" && (
           <div className="flex flex-wrap gap-2">
             {([
@@ -398,10 +406,10 @@ export default function ChatPage() {
               <button
                 key={code}
                 type="button"
-                className={`rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${
                   isDark 
                     ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" 
-                    : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50 shadow-sm"
+                    : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"
                 }`}
                 onClick={() => {
                   void setLanguage(code);
@@ -442,7 +450,7 @@ export default function ChatPage() {
               <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
               {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
             </div>
-            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors">
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">
               कुंडली देखें
             </Link>
           </div>
@@ -458,8 +466,8 @@ export default function ChatPage() {
       </div>
 
       {/* INPUT FIELD FIXED */}
-      <form onSubmit={handleSubmit} className={`shrink-0 border-t p-3 pb-6 ${inputWrapperClass}`}>
-        <div className="relative flex items-center">
+      <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
+        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
@@ -476,8 +484,27 @@ export default function ChatPage() {
           >
             <Send size={18} />
           </button>
-        </div>
-      </form>
+        </form>
+      </div>
+
+      {/* UPSELL BANNER (Only shows when Kundli is ready/Done) */}
+      {step === "done" && (
+        <Link 
+          href="/astrologers" 
+          className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full"
+        >
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 animate-pulse">
+              <Phone size={16} />
+            </span>
+            <div className="leading-tight">
+              <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">24x7 Available</p>
+              <p className="text-xs sm:text-sm font-black">Senior Astrologer se baat karein</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-rose-700 uppercase">Connect</span>
+        </Link>
+      )}
     </div>
   );
 }
