@@ -2,7 +2,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, X } from "lucide-react";
+import { ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, X, LogOut } from "lucide-react"; // 🔥 LogOut icon import kiya
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -33,7 +33,6 @@ export default function SettingsPage() {
 
   const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
-  // 🔥 YAHAN FIX HUA HAI: me?.user ka use kiya hai 🔥
   const isLoggedIn = Boolean(me?.user && !me.user.isGuest && me.user.email);
   const userName = isLoggedIn ? me?.user?.name || "User" : t("अतिथि उपयोगकर्ता", "Guest User", "Guest User");
   const userEmail = isLoggedIn ? me?.user?.email || "" : t("लॉगिन करने के लिए टैप करें", "Login karne ke liye tap karein", "Tap to login");
@@ -58,6 +57,26 @@ export default function SettingsPage() {
   const handleAvatarSelect = (url: string) => {
     setSelectedAvatar(url);
     setShowAvatarModal(false);
+  };
+
+  // 🔥 LOGOUT FUNCTIONALITY 🔥
+  const handleLogout = () => {
+    const confirmLogout = window.confirm(
+      t(
+        "क्या आप सच में लॉगआउट करना चाहते हैं?",
+        "Kya aap sach me logout karna chahte hain?",
+        "Are you sure you want to logout?"
+      )
+    );
+
+    if (confirmLogout) {
+      // 1. Clear all local storage / tokens
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // 2. Redirect to login page
+      window.location.href = "/login"; // Apna login route yahan verify kar lein
+    }
   };
 
   return (
@@ -135,6 +154,22 @@ export default function SettingsPage() {
             </div>
           </div>
         </section>
+
+        {/* 🔥 NAYA LOGOUT SECTION 🔥 */}
+        <section className="pt-2">
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition-all active:scale-95 ${
+              isDark
+                ? "border-red-900/50 bg-red-950/30 text-red-400 hover:bg-red-950/50"
+                : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100 shadow-sm"
+            }`}
+          >
+            <LogOut size={18} />
+            {t("लॉगआउट करें", "Logout Karein", "Logout")}
+          </button>
+        </section>
+
       </div>
 
       {showAvatarModal && (
