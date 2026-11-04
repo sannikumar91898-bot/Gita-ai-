@@ -22,7 +22,6 @@ export default function MatchingPage() {
   const isHindi = lang === "hi";
   const isHinglish = lang === "hinglish";
 
-  // State for Form Data
   const [boy, setBoy] = useState({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
   const [girl, setGirl] = useState({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
   
@@ -40,9 +39,8 @@ export default function MatchingPage() {
 
   const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-slate-900 shadow-xl" : "border-orange-100 bg-white shadow-xl";
-  const inputClass = `mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-orange-200 bg-orange-50 text-slate-900"}`;
+  const inputClass = `mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-gray-200 bg-gray-50 text-slate-900"}`;
 
-  // Rotating Loading Text Logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (loading) {
@@ -55,7 +53,6 @@ export default function MatchingPage() {
     return () => clearInterval(interval);
   }, [loading]);
 
-  // City Search (OpenStreetMap Nominatim)
   const searchCity = async (query: string, setSuggestions: any) => {
     if (query.length < 3) { setSuggestions([]); return; }
     try {
@@ -74,7 +71,6 @@ export default function MatchingPage() {
     const delay = setTimeout(() => searchCity(girl.city, setGirlSuggestions), 600);
     return () => clearTimeout(delay);
   }, [girl.city]);
-
 
   const handleMatch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,8 +144,8 @@ export default function MatchingPage() {
         </header>
 
         {/* WARNING / HOOK */}
-        <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/30" : "border-rose-200 bg-rose-50"}`}>
-          <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-800"}`}>
+        <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/30" : "border-red-200 bg-red-50"}`}>
+          <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-700"}`}>
             <ShieldAlert size={16} className="shrink-0 mt-0.5" />
             {t(
               "विवाह जीवन का सबसे बड़ा निर्णय है। कुंडली में छिपे दोष (जैसे मंगल दोष) रिश्तों में रुकावट ला सकते हैं। सही समय पर सही उपाय जानें, वरना देरी या अलगाव हो सकता है।",
@@ -164,8 +160,8 @@ export default function MatchingPage() {
           <form onSubmit={handleMatch} className={`space-y-6 rounded-2xl border p-5 ${cardClass}`}>
             
             {/* BOY DETAILS */}
-            <div className="space-y-3 p-4 rounded-xl border border-indigo-100 dark:border-slate-800 bg-indigo-50/30 dark:bg-slate-900/50">
-              <h3 className="text-sm font-bold text-indigo-600 dark:text-indigo-400">👦 {t("वर (लड़के) का विवरण", "Boy's Details", "Boy's Details")}</h3>
+            <div className={`space-y-3 p-4 rounded-xl border ${isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-200 bg-gray-50/50"}`}>
+              <h3 className="text-sm font-bold text-orange-600">👦 {t("वर (लड़के) का विवरण", "Boy's Details", "Boy's Details")}</h3>
               <input type="text" required placeholder={t("नाम", "Name", "Name")} value={boy.name} onChange={e => setBoy({...boy, name: e.target.value})} className={inputClass} />
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
@@ -197,8 +193,8 @@ export default function MatchingPage() {
             </div>
 
             {/* GIRL DETAILS */}
-            <div className="space-y-3 p-4 rounded-xl border border-rose-100 dark:border-slate-800 bg-rose-50/30 dark:bg-slate-900/50">
-              <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400">👧 {t("वधू (लड़की) का विवरण", "Girl's Details", "Girl's Details")}</h3>
+            <div className={`space-y-3 p-4 rounded-xl border ${isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-200 bg-gray-50/50"}`}>
+              <h3 className="text-sm font-bold text-rose-600">👧 {t("वधू (लड़की) का विवरण", "Girl's Details", "Girl's Details")}</h3>
               <input type="text" required placeholder={t("नाम", "Name", "Name")} value={girl.name} onChange={e => setGirl({...girl, name: e.target.value})} className={inputClass} />
               <div className="grid grid-cols-2 gap-3">
                 <div className="relative">
@@ -267,8 +263,8 @@ export default function MatchingPage() {
               </div>
 
               {/* PSYCHOLOGICAL HOOK */}
-              <div className={`rounded-xl border p-4 relative z-10 ${isDark ? "border-rose-900/50 bg-rose-950/40" : "border-rose-200 bg-rose-50 shadow-inner"}`}>
-                <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-900"}`}>
+              <div className={`rounded-xl border p-4 relative z-10 ${isDark ? "border-rose-900/50 bg-rose-950/40" : "border-red-200 bg-red-50 shadow-inner"}`}>
+                <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-800"}`}>
                   ⚠️ {result.fearMessage}
                 </p>
               </div>
@@ -279,19 +275,30 @@ export default function MatchingPage() {
             </div>
             {/* PDF TARGET AREA END */}
 
-            {/* CTA BUTTONS */}
+            {/* CTA BUTTONS (Marketing exactly like 2nd screenshot) */}
             <div className="space-y-3 pt-2">
-              <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3.5 text-sm font-black text-white shadow-lg active:scale-[0.98] transition-transform animate-pulse">
+              <Link 
+                href="/chat" 
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3.5 text-sm font-black text-white shadow-lg active:scale-[0.98] transition-transform animate-pulse"
+              >
                 <MessageCircle size={18} />
                 {t("ज्योतिषी से बात करें — पहली चैट FREE", "Jyotishi se baat karein — Pehli chat FREE", "Talk to Astrologer — First chat FREE")}
               </Link>
 
               <div className="flex gap-3">
-                <button onClick={downloadPdf} disabled={isDownloading} className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-green-700 disabled:opacity-50">
+                <button 
+                  onClick={downloadPdf} 
+                  disabled={isDownloading} 
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-green-700 disabled:opacity-50"
+                >
                   {isDownloading ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
                   {t("PDF डाउनलोड", "PDF Download", "Download PDF")}
                 </button>
-                <button onClick={resetForm} className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${isDark ? "border-slate-700 bg-slate-800 text-orange-400" : "border-orange-200 bg-white text-orange-600"}`}>
+                
+                <button 
+                  onClick={resetForm} 
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${isDark ? "border-slate-700 bg-slate-800 text-orange-400" : "border-gray-200 bg-white text-slate-700 hover:bg-gray-50"}`}
+                >
                   <RefreshCw size={18} />
                   {t("दोबारा बनाएं", "Dobara Banayein", "Reset")}
                 </button>
@@ -301,7 +308,7 @@ export default function MatchingPage() {
         )}
       </div>
 
-      {/* FIXED BOTTOM BAR */}
+      {/* FIXED BOTTOM BAR (Marketing) */}
       <Link href="/chat" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
