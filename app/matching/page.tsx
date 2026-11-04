@@ -1,19 +1,20 @@
 // app/matching/page.tsx
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { 
-  ArrowLeft, 
-  Heart, 
-  Sparkles, 
-  AlertCircle, 
-  MessageCircle, 
-  Download, 
-  RefreshCw,
-  ShieldAlert
+  ArrowLeft, Heart, Sparkles, MessageCircle, Download, 
+  RefreshCw, ShieldAlert, MapPin, Calendar, Clock
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
+
+const LOADING_STEPS = [
+  "Aligning planetary positions...",
+  "Calculating Nadi and Bhakoot scores...",
+  "Analyzing Manglik Dosha...",
+  "Generating Cosmic Diagnostic Report..."
+];
 
 export default function MatchingPage() {
   const { lang, theme } = useApp();
@@ -21,35 +22,86 @@ export default function MatchingPage() {
   const isHindi = lang === "hi";
   const isHinglish = lang === "hinglish";
 
-  const [boyName, setBoyName] = useState("");
-  const [girlName, setGirlName] = useState("");
-  const [result, setResult] = useState<number | null>(null);
+  // State for Form Data
+  const [boy, setBoy] = useState({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
+  const [girl, setGirl] = useState({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
+  
+  const [boySuggestions, setBoySuggestions] = useState([]);
+  const [girlSuggestions, setGirlSuggestions] = useState([]);
+  
+  const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState(LOADING_STEPS[0]);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // PDF Download ke liye ref
   const resultRef = useRef<HTMLDivElement>(null);
 
-  const t = (hi: string, hing: string, en: string) =>
-    isHindi ? hi : isHinglish ? hing : en;
+  const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
-  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
+  const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-slate-900 shadow-xl" : "border-orange-100 bg-white shadow-xl";
+  const inputClass = `mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-orange-200 bg-orange-50 text-slate-900"}`;
 
-  const handleMatch = () => {
-    if (!boyName.trim() || !girlName.trim()) return;
-    setLoading(true);
-    setResult(null);
-    
-    // Fake calculation delay (Psychological build-up)
-    setTimeout(() => {
-      const randomScore = Math.floor(Math.random() * 20) + 75; // 75% to 95%
-      setResult(randomScore);
-      setLoading(false);
-    }, 2500); // Thoda zyada time taaki user ko lage "Deep calculation" ho rahi hai
+  // Rotating Loading Text Logic
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      let i = 0;
+      interval = setInterval(() => {
+        i = (i + 1) % LOADING_STEPS.length;
+        setLoadingText(LOADING_STEPS[i]);
+      }, 1500);
+    }
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  // City Search (OpenStreetMap Nominatim)
+  const searchCity = async (query: string, setSuggestions: any) => {
+    if (query.length < 3) { setSuggestions([]); return; }
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`);
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (e) { console.error(e); }
   };
 
-  // 🔥 PDF DOWNLOAD FUNCTION 🔥
+  useEffect(() => {
+    const delay = setTimeout(() => searchCity(boy.city, setBoySuggestions), 600);
+    return () => clearTimeout(delay);
+  }, [boy.city]);
+
+  useEffect(() => {
+    const delay = setTimeout(() => searchCity(girl.city, setGirlSuggestions), 600);
+    return () => clearTimeout(delay);
+  }, [girl.city]);
+
+
+  const handleMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!boy.lat || !girl.lat) {
+      alert(t("Kripya list me se city select karein!", "Please select city from list!", "Please select a valid city from the list!"));
+      return;
+    }
+
+    setLoading(true);
+    setResult(null);
+
+    try {
+      const response = await fetch("/api/matching", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boy, girl }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
+      setResult(data);
+    } catch (error: any) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const downloadPdf = async () => {
     if (!resultRef.current) return;
     setIsDownloading(true);
@@ -57,7 +109,7 @@ export default function MatchingPage() {
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
         margin: 0.4,
-        filename: `${boyName || "Boy"}_${girlName || "Girl"}_Milan.pdf`,
+        filename: `${boy.name}_${girl.name}_Milan.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: isDark ? "#0f172a" : "#ffffff" },
         jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
@@ -70,10 +122,9 @@ export default function MatchingPage() {
     }
   };
 
-  // 🔥 RESET FUNCTION 🔥
   const resetForm = () => {
-    setBoyName("");
-    setGirlName("");
+    setBoy({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
+    setGirl({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
     setResult(null);
   };
 
@@ -96,7 +147,7 @@ export default function MatchingPage() {
           </div>
         </header>
 
-        {/* WARNING / HOOK (Psychological Trigger) */}
+        {/* WARNING / HOOK */}
         <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/30" : "border-rose-200 bg-rose-50"}`}>
           <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-800"}`}>
             <ShieldAlert size={16} className="shrink-0 mt-0.5" />
@@ -110,134 +161,137 @@ export default function MatchingPage() {
 
         {/* FORM */}
         {!result && (
-          <section className={`space-y-4 rounded-2xl border p-5 ${cardClass}`}>
-            <div className="space-y-3">
-              <div>
-                <label className={`text-xs font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-                  {t("वर (लड़के) का नाम", "Var (Boy) ka Naam", "Boy's Name")}
-                </label>
-                <input
-                  type="text"
-                  value={boyName}
-                  onChange={(e) => setBoyName(e.target.value)}
-                  placeholder={t("लड़के का नाम लिखें", "Boy ka naam likhein", "Enter boy's name")}
-                  className={`mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-orange-200 bg-orange-50 text-slate-900"}`}
-                />
+          <form onSubmit={handleMatch} className={`space-y-6 rounded-2xl border p-5 ${cardClass}`}>
+            
+            {/* BOY DETAILS */}
+            <div className="space-y-3 p-4 rounded-xl border border-indigo-100 dark:border-slate-800 bg-indigo-50/30 dark:bg-slate-900/50">
+              <h3 className="text-sm font-bold text-indigo-600 dark:text-indigo-400">👦 {t("वर (लड़के) का विवरण", "Boy's Details", "Boy's Details")}</h3>
+              <input type="text" required placeholder={t("नाम", "Name", "Name")} value={boy.name} onChange={e => setBoy({...boy, name: e.target.value})} className={inputClass} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="date" required value={boy.dob} onChange={e => setBoy({...boy, dob: e.target.value})} className={`${inputClass} pl-9`} />
+                </div>
+                <div className="relative">
+                  <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="time" required value={boy.time} onChange={e => setBoy({...boy, time: e.target.value})} className={`${inputClass} pl-9`} />
+                </div>
               </div>
-
-              <div className="flex justify-center text-orange-400 py-1">
-                <Heart size={24} fill="currentColor" className="animate-pulse" />
-              </div>
-
-              <div>
-                <label className={`text-xs font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-                  {t("वधू (लड़की) का नाम", "Vadhu (Girl) ka Naam", "Girl's Name")}
-                </label>
-                <input
-                  type="text"
-                  value={girlName}
-                  onChange={(e) => setGirlName(e.target.value)}
-                  placeholder={t("लड़की का नाम लिखें", "Girl ka naam likhein", "Enter girl's name")}
-                  className={`mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-orange-200 bg-orange-50 text-slate-900"}`}
-                />
+              <div className="relative">
+                <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
+                <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={boy.city} onChange={e => setBoy({...boy, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
+                {boySuggestions.length > 0 && (
+                  <ul className={`absolute z-10 w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow-xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+                    {boySuggestions.map((item: any) => (
+                      <li key={item.place_id} className={`px-4 py-2 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setBoy({ ...boy, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setBoySuggestions([]); }}>
+                        {item.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
 
-            <button
-              onClick={handleMatch}
-              disabled={!boyName.trim() || !girlName.trim() || loading}
-              className="w-full mt-2 rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3.5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50"
-            >
-              {loading 
-                ? t("ग्रहों की गणना हो रही है...", "Graho ki ganana ho rahi hai...", "Calculating planetary positions...") 
-                : t("मिलान करें", "Milan Karein", "Match Now")}
+            <div className="flex justify-center text-orange-400 py-1">
+              <Heart size={24} fill="currentColor" className="animate-pulse" />
+            </div>
+
+            {/* GIRL DETAILS */}
+            <div className="space-y-3 p-4 rounded-xl border border-rose-100 dark:border-slate-800 bg-rose-50/30 dark:bg-slate-900/50">
+              <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400">👧 {t("वधू (लड़की) का विवरण", "Girl's Details", "Girl's Details")}</h3>
+              <input type="text" required placeholder={t("नाम", "Name", "Name")} value={girl.name} onChange={e => setGirl({...girl, name: e.target.value})} className={inputClass} />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="relative">
+                  <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="date" required value={girl.dob} onChange={e => setGirl({...girl, dob: e.target.value})} className={`${inputClass} pl-9`} />
+                </div>
+                <div className="relative">
+                  <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="time" required value={girl.time} onChange={e => setGirl({...girl, time: e.target.value})} className={`${inputClass} pl-9`} />
+                </div>
+              </div>
+              <div className="relative">
+                <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
+                <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={girl.city} onChange={e => setGirl({...girl, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
+                {girlSuggestions.length > 0 && (
+                  <ul className={`absolute z-10 w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow-xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+                    {girlSuggestions.map((item: any) => (
+                      <li key={item.place_id} className={`px-4 py-2 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setGirl({ ...girl, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setGirlSuggestions([]); }}>
+                        {item.display_name}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3.5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
+              {loading ? loadingText : t("मिलान करें", "Milan Karein", "Match Now")}
             </button>
-          </section>
+          </form>
         )}
 
-        {/* RESULT (Jisko PDF me convert karna hai) */}
-        {result !== null && !loading && (
+        {/* RESULT */}
+        {result && !loading && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             
-            {/* 🔥 PDF TARGET AREA START 🔥 */}
-            <div 
-              ref={resultRef} 
-              className={`space-y-4 rounded-2xl border-2 border-orange-300 p-5 relative overflow-hidden ${isDark ? "bg-slate-900" : "bg-gradient-to-br from-orange-50 to-amber-50"}`}
-            >
-              {/* PDF Watermark/Background (Optional Design) */}
+            {/* PDF TARGET AREA START */}
+            <div ref={resultRef} className={`space-y-4 rounded-2xl border-2 p-5 relative overflow-hidden ${isDark ? "border-orange-900/50 bg-slate-900" : "border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
+              
               <div className="absolute -right-10 -top-10 text-orange-500/5 rotate-12 pointer-events-none">
                 <Sparkles size={150} />
               </div>
 
               <div className="flex items-center gap-2 relative z-10">
                 <Sparkles className="text-amber-500" size={18} />
-                <p className="text-sm font-black text-orange-700">
-                  {t("मिलान परिणाम", "Matching Result", "Matching Result")}
-                </p>
+                <p className="text-sm font-black text-orange-600">{t("मिलान परिणाम", "Matching Result", "Matching Result")}</p>
               </div>
 
               <div className="text-center py-4 relative z-10">
-                <p className={`text-6xl font-black ${isDark ? "text-orange-400" : "text-orange-600"} drop-shadow-sm`}>
-                  {result}%
-                </p>
-                <p className={`text-sm font-bold mt-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
-                  {t("कुल अष्टकूट मिलान", "Total Ashtakoot Milan", "Total Ashtakoot Score")}
-                </p>
-                <p className={`text-xs font-medium mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-                  {boyName} ❤️ {girlName}
-                </p>
+                <p className={`text-6xl font-black ${isDark ? "text-orange-400" : "text-orange-600"} drop-shadow-sm`}>{result.score}</p>
+                <p className={`text-sm font-bold mt-1 ${isDark ? "text-slate-200" : "text-gray-800"}`}>{t("/ 36 कुल अष्टकूट मिलान", "/ 36 Total Ashtakoot", "/ 36 Total Ashtakoot")}</p>
+                <p className={`text-xs font-medium mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{boy.name} ❤️ {girl.name}</p>
               </div>
 
-              {/* Psychological Hook in Result */}
+              {/* 8-POINT BREAKDOWN */}
+              <div className={`p-4 rounded-xl border relative z-10 ${isDark ? "border-slate-700 bg-slate-800/50" : "border-orange-200 bg-white/60"}`}>
+                <h4 className="text-xs font-bold text-gray-500 mb-3 uppercase">Detailed Breakdown</h4>
+                <div className="grid grid-cols-2 gap-3">
+                  {result.details.map((item: any, idx: number) => (
+                    <div key={idx} className="flex justify-between items-center text-xs">
+                      <span className={isDark ? "text-slate-300" : "text-gray-700"}>{item.name}</span>
+                      <span className={`font-bold ${item.score === 0 ? 'text-red-500' : 'text-green-500'}`}>{item.score}/{item.max}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* PSYCHOLOGICAL HOOK */}
               <div className={`rounded-xl border p-4 relative z-10 ${isDark ? "border-rose-900/50 bg-rose-950/40" : "border-rose-200 bg-rose-50 shadow-inner"}`}>
                 <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-rose-900"}`}>
-                  {t(
-                    "आपका मिलान तो अच्छा है, लेकिन कुंडली के सूक्ष्म गणना (Manglik/Kaal Sarp) में एक 'रुकावट' दिख रही है जो विवाह में देरी या आपसी मतभेद ला सकती है। इसका सटीक कारण और उपाय जाने बिना शादी का निर्णय न लें।",
-                    "Aapka milan toh accha hai, lekin kundli ki sookshma ganana mein ek 'rukawat' dikh rahi hai jo vivah mein deri ya aapsi matbhed la sakti hai. Iska sateek karan aur upay jaane bina shaadi ka nirnay na lein.",
-                    "Your match is good, but deep chart calculation reveals a 'blockage' that can cause delays or misunderstandings. Do not take a marriage decision without knowing the exact cause and remedy."
-                  )}
+                  ⚠️ {result.fearMessage}
                 </p>
               </div>
 
-              {/* PDF Footer Branding */}
               <div className={`text-center text-[9px] mt-2 relative z-10 ${isDark ? "text-slate-500" : "text-gray-400"}`}>
                 {t("जनरेट किया गया", "Generated by", "Generated by")} Gita AI • www.gita-ai.com
               </div>
             </div>
-            {/* 🔥 PDF TARGET AREA END 🔥 */}
+            {/* PDF TARGET AREA END */}
 
-            {/* CTA & BUTTONS (Outside PDF Target so they don't print) */}
+            {/* CTA BUTTONS */}
             <div className="space-y-3 pt-2">
-              <Link
-                href="/chat"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3.5 text-sm font-black text-white shadow-lg active:scale-[0.98] transition-transform animate-bounce-subtle"
-              >
+              <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3.5 text-sm font-black text-white shadow-lg active:scale-[0.98] transition-transform animate-pulse">
                 <MessageCircle size={18} />
                 {t("ज्योतिषी से बात करें — पहली चैट FREE", "Jyotishi se baat karein — Pehli chat FREE", "Talk to Astrologer — First chat FREE")}
               </Link>
 
               <div className="flex gap-3">
-                <button
-                  onClick={downloadPdf}
-                  disabled={isDownloading}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-green-700 disabled:opacity-50"
-                >
-                  {isDownloading ? (
-                    <RefreshCw size={18} className="animate-spin" />
-                  ) : (
-                    <Download size={18} />
-                  )}
+                <button onClick={downloadPdf} disabled={isDownloading} className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-green-700 disabled:opacity-50">
+                  {isDownloading ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
                   {t("PDF डाउनलोड", "PDF Download", "Download PDF")}
                 </button>
-                
-                <button
-                  onClick={resetForm}
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${
-                    isDark 
-                      ? "border-slate-700 bg-slate-800 text-orange-400 hover:bg-slate-700" 
-                      : "border-orange-200 bg-white text-orange-600 hover:bg-orange-50"
-                  }`}
-                >
+                <button onClick={resetForm} className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${isDark ? "border-slate-700 bg-slate-800 text-orange-400" : "border-orange-200 bg-white text-orange-600"}`}>
                   <RefreshCw size={18} />
                   {t("दोबारा बनाएं", "Dobara Banayein", "Reset")}
                 </button>
@@ -245,18 +299,10 @@ export default function MatchingPage() {
             </div>
           </div>
         )}
-
-        {/* DISCLAIMER */}
-        <p className={`px-6 text-center text-[9px] leading-3 select-none tracking-wide mt-6 ${isDark ? "text-slate-600" : "text-slate-400"}`}>
-          © 2026 Astrologer App. This platform displays calculations based on ancient Vedic Astrology principles.
-        </p>
       </div>
 
-      {/* FIXED BOTTOM BAR (Marketing) */}
-      <Link
-        href="/chat"
-        className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl"
-      >
+      {/* FIXED BOTTOM BAR */}
+      <Link href="/chat" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
             <MessageCircle size={18} />
