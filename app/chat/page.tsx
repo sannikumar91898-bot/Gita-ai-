@@ -84,7 +84,7 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
 }
 
 export default function ChatPage() {
-  const { lang, me, setLanguage, refresh, loading, sessionError } = useApp();
+  const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
   
   const [topic, setTopic] = useState("general");
   const [step, setStep] = useState<Step>("language");
@@ -95,6 +95,15 @@ export default function ChatPage() {
   const [isLoading, setIsLoading] = useState(false);
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
+
+  // THEME LOGIC
+  const isDark = theme === "dark";
+  const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const headerClass = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-orange-100 shadow-sm";
+  const inputWrapperClass = isDark ? "bg-slate-900 border-slate-800" : "bg-white border-orange-100";
+  const inputClass = isDark 
+    ? "bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" 
+    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-500";
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("topic") || "";
@@ -129,9 +138,7 @@ export default function ChatPage() {
     }
   }, [me]);
 
-  // 🔥 FIX: Race condition solve karne ke liye loading aur me?.user add kiya gaya hai 🔥
   useEffect(() => {
-    // Jab tak Providers guest user nahi bana leta, tab tak wait karo
     if (loading || !me?.user) return; 
     if (!conversationId.current) return;
 
@@ -161,7 +168,7 @@ export default function ChatPage() {
     return () => {
       cancelled = true;
     };
-  }, [loading, me?.user]); // 🔥 Dependencies mein loading aur me?.user add kiya 🔥
+  }, [loading, me?.user]); 
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -336,22 +343,22 @@ export default function ChatPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 text-violet-50">
-        <Sparkles size={32} className="animate-spin text-gold-300 mb-4" />
-        <p className="text-sm font-semibold text-violet-300">Setting up your session...</p>
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center ${pageClass}`}>
+        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
+        <p className="text-sm font-semibold text-orange-500">Setting up your session...</p>
       </div>
     );
   }
 
   if (sessionError || !me?.user) {
     return (
-      <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center bg-night-900 px-4 text-center">
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
         <p className="text-3xl mb-4">⚠️</p>
-        <h2 className="text-lg font-bold text-red-400">Connection Failed</h2>
-        <p className="text-sm text-violet-300 mt-2">Could not start your session. Please check your internet or try again.</p>
+        <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
+        <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
         <button
           onClick={() => refresh()}
-          className="mt-6 rounded-lg bg-gold-400 px-6 py-2 text-sm font-bold text-black hover:bg-gold-300 transition-all"
+          className="mt-6 rounded-lg bg-orange-500 px-6 py-2 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
         >
           Try Again
         </button>
@@ -365,18 +372,21 @@ export default function ChatPage() {
       : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang) }];
 
   return (
-    <div className="flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col bg-night-900 text-violet-50">
-      <header className="flex shrink-0 items-center gap-3 border-b border-gold-400/10 px-4 py-3">
-        <Link href="/" aria-label="Back" className="text-violet-300 hover:text-gold-300">
+    <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
+      
+      {/* HEADER FIXED */}
+      <header className={`flex shrink-0 items-center gap-3 border-b px-4 py-3 ${headerClass}`}>
+        <Link href="/" aria-label="Back" className={`hover:text-orange-500 transition-colors ${isDark ? "text-slate-300" : "text-slate-600"}`}>
           <ArrowLeft size={20} />
         </Link>
         <Avatar size={42} glow={false} />
         <div>
-          <h1 className="font-display text-sm font-bold">Gita AI</h1>
-          <p className="text-[10px] text-violet-300">{topic === "general" ? "AI Assistant" : topic}</p>
+          <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
+          <p className={`text-[10px] font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>{topic === "general" ? "AI Assistant" : topic}</p>
         </div>
       </header>
 
+      {/* CHAT AREA FIXED */}
       <div className="flex-1 space-y-4 overflow-y-auto p-4" aria-live="polite">
         {step === "language" && (
           <div className="flex flex-wrap gap-2">
@@ -388,7 +398,11 @@ export default function ChatPage() {
               <button
                 key={code}
                 type="button"
-                className="rounded-full border border-gold-400/30 px-3 py-1.5 text-xs font-bold text-gold-300"
+                className={`rounded-full border px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
+                  isDark 
+                    ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" 
+                    : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50 shadow-sm"
+                }`}
                 onClick={() => {
                   void setLanguage(code);
                   sessionStorage.setItem("gita_lang_confirmed", "1");
@@ -406,10 +420,12 @@ export default function ChatPage() {
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
             <div
               className={
-                "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm " +
+                "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " +
                 (message.role === "user"
-                  ? "bg-violet-600 text-white"
-                  : "card border border-gold-400/10 text-violet-100")
+                  ? "bg-orange-500 text-white rounded-br-sm"
+                  : isDark 
+                    ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm"
+                    : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")
               }
             >
               {message.content}
@@ -418,44 +434,47 @@ export default function ChatPage() {
         ))}
 
         {chart && (
-          <div className="card max-w-[85%] space-y-2 border border-gold-400/20 p-4 text-sm">
-            <p className="font-bold text-gold-300">कुंडली तैयार है</p>
-            <p>लग्न: {chart.lagna.rashiNameHi} ({chart.lagna.degreeInSign}°)</p>
-            <p>राशि: {chart.moonSign.rashiNameHi}</p>
-            <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
-            {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
-            <Link href="/kundli" className="btn-gold inline-flex px-4 py-2 text-xs">
+          <div className={`max-w-[85%] space-y-3 rounded-2xl p-4 text-sm border shadow-sm ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-orange-100"}`}>
+            <p className="font-bold text-orange-500">कुंडली तैयार है</p>
+            <div className={`space-y-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+              <p>लग्न: {chart.lagna.rashiNameHi} ({chart.lagna.degreeInSign}°)</p>
+              <p>राशि: {chart.moonSign.rashiNameHi}</p>
+              <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
+              {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
+            </div>
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors">
               कुंडली देखें
             </Link>
           </div>
         )}
 
         {isLoading && (
-          <div className="card inline-flex items-center gap-2 px-4 py-3 text-xs text-violet-300">
-            <Sparkles size={14} className="animate-spin text-gold-300" />
+          <div className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs border shadow-sm ${isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-orange-100 text-gray-500"}`}>
+            <Sparkles size={14} className="animate-spin text-orange-500" />
             <span>{lang === "hi" ? "गीता लिख रही है..." : "Gita is writing..."}</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="shrink-0 border-t border-gold-400/10 bg-night-950 p-3">
-        <div className="relative">
+      {/* INPUT FIELD FIXED */}
+      <form onSubmit={handleSubmit} className={`shrink-0 border-t p-3 pb-6 ${inputWrapperClass}`}>
+        <div className="relative flex items-center">
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}
             maxLength={8000}
             disabled={isLoading}
             placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
-            className="w-full rounded-xl border border-gold-400/20 bg-violet-950/40 py-3 pl-4 pr-12 text-sm"
+            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
             aria-label="Send"
-            className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-lg bg-gold-400 text-black disabled:opacity-50"
+            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"
           >
-            <Send size={16} />
+            <Send size={18} />
           </button>
         </div>
       </form>
