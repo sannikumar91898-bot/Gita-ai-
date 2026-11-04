@@ -4,7 +4,7 @@
 import { useState, useRef, useEffect } from "react";
 import { 
   ArrowLeft, Heart, Sparkles, MessageCircle, Download, 
-  RefreshCw, ShieldAlert, MapPin, Calendar, Clock
+  RefreshCw, ShieldAlert, MapPin, Calendar, Clock, CheckCircle2
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -37,9 +37,10 @@ export default function MatchingPage() {
 
   const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
-  const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark ? "border-slate-800 bg-slate-900 shadow-xl" : "border-orange-100 bg-white shadow-xl";
-  const inputClass = `mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none focus:border-orange-400 transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-white" : "border-gray-200 bg-gray-50 text-slate-900"}`;
+  // Premium Colors
+  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-2xl" : "border-orange-100 bg-white shadow-xl";
+  const inputClass = `mt-1 w-full rounded-xl border px-4 py-3 text-sm outline-none transition-all focus:ring-2 focus:ring-orange-500/30 ${isDark ? "border-slate-700 bg-slate-800/50 text-white focus:border-orange-500" : "border-gray-200 bg-gray-50 text-slate-900 focus:border-orange-400"}`;
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -125,163 +126,179 @@ export default function MatchingPage() {
   };
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+    <main className={`min-h-screen w-full px-4 pb-32 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
-          <Link href="/" className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
+          <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
             <ArrowLeft size={18} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
+            <h1 className="text-base font-black uppercase tracking-tight text-orange-500">
               {t("कुंडली मिलान", "Kundli Milan", "Kundli Matching")}
             </h1>
-            <p className="text-[11px] font-bold text-gray-400">
+            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               {t("सटीक विवाह मिलान", "Accurate Marriage Matching", "Accurate Marriage Matching")}
             </p>
           </div>
         </header>
 
-        {/* WARNING / HOOK */}
-        <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900 bg-rose-950/30" : "border-red-200 bg-red-50"}`}>
-          <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-700"}`}>
-            <ShieldAlert size={16} className="shrink-0 mt-0.5" />
-            {t(
-              "विवाह जीवन का सबसे बड़ा निर्णय है। कुंडली में छिपे दोष (जैसे मंगल दोष) रिश्तों में रुकावट ला सकते हैं। सही समय पर सही उपाय जानें, वरना देरी या अलगाव हो सकता है।",
-              "Vivah jeevan ka sabse bada nirnay hai. Kundli mein chhipe dosh (jaise Mangal Dosh) rishton mein rukawat la sakte hain. Sahi samay par sahi upay jaanें, warna deri ya alagav ho sakta hai.",
-              "Marriage is life's biggest decision. Hidden doshas (like Mangal Dosh) can bring obstructions in relationships. Know the right remedies at the right time to avoid delays or separation."
-            )}
-          </p>
-        </div>
-
-        {/* FORM */}
-        {!result && (
-          <form onSubmit={handleMatch} className={`space-y-6 rounded-2xl border p-5 ${cardClass}`}>
-            
-            {/* BOY DETAILS */}
-            <div className={`space-y-3 p-4 rounded-xl border ${isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-200 bg-gray-50/50"}`}>
-              <h3 className="text-sm font-bold text-orange-600">👦 {t("वर (लड़के) का विवरण", "Boy's Details", "Boy's Details")}</h3>
-              <input type="text" required placeholder={t("नाम", "Name", "Name")} value={boy.name} onChange={e => setBoy({...boy, name: e.target.value})} className={inputClass} />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
-                  <input type="date" required value={boy.dob} onChange={e => setBoy({...boy, dob: e.target.value})} className={`${inputClass} pl-9`} />
-                </div>
-                <div className="relative">
-                  <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
-                  <input type="time" required value={boy.time} onChange={e => setBoy({...boy, time: e.target.value})} className={`${inputClass} pl-9`} />
-                </div>
-              </div>
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
-                <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={boy.city} onChange={e => setBoy({...boy, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
-                {boySuggestions.length > 0 && (
-                  <ul className={`absolute z-10 w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow-xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
-                    {boySuggestions.map((item: any) => (
-                      <li key={item.place_id} className={`px-4 py-2 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setBoy({ ...boy, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setBoySuggestions([]); }}>
-                        {item.display_name}
-                      </li>
-                    ))}
-                  </ul>
+        {/* FORM SCREEN */}
+        {!result && !loading && (
+          <>
+            <div className={`rounded-xl border p-4 ${isDark ? "border-rose-900/50 bg-rose-950/20" : "border-red-200 bg-red-50"}`}>
+              <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-300" : "text-red-700"}`}>
+                <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                {t(
+                  "विवाह जीवन का सबसे बड़ा निर्णय है। कुंडली में छिपे दोष (जैसे मंगल दोष) रिश्तों में रुकावट ला सकते हैं। सही समय पर सही उपाय जानें।",
+                  "Vivah jeevan ka sabse bada nirnay hai. Kundli mein chhipe dosh (jaise Mangal Dosh) rishton mein rukawat la sakte hain. Sahi samay par sahi upay jaanें.",
+                  "Marriage is life's biggest decision. Hidden doshas (like Mangal Dosh) can bring obstructions in relationships. Know the right remedies."
                 )}
-              </div>
+              </p>
             </div>
 
-            <div className="flex justify-center text-orange-400 py-1">
-              <Heart size={24} fill="currentColor" className="animate-pulse" />
-            </div>
-
-            {/* GIRL DETAILS */}
-            <div className={`space-y-3 p-4 rounded-xl border ${isDark ? "border-slate-700 bg-slate-800/30" : "border-gray-200 bg-gray-50/50"}`}>
-              <h3 className="text-sm font-bold text-rose-600">👧 {t("वधू (लड़की) का विवरण", "Girl's Details", "Girl's Details")}</h3>
-              <input type="text" required placeholder={t("नाम", "Name", "Name")} value={girl.name} onChange={e => setGirl({...girl, name: e.target.value})} className={inputClass} />
-              <div className="grid grid-cols-2 gap-3">
-                <div className="relative">
-                  <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
-                  <input type="date" required value={girl.dob} onChange={e => setGirl({...girl, dob: e.target.value})} className={`${inputClass} pl-9`} />
+            <form onSubmit={handleMatch} className={`space-y-6 rounded-3xl border p-5 sm:p-6 ${cardClass}`}>
+              
+              {/* BOY DETAILS */}
+              <div className={`space-y-3 p-4 rounded-2xl border ${isDark ? "border-slate-700/50 bg-slate-800/20" : "border-gray-200 bg-gray-50"}`}>
+                <h3 className="text-sm font-bold text-orange-500 flex items-center gap-2">
+                  <span className="bg-orange-500/10 p-1.5 rounded-lg">👦</span> {t("वर (लड़के) का विवरण", "Boy's Details", "Boy's Details")}
+                </h3>
+                <input type="text" required placeholder={t("पूरा नाम", "Full Name", "Full Name")} value={boy.name} onChange={e => setBoy({...boy, name: e.target.value})} className={inputClass} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
+                    <input type="date" required value={boy.dob} onChange={e => setBoy({...boy, dob: e.target.value})} className={`${inputClass} pl-9`} />
+                  </div>
+                  <div className="relative">
+                    <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
+                    <input type="time" required value={boy.time} onChange={e => setBoy({...boy, time: e.target.value})} className={`${inputClass} pl-9`} />
+                  </div>
                 </div>
                 <div className="relative">
-                  <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
-                  <input type="time" required value={girl.time} onChange={e => setGirl({...girl, time: e.target.value})} className={`${inputClass} pl-9`} />
+                  <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={boy.city} onChange={e => setBoy({...boy, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
+                  {boySuggestions.length > 0 && (
+                    <ul className={`absolute z-10 w-full mt-1 rounded-xl max-h-40 overflow-y-auto shadow-2xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+                      {boySuggestions.map((item: any) => (
+                        <li key={item.place_id} className={`px-4 py-2.5 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setBoy({ ...boy, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setBoySuggestions([]); }}>
+                          {item.display_name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               </div>
-              <div className="relative">
-                <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
-                <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={girl.city} onChange={e => setGirl({...girl, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
-                {girlSuggestions.length > 0 && (
-                  <ul className={`absolute z-10 w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow-xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
-                    {girlSuggestions.map((item: any) => (
-                      <li key={item.place_id} className={`px-4 py-2 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setGirl({ ...girl, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setGirlSuggestions([]); }}>
-                        {item.display_name}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
 
-            <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3.5 text-sm font-bold text-white shadow-md transition-all active:scale-[0.98] disabled:opacity-50">
-              {loading ? loadingText : t("मिलान करें", "Milan Karein", "Match Now")}
-            </button>
-          </form>
+              <div className="flex justify-center text-orange-500 py-1">
+                <Heart size={24} fill="currentColor" className="animate-pulse" />
+              </div>
+
+              {/* GIRL DETAILS */}
+              <div className={`space-y-3 p-4 rounded-2xl border ${isDark ? "border-slate-700/50 bg-slate-800/20" : "border-gray-200 bg-gray-50"}`}>
+                <h3 className="text-sm font-bold text-orange-500 flex items-center gap-2">
+                  <span className="bg-orange-500/10 p-1.5 rounded-lg">👧</span> {t("वधू (लड़की) का विवरण", "Girl's Details", "Girl's Details")}
+                </h3>
+                <input type="text" required placeholder={t("पूरा नाम", "Full Name", "Full Name")} value={girl.name} onChange={e => setGirl({...girl, name: e.target.value})} className={inputClass} />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="relative">
+                    <Calendar size={14} className="absolute left-3 top-4 text-gray-400" />
+                    <input type="date" required value={girl.dob} onChange={e => setGirl({...girl, dob: e.target.value})} className={`${inputClass} pl-9`} />
+                  </div>
+                  <div className="relative">
+                    <Clock size={14} className="absolute left-3 top-4 text-gray-400" />
+                    <input type="time" required value={girl.time} onChange={e => setGirl({...girl, time: e.target.value})} className={`${inputClass} pl-9`} />
+                  </div>
+                </div>
+                <div className="relative">
+                  <MapPin size={14} className="absolute left-3 top-4 text-gray-400" />
+                  <input type="text" required placeholder={t("जन्म स्थान (City)", "Birth City", "Birth City")} value={girl.city} onChange={e => setGirl({...girl, city: e.target.value, lat: "", lon: ""})} className={`${inputClass} pl-9`} />
+                  {girlSuggestions.length > 0 && (
+                    <ul className={`absolute z-10 w-full mt-1 rounded-xl max-h-40 overflow-y-auto shadow-2xl border ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"}`}>
+                      {girlSuggestions.map((item: any) => (
+                        <li key={item.place_id} className={`px-4 py-2.5 text-xs cursor-pointer hover:bg-orange-50 dark:hover:bg-slate-700 ${isDark ? "text-slate-200" : "text-slate-800"}`} onClick={() => { setGirl({ ...girl, city: item.display_name.split(',')[0], lat: item.lat, lon: item.lon }); setGirlSuggestions([]); }}>
+                          {item.display_name}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <button type="submit" disabled={loading} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-4 text-sm font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50">
+                {loading ? loadingText : t("मिलान करें", "Milan Karein", "Match Now")}
+              </button>
+            </form>
+          </>
         )}
 
-        {/* RESULT */}
+        {/* LOADING SCREEN (Only shows while calculating) */}
+        {loading && (
+          <div className={`flex flex-col items-center justify-center h-[50vh] rounded-3xl border ${cardClass}`}>
+            <Sparkles size={40} className="text-orange-500 animate-spin mb-4" />
+            <p className="text-sm font-bold text-orange-500 animate-pulse">{loadingText}</p>
+          </div>
+        )}
+
+        {/* RESULT SCREEN */}
         {result && !loading && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
             
-            {/* PDF TARGET AREA START */}
-            <div ref={resultRef} className={`space-y-4 rounded-2xl border-2 p-5 relative overflow-hidden ${isDark ? "border-orange-900/50 bg-slate-900" : "border-orange-300 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
+            {/* PDF TARGET AREA */}
+            <div ref={resultRef} className={`space-y-4 rounded-3xl border-2 p-5 sm:p-6 relative overflow-hidden ${isDark ? "border-orange-900/30 bg-[#151E2E]" : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
               
-              <div className="absolute -right-10 -top-10 text-orange-500/5 rotate-12 pointer-events-none">
-                <Sparkles size={150} />
-              </div>
-
               <div className="flex items-center gap-2 relative z-10">
-                <Sparkles className="text-amber-500" size={18} />
-                <p className="text-sm font-black text-orange-600">{t("मिलान परिणाम", "Matching Result", "Matching Result")}</p>
+                <Sparkles className="text-amber-500" size={20} />
+                <p className="text-sm font-black text-orange-500 uppercase tracking-widest">{t("मिलान परिणाम", "Matching Result", "Matching Result")}</p>
               </div>
 
-              <div className="text-center py-4 relative z-10">
-                <p className={`text-6xl font-black ${isDark ? "text-orange-400" : "text-orange-600"} drop-shadow-sm`}>{result.score}</p>
-                <p className={`text-sm font-bold mt-1 ${isDark ? "text-slate-200" : "text-gray-800"}`}>{t("/ 36 कुल अष्टकूट मिलान", "/ 36 Total Ashtakoot", "/ 36 Total Ashtakoot")}</p>
-                <p className={`text-xs font-medium mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{boy.name} ❤️ {girl.name}</p>
+              <div className="text-center py-6 relative z-10 border-b border-gray-200 dark:border-slate-700/50">
+                <p className="text-7xl font-black text-transparent bg-clip-text bg-gradient-to-b from-amber-400 to-orange-600 drop-shadow-sm">{result.score}</p>
+                <p className={`text-sm font-bold mt-2 ${isDark ? "text-slate-300" : "text-gray-800"}`}>{t("/ 36 कुल अष्टकूट मिलान", "/ 36 Total Ashtakoot", "/ 36 Total Ashtakoot")}</p>
+                <p className={`text-xs font-semibold mt-1 tracking-wide ${isDark ? "text-slate-400" : "text-gray-500"}`}>{boy.name} ❤️ {girl.name}</p>
               </div>
 
               {/* 8-POINT BREAKDOWN */}
-              <div className={`p-4 rounded-xl border relative z-10 ${isDark ? "border-slate-700 bg-slate-800/50" : "border-orange-200 bg-white/60"}`}>
-                <h4 className="text-xs font-bold text-gray-500 mb-3 uppercase">Detailed Breakdown</h4>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="py-2 relative z-10">
+                <h4 className={`text-xs font-bold mb-3 uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>Detailed Breakdown</h4>
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4">
                   {result.details.map((item: any, idx: number) => (
-                    <div key={idx} className="flex justify-between items-center text-xs">
-                      <span className={isDark ? "text-slate-300" : "text-gray-700"}>{item.name}</span>
-                      <span className={`font-bold ${item.score === 0 ? 'text-red-500' : 'text-green-500'}`}>{item.score}/{item.max}</span>
+                    <div key={idx} className="flex justify-between items-center text-xs border-b border-dashed border-gray-200 dark:border-slate-700/50 pb-1">
+                      <span className={`font-medium ${isDark ? "text-slate-300" : "text-gray-700"}`}>{item.name}</span>
+                      <span className={`font-black ${item.score === 0 ? 'text-red-500' : 'text-emerald-500'}`}>{item.score}/{item.max}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* PSYCHOLOGICAL HOOK */}
-              <div className={`rounded-xl border p-4 relative z-10 ${isDark ? "border-rose-900/50 bg-rose-950/40" : "border-red-200 bg-red-50 shadow-inner"}`}>
-                <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-800"}`}>
-                  ⚠️ {result.fearMessage}
-                </p>
+              {/* DYNAMIC FEAR / SAFE MESSAGE FROM BACKEND */}
+              <div className={`rounded-xl border p-4 relative z-10 ${isDark ? "border-slate-700 bg-slate-800/50" : "border-orange-200 bg-white shadow-sm"}`}>
+                {result.dangerLevel === 'safe' ? (
+                   <p className={`text-xs font-bold leading-5 flex gap-2 ${isDark ? "text-emerald-400" : "text-emerald-700"}`}>
+                     <CheckCircle2 size={16} className="shrink-0 mt-0.5" /> 
+                     {result.fearMessage || "आपका मिलान बहुत अच्छा है। कोई बड़ा दोष नहीं है।"}
+                   </p>
+                ) : (
+                  <p className={`text-xs font-bold leading-5 flex gap-2 ${isDark ? "text-rose-300" : "text-red-800"}`}>
+                    <ShieldAlert size={16} className="shrink-0 mt-0.5 text-red-500" />
+                    {result.fearMessage}
+                  </p>
+                )}
               </div>
 
-              <div className={`text-center text-[9px] mt-2 relative z-10 ${isDark ? "text-slate-500" : "text-gray-400"}`}>
-                {t("जनरेट किया गया", "Generated by", "Generated by")} Gita AI • www.gita-ai.com
+              <div className={`text-center text-[9px] mt-2 relative z-10 font-medium ${isDark ? "text-slate-500" : "text-gray-400"}`}>
+                Generated by Gita AI • www.gita-ai.com
               </div>
             </div>
-            {/* PDF TARGET AREA END */}
 
-            {/* CTA BUTTONS (Marketing exactly like 2nd screenshot) */}
+            {/* CTA BUTTONS */}
             <div className="space-y-3 pt-2">
               <Link 
                 href="/chat" 
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 px-4 py-3.5 text-sm font-black text-white shadow-lg active:scale-[0.98] transition-transform animate-pulse"
+                className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 px-4 py-4 text-sm font-black text-white shadow-[0_0_20px_rgba(225,29,72,0.4)] transition-all active:scale-[0.98] hover:shadow-[0_0_25px_rgba(225,29,72,0.6)] animate-pulse"
               >
-                <MessageCircle size={18} />
+                <MessageCircle size={20} />
                 {t("ज्योतिषी से बात करें — पहली चैट FREE", "Jyotishi se baat karein — Pehli chat FREE", "Talk to Astrologer — First chat FREE")}
               </Link>
 
@@ -289,18 +306,18 @@ export default function MatchingPage() {
                 <button 
                   onClick={downloadPdf} 
                   disabled={isDownloading} 
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-green-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-green-700 disabled:opacity-50"
+                  className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 py-3.5 text-sm font-bold text-white shadow-md active:scale-[0.98] transition-transform hover:bg-emerald-500 disabled:opacity-50"
                 >
                   {isDownloading ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />}
-                  {t("PDF डाउनलोड", "PDF Download", "Download PDF")}
+                  {t("PDF डाउनलोड", "PDF", "PDF")}
                 </button>
                 
                 <button 
                   onClick={resetForm} 
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${isDark ? "border-slate-700 bg-slate-800 text-orange-400" : "border-gray-200 bg-white text-slate-700 hover:bg-gray-50"}`}
+                  className={`flex-1 flex items-center justify-center gap-2 rounded-xl border py-3.5 text-sm font-bold shadow-sm active:scale-[0.98] transition-transform ${isDark ? "border-slate-700 bg-slate-800 text-slate-300 hover:bg-slate-700" : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"}`}
                 >
                   <RefreshCw size={18} />
-                  {t("दोबारा बनाएं", "Dobara Banayein", "Reset")}
+                  {t("दोबारा बनाएं", "Reset", "Reset")}
                 </button>
               </div>
             </div>
@@ -308,22 +325,24 @@ export default function MatchingPage() {
         )}
       </div>
 
-      {/* FIXED BOTTOM BAR (Marketing) */}
-      <Link href="/chat" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
-            <MessageCircle size={18} />
-          </span>
-          <div className="leading-tight">
-            <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
-              {t("ज्योतिषी • 24x7 उपलब्ध", "Astrologer • 24x7 Available", "Astrologer • 24x7 Available")}
-            </p>
-            <p className="text-sm font-black">
-              {t("रुकावट का कारण जानने के लिए चैट करें — FREE", "Rukawat ka karan jaanne ke liye chat karein — FREE", "Chat to know the cause of blockage — FREE")}
-            </p>
+      {/* FIXED BOTTOM BAR (Only shows when Result is available) */}
+      {result && !loading && (
+        <Link href="/chat" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-full">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20">
+              <MessageCircle size={18} />
+            </span>
+            <div className="leading-tight">
+              <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">
+                {t("ज्योतिषी • 24x7 उपलब्ध", "Astrologer • 24x7 Available", "Astrologer • 24x7 Available")}
+              </p>
+              <p className="text-sm font-black">
+                {t("रुकावट का कारण जानने के लिए चैट करें — FREE", "Rukawat ka karan jaanne ke liye chat karein — FREE", "Chat to know the cause of blockage — FREE")}
+              </p>
+            </div>
           </div>
-        </div>
-      </Link>
+        </Link>
+      )}
     </main>
   );
 }
