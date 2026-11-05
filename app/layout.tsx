@@ -1,3 +1,4 @@
+// app/layout.tsx
 import React from "react";
 import "./globals.css";
 import { AppProvider } from "./Providers";
@@ -50,7 +51,8 @@ export const metadata: Metadata = {
     description: "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
     images: [
       {
-        url: "/og-image.jpg", // Ek 1200x630 ka banner public folder me daalein
+        // 🔥 Maine isko aapke public folder wali photo se match kar diya hai
+        url: "/gita-portrait.jpg", 
         width: 1200,
         height: 630,
         alt: "Gita AI - Your Favorite AI Astrologer",
@@ -61,11 +63,15 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Gita AI — Best AI Astrologer",
     description: "Get accurate online kundli matching and daily horoscope for free.",
-    images: ["/og-image.jpg"], 
+    images: ["/gita-portrait.jpg"], // 🔥 Yahan bhi update kiya
   },
   manifest: "/manifest.webmanifest", 
   icons: {
-    icon: "/favicon.ico",
+    // 🔥 Icons ko array me update kiya taaki browser ko sahi icon mile
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon.png", type: "image/png", sizes: "32x32" }
+    ],
     apple: "/apple-touch-icon.png", 
   },
 };
