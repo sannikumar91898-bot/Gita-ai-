@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles, Phone } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Phone, X, Lock } from "lucide-react";
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
@@ -94,10 +94,15 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 🔥 MARKETING UPSELL STATES 🔥
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
+
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  // THEME LOGIC (Premium Orange/Slate Theme)
+  // THEME LOGIC
   const isDark = theme === "dark";
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
@@ -267,6 +272,16 @@ export default function ChatPage() {
     if (!text || isLoading) return;
     setInput("");
     push("user", text);
+
+    // 🔥 MARKETING LOGIC: Agar user 'done' step par hai, toh question count badhao 🔥
+    if (step === "done" && !showUpsell) {
+      const newCount = doneQuestionsCount + 1;
+      setDoneQuestionsCount(newCount);
+      // 3 messages ke baad upsell dikhao
+      if (newCount >= 3) {
+        setShowUpsell(true);
+      }
+    }
 
     if (looksLikeQuestion(text) && step !== "language") {
       await sendToAi(text);
@@ -488,7 +503,7 @@ export default function ChatPage() {
       </div>
 
       {/* UPSELL BANNER (Only shows when Kundli is ready/Done) */}
-      {step === "done" && (
+      {step === "done" && !showUpsell && (
         <Link 
           href="/astrologers" 
           className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full"
@@ -499,12 +514,46 @@ export default function ChatPage() {
             </span>
             <div className="leading-tight">
               <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">24x7 Available</p>
-              <p className="text-xs sm:text-sm font-black">Senior Astrologer se baat karein</p>
+              <p className="text-xs font-black">Talk to Astrologer - First Chat FREE</p>
             </div>
           </div>
-          <span className="rounded-full bg-white px-3 py-1 text-[10px] font-black text-rose-700 uppercase">Connect</span>
+          <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-rose-700 uppercase">Chat</span>
         </Link>
       )}
+
+      {/* 🔥 PREMIUM UPSELL MODAL (Shows after 3 questions) 🔥 */}
+      {showUpsell && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4">
+              <Lock size={32} />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Unlock Full Cosmic Insights</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Gita AI ne aapke graho me ek <b className="text-orange-400">"Rukawat"</b> detect ki hai. Kya aap iska sateek karan aur aane wale samay ka pura vishleshan jaanna chahte hain?
+            </p>
+            
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Special Price</span>
+              <span className="text-lg font-black text-white">₹9 <span className="text-xs line-through text-slate-500 font-medium">₹49</span> / min</span>
+            </div>
+
+            <Link 
+              href="/wallet" 
+              className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+            >
+              Add Money & Continue
+            </Link>
+            <button 
+              onClick={() => setShowUpsell(false)}
+              className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"
+            >
+              <X size={14} /> Maybe Later
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
