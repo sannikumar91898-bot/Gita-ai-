@@ -32,19 +32,26 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Install Android SDK packages
+      - name: Locate and install Android SDK
         shell: bash
         run: |
-          set -euo pipefail
-          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          set -e
 
-          if [ ! -x "$SDKMANAGER" ]; then
-            echo "sdkmanager not found: $SDKMANAGER"
-            find "$ANDROID_HOME/cmdline-tools" -maxdepth 3 -name sdkmanager -type f
+          echo "Searching for Android SDK Manager..."
+
+          SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" \
+            -type f -name sdkmanager 2>/dev/null | sort -V | tail -n 1)
+
+          if [ -z "$SDKMANAGER" ]; then
+            echo "ERROR: sdkmanager not found"
+            find "$ANDROID_HOME" -name sdkmanager
             exit 1
           fi
 
-          yes | "$SDKMANAGER" --sdk_root="$ANDROID_HOME" --licenses
+          echo "Using: $SDKMANAGER"
+
+          yes | "$SDKMANAGER" \
+            --sdk_root="$ANDROID_HOME" --licenses || true
 
           "$SDKMANAGER" --sdk_root="$ANDROID_HOME" \
             "platform-tools" \
