@@ -1,3 +1,4 @@
+
 name: Build Gita AI Android App
 
 on:
@@ -43,7 +44,7 @@ jobs:
           python -m json.tool manifest.json
 
       - name: Build debug APK
-        run: gradle --no-daemon assembleDebug
+        run: cd android && gradle --no-daemon assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
