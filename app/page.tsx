@@ -148,7 +148,7 @@ export default function HomePage() {
 
       <div className="mx-auto max-w-xl space-y-7 px-4 py-5">
         
-        {/* 🔥 SEO: Hidden H1 Tag for Google Crawlers (Design same rahega) 🔥 */}
+        {/* 🔥 SEO: Hidden H1 Tag for Google Crawlers 🔥 */}
         <h1 className="sr-only">GitaTalk - Online AI Astrologer, Kundli Matching & Daily Horoscope</h1>
 
         {/* HERO BANNER */}
@@ -157,7 +157,6 @@ export default function HomePage() {
             <p className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-100">
               <Sparkles size={14} /> {t("स्पेशल ऑफर", "Special Offer", "Special Offer")}
             </p>
-            {/* 🔥 Changed to H2 for semantic hierarchy 🔥 */}
             <h2 className="text-2xl font-black">
               {t("पहली चैट फ्री 🎉", "First Chat FREE 🎉", "First Chat FREE 🎉")}
             </h2>
@@ -213,13 +212,21 @@ export default function HomePage() {
 
         {/* ASTROLOGER LIST */}
         <section aria-labelledby="astrologers-heading" className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h2 id="astrologers-heading" className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              {t("ज्योतिषियों से बात करें", "Talk to Astrologers", "Talk to Astrologers")}
-            </h2>
-            <span className="text-xs font-semibold text-orange-500">
-              {t("4 ऑनलाइन", "4 Online", "4 Online")}
-            </span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center justify-between">
+              <h2 id="astrologers-heading" className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                {t("ज्योतिषियों से बात करें", "Talk to Astrologers", "Talk to Astrologers")}
+              </h2>
+              <span className="text-xs font-semibold text-orange-500">
+                {t("4 ऑनलाइन", "4 Online", "4 Online")}
+              </span>
+            </div>
+            
+            {/* 🔥 POINT 7 FIX: Transparency Badge 🔥 */}
+            <p className={`text-[10px] flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              <span className="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-sm font-bold">AI</span>
+              Powered by Advanced AI + Vedic Knowledge
+            </p>
           </div>
 
           <div className="space-y-4">
@@ -234,7 +241,6 @@ export default function HomePage() {
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
                     <img
                       src={astro.image}
-                      // 🔥 SEO FIX: Descriptive Alt Tag 🔥
                       alt={`${astro.name} - ${astro.specialty} Expert`}
                       width={80}
                       height={80}
@@ -250,7 +256,6 @@ export default function HomePage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        {/* 🔥 Changed to H3 🔥 */}
                         <h3 className="text-sm font-bold">{astro.name}</h3>
                         {astro.isCelebrity && (
                           <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[9px] font-bold text-yellow-700">
