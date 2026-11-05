@@ -2,7 +2,11 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, X, LogOut } from "lucide-react"; // 🔥 LogOut icon import kiya
+import { 
+  ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, 
+  Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, 
+  X, LogOut, Shield, FileText, Mail 
+} from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -54,12 +58,18 @@ export default function SettingsPage() {
     { name: t("ऑर्डर हिस्ट्री", "Order History", "Order History"), icon: List, href: "/orders" },
   ];
 
+  // 🔥 NAYA: Legal & Support Links for Play Store Compliance 🔥
+  const legalItems = [
+    { name: t("प्राइवेसी पॉलिसी", "Privacy Policy", "Privacy Policy"), icon: Shield, href: "/privacy" },
+    { name: t("नियम और शर्तें", "Terms of Service", "Terms of Service"), icon: FileText, href: "/terms" },
+    { name: t("संपर्क करें", "Contact Us", "Contact Us"), icon: Mail, href: "/contact" },
+  ];
+
   const handleAvatarSelect = (url: string) => {
     setSelectedAvatar(url);
     setShowAvatarModal(false);
   };
 
-  // 🔥 LOGOUT FUNCTIONALITY 🔥
   const handleLogout = () => {
     const confirmLogout = window.confirm(
       t(
@@ -70,12 +80,9 @@ export default function SettingsPage() {
     );
 
     if (confirmLogout) {
-      // 1. Clear all local storage / tokens
       localStorage.clear();
       sessionStorage.clear();
-      
-      // 2. Redirect to login page
-      window.location.href = "/login"; // Apna login route yahan verify kar lein
+      window.location.href = "/login";
     }
   };
 
@@ -134,6 +141,19 @@ export default function SettingsPage() {
           </div>
         </section>
 
+        {/* 🔥 NAYA SECTION: Legal & Support 🔥 */}
+        <section className="space-y-2">
+          <h3 className={`px-1 text-xs font-bold uppercase ${mutedClass}`}>{t("कानूनी जानकारी", "Legal & Support", "Legal & Support")}</h3>
+          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
+            {legalItems.map((item, idx) => (
+              <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 ${idx !== legalItems.length - 1 ? (isDark ? "border-b border-slate-700" : "border-b border-gray-100") : ""}`}>
+                <div className="flex items-center gap-3"><item.icon size={18} className="text-orange-500" /><span className="text-sm font-semibold">{item.name}</span></div>
+                <ChevronRight size={16} className={mutedClass} />
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="space-y-2">
           <h3 className={`px-1 text-xs font-bold uppercase ${mutedClass}`}>{t("ऐप सेटिंग्स", "App Settings", "App Settings")}</h3>
           <div className={`overflow-hidden rounded-2xl border p-4 space-y-5 ${cardClass}`}>
@@ -155,7 +175,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 🔥 NAYA LOGOUT SECTION 🔥 */}
+        {/* LOGOUT SECTION */}
         <section className="pt-2">
           <button
             onClick={handleLogout}
