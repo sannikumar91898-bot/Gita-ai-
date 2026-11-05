@@ -14,13 +14,13 @@
   "categories": ["lifestyle", "education"],
   "icons": [
     {
-      "src": "/icons/geeta_ai_icon_192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/geeta_ai_icon_512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -32,14 +32,14 @@
       "short_name": "Chat",
       "description": "Talk to our expert female astrologers",
       "url": "/chat",
-      "icons": [{ "src": "/icons/geeta_ai_icon_192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Free Kundli",
       "short_name": "Kundli",
       "description": "Check your Vedic birth chart",
       "url": "/kundli",
-      "icons": [{ "src": "/icons/geeta_ai_icon_192.png", "sizes": "192x192" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
