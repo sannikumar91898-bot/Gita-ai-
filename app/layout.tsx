@@ -6,7 +6,7 @@ import type { Metadata, Viewport } from "next";
 
 // 🔥 SEO 9.5+ Metadata Setup
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gita-ai-1.onrender.com"), // Apna real domain yahan dalein (jaise https://gita-ai.com)
+  metadataBase: new URL("https://gita-ai-1.onrender.com"), // Apna real domain yahan dalein
   title: {
     default: "Gita AI — Best AI Astrologer & Free Online Kundli",
     template: "%s | Gita AI Astrology",
@@ -44,7 +44,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://gita-ai-1.onrender.com", // Apna real domain dalein
+    url: "https://gita-ai-1.onrender.com", 
     siteName: "Gita AI",
     title: "Gita AI — Best AI Astrologer & Free Online Kundli",
     description: "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
@@ -61,12 +61,12 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Gita AI — Best AI Astrologer",
     description: "Get accurate online kundli matching and daily horoscope for free.",
-    images: ["/og-image.jpg"], // Same banner yahan bhi use hoga
+    images: ["/og-image.jpg"], 
   },
-  manifest: "/manifest.webmanifest", // PWA manifest
+  manifest: "/manifest.webmanifest", 
   icons: {
     icon: "/favicon.ico",
-    apple: "/apple-touch-icon.png", // Agar hai toh
+    apple: "/apple-touch-icon.png", 
   },
 };
 
@@ -74,9 +74,9 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 5, // User zoom kar sakta hai (SEO Audit Fix)
+  maximumScale: 5, 
   userScalable: true,
-  themeColor: "#0B0F19", // Mobile browser ki top bar ka color
+  themeColor: "#0B0F19", 
 };
 
 export default function RootLayout({
@@ -89,7 +89,7 @@ export default function RootLayout({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Gita AI",
-    url: "https://gita-ai-1.onrender.com", // Apna real domain dalein
+    url: "https://gita-ai-1.onrender.com", 
     description: "AI-powered Vedic astrology platform for Kundli, Horoscope, and Matchmaking.",
     potentialAction: {
       "@type": "SearchAction",
@@ -100,10 +100,8 @@ export default function RootLayout({
 
   return (
     <html lang="hi" suppressHydrationWarning> 
-      {/* Note: Agar audience Indian hai toh lang="hi" (Hindi) ya lang="en-IN" zyada better SEO deta hai. */}
       <body className="antialiased overflow-x-hidden">
         
-        {/* JSON-LD Script Injected into Body */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
