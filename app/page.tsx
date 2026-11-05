@@ -123,16 +123,17 @@ export default function HomePage() {
         <div className="flex items-center gap-3">
           <Link
             href="/settings"
-            className={`rounded-full p-2 ${
+            aria-label="Settings"
+            className={`rounded-full p-2 transition hover:scale-105 ${
               isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"
             }`}
           >
             <Settings size={18} />
           </Link>
           
-          {/* 🔥 FIXED: Wallet Div ko Link banaya gaya hai 🔥 */}
           <Link
             href="/wallet"
+            aria-label="Wallet Balance"
             className={`flex items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold cursor-pointer transition hover:scale-105 ${
               isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"
             }`}
@@ -146,12 +147,17 @@ export default function HomePage() {
       </header>
 
       <div className="mx-auto max-w-xl space-y-7 px-4 py-5">
+        
+        {/* 🔥 SEO: Hidden H1 Tag for Google Crawlers (Design same rahega) 🔥 */}
+        <h1 className="sr-only">GitaTalk - Online AI Astrologer, Kundli Matching & Daily Horoscope</h1>
+
         {/* HERO BANNER */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white shadow-lg">
+        <section aria-label="Special Offer" className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-red-500 p-5 text-white shadow-lg">
           <div className="relative z-10 space-y-2">
             <p className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-orange-100">
               <Sparkles size={14} /> {t("स्पेशल ऑफर", "Special Offer", "Special Offer")}
             </p>
+            {/* 🔥 Changed to H2 for semantic hierarchy 🔥 */}
             <h2 className="text-2xl font-black">
               {t("पहली चैट फ्री 🎉", "First Chat FREE 🎉", "First Chat FREE 🎉")}
             </h2>
@@ -174,16 +180,15 @@ export default function HomePage() {
         </section>
 
         {/* FREE TOOLS */}
-        <section className="space-y-3">
-          <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+        <section aria-labelledby="free-tools-heading" className="space-y-3">
+          <h2 id="free-tools-heading" className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
             {t("फ्री टूल्स", "Free Tools", "Free Tools")}
-          </h3>
+          </h2>
           <div className="grid grid-cols-3 gap-3">
             {[
               { name: t("कुंडली", "Kundli", "Kundli"), icon: Scroll, href: "/kundli" },
               { name: t("मिलान", "Matching", "Matching"), icon: Heart, href: "/matching" },
               { name: t("राशिफल", "Horoscope", "Horoscope"), icon: Sun, href: "/daily" },
-              // 🔥 FIXED: Panchang href changed from "#" to "/panchang" 🔥
               { name: t("पंचांग", "Panchang", "Panchang"), icon: CalendarDays, href: "/panchang" },
               { name: t("हस्तरेखा", "Palmistry", "Palmistry"), icon: Hand, href: "/palmistry" },
               { name: t("फेस रीडिंग", "Face Reading", "Face Reading"), icon: ScanFace, href: "/face-reading" },
@@ -198,7 +203,7 @@ export default function HomePage() {
                 }`}
               >
                 <div className="text-orange-500">
-                  <tool.icon size={22} />
+                  <tool.icon size={22} aria-hidden="true" />
                 </div>
                 <span className="text-[11px] font-semibold">{tool.name}</span>
               </Link>
@@ -207,11 +212,11 @@ export default function HomePage() {
         </section>
 
         {/* ASTROLOGER LIST */}
-        <section className="space-y-3">
+        <section aria-labelledby="astrologers-heading" className="space-y-3">
           <div className="flex items-center justify-between">
-            <h3 className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+            <h2 id="astrologers-heading" className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
               {t("ज्योतिषियों से बात करें", "Talk to Astrologers", "Talk to Astrologers")}
-            </h3>
+            </h2>
             <span className="text-xs font-semibold text-orange-500">
               {t("4 ऑनलाइन", "4 Online", "4 Online")}
             </span>
@@ -219,7 +224,7 @@ export default function HomePage() {
 
           <div className="space-y-4">
             {ASTROLOGERS.map((astro) => (
-              <div
+              <article
                 key={astro.id}
                 className={`flex flex-col gap-3 rounded-2xl border p-3 shadow-sm ${
                   isDark ? "border-slate-700 bg-slate-900" : "border-orange-100 bg-white"
@@ -229,7 +234,11 @@ export default function HomePage() {
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
                     <img
                       src={astro.image}
-                      alt={astro.name}
+                      // 🔥 SEO FIX: Descriptive Alt Tag 🔥
+                      alt={`${astro.name} - ${astro.specialty} Expert`}
+                      width={80}
+                      height={80}
+                      loading="lazy"
                       className="h-full w-full object-cover"
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=f97316&color=fff`;
@@ -241,7 +250,8 @@ export default function HomePage() {
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
                       <div className="flex items-center gap-2">
-                        <h4 className="text-sm font-bold">{astro.name}</h4>
+                        {/* 🔥 Changed to H3 🔥 */}
+                        <h3 className="text-sm font-bold">{astro.name}</h3>
                         {astro.isCelebrity && (
                           <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[9px] font-bold text-yellow-700">
                             Celebrity
@@ -280,6 +290,7 @@ export default function HomePage() {
                       </div>
                       <Link 
                         href={`/chat/${astro.id}`}
+                        aria-label={`Chat with ${astro.name}`}
                         className="rounded-full bg-orange-500 px-4 py-1.5 text-xs font-bold text-white shadow transition hover:bg-orange-600 active:scale-95"
                       >
                         {t("चैट करें", "Chat Now", "Chat Now")}
@@ -300,14 +311,24 @@ export default function HomePage() {
                   </div>
                   <p className="italic">"{astro.review}"</p>
                 </div>
-              </div>
+              </article>
             ))}
           </div>
         </section>
+
+        {/* 🔥 SEO: Rich Text content for Google Crawler (Hidden from UI) 🔥 */}
+        <section className="sr-only">
+          <h2>About GitaTalk AI Astrology</h2>
+          <p>
+            GitaTalk is India's premium AI astrology platform. We offer 100% accurate online Kundli matching, free daily horoscope predictions, palmistry, and face reading. Our AI astrologers, including experts in Vedic astrology, Tarot, and KP System, provide instant remedies for career, marriage, and health issues. Start your first chat for free today.
+          </p>
+        </section>
+
       </div>
 
       {/* BOTTOM NAVIGATION */}
       <nav
+        aria-label="Main Navigation"
         className={`fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around border-t px-2 py-2 ${
           isDark ? "border-slate-800 bg-slate-900" : "border-gray-200 bg-white"
         }`}
@@ -322,7 +343,8 @@ export default function HomePage() {
           <Link
             key={item.id}
             href={item.href}
-            className={`flex flex-col items-center gap-1 p-1 ${
+            aria-label={item.label}
+            className={`flex flex-col items-center gap-1 p-1 transition hover:-translate-y-1 ${
               activeTab === item.id
                 ? "text-orange-500"
                 : isDark
@@ -340,7 +362,8 @@ export default function HomePage() {
       <div className="fixed bottom-[60px] left-0 right-0 z-40 mx-auto max-w-xl px-2">
         <Link
           href="/chat"
-          className="flex items-center justify-between gap-3 rounded-t-xl bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl"
+          aria-label="Talk to Astrologer for Free"
+          className="flex items-center justify-between gap-3 rounded-t-xl bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-2 text-white shadow-xl transition hover:opacity-95"
         >
           <div className="flex items-center gap-2">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20">
