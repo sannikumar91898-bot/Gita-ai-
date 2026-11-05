@@ -1,13 +1,13 @@
 /* Gita AI service worker — offline shell only. API calls always hit the network. */
 
-const CACHE = "gita-shell-v7"; // 🔥 Version bumped for offline.html
+const CACHE = "gita-shell-v8"; // 🔥 Version bumped to v8 for new icons
 
 const SHELL = [
   "/",
   "/manifest.webmanifest",
-  "/offline.html", // 🔥 Naya offline page add kiya
-  "/icons/geeta_ai_icon_192.png",
-  "/icons/geeta_ai_icon_512.png"
+  "/offline.html", 
+  "/icon-192.png", // 🔥 Path updated
+  "/icon-512.png"  // 🔥 Path updated
 ];
 
 self.addEventListener("install", (event) => {
@@ -68,7 +68,7 @@ self.addEventListener("fetch", (event) => {
           const cached = await caches.match(request);
           if (cached) return cached;
 
-          // 🔥 FIX: Offline page dikhao (plain text nahi)
+          // Offline page dikhao
           return (
             (await caches.match("/offline.html")) ||
             (await caches.match("/")) ||
