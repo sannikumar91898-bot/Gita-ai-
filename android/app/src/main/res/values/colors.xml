@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="theme_color">#4B238A</color>
+    <color name="navigation_color">#21113D</color>
+    <color name="splash_color">#21113D</color>
+</resources>
