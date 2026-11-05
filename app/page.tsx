@@ -115,9 +115,12 @@ export default function HomePage() {
         }`}
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-500 text-sm font-bold text-white">
-            G
-          </div>
+          {/* 🔥 YAHAN FIX HUA HAI: Text 'G' ko Logo se replace kiya hai 🔥 */}
+          <img
+            src="/icon-192.png"
+            alt="Gita AI Logo"
+            className="h-8 w-8 rounded-full object-cover shadow-sm border border-orange-500/20"
+          />
           <span className="text-lg font-bold">GitaTalk</span>
         </div>
         <div className="flex items-center gap-3">
