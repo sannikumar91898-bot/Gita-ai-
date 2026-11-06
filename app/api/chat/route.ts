@@ -272,20 +272,40 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash", 
-      contents: contents,
-      config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
-    });
+    // 🔥 4. SMART RETRY LOGIC (Google ke Overload se bachne ke liye) 🔥
+    let response;
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        response = await ai.models.generateContent({
+          model: "gemini-1.5-flash", // ✅ Model updated
+          contents: contents,
+          config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
+        });
+        break; // Success! Loop se bahar
+      } catch (err: any) {
+        console.error(`AI Attempt Failed (Retries left: ${retries - 1}):`, err.message);
+        
+        // Agar Google ka server down hai (503) ya limit cross (429) hai, toh retry karo
+        if (err.message?.includes("503") || err.message?.includes("429") || err.message?.includes("fetch")) {
+          retries--;
+          if (retries === 0) throw new Error("AI_SERVER_OVERLOADED");
+          await new Promise(r => setTimeout(r, 2000)); // 2 second wait karke wapas try karo
+        } else {
+          throw err; // Agar API Key galat hai (401) toh turant fail karo
+        }
+      }
+    }
 
-    const rawReply = response.text || "";
+    const rawReply = response?.text || "";
     if (!rawReply) throw new Error("EMPTY_AI_RESPONSE");
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
-    // 🔥 4. SAVE MESSAGES (Transaction) 🔥
+    // 🔥 5. SAVE MESSAGES (Transaction) 🔥
     await db.transaction(async (tx) => {
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
@@ -305,13 +325,12 @@ Description
   } catch (error: any) {
     console.error("POST /api/chat error:", error);
 
-    // 🔥 5. BULLETPROOF REFUND 🔥
+    // 🔥 6. BULLETPROOF REFUND (Agar AI fail hua toh paisa wapas) 🔥
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
           await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + 200` }).where(eq(users.id, userId));
         } else if (deductedType === "free") {
-          // GREATEST(..., 0) ensures freeMessagesUsed doesn't drop below 0
           await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId)); 
         }
         console.log(`Refund successful for user ${userId} (Type: ${deductedType})`);
@@ -322,6 +341,11 @@ Description
 
     if (error.message === "CONVERSATION_NOT_FOUND") {
       return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
+    }
+
+    // Agar AI server overload hai
+    if (error.message === "AI_SERVER_OVERLOADED") {
+       return NextResponse.json({ success: false, error: "Google AI server is currently busy. Your money is refunded. Please try again in 1 minute." }, { status: 500 });
     }
 
     const errorMsg = "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa/msg wapas kar diya gaya hai. Kripya thodi der baad try karein.";
