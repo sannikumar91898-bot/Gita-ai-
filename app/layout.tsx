@@ -5,9 +5,8 @@ import { AppProvider } from "./Providers";
 import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 
-// 🔥 SEO 9.5+ Metadata Setup
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gita-ai-1.onrender.com"), // Apna real domain yahan dalein
+  metadataBase: new URL("https://gita-ai-1.onrender.com"), 
   title: {
     default: "Gita AI — Best AI Astrologer & Free Online Kundli",
     template: "%s | Gita AI Astrology",
@@ -15,22 +14,20 @@ export const metadata: Metadata = {
   description:
     "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, palmistry, and face reading. 100% Free first chat!",
   keywords: [
-    "AI Astrologer",
-    "Online Kundli",
-    "Free Kundli Milan",
-    "Vedic Astrology",
-    "Daily Horoscope",
-    "Palmistry AI",
-    "Face Reading",
-    "Gita AI",
-    "Astrology Chat"
+    "AI Astrologer", "Online Kundli", "Free Kundli Milan", "Vedic Astrology", 
+    "Daily Horoscope", "Palmistry AI", "Face Reading", "Gita AI", "Astrology Chat",
+    "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India"
   ],
   authors: [{ name: "Gita AI Team" }],
   creator: "Gita AI",
   publisher: "Gita AI",
-  alternates: {
-    canonical: "/",
+  alternates: { canonical: "/" },
+  
+  // 🔥 Google Search Console Verification 🔥
+  verification: {
+    google: "ZcIHuXYR5-z_kC0EliGBYoR41O-duRHgJ9tQVqp3E1I", 
   },
+  
   robots: {
     index: true,
     follow: true,
@@ -51,7 +48,6 @@ export const metadata: Metadata = {
     description: "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
     images: [
       {
-        // 🔥 Maine isko aapke public folder wali photo se match kar diya hai
         url: "/gita-portrait.jpg", 
         width: 1200,
         height: 630,
@@ -63,11 +59,10 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Gita AI — Best AI Astrologer",
     description: "Get accurate online kundli matching and daily horoscope for free.",
-    images: ["/gita-portrait.jpg"], // 🔥 Yahan bhi update kiya
+    images: ["/gita-portrait.jpg"], 
   },
   manifest: "/manifest.webmanifest", 
   icons: {
-    // 🔥 Icons ko array me update kiya taaki browser ko sahi icon mile
     icon: [
       { url: "/favicon.ico", sizes: "any" },
       { url: "/favicon.png", type: "image/png", sizes: "32x32" }
@@ -76,7 +71,6 @@ export const metadata: Metadata = {
   },
 };
 
-// 🔥 Viewport Fix: Accessibility aur Mobile SEO ke liye (Zoom allow kiya)
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
@@ -90,24 +84,56 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔥 JSON-LD (Structured Data) for Google Rich Snippets
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Gita AI",
-    url: "https://gita-ai-1.onrender.com", 
-    description: "AI-powered Vedic astrology platform for Kundli, Horoscope, and Matchmaking.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://gita-ai-1.onrender.com/search?q={search_term_string}",
-      "query-input": "required name=search_term_string",
+  // 🔥 ULTIMATE JSON-LD (Google Rich Snippets ke liye) 🔥
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Gita AI",
+      "url": "https://gita-ai-1.onrender.com",
+      "description": "AI-powered Vedic astrology platform for Kundli, Horoscope, and Matchmaking.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://gita-ai-1.onrender.com/search?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
     },
-  };
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Gita AI",
+      "url": "https://gita-ai-1.onrender.com",
+      "logo": "https://gita-ai-1.onrender.com/icon-512.png",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91-XXXXXXXXXX", // Apna number dalein (Optional)
+        "contactType": "customer service",
+        "email": "gitaaisupport@gmail.com"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": "Gita AI Premium",
+      "description": "Unlimited AI Astrologer Chat & Premium Reports",
+      "brand": {
+        "@type": "Brand",
+        "name": "Gita AI"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "199",
+        "priceCurrency": "INR",
+        "availability": "https://schema.org/InStock"
+      }
+    }
+  ];
 
   return (
     <html lang="hi" suppressHydrationWarning> 
       <body className="antialiased overflow-x-hidden">
         
+        {/* Inject Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
