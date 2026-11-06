@@ -1,4 +1,3 @@
-// app/face-reading/page.tsx
 "use client";
 
 import { useRef, useState, useEffect, ChangeEvent } from "react";
@@ -21,6 +20,45 @@ const LOADING_STEPS = [
   "Decoding destiny markers...",
   "Generating Vedic report..."
 ];
+
+// 🔥 NAYA: Image Compress Karne Ka Function (Bina kisi library ke) 🔥
+const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scaleSize = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas error");
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              reject("Compression failed");
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 export default function FaceReadingPage() {
   const { lang, theme } = useApp();
@@ -67,10 +105,10 @@ export default function FaceReadingPage() {
     setErrorMsg(null);
     setResult(null);
 
-    // Validation
-    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+    // 🔥 UPDATED VALIDATION: Limit 10MB kar di hai 🔥
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
       setPhoto(null);
-      setErrorMsg(t("फोटो 5MB से छोटी होनी चाहिए।", "Photo 5MB se chhoti honi chahiye.", "Photo must be under 5MB."));
+      setErrorMsg(t("फोटो 10MB से छोटी होनी चाहिए।", "Photo 10MB se chhoti honi chahiye.", "Photo must be under 10MB."));
       e.target.value = "";
       return;
     }
@@ -97,12 +135,15 @@ export default function FaceReadingPage() {
     reader.onload = async () => {
       if (typeof reader.result !== "string") return;
 
-      setPhoto(reader.result);
+      setPhoto(reader.result); // Preview dikhane ke liye
       setLoading(true);
 
       try {
+        // 🔥 COMPRESS KARO PHOTO KO 🔥
+        const compressedFile = await compressImage(file);
+
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("image", compressedFile);
 
         const res = await fetch("/api/face-reading", {
           method: "POST",
@@ -113,7 +154,6 @@ export default function FaceReadingPage() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          // Agar backend se error aaya hai toh uska asli message dikhao
           if (data?.error === "INVALID_IMAGE") {
             setPhoto(null);
             setErrorMsg(data.message || "Please upload a clear human face.");
@@ -135,7 +175,6 @@ export default function FaceReadingPage() {
         if (error.name === "AbortError") return;
         console.error("Face reading error:", error);
         
-        // Agar error backend se aaya hai toh usko show karo, warna generic
         setErrorMsg(error.message !== "Analysis failed" 
           ? error.message 
           : t("विश्लेषण विफल रहा। सर्वर से संपर्क नहीं हो पाया।", "Analysis failed. Server issue.", "Analysis failed. Server issue.")
@@ -191,9 +230,9 @@ export default function FaceReadingPage() {
             <div>
               <h2 className="text-xl font-bold">{t("अपना फोटो अपलोड करें", "Upload your photo", "Upload your photo")}</h2>
               <p className={`text-sm mt-2 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-                {t("आपके चेहरे के लक्षण आपके भाग्य की दिशा बताते हैं (सिर्फ साफ चेहरे की फोटो डालें)", 
-                   "Aapke chehre ke lakshan aapke bhagya ki disha batate hain (Sirf face ki clear photo daalein)", 
-                   "Your facial features reveal your destiny (Upload clear face only)")}
+                {t("आपके चेहरे के लक्षण आपके भाग्य की दिशा बताते हैं (सिर्फ साफ चेहरे की फोटो डालें, Max 10MB)", 
+                   "Aapke chehre ke lakshan aapke bhagya ki disha batate hain (Sirf face ki clear photo daalein, Max 10MB)", 
+                   "Your facial features reveal your destiny (Upload clear face only, Max 10MB)")}
               </p>
             </div>
             
