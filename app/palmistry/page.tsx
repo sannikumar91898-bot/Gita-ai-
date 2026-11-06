@@ -22,6 +22,45 @@ const LOADING_STEPS = [
   "Generating Vedic report..."
 ];
 
+// 🔥 NAYA: Image Compress Karne Ka Function (Bina kisi library ke) 🔥
+const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const scaleSize = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleSize;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return reject("Canvas error");
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name, {
+                type: "image/jpeg",
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              reject("Compression failed");
+            }
+          },
+          "image/jpeg",
+          quality
+        );
+      };
+      img.onerror = (error) => reject(error);
+    };
+    reader.onerror = (error) => reject(error);
+  });
+};
+
 export default function PalmistryPage() {
   const { lang, theme } = useApp();
   const isDark = theme === "dark";
@@ -56,7 +95,7 @@ export default function PalmistryPage() {
     return () => clearInterval(interval);
   }, [loading]);
 
-  // Memory leak fix (Component unmount hone par request cancel)
+  // Memory leak fix
   useEffect(() => {
     return () => { abortRef.current?.abort(); };
   }, []);
@@ -68,10 +107,10 @@ export default function PalmistryPage() {
     setResult(null);
     setErrorMsg("");
 
-    // 🔥 1. VALIDATION (Size & Type)
-    if (file.size === 0 || file.size > 5 * 1024 * 1024) {
+    // 🔥 UPDATED VALIDATION: Limit 10MB kar di hai 🔥
+    if (file.size === 0 || file.size > 10 * 1024 * 1024) {
       setPhoto(null);
-      setErrorMsg(t("फोटो 5MB से छोटी होनी चाहिए।", "Photo 5MB se chhoti honi chahiye.", "Photo must be under 5MB."));
+      setErrorMsg(t("फोटो 10MB से छोटी होनी चाहिए।", "Photo 10MB se chhoti honi chahiye.", "Photo must be under 10MB."));
       e.target.value = "";
       return;
     }
@@ -102,8 +141,11 @@ export default function PalmistryPage() {
       setLoading(true);
 
       try {
+        // 🔥 COMPRESS KARO PHOTO KO 🔥
+        const compressedFile = await compressImage(file);
+
         const formData = new FormData();
-        formData.append("image", file);
+        formData.append("image", compressedFile);
 
         const res = await fetch("/api/palm", {
           method: "POST",
@@ -114,14 +156,12 @@ export default function PalmistryPage() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          // 🔥 2. REAL ERROR SHOW KARO (Generic nahi)
           if (data?.error === "INVALID_IMAGE") {
             setPhoto(null);
             setErrorMsg(data.message || "Please upload a clear palm photo.");
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
-          // Backend se aaya hua asli error message dikhao
           throw new Error(data?.message || data?.error || "Analysis failed");
         }
 
@@ -129,21 +169,17 @@ export default function PalmistryPage() {
           throw new Error("Invalid response format from server.");
         }
 
-        // AI ka real result set karo
         setResult(data.result);
 
       } catch (error: any) {
         if (error.name === "AbortError") return;
         console.error("Palm reading error:", error);
         
-        // 3. SMART ERROR HANDLING
         let displayError = error.message;
         
-        // Agar model nahi mila (Render me model name galat hai)
         if (displayError.includes("404") || displayError.includes("not found")) {
            displayError = "AI Model currently unavailable. Please check backend config.";
         }
-        // Agar quota exceed ho gaya (Free tier limit)
         else if (displayError.includes("429") || displayError.includes("quota")) {
            displayError = t("सर्वर पर बहुत ज्यादा लोड है। 1 मिनट बाद प्रयास करें।", "Server load high. Try again in 1 min.", "Server busy. Try again in 1 min.");
         }
@@ -208,9 +244,9 @@ export default function PalmistryPage() {
             <div>
               <h2 className="text-xl font-bold">{t("हथेली की फोटो अपलोड करें", "Apni hatheli ki photo upload karein", "Upload your palm photo")}</h2>
               <p className={`text-sm mt-2 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-                {t("हथेली की रेखाएं आपके भविष्य का राज बताती हैं। (सिर्फ साफ हथेली की फोटो डालें)", 
-                   "Hatheli ki rekhaayein aapke bhavishya ka raaj batati hain. (Sirf clear palm ki photo daalein)", 
-                   "Your palm lines reveal the secrets of your future. (Upload clear palm only)")}
+                {t("हथेली की रेखाएं आपके भविष्य का राज बताती हैं। (सिर्फ साफ हथेली की फोटो डालें, Max 10MB)", 
+                   "Hatheli ki rekhaayein aapke bhavishya ka raaj batati hain. (Sirf clear palm ki photo daalein, Max 10MB)", 
+                   "Your palm lines reveal the secrets of your future. (Upload clear palm only, Max 10MB)")}
               </p>
             </div>
             
