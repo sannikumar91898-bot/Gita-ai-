@@ -1,10 +1,11 @@
 // app/chat/page.tsx
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -21,7 +22,6 @@ type PublicChart = {
 
 const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
 
-// Persona details fetch karne ka helper
 const getPersonaDetails = (p: string) => {
   switch (p) {
     case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
@@ -92,8 +92,9 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish", name: string): 
   return en[step];
 }
 
-export default function ChatPage() {
+function ChatPageContent() {
   const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
+  const searchParams = useSearchParams();
   
   const [persona, setPersona] = useState("gita");
   const [topic, setTopic] = useState("general");
@@ -103,6 +104,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   
   const [showUpsell, setShowUpsell] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
@@ -132,23 +134,17 @@ export default function ChatPage() {
   const personaDetails = getPersonaDetails(persona);
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const p = urlParams.get("persona");
+    const p = searchParams.get("persona");
     if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) {
       setPersona(p);
     }
     
-    const rawTopic = urlParams.get("topic") || "";
+    const rawTopic = searchParams.get("topic") || "";
     const cleaned = rawTopic.toLowerCase().replace(/[^a-z]/g, "");
     if (["palm", "love", "money", "remedies", "health", "career", "family"].includes(cleaned)) {
       setTopic(cleaned);
     }
 
-    const stored = sessionStorage.getItem("gita_conversation_id");
-    conversationId.current =
-      stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
-    sessionStorage.setItem("gita_conversation_id", conversationId.current);
-    
     const savedDraft = sessionStorage.getItem("gita_birth_draft");
     if (savedDraft) {
       try {
@@ -158,7 +154,7 @@ export default function ChatPage() {
       }
     }
     if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
-  }, []);
+  }, [searchParams]);
 
   useEffect(() => {
     if (me?.birth?.name && me.birth.dob && me.birth.birthTime && me.birth.birthPlace) {
@@ -172,26 +168,40 @@ export default function ChatPage() {
     }
   }, [me]);
 
-  const loadConversationMessages = async (convId: string) => {
-    if (!convId) return;
-    try {
-      const response = await fetch("/api/chat?conversationId=" + encodeURIComponent(convId), { cache: "no-store" });
-      const data = await response.json();
-      if (response.ok && data.messages) {
-        setMessages(data.messages);
-      } else {
-        setMessages([]);
-      }
-    } catch (error) {
-      console.error("Failed to load messages", error);
-    }
-  };
-
   useEffect(() => {
-    if (loading || !me?.user) return; 
-    if (!conversationId.current) return;
-    loadConversationMessages(conversationId.current);
-  }, [loading, me?.user]); 
+    if (loading || !me?.user) return;
+
+    let cancelled = false;
+    setHistoryLoading(true);
+    setMessages([]); 
+    conversationId.current = ""; 
+
+    const fetchHistory = async () => {
+      try {
+        const response = await fetch(`/api/chat?persona=${persona}`, { cache: "no-store" });
+        const data = await response.json();
+        
+        if (cancelled) return;
+        
+        if (response.ok) {
+          if (Array.isArray(data.messages) && data.messages.length > 0) {
+            setMessages(data.messages);
+          }
+          if (data.conversationId) {
+            conversationId.current = data.conversationId;
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load history", error);
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
+      }
+    };
+
+    fetchHistory();
+
+    return () => { cancelled = true; };
+  }, [persona, loading, me?.user]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
@@ -214,9 +224,7 @@ export default function ChatPage() {
   };
 
   const handleNewChat = () => {
-    const newId = crypto.randomUUID();
-    conversationId.current = newId;
-    sessionStorage.setItem("gita_conversation_id", newId);
+    conversationId.current = ""; 
     setMessages([]);
     setChart(null);
     setSidebarOpen(false);
@@ -230,8 +238,7 @@ export default function ChatPage() {
 
   const handleSelectChat = (id: string) => {
     conversationId.current = id;
-    sessionStorage.setItem("gita_conversation_id", id);
-    loadConversationMessages(id);
+    setMessages([]); 
     setStep("done");
     setSidebarOpen(false);
   };
@@ -243,12 +250,12 @@ export default function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
-        signal: AbortSignal.timeout(90000), // 90 seconds
+        signal: AbortSignal.timeout(90000),
         body: JSON.stringify({
           message: text,
           language: lang,
           topic,
-          conversationId: conversationId.current,
+          conversationId: conversationId.current || undefined,
           persona: persona,
         }),
       });
@@ -256,7 +263,6 @@ export default function ChatPage() {
       
       if (typeof data.conversationId === "string") {
         conversationId.current = data.conversationId;
-        sessionStorage.setItem("gita_conversation_id", data.conversationId);
       }
       
       if (!response.ok) {
@@ -275,12 +281,8 @@ export default function ChatPage() {
       push(
         "assistant",
         timedOut
-          ? lang === "hi"
-            ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।"
-            : "The reply took too long. Please try again."
-          : lang === "hi"
-            ? "सर्वर से संपर्क नहीं हो पाया।"
-            : "Could not reach the server."
+          ? lang === "hi" ? "उत्तर आने में ज़्यादा समय लग गया।" : "The reply took too long."
+          : lang === "hi" ? "सर्वर से संपर्क नहीं हो पाया।" : "Could not reach the server."
       );
     } finally {
       setIsLoading(false);
@@ -342,13 +344,7 @@ export default function ChatPage() {
     }
 
     if (step === "language") {
-      const value = /hindi|हिंदी|हिन्दी/i.test(text)
-        ? "hi"
-        : /hinglish|हिंग्लिश/i.test(text)
-          ? "hinglish"
-          : /english|angrezi|अंग्रेजी/i.test(text)
-            ? "en"
-            : null;
+      const value = /hindi|हिंदी|हिन्दी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi|अंग्रेजी/i.test(text) ? "en" : null;
       if (!value) {
         push("assistant", questionFor("language", lang, personaDetails.name));
         return;
@@ -410,11 +406,11 @@ export default function ChatPage() {
     await sendToAi(text);
   }
 
-  if (loading) {
+  if (loading || historyLoading) {
     return (
       <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center ${pageClass}`}>
         <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
-        <p className="text-sm font-semibold text-orange-500">Setting up your session...</p>
+        <p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p>
       </div>
     );
   }
@@ -425,38 +421,21 @@ export default function ChatPage() {
         <p className="text-3xl mb-4">⚠️</p>
         <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
         <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
-        <button
-          onClick={() => refresh()}
-          className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
-        >
-          Try Again
-        </button>
+        <button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md">Try Again</button>
       </div>
     );
   }
 
-  const shownMessages =
-    messages.length > 0
-      ? messages
-      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
+  const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
-      <HistorySidebar 
-        isOpen={sidebarOpen}
-        onClose={() => setSidebarOpen(false)}
-        currentConversationId={conversationId.current}
-        onSelectChat={handleSelectChat}
-        onNewChat={handleNewChat}
-      />
+      <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={handleSelectChat} onNewChat={handleNewChat} />
 
       <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
         <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setSidebarOpen(true)}
-            className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}
-          >
+          <button onClick={() => setSidebarOpen(true)} className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}>
             <Menu size={20} />
           </button>
           
@@ -538,9 +517,7 @@ export default function ChatPage() {
               <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
               {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
             </div>
-            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">
-              कुंडली देखें
-            </Link>
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">कुंडली देखें</Link>
           </div>
         )}
 
@@ -617,5 +594,18 @@ export default function ChatPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex h-[calc(100dvh-80px)] w-full flex-col items-center justify-center bg-[#0B0F19] text-white">
+        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
+        <p className="text-sm font-semibold text-orange-500">Loading Chat...</p>
+      </div>
+    }>
+      <ChatPageContent />
+    </Suspense>
   );
 }
