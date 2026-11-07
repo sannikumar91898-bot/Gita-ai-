@@ -4,9 +4,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
 
-import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
 
@@ -21,6 +20,16 @@ type PublicChart = {
 };
 
 const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
+
+// Persona details fetch karne ka helper
+const getPersonaDetails = (p: string) => {
+  switch (p) {
+    case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
+    case "devaki": return { name: "Dr. Devaki Shastri", img: "/astrologers/devaki.jpg" };
+    case "gargi": return { name: "Gargi Maa", img: "/astrologers/gargi.jpg" };
+    default: return { name: "Gita", img: "/astrologers/gita.jpg" };
+  }
+};
 
 function looksLikeQuestion(text: string): boolean {
   if (/[?？]/.test(text)) return true;
@@ -53,9 +62,9 @@ function parseTime(value: string): string | null {
   return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
 }
 
-function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
+function questionFor(step: Step, lang: "en" | "hi" | "hinglish", name: string): string {
   const hi: Record<Step, string> = {
-    language: "नमस्ते, मैं गीता हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?",
+    language: `नमस्ते, मैं ${name} हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?`,
     name: "आपका नाम क्या है?",
     dob: "जन्म तिथि लिखें, जैसे 15/08/1990।",
     time: "जन्म का समय लिखें, जैसे 08:30 AM।",
@@ -63,7 +72,7 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
     done: "मैं यहीं हूँ। करियर, पढ़ाई, संबंध या कुंडली पर आगे पूछ सकते हैं।",
   };
   const en: Record<Step, string> = {
-    language: "Hello, I am Gita. Would you like Hindi, Hinglish, or English?",
+    language: `Hello, I am ${name}. Would you like Hindi, Hinglish, or English?`,
     name: "What is your name?",
     dob: "Please share your date of birth, for example 15/08/1990.",
     time: "What was your birth time? For example 08:30 AM.",
@@ -71,7 +80,7 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
     done: "I am here. You can ask about career, study, relationships, or your chart.",
   };
   const hg: Record<Step, string> = {
-    language: "Namaste, main Gita hoon. Aap Hindi, Hinglish ya English mein baat karna chahenge?",
+    language: `Namaste, main ${name} hoon. Aap Hindi, Hinglish ya English mein baat karna chahenge?`,
     name: "Aapka naam kya hai?",
     dob: "Janm tithi likhiye, jaise 15/08/1990.",
     time: "Janm ka samay likhiye, jaise 08:30 AM.",
@@ -86,6 +95,7 @@ function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
 export default function ChatPage() {
   const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
   
+  const [persona, setPersona] = useState("gita");
   const [topic, setTopic] = useState("general");
   const [step, setStep] = useState<Step>("language");
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
@@ -112,14 +122,28 @@ export default function ChatPage() {
     : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
 
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
-  const isLowBalance = walletBalanceRupees < 2;
+  const freeMessagesUsed = me?.user?.freeMessagesUsed ?? 0;
+  const hasFreeMessagesLeft = freeMessagesUsed < 3;
+  const isPremium = !!me?.user?.premiumUntil && new Date(me.user.premiumUntil) > new Date();
+  
+  const isLowBalance = walletBalanceRupees < 2 && !hasFreeMessagesLeft && !isPremium;
+  const shouldShowUpsell = !isPremium && !hasFreeMessagesLeft;
+
+  const personaDetails = getPersonaDetails(persona);
 
   useEffect(() => {
-    const raw = new URLSearchParams(window.location.search).get("topic") || "";
-    const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
+    const urlParams = new URLSearchParams(window.location.search);
+    const p = urlParams.get("persona");
+    if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) {
+      setPersona(p);
+    }
+    
+    const rawTopic = urlParams.get("topic") || "";
+    const cleaned = rawTopic.toLowerCase().replace(/[^a-z]/g, "");
     if (["palm", "love", "money", "remedies", "health", "career", "family"].includes(cleaned)) {
       setTopic(cleaned);
     }
+
     const stored = sessionStorage.getItem("gita_conversation_id");
     conversationId.current =
       stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
@@ -219,12 +243,13 @@ export default function ChatPage() {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
-        signal: AbortSignal.timeout(35000),
+        signal: AbortSignal.timeout(90000), // 90 seconds
         body: JSON.stringify({
           message: text,
           language: lang,
           topic,
           conversationId: conversationId.current,
+          persona: persona,
         }),
       });
       const data = await response.json().catch(() => ({}));
@@ -303,7 +328,7 @@ export default function ChatPage() {
     setInput("");
     push("user", text);
 
-    if (step === "done" && !showUpsell) {
+    if (step === "done" && !showUpsell && shouldShowUpsell && hasFreeMessagesLeft) {
       const newCount = doneQuestionsCount + 1;
       setDoneQuestionsCount(newCount);
       if (newCount >= 3) {
@@ -325,54 +350,54 @@ export default function ChatPage() {
             ? "en"
             : null;
       if (!value) {
-        push("assistant", questionFor("language", lang));
+        push("assistant", questionFor("language", lang, personaDetails.name));
         return;
       }
       await setLanguage(value);
       sessionStorage.setItem("gita_lang_confirmed", "1");
       setStep(me?.birth?.name ? "done" : "name");
-      push("assistant", questionFor(me?.birth?.name ? "done" : "name", value));
+      push("assistant", questionFor(me?.birth?.name ? "done" : "name", value, personaDetails.name));
       return;
     }
 
     if (step === "name") {
       if (text.length < 2 || text.length > 100) {
-        push("assistant", questionFor("name", lang));
+        push("assistant", questionFor("name", lang, personaDetails.name));
         return;
       }
       const next = { ...draft, name: text };
       remember(next, "dob");
-      push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang));
+      push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang, personaDetails.name));
       return;
     }
 
     if (step === "dob") {
       const dob = parseDate(text);
       if (!dob) {
-        push("assistant", questionFor("dob", lang));
+        push("assistant", questionFor("dob", lang, personaDetails.name));
         return;
       }
       const next = { ...draft, dob };
       remember(next, "time");
-      push("assistant", questionFor("time", lang));
+      push("assistant", questionFor("time", lang, personaDetails.name));
       return; 
     }
 
     if (step === "time") {
       const time = parseTime(text);
       if (!time) {
-        push("assistant", questionFor("time", lang));
+        push("assistant", questionFor("time", lang, personaDetails.name));
         return;
       }
       const next = { ...draft, time };
       remember(next, "place");
-      push("assistant", questionFor("place", lang));
+      push("assistant", questionFor("place", lang, personaDetails.name));
       return;
     }
 
     if (step === "place") {
       if (text.length < 2) {
-        push("assistant", questionFor("place", lang));
+        push("assistant", questionFor("place", lang, personaDetails.name));
         return;
       }
       const next = { ...draft, place: text };
@@ -413,7 +438,7 @@ export default function ChatPage() {
   const shownMessages =
     messages.length > 0
       ? messages
-      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang) }];
+      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
@@ -435,9 +460,11 @@ export default function ChatPage() {
             <Menu size={20} />
           </button>
           
-          <Avatar size={42} glow={false} />
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
+            <img src={personaDetails.img} alt={personaDetails.name} className="h-full w-full object-cover" />
+          </div>
           <div>
-            <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
+            <h1 className="text-sm font-bold text-orange-500">{personaDetails.name}</h1>
             <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
             </p>
@@ -480,7 +507,7 @@ export default function ChatPage() {
                   void setLanguage(code);
                   sessionStorage.setItem("gita_lang_confirmed", "1");
                   setStep(me?.birth?.name ? "done" : "name");
-                  push("assistant", questionFor(me?.birth?.name ? "done" : "name", code));
+                  push("assistant", questionFor(me?.birth?.name ? "done" : "name", code, personaDetails.name));
                 }}
               >
                 {label}
@@ -520,13 +547,13 @@ export default function ChatPage() {
         {isLoading && (
           <div className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs border shadow-sm ${isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-orange-100 text-gray-500"}`}>
             <Sparkles size={14} className="animate-spin text-orange-500" />
-            <span>{lang === "hi" ? "गीता लिख रही है..." : "Gita is writing..."}</span>
+            <span>{lang === "hi" ? `${personaDetails.name} लिख रही है...` : `${personaDetails.name} is writing...`}</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
+      <div className={`shrink-0 border-t p-3 pb-4 sm:pb-3 z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
           <input
             value={input}
@@ -542,20 +569,6 @@ export default function ChatPage() {
         </form>
       </div>
 
-      {step === "done" && !showUpsell && (
-        <Link href="/astrologers" className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full">
-          <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 animate-pulse"><Phone size={16} /></span>
-            <div className="leading-tight">
-              <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">24x7 Available</p>
-              <p className="text-xs font-black">Talk to Astrologer - First Chat FREE</p>
-            </div>
-          </div>
-          <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-rose-700 uppercase">Chat</span>
-        </Link>
-      )}
-
-      {/* 🔥 EMOTIONAL UPSELL MODAL 🔥 */}
       {showUpsell && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
@@ -564,14 +577,14 @@ export default function ChatPage() {
             </div>
             <h2 className="text-xl font-black text-white mb-2">Ruko! Ek Baat Suno...</h2>
             <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              Gita AI ne aapki kundli me ek bahut gehri baat dhoondhi hai jo aapki life badal sakti hai. <b className="text-orange-400">Lekin yeh adhuri hai.</b> Kya aap apni adhuri kismat ka raaz jaanna chahte hain?
+              {personaDetails.name} ne aapki kundli me ek aur gehri baat dhoondhi hai. Apne 3 free messages use ho gaye hain — kya aap apni kundli ka pura vishleshan jaanna chahte hain?
             </p>
             <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
-              <span className="text-xs font-semibold text-slate-400">Pura Solution Unlock Karein</span>
-              <span className="text-lg font-black text-white">₹9 <span className="text-xs line-through text-slate-500 font-medium">₹49</span> / min</span>
+              <span className="text-xs font-semibold text-slate-400">Per Message</span>
+              <span className="text-lg font-black text-white">₹2 <span className="text-xs text-slate-400">/ message</span></span>
             </div>
             <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3.5 text-sm font-black text-white shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
-              Gita Se Baat Puri Karein
+              Recharge & Continue with {personaDetails.name}
             </Link>
             <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
               <X size={14} /> Baad me dekhenge
@@ -580,7 +593,6 @@ export default function ChatPage() {
         </div>
       )}
 
-      {/* 🔥 EMOTIONAL INSUFFICIENT BALANCE MODAL 🔥 */}
       {showInsufficientBalance && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
@@ -589,14 +601,14 @@ export default function ChatPage() {
             </div>
             <h2 className="text-xl font-black text-white mb-2">Hamari Baat Adhuri Hai...</h2>
             <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              Gita aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.
+              {personaDetails.name} aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.
             </p>
             <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
               <span className="text-xs font-semibold text-slate-400">Current Balance</span>
               <span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span>
             </div>
             <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
-              Recharge & Continue with Gita
+              Recharge & Continue with {personaDetails.name}
             </Link>
             <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
               <X size={14} /> Band Karein
