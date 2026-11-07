@@ -111,8 +111,8 @@ export default function ChatPage() {
     ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
     : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
 
-  // 🔥 FIX: TypeScript error solve karne ke liye 'as any' use kiya hai 🔥
-  const walletBalanceRupees = Number((me?.user as any)?.walletBalancePaise || 0) / 100;
+  // 🔥 FIX: Ab 'as any' hata diya gaya hai kyunki Providers me type update ho chuki hai
+  const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
   const isLowBalance = walletBalanceRupees < 2;
 
   useEffect(() => {
