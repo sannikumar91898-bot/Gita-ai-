@@ -1,3 +1,4 @@
+// app/Providers.tsx
 "use client";
 
 import {
@@ -40,7 +41,7 @@ function readSavedTheme(): Theme {
   }
 }
 
-// 🔥 FIX: MeUser me wallet aur free messages add kar diye gaye hain
+// 🔥 FIX: MeUser me premiumUntil add kar diya gaya hai
 export type MeUser = {
   id: string;
   name: string | null;
@@ -49,6 +50,7 @@ export type MeUser = {
   isGuest: boolean;
   walletBalancePaise: number;
   freeMessagesUsed: number;
+  premiumUntil?: string | null; // 🔥 Yeh line add ki hai
 };
 
 export type MeBirth = {
@@ -166,7 +168,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
 
-      // 🔥 FIX: Yahan parse karte waqt naye fields map kiye gaye hain
+      // 🔥 FIX: Yahan premiumUntil map kiya gaya hai
       const user: MeUser = {
         id: data.user.id,
         name: typeof data.user.name === "string" ? data.user.name : null,
@@ -175,6 +177,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isGuest: data.user.isGuest === true,
         walletBalancePaise: Number(data.user.walletBalancePaise ?? 0),
         freeMessagesUsed: Number(data.user.freeMessagesUsed ?? 0),
+        premiumUntil: typeof data.user.premiumUntil === "string" ? data.user.premiumUntil : null,
       };
 
       if (!languageLoadedRef.current) {
