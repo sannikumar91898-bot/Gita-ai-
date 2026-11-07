@@ -19,8 +19,9 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 Model configuration
+// 🔥 Primary aur Fallback Model Configuration
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const FALLBACK_MODEL = "gemini-2.5-flash"; // Fallback model agar primary fail ho jaye
 
 type PersonaConfig = {
   name: string;
@@ -217,7 +218,7 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const relevantKnowledge = getRelevantKnowledge(userMessage);
 
-    // Context limit reduce
+    // Chart data limit reduce kiya taaki prompt token limit cross na ho
     const astrologyContext = [
       birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 3000)}` : "No chart available.",
@@ -273,69 +274,82 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    // 🔥 FINAL ROBUST RETRY LOGIC WITH EXACT ERROR LOGGING 🔥
+    // 🔥 FINAL ROBUST RETRY LOGIC WITH EXACT ERROR LOGGING & FALLBACK 🔥
     let response;
-    let retries = 3;
+    let lastError: any = null;
+    const modelsToTry = [GEMINI_MODEL, FALLBACK_MODEL];
     const MAX_RETRIES = 3;
     const BASE_DELAY = 2000; // 2 seconds
-    
-    while (retries > 0) {
-      try {
-        console.log(`[GEMINI API] Attempt ${MAX_RETRIES - retries + 1}/${MAX_RETRIES}. Model: ${GEMINI_MODEL}`);
-        
-        response = await ai.models.generateContent({
-          model: GEMINI_MODEL,
-          contents: contents,
-          config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
-        });
-        
-        console.log(`[GEMINI API] Success with model: ${GEMINI_MODEL}`);
-        break; // Success
-      } catch (err: any) {
-        retries--;
-        
-        // 🔥 EXACT ERROR PRINT KARO 🔥
-        const status = err.status || err.code;
-        const errorMsg = err.message || "Unknown Error";
-        const errorDetails = err.response?.data || err.details || "No detailed response";
-        const retryAfterHeader = err.response?.headers?.["retry-after"];
-        
-        console.error(`[GEMINI API ERROR]`, {
-          attempt: MAX_RETRIES - retries,
-          status: status,
-          message: errorMsg,
-          details: typeof errorDetails === 'object' ? JSON.stringify(errorDetails) : errorDetails,
-          retryAfter: retryAfterHeader,
-          retriesRemaining: retries
-        });
 
-        // Agar 400 (Bad Request) ya 404 (Not Found) hai, toh retry mat karo
-        if (status === 400 || status === 404) {
-           throw err; 
+    for (const modelName of modelsToTry) {
+      let retries = MAX_RETRIES;
+      let modelSuccess = false;
+
+      while (retries > 0) {
+        try {
+          console.log(`[GEMINI API] Attempt ${MAX_RETRIES - retries + 1}/${MAX_RETRIES}. Model: ${modelName}`);
+          
+          response = await ai.models.generateContent({
+            model: modelName,
+            contents: contents,
+            config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
+          });
+          
+          console.log(`[GEMINI API] Success with model: ${modelName}`);
+          modelSuccess = true;
+          break; // Success! Break the retry loop
+        } catch (err: any) {
+          retries--;
+          lastError = err;
+          
+          // 🔥 EXACT ERROR PRINT KARO 🔥
+          const status = err.status || err.code;
+          const errorMsg = err.message || "Unknown Error";
+          const errorDetails = err.response?.data || err.details || "No detailed response";
+          const retryAfterHeader = err.response?.headers?.["retry-after"];
+          
+          console.error(`[GEMINI API ERROR]`, {
+            model: modelName,
+            attempt: MAX_RETRIES - retries,
+            status: status,
+            message: errorMsg,
+            details: typeof errorDetails === 'object' ? JSON.stringify(errorDetails) : errorDetails,
+            retryAfter: retryAfterHeader,
+            retriesRemaining: retries
+          });
+
+          // Agar 400 (Bad Request) ya 404 (Not Found) hai, toh is model par retry mat karo, next model try karo
+          if (status === 400 || status === 404) {
+             break; // Break retry loop, move to next model
+          }
+
+          if (retries === 0) {
+            break; // Break retry loop, move to next model
+          }
+
+          // Exponential Backoff + Retry-After handling
+          let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
+          if (retryAfterHeader) {
+            const retryAfterSeconds = parseInt(retryAfterHeader, 10);
+            if (!isNaN(retryAfterSeconds)) waitTime = retryAfterSeconds * 1000;
+          }
+          
+          // 429 (Rate Limit) par zyada wait
+          if (status === 429) waitTime = Math.max(waitTime, 5000);
+
+          console.log(`[GEMINI API] Waiting for ${waitTime}ms before retry...`);
+          await new Promise(r => setTimeout(r, waitTime));
         }
-
-        if (retries === 0) {
-          throw new Error(`AI_MAX_RETRIES_REACHED. Last status: ${status}`);
-        }
-
-        // Exponential Backoff + Retry-After handling
-        let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
-        if (retryAfterHeader) {
-          const retryAfterSeconds = parseInt(retryAfterHeader, 10);
-          if (!isNaN(retryAfterSeconds)) waitTime = retryAfterSeconds * 1000;
-        }
-        
-        // 429 (Rate Limit) par zyada wait
-        if (status === 429) waitTime = Math.max(waitTime, 5000);
-
-        console.log(`[GEMINI API] Waiting for ${waitTime}ms before retry...`);
-        await new Promise(r => setTimeout(r, waitTime));
       }
+
+      if (modelSuccess) break; // Agar kisi model ne success diya, toh bahar nikal jao
     }
 
-    const rawReply = response?.text?.trim() || "";
-    if (!rawReply) throw new Error("EMPTY_AI_RESPONSE");
+    if (!response || !response.text) {
+      throw new Error(`AI_MAX_RETRIES_REACHED. Last error: ${lastError?.message || "Unknown"}`);
+    }
 
+    const rawReply = response.text.trim();
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
