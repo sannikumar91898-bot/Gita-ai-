@@ -46,7 +46,7 @@ export default function AstrologerChatPage() {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   
-  // 🔥 Wallet aur Paywall ke liye states
+  // Wallet aur Paywall ke liye states
   const [walletBalance, setWalletBalance] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -54,7 +54,7 @@ export default function AstrologerChatPage() {
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
 
-  // 🔥 Wallet Balance fetch karne ka function
+  // Wallet Balance fetch karne ka function
   const fetchProfile = useCallback(async () => {
     try {
       const res = await fetch("/api/me", { cache: "no-store" });
@@ -188,7 +188,7 @@ export default function AstrologerChatPage() {
 
       if (activePersonaRef.current !== selectedPersona) return;
 
-      // 🔥 FIX: Agar backend se 402 (Payment Required) aata hai, toh Paywall dikhao
+      // Agar backend se 402 (Payment Required) aata hai, toh Paywall dikhao
       if (response.status === 402) {
         setShowPaywall(true);
         setLoading(false);
@@ -212,7 +212,7 @@ export default function AstrologerChatPage() {
           { id: createMessageId(), role: "assistant", content: data.reply },
         ]);
         
-        // 🔥 Message successful hone par wallet balance update karo
+        // Message successful hone par wallet balance update karo
         void fetchProfile(); 
       } else {
         setMessages((previous) => [
@@ -245,7 +245,7 @@ export default function AstrologerChatPage() {
   return (
     <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
       
-      {/* HEADER (REPLACED WITH NEW DESIGN & COMPATIBILITY) */}
+      {/* HEADER */}
       <header className={`sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <Link href="/" aria-label="Back" className={`text-2xl leading-none transition-transform active:scale-95 ${isDark ? "text-white" : "text-black"}`}>
@@ -281,3 +281,5 @@ export default function AstrologerChatPage() {
 
       <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
         {historyLoading && (
+          <div className={`py-10 text-center text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            ज्योतिषी जुड़ रही हैं...
