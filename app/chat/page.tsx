@@ -8,7 +8,7 @@ import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock,
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
-import HistorySidebar from "../components/HistorySidebar"; // 🔥 YAHAN FIX HUA HAI (Ek dot ../)
+import HistorySidebar from "../components/HistorySidebar";
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
 type Step = "language" | "name" | "dob" | "time" | "place" | "done";
@@ -94,19 +94,15 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // MARKETING UPSELL STATES
   const [showUpsell, setShowUpsell] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-  // 🔥 SIDEBAR STATE 🔥
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
 
-  // THEME LOGIC
   const isDark = theme === "dark";
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
@@ -115,8 +111,8 @@ export default function ChatPage() {
     ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
     : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
 
-  // ✅ Live Wallet Balance
-  const walletBalanceRupees = (me?.user?.walletBalancePaise || 0) / 100;
+  // 🔥 FIX: TypeScript error solve karne ke liye 'as any' use kiya hai 🔥
+  const walletBalanceRupees = Number((me?.user as any)?.walletBalancePaise || 0) / 100;
   const isLowBalance = walletBalanceRupees < 2;
 
   useEffect(() => {
@@ -153,7 +149,6 @@ export default function ChatPage() {
     }
   }, [me]);
 
-  // 🔥 Load Conversation Messages Function
   const loadConversationMessages = async (convId: string) => {
     if (!convId) return;
     try {
@@ -195,7 +190,6 @@ export default function ChatPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  // 🔥 New Chat Function
   const handleNewChat = () => {
     const newId = crypto.randomUUID();
     conversationId.current = newId;
@@ -211,7 +205,6 @@ export default function ChatPage() {
     }
   };
 
-  // 🔥 Switch Chat Function
   const handleSelectChat = (id: string) => {
     conversationId.current = id;
     sessionStorage.setItem("gita_conversation_id", id);
@@ -426,7 +419,6 @@ export default function ChatPage() {
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
-      {/* 🔥 SIDEBAR COMPONENT 🔥 */}
       <HistorySidebar 
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -437,7 +429,6 @@ export default function ChatPage() {
 
       <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
         <div className="flex items-center gap-3">
-          {/* 🔥 SIDEBAR TOGGLE BUTTON 🔥 */}
           <button 
             onClick={() => setSidebarOpen(true)}
             className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}
