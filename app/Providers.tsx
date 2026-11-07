@@ -12,7 +12,6 @@ import {
   type ReactNode,
 } from "react";
 
-// 🔥 APNE I18N KA PATH CHECK KAR LENA
 import { translate, type Lang } from "../i18n"; 
 import type { Entitlement } from "../entitlement";
 
@@ -41,7 +40,6 @@ function readSavedTheme(): Theme {
   }
 }
 
-// 🔥 FIX: MeUser me premiumUntil add kar diya gaya hai
 export type MeUser = {
   id: string;
   name: string | null;
@@ -50,7 +48,7 @@ export type MeUser = {
   isGuest: boolean;
   walletBalancePaise: number;
   freeMessagesUsed: number;
-  premiumUntil?: string | null; // 🔥 Yeh line add ki hai
+  premiumUntil?: string | null; 
 };
 
 export type MeBirth = {
@@ -144,16 +142,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       let data = await response.json();
 
       if (!data?.user) {
-        console.log("No session found, creating guest user...");
-        
         const guestRes = await fetch("/api/auth/guest", {
           method: "POST",
           headers: { "Content-Type": "application/json", Accept: "application/json" },
         });
 
-        if (!guestRes.ok) {
-          throw new Error("Failed to create guest session");
-        }
+        if (!guestRes.ok) throw new Error("Failed to create guest session");
 
         const meRes = await fetch("/api/me", {
           method: "GET",
@@ -168,7 +162,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
 
-      // 🔥 FIX: Yahan premiumUntil map kiya gaya hai
       const user: MeUser = {
         id: data.user.id,
         name: typeof data.user.name === "string" ? data.user.name : null,
