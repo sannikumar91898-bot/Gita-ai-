@@ -327,11 +327,19 @@ Description
             break; // Break retry loop, move to next model
           }
 
-          // Exponential Backoff + Retry-After handling
+          // 🔥 FIXED: Exponential Backoff + Retry-After handling (Seconds AND HTTP-Date) 🔥
           let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
           if (retryAfterHeader) {
             const retryAfterSeconds = parseInt(retryAfterHeader, 10);
-            if (!isNaN(retryAfterSeconds)) waitTime = retryAfterSeconds * 1000;
+            if (!isNaN(retryAfterSeconds)) {
+              waitTime = retryAfterSeconds * 1000;
+            } else {
+              // Agar HTTP-date format hai
+              const retryDate = new Date(retryAfterHeader).getTime();
+              if (!isNaN(retryDate)) {
+                waitTime = Math.max(0, retryDate - Date.now());
+              }
+            }
           }
           
           // 429 (Rate Limit) par zyada wait
