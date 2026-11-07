@@ -19,6 +19,9 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// 🔥 लेटेस्ट गूगल मॉडल (आपके डॉक्यूमेंट के अनुसार)
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+
 type PersonaConfig = {
   name: string;
   specializations: string;
@@ -158,7 +161,6 @@ export async function POST(request: Request) {
     const canAffordWallet = user.walletBalancePaise >= COST_PER_MESSAGE_PAISE;
     const hasFreeMessages = user.freeMessagesUsed < 3;
 
-    // 1. Initial Check
     if (!isPremium && !canAffordWallet && !hasFreeMessages) {
       return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein." }, { status: 402 });
     }
@@ -180,7 +182,6 @@ export async function POST(request: Request) {
 
     if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
 
-    // 🔥 2. FETCH DB DATA FIRST (Paisa katne se pehle) 🔥
     const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
 
     const [birthRows, chartRows, previousMessages] = await Promise.all([
@@ -189,7 +190,6 @@ export async function POST(request: Request) {
       db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
     ]);
 
-    // 🔥 3. DEDUCT MONEY (Atomic Deduction) 🔥
     if (!isPremium) {
       if (canAffordWallet) {
         const updated = await db.update(users)
@@ -272,40 +272,41 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    // 🔥 4. SMART RETRY LOGIC (Google ke Overload se bachne ke liye) 🔥
+    // 🔥 SMART RETRY LOGIC (429, 503, Network Errors के लिए) 🔥
     let response;
     let retries = 3;
     
     while (retries > 0) {
       try {
+        console.log(`[GEMINI] Attempt with model: ${GEMINI_MODEL}, Retries left: ${retries - 1}`);
         response = await ai.models.generateContent({
-          model: "gemini-1.5-flash", // ✅ Model updated
+          model: GEMINI_MODEL, // ✅ नया मॉडल यहाँ इस्तेमाल हो रहा है
           contents: contents,
           config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
         });
-        break; // Success! Loop se bahar
+        break; // Success! Loop से बाहर
       } catch (err: any) {
-        console.error(`AI Attempt Failed (Retries left: ${retries - 1}):`, err.message);
+        const errMsg = err?.message || "";
+        console.error(`[GEMINI ERROR] Attempt failed:`, errMsg);
         
-        // Agar Google ka server down hai (503) ya limit cross (429) hai, toh retry karo
-        if (err.message?.includes("503") || err.message?.includes("429") || err.message?.includes("fetch")) {
+        // अगर सर्वर ओवरलोड है या लिमिट क्रॉस हुई है, तो रिट्राई करें
+        if (errMsg.includes("503") || errMsg.includes("429") || errMsg.includes("fetch") || errMsg.includes("overloaded")) {
           retries--;
           if (retries === 0) throw new Error("AI_SERVER_OVERLOADED");
-          await new Promise(r => setTimeout(r, 2000)); // 2 second wait karke wapas try karo
+          await new Promise(r => setTimeout(r, 3000)); // 3 सेकंड रुककर फिर ट्राई करें
         } else {
-          throw err; // Agar API Key galat hai (401) toh turant fail karo
+          throw err; // अगर API Key गलत है या मॉडल नहीं मिला (404), तो सीधे एरर दें
         }
       }
     }
 
-    const rawReply = response?.text || "";
+    const rawReply = response?.text?.trim() || "";
     if (!rawReply) throw new Error("EMPTY_AI_RESPONSE");
 
     const extracted = extractRemedy(rawReply);
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
-    // 🔥 5. SAVE MESSAGES (Transaction) 🔥
     await db.transaction(async (tx) => {
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
@@ -325,7 +326,7 @@ Description
   } catch (error: any) {
     console.error("POST /api/chat error:", error);
 
-    // 🔥 6. BULLETPROOF REFUND (Agar AI fail hua toh paisa wapas) 🔥
+    // 🔥 REFUND LOGIC 🔥
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
@@ -343,7 +344,6 @@ Description
       return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
     }
 
-    // Agar AI server overload hai
     if (error.message === "AI_SERVER_OVERLOADED") {
        return NextResponse.json({ success: false, error: "Google AI server is currently busy. Your money is refunded. Please try again in 1 minute." }, { status: 500 });
     }
