@@ -11,7 +11,7 @@ import {
   type ReactNode,
 } from "react";
 
-// 🔥 APNE I18N KA PATH CHECK KAR LENA. AGAR i18n.ts ROOT MEIN HAI TOH ../i18n RAKHNA, AGAR APP MEIN HAI TOH ./i18n RAKHNA 🔥
+// 🔥 APNE I18N KA PATH CHECK KAR LENA
 import { translate, type Lang } from "../i18n"; 
 import type { Entitlement } from "../entitlement";
 
@@ -40,12 +40,15 @@ function readSavedTheme(): Theme {
   }
 }
 
+// 🔥 FIX: MeUser me wallet aur free messages add kar diye gaye hain
 export type MeUser = {
   id: string;
   name: string | null;
   email: string | null;
   language: Lang;
   isGuest: boolean;
+  walletBalancePaise: number;
+  freeMessagesUsed: number;
 };
 
 export type MeBirth = {
@@ -64,7 +67,6 @@ export type Me = {
   sessionError?: boolean;
 };
 
-// 🔥 FIX: Yahan Ctx mein sessionError add kiya gaya hai 🔥
 type Ctx = {
   me: Me | null;
   loading: boolean;
@@ -129,7 +131,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshInProgressRef.current = true;
 
     try {
-      // 1. Pehle check karo /api/me
       const response = await fetch("/api/me", {
         method: "GET",
         cache: "no-store",
@@ -140,7 +141,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       let data = await response.json();
 
-      // 🔥 2. AGAR USER NAHI HAI, TOH GUEST CREATE KARO 🔥
       if (!data?.user) {
         console.log("No session found, creating guest user...");
         
@@ -153,7 +153,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           throw new Error("Failed to create guest session");
         }
 
-        // 3. Guest banne ke baad wapas /api/me call karo taaki naya user mil jaye
         const meRes = await fetch("/api/me", {
           method: "GET",
           cache: "no-store",
@@ -162,17 +161,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
         if (!meRes.ok) throw new Error("Failed to fetch user after guest creation");
         
-        data = await meRes.json(); // Data ko update kar diya naye guest user ke data se
+        data = await meRes.json(); 
       }
 
       const serverLanguage = isLang(data?.user?.language) ? data.user.language : "en";
 
+      // 🔥 FIX: Yahan parse karte waqt naye fields map kiye gaye hain
       const user: MeUser = {
         id: data.user.id,
         name: typeof data.user.name === "string" ? data.user.name : null,
         email: typeof data.user.email === "string" ? data.user.email : null,
         language: serverLanguage,
         isGuest: data.user.isGuest === true,
+        walletBalancePaise: Number(data.user.walletBalancePaise ?? 0),
+        freeMessagesUsed: Number(data.user.freeMessagesUsed ?? 0),
       };
 
       if (!languageLoadedRef.current) {
@@ -210,7 +212,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           birth: null,
           hasChart: false,
           googleAuthConfigured: false,
-          sessionError: true, // Ab error true hoga agar guest create bhi fail ho jaye
+          sessionError: true,
         });
       }
     } finally {
@@ -254,7 +256,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const lang: Lang = isLang(localLang) ? localLang : "en";
   const t = useCallback((key: string) => translate(lang, key), [lang]);
 
-  // 🔥 FIX: Value object mein sessionError pass kiya gaya hai 🔥
   const value = useMemo<Ctx>(
     () => ({
       me, 
@@ -266,7 +267,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setEntitlement, 
       theme, 
       setTheme,
-      sessionError: me?.sessionError ?? false, // Yeh line add ki gayi hai
+      sessionError: me?.sessionError ?? false,
     }),
     [me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme]
   );
@@ -278,4 +279,4 @@ export function useApp(): Ctx {
   const context = useContext(AppContext);
   if (!context) throw new Error("useApp must be used inside AppProvider");
   return context;
-} 
+}
