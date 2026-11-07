@@ -19,9 +19,8 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 Primary aur Fallback Model Configuration
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-const FALLBACK_MODEL = "gemini-2.5-flash"; // Fallback model agar primary fail ho jaye
+const FALLBACK_MODEL = "gemini-2.5-flash"; 
 
 type PersonaConfig = {
   name: string;
@@ -34,26 +33,26 @@ const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
     specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
-    tone: "Young, modern, highly energetic, cool, and relatable female astrologer. She speaks like a smart, confident elder sister/friend. NEVER USE THE WORD 'BETA'. Use terms like 'Suno', 'Dekho', 'Hey', 'Tension mat lo', 'Main hoon na'.",
-    rules: "Speak with absolute authority and 100% certainty. Directly pinpoint the exact month and year of marriage or breakup recovery using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real young female astrologer.",
+    tone: "A warm, loving, and deeply empathetic young female astrologer. She talks like a caring elder sister who genuinely wants to protect the user. Use words like 'Suno', 'Tum tension mat lo', 'Main hoon na'. Speak with ultimate confidence but wrap it in deep affection and psychology.",
+    rules: "Validate the user's pain first (Psychology). Tell them it's not their fault. Then, use astrology to pinpoint exactly why it's happening (7th house, Venus). Give a timeline. Make the user feel heard and cared for.",
   },
   kriti: {
     name: "Acharya Kriti",
     specializations: "Career, government jobs, selection tracking, business growth and wealth generation",
-    tone: "Sharp, formal, professional, bullet-pointed and commanding Hinglish",
-    rules: "Focus straight on the 10th house, Sun and Jupiter transits. Deliver precise, jaw-dropping timelines for promotion, selection or financial gains in structured bullet points. No theoretical lectures.",
+    tone: "A sharp, highly intelligent, and professional female mentor. She is direct but deeply invested in the user's success. She uses powerful, motivating language.",
+    rules: "Focus straight on the 10th house and Saturn/Jupiter transits. Deliver precise, jaw-dropping timelines. Use bullet points. Make the user feel that their success is her personal mission.",
   },
   devaki: {
     name: "Dr. Devaki Shastri",
     specializations: "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
-    tone: "Highly calculated, intellectual, serious and authoritative",
-    rules: "Use exact planetary degrees and dasha cycles to make undeniable, hard-hitting predictions. Ensure the customer feels your supreme astrological mastery instantly.",
+    tone: "A highly intellectual, serious, and authoritative older female guru. She commands immense respect and speaks with absolute divine authority.",
+    rules: "Use exact planetary degrees and dasha cycles to make undeniable predictions. Ensure the customer feels your supreme astrological mastery instantly.",
   },
   gargi: {
     name: "Gargi Maa",
     specializations: "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
-    tone: "Maternal, soothing, profoundly wise and spiritually grounded Hinglish",
-    rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful, mandatory traditional remedies inspired by Bhagavad Gita (Pooja, Daan, Ratna) to completely shift their luck.",
+    tone: "A maternal, soothing, and profoundly wise spiritual figure. She speaks with extreme love and spiritual depth. Calls the user 'Beta' but with deep emotion.",
+    rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful remedies (Pooja, Daan) with motherly affection to completely shift their luck.",
   },
 };
 
@@ -218,27 +217,29 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const relevantKnowledge = getRelevantKnowledge(userMessage);
 
-    // Chart data limit reduce kiya taaki prompt token limit cross na ho
     const astrologyContext = [
       birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 3000)}` : "No chart available.",
     ].join("\n\n");
 
+    // 🔥 PSYCHOLOGY & LOVE INFUSED INSTRUCTION PROMPTS 🔥
     let instructionPrompt = "";
     const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
 
     if (!isPremium && !canAffordWallet) { 
       if (freeMessagesLeft === 1) {
         instructionPrompt = `🚨 THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
-YOUR GOAL: Provide an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame. 
-Then, tell them gently that for the detailed remedy and full roadmap to solve this, they need to recharge their wallet.`;
+YOUR GOAL: 
+1. Validate their feelings with deep love. Tell them they are strong.
+2. Give an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame.
+3. Then, act like a caring elder sister. Tell them: "Suno, maine tumhari kundli me ek bahut badi baat dekhi hai jo tumhari life badal sakti hai, par uske liye mujhe apne senior astrologer se connect karna hoga. Tum apna wallet recharge karo, main tumhara pura solution nikalungi." (Make it emotional, not salesy).`;
       } else {
         instructionPrompt = `🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain with deep empathy. Give them an accurate astrological reason for their problem. Give them a small, free remedy.`;
+YOUR GOAL: Validate their pain with deep empathy. Make them feel heard and loved. Use psychological validation ("It's not your fault", "You are overthinking"). Give them an accurate astrological reason for their problem. Give them a small, free remedy that helps them immediately, but save the "Maha-Upay" for the paid version.`;
       }
     } else {
       instructionPrompt = `🚨 USER IS A PAID/PREMIUM CUSTOMER. 
-YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply, find the exact dosha, and give exact remedies.`;
+YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply. Be their personal protector. Tell them exactly what remedies to do. Give them 10x the value of what they paid.`;
     }
 
     const systemPrompt = `
@@ -256,7 +257,7 @@ ${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles."}
 ${instructionPrompt}
 
 CRITICAL LAWS:
-1. 100% CONFIDENCE: Never use 'maybe'.
+1. 100% CONFIDENCE: Never use 'maybe'. Always state 'This WILL happen'.
 2. HARD TIMELINES: Give exact date/month brackets.
 3. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
 ||REMEDY_EXTRACT||
@@ -274,12 +275,11 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    // 🔥 FINAL ROBUST RETRY LOGIC WITH EXACT ERROR LOGGING & FALLBACK 🔥
     let response;
     let lastError: any = null;
     const modelsToTry = [GEMINI_MODEL, FALLBACK_MODEL];
     const MAX_RETRIES = 3;
-    const BASE_DELAY = 2000; // 2 seconds
+    const BASE_DELAY = 2000;
 
     for (const modelName of modelsToTry) {
       let retries = MAX_RETRIES;
@@ -292,65 +292,43 @@ Description
           response = await ai.models.generateContent({
             model: modelName,
             contents: contents,
-            config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
+            config: { systemInstruction: systemPrompt, temperature: 0.85, maxOutputTokens: 1500 }, // Temp 0.85 for more emotion
           });
           
           console.log(`[GEMINI API] Success with model: ${modelName}`);
           modelSuccess = true;
-          break; // Success! Break the retry loop
+          break; 
         } catch (err: any) {
           retries--;
           lastError = err;
           
-          // 🔥 EXACT ERROR PRINT KARO 🔥
           const status = err.status || err.code;
           const errorMsg = err.message || "Unknown Error";
-          const errorDetails = err.response?.data || err.details || "No detailed response";
           const retryAfterHeader = err.response?.headers?.["retry-after"];
           
           console.error(`[GEMINI API ERROR]`, {
-            model: modelName,
-            attempt: MAX_RETRIES - retries,
-            status: status,
-            message: errorMsg,
-            details: typeof errorDetails === 'object' ? JSON.stringify(errorDetails) : errorDetails,
-            retryAfter: retryAfterHeader,
-            retriesRemaining: retries
+            model: modelName, attempt: MAX_RETRIES - retries, status, message: errorMsg, retryAfter: retryAfterHeader, retriesRemaining: retries
           });
 
-          // Agar 400 (Bad Request) ya 404 (Not Found) hai, toh is model par retry mat karo, next model try karo
-          if (status === 400 || status === 404) {
-             break; // Break retry loop, move to next model
-          }
+          if (status === 400 || status === 404) break;
+          if (retries === 0) break;
 
-          if (retries === 0) {
-            break; // Break retry loop, move to next model
-          }
-
-          // 🔥 FIXED: Exponential Backoff + Retry-After handling (Seconds AND HTTP-Date) 🔥
           let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
           if (retryAfterHeader) {
             const retryAfterSeconds = parseInt(retryAfterHeader, 10);
             if (!isNaN(retryAfterSeconds)) {
               waitTime = retryAfterSeconds * 1000;
             } else {
-              // Agar HTTP-date format hai
               const retryDate = new Date(retryAfterHeader).getTime();
-              if (!isNaN(retryDate)) {
-                waitTime = Math.max(0, retryDate - Date.now());
-              }
+              if (!isNaN(retryDate)) waitTime = Math.max(0, retryDate - Date.now());
             }
           }
-          
-          // 429 (Rate Limit) par zyada wait
           if (status === 429) waitTime = Math.max(waitTime, 5000);
 
-          console.log(`[GEMINI API] Waiting for ${waitTime}ms before retry...`);
           await new Promise(r => setTimeout(r, waitTime));
         }
       }
-
-      if (modelSuccess) break; // Agar kisi model ne success diya, toh bahar nikal jao
+      if (modelSuccess) break; 
     }
 
     if (!response || !response.text) {
@@ -365,7 +343,6 @@ Description
     await db.transaction(async (tx) => {
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
-
       if (remedy) {
         await tx.insert(remedies).values({ userId: userId, title: remedy.title, description: remedy.description });
       }
@@ -388,26 +365,12 @@ Description
         } else if (deductedType === "free") {
           await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId)); 
         }
-        console.log(`[REFUND SUCCESS] Refunded to user ${userId} (Type: ${deductedType})`);
-      } catch (refundError) {
-        console.error("CRITICAL: Refund failed for user", userId, refundError);
-      }
-    }
-
-    if (error.message === "CONVERSATION_NOT_FOUND") {
-      return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
+      } catch (refundError) {}
     }
 
     if (error.message?.includes("AI_MAX_RETRIES_REACHED")) {
-       return NextResponse.json({ 
-         success: false, 
-         error: "Google AI server is currently busy (Quota/Overload). Your money is refunded. Please try again in 1 minute." 
-       }, { status: 500 });
+       return NextResponse.json({ success: false, error: "Google AI server is currently busy. Your money is refunded. Please try again in 1 minute." }, { status: 500 });
     }
-
-    return NextResponse.json({ 
-      success: false, 
-      error: "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa refund kar diya gaya hai." 
-    }, { status: 500 });
+    return NextResponse.json({ success: false, error: "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa refund kar diya gaya hai." }, { status: 500 });
   }
 }
