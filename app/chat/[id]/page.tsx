@@ -245,28 +245,31 @@ export default function AstrologerChatPage() {
   return (
     <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
       
-      {/* HEADER */}
-      <header className={`sticky top-0 z-30 flex shrink-0 items-center gap-3 border-b px-3 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
-        <Link href="/" aria-label="Back" className={`text-2xl leading-none ${isDark ? "text-white" : "text-black"}`}>
-          ←
-        </Link>
+      {/* HEADER (REPLACED WITH NEW DESIGN & COMPATIBILITY) */}
+      <header className={`sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <Link href="/" aria-label="Back" className={`text-2xl leading-none transition-transform active:scale-95 ${isDark ? "text-white" : "text-black"}`}>
+            ←
+          </Link>
 
-        <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
-          <img
-            src={astrologer.photo}
-            alt={astrologer.name}
-            className="h-full w-full object-cover"
-          />
+          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
+            <img
+              src={astrologer.photo}
+              alt={astrologer.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h1 className={`truncate text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+              {astrologer.name}
+            </h1>
+            <p className="text-[11px] font-semibold text-green-600 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
+            </p>
+          </div>
         </div>
 
-        <div className="min-w-0 flex-1">
-          <h1 className={`truncate text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-            {astrologer.name}
-          </h1>
-          <p className="text-[11px] font-semibold text-green-600">● Online</p>
-        </div>
-
-        {/* 🔥 FIXED: WALLET AB CLICKABLE HAI 🔥 */}
         <Link 
           href="/wallet" 
           className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold transition hover:scale-105 cursor-pointer ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}
@@ -278,131 +281,3 @@ export default function AstrologerChatPage() {
 
       <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
         {historyLoading && (
-          <div className={`py-10 text-center text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            ज्योतिषी जुड़ रही हैं...
-          </div>
-        )}
-
-        {!historyLoading && messages.length === 0 && (
-          <div className={`mt-10 px-4 text-center text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <p className={`text-base font-bold ${isDark ? "text-white" : "text-gray-800"}`}>
-              {astrologer.name}
-            </p>
-            <p className="mt-2">{astrologer.shortBio}</p>
-            <p className="mt-6 text-xs text-gray-400">
-              नीचे से सवाल चुनें या अपना सवाल टाइप करें।
-            </p>
-          </div>
-        )}
-
-        {!historyLoading && messages.map((message) => (
-          <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-              message.role === "user"
-                ? "rounded-br-md bg-orange-500 text-white"
-                : isDark 
-                  ? "rounded-bl-md border border-slate-700 bg-slate-800 text-slate-200" 
-                  : "rounded-bl-md border border-orange-100 bg-white text-gray-800"
-            }`}>
-              {message.content}
-            </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex justify-start">
-            <div className={`rounded-2xl rounded-bl-md border px-4 py-3 text-sm ${
-              isDark ? "border-slate-700 bg-slate-800 text-slate-400" : "border-orange-100 bg-white text-gray-500"
-            }`}>
-              <span className="animate-pulse">जवाब तैयार हो रहा है...</span>
-            </div>
-          </div>
-        )}
-
-        <div ref={endRef} />
-      </main>
-
-      {!historyLoading && messages.length === 0 && (
-        <div className="no-scrollbar flex shrink-0 gap-2 overflow-x-auto px-3 pb-2">
-          {INTENT_CHIPS.map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => void sendMessage(chip)}
-              disabled={loading}
-              className={`flex-shrink-0 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs disabled:opacity-50 ${
-                isDark ? "border-slate-700 bg-slate-800 text-orange-400" : "border-orange-200 bg-white text-orange-700"
-              }`}
-            >
-              {chip}
-            </button>
-          ))}
-        </div>
-      )}
-
-      <form 
-        className={`flex shrink-0 items-center gap-2 border-t px-3 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`} 
-        onSubmit={(event) => { event.preventDefault(); void sendMessage(input); }}
-      >
-        <input
-          value={input}
-          onChange={(event) => setInput(event.target.value)}
-          placeholder="अपना सवाल लिखें..."
-          className={`min-w-0 flex-1 rounded-full border px-4 py-2.5 text-sm outline-none focus:border-orange-400 ${
-            isDark ? "border-slate-700 bg-slate-800 text-white" : "border-orange-100 bg-[#FFF9E6] text-black"
-          }`}
-          disabled={loading || historyLoading}
-          maxLength={8000}
-        />
-
-        <button
-          type="submit"
-          disabled={loading || historyLoading || !input.trim()}
-          aria-label="Send message"
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-orange-500 text-white transition active:scale-95 disabled:opacity-50"
-        >
-          →
-        </button>
-      </form>
-
-      {/* 🔥 SHAGUN PAYWALL MODAL 🔥 */}
-      {showPaywall && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-md">
-          <div className={`w-full max-w-sm rounded-3xl p-6 text-center ${isDark ? "bg-slate-900 text-white" : "bg-white text-gray-900"}`}>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-600">
-              <Lock size={32} />
-            </div>
-            <h2 className="text-xl font-black text-orange-600 mb-2">
-              Aapka Free Session Samapt Hua
-            </h2>
-            <p className={`text-sm mb-6 ${isDark ? "text-slate-300" : "text-gray-600"}`}>
-              {astrologer?.name} ji ne aapki kundli mein jo "Rukawat" dekhi hai, usko door karne ka samay aa gaya hai. Aage ki baat karne ke liye shagun dakshina arpit karein.
-            </p>
-            
-            <div className="grid grid-cols-2 gap-2 mb-6">
-              <Link href="/wallet" className="rounded-xl border-2 border-orange-500 bg-orange-50 p-3 text-center transition hover:bg-orange-100">
-                <p className="text-lg font-black text-orange-600">₹11</p>
-                <p className="text-[10px] font-bold text-gray-500">Quick Answer</p>
-              </Link>
-              <Link href="/wallet" className="rounded-xl border-2 border-orange-500 bg-orange-50 p-3 text-center transition hover:bg-orange-100">
-                <p className="text-lg font-black text-orange-600">₹51</p>
-                <p className="text-[10px] font-bold text-gray-500">Full Solution</p>
-              </Link>
-            </div>
-
-            <Link
-              href="/wallet"
-              className="block w-full rounded-xl bg-gradient-to-r from-orange-600 to-amber-500 px-4 py-3 text-sm font-black text-white shadow-lg active:scale-95"
-            >
-              Dakshina Dein & Solution Payein
-            </Link>
-            
-            <button onClick={() => setShowPaywall(false)} className="mt-4 text-xs font-bold text-gray-400">
-              Abhi Nahi
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
