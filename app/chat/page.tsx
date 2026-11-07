@@ -8,7 +8,7 @@ import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock,
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
-import HistorySidebar from "../../components/HistorySidebar"; // 🔥 Import Sidebar
+import HistorySidebar from "../components/HistorySidebar"; // 🔥 YAHAN FIX HUA HAI (Ek dot ../)
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
 type Step = "language" | "name" | "dob" | "time" | "place" | "done";
@@ -94,17 +94,19 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
+  // MARKETING UPSELL STATES
   const [showUpsell, setShowUpsell] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  
+
   // 🔥 SIDEBAR STATE 🔥
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
 
+  // THEME LOGIC
   const isDark = theme === "dark";
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
@@ -113,10 +115,10 @@ export default function ChatPage() {
     ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
     : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
 
+  // ✅ Live Wallet Balance
   const walletBalanceRupees = (me?.user?.walletBalancePaise || 0) / 100;
   const isLowBalance = walletBalanceRupees < 2;
 
-  // Initialize Session
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("topic") || "";
     const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
@@ -124,12 +126,17 @@ export default function ChatPage() {
       setTopic(cleaned);
     }
     const stored = sessionStorage.getItem("gita_conversation_id");
-    conversationId.current = stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
+    conversationId.current =
+      stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
     sessionStorage.setItem("gita_conversation_id", conversationId.current);
     
     const savedDraft = sessionStorage.getItem("gita_birth_draft");
     if (savedDraft) {
-      try { setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) }); } catch { setDraft(EMPTY_DRAFT); }
+      try {
+        setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) });
+      } catch {
+        setDraft(EMPTY_DRAFT);
+      }
     }
     if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
   }, []);
@@ -137,11 +144,16 @@ export default function ChatPage() {
   useEffect(() => {
     if (me?.birth?.name && me.birth.dob && me.birth.birthTime && me.birth.birthPlace) {
       setStep("done");
-      setDraft({ name: me.birth.name, dob: me.birth.dob, time: me.birth.birthTime, place: me.birth.birthPlace });
+      setDraft({
+        name: me.birth.name,
+        dob: me.birth.dob,
+        time: me.birth.birthTime,
+        place: me.birth.birthPlace,
+      });
     }
   }, [me]);
 
-  // 🔥 Function to load messages for a conversation
+  // 🔥 Load Conversation Messages Function
   const loadConversationMessages = async (convId: string) => {
     if (!convId) return;
     try {
@@ -157,9 +169,9 @@ export default function ChatPage() {
     }
   };
 
-  // Load initial messages
   useEffect(() => {
-    if (loading || !me?.user || !conversationId.current) return;
+    if (loading || !me?.user) return; 
+    if (!conversationId.current) return;
     loadConversationMessages(conversationId.current);
   }, [loading, me?.user]); 
 
@@ -192,7 +204,6 @@ export default function ChatPage() {
     setChart(null);
     setSidebarOpen(false);
     setDoneQuestionsCount(0);
-    // Agar user ki birth details already saved hain, toh direct 'done' pe bhejo
     if (me?.birth?.name) {
       setStep("done");
     } else {
@@ -205,7 +216,7 @@ export default function ChatPage() {
     conversationId.current = id;
     sessionStorage.setItem("gita_conversation_id", id);
     loadConversationMessages(id);
-    setStep("done"); // Purani chat hamesha 'done' state me hoti hai
+    setStep("done");
     setSidebarOpen(false);
   };
 
@@ -217,7 +228,12 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(35000),
-        body: JSON.stringify({ message: text, language: lang, topic, conversationId: conversationId.current }),
+        body: JSON.stringify({
+          message: text,
+          language: lang,
+          topic,
+          conversationId: conversationId.current,
+        }),
       });
       const data = await response.json().catch(() => ({}));
       
@@ -239,7 +255,16 @@ export default function ChatPage() {
       await refresh(); 
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
-      push("assistant", timedOut ? (lang === "hi" ? "उत्तर आने में ज़्यादा समय लग गया।" : "Reply took too long.") : (lang === "hi" ? "सर्वर से संपर्क नहीं हो पाया।" : "Could not reach server."));
+      push(
+        "assistant",
+        timedOut
+          ? lang === "hi"
+            ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।"
+            : "The reply took too long. Please try again."
+          : lang === "hi"
+            ? "सर्वर से संपर्क नहीं हो पाया।"
+            : "Could not reach the server."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -251,7 +276,12 @@ export default function ChatPage() {
       const response = await fetch("/api/kundli", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: next.name, dateOfBirth: next.dob, timeOfBirth: next.time, placeOfBirth: next.place }),
+        body: JSON.stringify({
+          name: next.name,
+          dateOfBirth: next.dob,
+          timeOfBirth: next.time,
+          placeOfBirth: next.place,
+        }),
       });
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data.chart) {
@@ -262,7 +292,12 @@ export default function ChatPage() {
       setChart(data.chart as PublicChart);
       setStep("done");
       sessionStorage.removeItem("gita_birth_draft");
-      push("assistant", lang === "hi" ? "आपकी गणना की गई कुंडली तैयार है। नीचे कार्ड देखें।" : "Your calculated kundli is ready. The card is below.");
+      push(
+        "assistant",
+        lang === "hi"
+          ? "आपकी गणना की गई कुंडली तैयार है। नीचे कार्ड देखें।"
+          : "Your calculated kundli is ready. The card is below."
+      );
       await refresh();
     } finally {
       setIsLoading(false);
@@ -279,7 +314,9 @@ export default function ChatPage() {
     if (step === "done" && !showUpsell) {
       const newCount = doneQuestionsCount + 1;
       setDoneQuestionsCount(newCount);
-      if (newCount >= 3) setShowUpsell(true);
+      if (newCount >= 3) {
+        setShowUpsell(true);
+      }
     }
 
     if (looksLikeQuestion(text) && step !== "language") {
@@ -288,8 +325,17 @@ export default function ChatPage() {
     }
 
     if (step === "language") {
-      const value = /hindi|हिंदी|हिन्दी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi|अंग्रेजी/i.test(text) ? "en" : null;
-      if (!value) { push("assistant", questionFor("language", lang)); return; }
+      const value = /hindi|हिंदी|हिन्दी/i.test(text)
+        ? "hi"
+        : /hinglish|हिंग्लिश/i.test(text)
+          ? "hinglish"
+          : /english|angrezi|अंग्रेजी/i.test(text)
+            ? "en"
+            : null;
+      if (!value) {
+        push("assistant", questionFor("language", lang));
+        return;
+      }
       await setLanguage(value);
       sessionStorage.setItem("gita_lang_confirmed", "1");
       setStep(me?.birth?.name ? "done" : "name");
@@ -298,7 +344,10 @@ export default function ChatPage() {
     }
 
     if (step === "name") {
-      if (text.length < 2 || text.length > 100) { push("assistant", questionFor("name", lang)); return; }
+      if (text.length < 2 || text.length > 100) {
+        push("assistant", questionFor("name", lang));
+        return;
+      }
       const next = { ...draft, name: text };
       remember(next, "dob");
       push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang));
@@ -307,7 +356,10 @@ export default function ChatPage() {
 
     if (step === "dob") {
       const dob = parseDate(text);
-      if (!dob) { push("assistant", questionFor("dob", lang)); return; }
+      if (!dob) {
+        push("assistant", questionFor("dob", lang));
+        return;
+      }
       const next = { ...draft, dob };
       remember(next, "time");
       push("assistant", questionFor("time", lang));
@@ -316,7 +368,10 @@ export default function ChatPage() {
 
     if (step === "time") {
       const time = parseTime(text);
-      if (!time) { push("assistant", questionFor("time", lang)); return; }
+      if (!time) {
+        push("assistant", questionFor("time", lang));
+        return;
+      }
       const next = { ...draft, time };
       remember(next, "place");
       push("assistant", questionFor("place", lang));
@@ -324,7 +379,10 @@ export default function ChatPage() {
     }
 
     if (step === "place") {
-      if (text.length < 2) { push("assistant", questionFor("place", lang)); return; }
+      if (text.length < 2) {
+        push("assistant", questionFor("place", lang));
+        return;
+      }
       const next = { ...draft, place: text };
       remember(next, "place");
       push("assistant", lang === "hi" ? "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" : "Place noted. I am calculating the chart.");
@@ -350,14 +408,20 @@ export default function ChatPage() {
         <p className="text-3xl mb-4">⚠️</p>
         <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
         <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
-        <button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md">
+        <button
+          onClick={() => refresh()}
+          className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+        >
           Try Again
         </button>
       </div>
     );
   }
 
-  const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang) }];
+  const shownMessages =
+    messages.length > 0
+      ? messages
+      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang) }];
 
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
@@ -391,14 +455,19 @@ export default function ChatPage() {
         </div>
         
         <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
-          <Wallet size={12} /> ₹{walletBalanceRupees}
-          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span> <Plus size={12} className="font-black" />
+          <Wallet size={12} />
+          ₹{walletBalanceRupees}
+          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
+          <Plus size={12} className="font-black" />
         </Link>
       </header>
 
       {isLowBalance && step === "done" && (
         <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-          <div className="flex items-center gap-2"><AlertTriangle size={14} /><span>Low balance! Recharge to continue chatting.</span></div>
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={14} />
+            <span>Low balance! Recharge to continue chatting.</span>
+          </div>
           <span className="underline">Add Cash</span>
         </Link>
       )}
@@ -413,7 +482,10 @@ export default function ChatPage() {
         {step === "language" && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
-              <button key={code} type="button" className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
+              <button
+                key={code}
+                type="button"
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
                 onClick={() => {
                   void setLanguage(code);
                   sessionStorage.setItem("gita_lang_confirmed", "1");
@@ -449,7 +521,9 @@ export default function ChatPage() {
               <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
               {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
             </div>
-            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">कुंडली देखें</Link>
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">
+              कुंडली देखें
+            </Link>
           </div>
         )}
 
@@ -464,7 +538,14 @@ export default function ChatPage() {
 
       <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
-          <input value={input} onChange={(event) => setInput(event.target.value)} maxLength={8000} disabled={isLoading} placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."} className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`} />
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            maxLength={8000}
+            disabled={isLoading}
+            placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
+            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
+          />
           <button type="submit" disabled={!input.trim() || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
             <Send size={18} />
           </button>
