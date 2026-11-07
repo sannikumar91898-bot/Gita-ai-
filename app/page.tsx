@@ -4,19 +4,8 @@
 import { useState } from "react";
 import { useApp } from "./Providers";
 import {
-  Home,
-  MessageCircle,
-  Sun,
-  CalendarDays,
-  User,
-  Star,
-  Eye,
-  Settings,
-  Sparkles,
-  Hand,
-  ScanFace,
-  Heart,
-  Scroll,
+  Home, MessageCircle, Sun, CalendarDays, User, Star, Eye, Settings,
+  Sparkles, Hand, ScanFace, Heart, Scroll, ShieldCheck, Lock, CheckCircle
 } from "lucide-react";
 import Link from "next/link";
 
@@ -45,7 +34,7 @@ const ASTROLOGERS: Astrologer[] = [
     experience: "5 Years",
     price: 19,
     oldPrice: 29,
-    image: "/astrologers/riya.jpg", 
+    image: "/astrologers/riya.jpg",
     review: "Bohot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️",
     reviewer: "Priya S."
   },
@@ -115,7 +104,6 @@ export default function HomePage() {
         }`}
       >
         <div className="flex items-center gap-2">
-          {/* 🔥 YAHAN FIX HUA HAI: Text 'G' ko Logo se replace kiya hai 🔥 */}
           <img
             src="/icon-192.png"
             alt="Gita AI Logo"
@@ -181,6 +169,22 @@ export default function HomePage() {
           <div className="absolute -bottom-8 right-10 h-24 w-24 rounded-full bg-yellow-300/20 blur-xl" />
         </section>
 
+        {/* 🔥 TRUST BADGES (Review Suggestion Applied) 🔥 */}
+        <div className={`flex items-center justify-between rounded-xl border px-3 py-2.5 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white shadow-sm"}`}>
+          <div className="flex flex-col items-center gap-1 text-center w-full border-r border-gray-200 dark:border-slate-700">
+            <ShieldCheck size={18} className="text-green-500" />
+            <span className={`text-[9px] font-bold uppercase ${isDark ? "text-slate-400" : "text-gray-600"}`}>100% Secure</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 text-center w-full border-r border-gray-200 dark:border-slate-700">
+            <Lock size={18} className="text-blue-500" />
+            <span className={`text-[9px] font-bold uppercase ${isDark ? "text-slate-400" : "text-gray-600"}`}>Private Chat</span>
+          </div>
+          <div className="flex flex-col items-center gap-1 text-center w-full">
+            <Star size={18} className="text-orange-500" fill="currentColor" />
+            <span className={`text-[9px] font-bold uppercase ${isDark ? "text-slate-400" : "text-gray-600"}`}>Verified Experts</span>
+          </div>
+        </div>
+
         {/* FREE TOOLS */}
         <section aria-labelledby="free-tools-heading" className="space-y-3">
           <h2 id="free-tools-heading" className={`text-sm font-bold ${isDark ? "text-slate-300" : "text-gray-700"}`}>
@@ -225,7 +229,6 @@ export default function HomePage() {
               </span>
             </div>
             
-            {/* 🔥 POINT 7 FIX: Transparency Badge 🔥 */}
             <p className={`text-[10px] flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               <span className="bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-sm font-bold">AI</span>
               Powered by Advanced AI + Vedic Knowledge
