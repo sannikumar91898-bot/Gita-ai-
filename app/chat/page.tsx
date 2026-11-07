@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles, Phone, X, Lock } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock } from "lucide-react";
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
@@ -24,9 +24,7 @@ const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
 function looksLikeQuestion(text: string): boolean {
   if (/[?？]/.test(text)) return true;
   if (text.trim().split(/\s+/).length > 8) return true;
-  return /क्या|कैसे|क्यों|कब|कहाँ|कौन|what|why|how|when|where|who|kaise|kya|kyun|kab|exam|career|नौकरी|शादी|भविष्य/i.test(
-    text
-  );
+  return /क्या|कैसे|क्यों|कब|कहाँ|कौन|what|why|how|when|where|who|kaise|kya|kyun|kab|exam|career|नौकरी|शादी|भविष्य/i.test(text);
 }
 
 function parseDate(value: string): string | null {
@@ -95,7 +93,7 @@ export default function ChatPage() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  // 🔥 MARKETING UPSELL STATES 🔥
+  // MARKETING UPSELL STATES
   const [showUpsell, setShowUpsell] = useState(false);
   const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
 
@@ -110,6 +108,10 @@ export default function ChatPage() {
   const inputClass = isDark 
     ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
     : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
+
+  // ✅ Live Wallet Balance
+  const walletBalanceRupees = (me?.user?.walletBalancePaise || 0) / 100;
+  const isLowBalance = walletBalanceRupees < 2; // ₹2 per message cost
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("topic") || "";
@@ -215,6 +217,7 @@ export default function ChatPage() {
         return;
       }
       push("assistant", typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।");
+      await refresh(); // 🔥 Balance turant update karne ke liye
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       push(
@@ -273,11 +276,9 @@ export default function ChatPage() {
     setInput("");
     push("user", text);
 
-    // 🔥 MARKETING LOGIC: Agar user 'done' step par hai, toh question count badhao 🔥
     if (step === "done" && !showUpsell) {
       const newCount = doneQuestionsCount + 1;
       setDoneQuestionsCount(newCount);
-      // 3 messages ke baad upsell dikhao
       if (newCount >= 3) {
         setShowUpsell(true);
       }
@@ -390,42 +391,60 @@ export default function ChatPage() {
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
-      {/* HEADER FIXED */}
-      <header className={`flex shrink-0 items-center gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
-        <Link href="/" aria-label="Back" className={`rounded-xl p-2 hover:bg-orange-50 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600"}`}>
-          <ArrowLeft size={20} />
-        </Link>
-        <Avatar size={42} glow={false} />
-        <div>
-          <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
-          <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
-          </p>
+      {/* HEADER with Live Balance & Recharge Button */}
+      <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
+        <div className="flex items-center gap-3">
+          <Link href="/" aria-label="Back" className={`rounded-xl p-2 hover:bg-orange-50 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600"}`}>
+            <ArrowLeft size={20} />
+          </Link>
+          <Avatar size={42} glow={false} />
+          <div>
+            <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
+            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
+            </p>
+          </div>
         </div>
+        
+        {/* 🔥 Live Balance aur Add Cash Button 🔥 */}
+        <Link 
+          href="/wallet"
+          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}
+        >
+          <Wallet size={12} />
+          ₹{walletBalanceRupees}
+          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
+          <Plus size={12} className="font-black" />
+        </Link>
       </header>
 
-      {/* FREE CHAT BANNER */}
-      <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
-        ✨ Pehli Chat 100% FREE ✨
-      </div>
+      {/* LOW BALANCE WARNING BANNER */}
+      {isLowBalance && step === "done" && (
+        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <div className="flex items-center gap-2">
+            <AlertTriangle size={14} />
+            <span>Low balance! Recharge to continue chatting.</span>
+          </div>
+          <span className="underline">Add Cash</span>
+        </Link>
+      )}
 
-      {/* CHAT AREA FIXED */}
+      {/* FREE CHAT BANNER */}
+      {step !== "done" && (
+        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
+          ✨ Pehli Chat 100% FREE ✨
+        </div>
+      )}
+
+      {/* CHAT AREA */}
       <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
         {step === "language" && (
           <div className="flex flex-wrap gap-2">
-            {([
-              ["hi", "हिन्दी"],
-              ["hinglish", "Hinglish"],
-              ["en", "English"],
-            ] as const).map(([code, label]) => (
+            {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
               <button
                 key={code}
                 type="button"
-                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${
-                  isDark 
-                    ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" 
-                    : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"
-                }`}
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
                 onClick={() => {
                   void setLanguage(code);
                   sessionStorage.setItem("gita_lang_confirmed", "1");
@@ -441,16 +460,7 @@ export default function ChatPage() {
 
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-            <div
-              className={
-                "max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " +
-                (message.role === "user"
-                  ? "bg-orange-500 text-white rounded-br-sm"
-                  : isDark 
-                    ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm"
-                    : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")
-              }
-            >
+            <div className={"max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
               {message.content}
             </div>
           </div>
@@ -480,7 +490,7 @@ export default function ChatPage() {
         <div ref={endRef} />
       </div>
 
-      {/* INPUT FIELD FIXED */}
+      {/* INPUT FIELD */}
       <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
           <input
@@ -491,27 +501,17 @@ export default function ChatPage() {
             placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
             className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || isLoading}
-            aria-label="Send"
-            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"
-          >
+          <button type="submit" disabled={!input.trim() || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
             <Send size={18} />
           </button>
         </form>
       </div>
 
-      {/* UPSELL BANNER (Only shows when Kundli is ready/Done) */}
+      {/* UPSELL BANNER */}
       {step === "done" && !showUpsell && (
-        <Link 
-          href="/astrologers" 
-          className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full"
-        >
+        <Link href="/astrologers" className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full">
           <div className="flex items-center gap-3">
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 animate-pulse">
-              <Phone size={16} />
-            </span>
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 animate-pulse"><Phone size={16} /></span>
             <div className="leading-tight">
               <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">24x7 Available</p>
               <p className="text-xs font-black">Talk to Astrologer - First Chat FREE</p>
@@ -521,39 +521,22 @@ export default function ChatPage() {
         </Link>
       )}
 
-      {/* 🔥 PREMIUM UPSELL MODAL (Shows after 3 questions) 🔥 */}
+      {/* UPSELL MODAL */}
       {showUpsell && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4">
-              <Lock size={32} />
-            </div>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4"><Lock size={32} /></div>
             <h2 className="text-xl font-black text-white mb-2">Unlock Full Cosmic Insights</h2>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              Gita AI ne aapke graho me ek <b className="text-orange-400">"Rukawat"</b> detect ki hai. Kya aap iska sateek karan aur aane wale samay ka pura vishleshan jaanna chahte hain?
-            </p>
-            
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">Gita AI ne aapke graho me ek <b className="text-orange-400">"Rukawat"</b> detect ki hai. Kya aap iska sateek karan aur aane wale samay ka pura vishleshan jaanna chahte hain?</p>
             <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
               <span className="text-xs font-semibold text-slate-400">Special Price</span>
               <span className="text-lg font-black text-white">₹9 <span className="text-xs line-through text-slate-500 font-medium">₹49</span> / min</span>
             </div>
-
-            <Link 
-              href="/wallet" 
-              className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
-            >
-              Add Money & Continue
-            </Link>
-            <button 
-              onClick={() => setShowUpsell(false)}
-              className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"
-            >
-              <X size={14} /> Maybe Later
-            </button>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">Add Money & Continue</Link>
+            <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Maybe Later</button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
