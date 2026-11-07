@@ -1,285 +1,622 @@
-// app/chat/[id]/page.tsx
+// app/chat/page.tsx
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
 import Link from "next/link";
-import { getAstrologerById } from "@/lib/astrologers";
-import { useApp } from "../../Providers";
-import { Wallet, Lock } from "lucide-react"; 
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
 
-type Message = {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
+import { useApp } from "../Providers";
+import HistorySidebar from "../components/HistorySidebar";
+
+type Message = { id: string; role: "user" | "assistant"; content: string };
+type Step = "language" | "name" | "dob" | "time" | "place" | "done";
+type Draft = { name: string; dob: string; time: string; place: string };
+type PublicChart = {
+  lagna: { rashiNameHi: string; degreeInSign: number };
+  moonSign: { rashiNameHi: string };
+  nakshatra: { name: string; pada: number };
+  currentDasha: { maha: string } | null;
 };
 
-const INTENT_CHIPS = [
-  "मेरी शादी कब होगी?",
-  "करियर में सफलता कैसे मिलेगी?",
-  "मुझे कौन सा रत्न पहनना चाहिए?",
-  "क्या मेरा पार्टनर सच्चा है?",
-];
+const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
 
-const VALID_PERSONAS = new Set(["gita", "kriti", "devaki", "gargi"]);
-
-function createMessageId(): string {
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
+// Persona details fetch karne ka helper
+const getPersonaDetails = (p: string) => {
+  switch (p) {
+    case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
+    case "devaki": return { name: "Dr. Devaki Shastri", img: "/astrologers/devaki.jpg" };
+    case "gargi": return { name: "Gargi Maa", img: "/astrologers/gargi.jpg" };
+    default: return { name: "Gita", img: "/astrologers/gita.jpg" };
   }
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+};
+
+function looksLikeQuestion(text: string): boolean {
+  if (/[?？]/.test(text)) return true;
+  if (text.trim().split(/\s+/).length > 8) return true;
+  return /क्या|कैसे|क्यों|कब|कहाँ|कौन|what|why|how|when|where|who|kaise|kya|kyun|kab|exam|career|नौकरी|शादी|भविष्य/i.test(text);
 }
 
-export default function AstrologerChatPage() {
-  const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const { lang, theme } = useApp();
+function parseDate(value: string): string | null {
+  const text = value.trim();
+  let match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return text;
+  match = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (!match) return null;
+  const day = match[1].padStart(2, "0");
+  const month = match[2].padStart(2, "0");
+  return match[3] + "-" + month + "-" + day;
+}
 
-  const isDark = theme === "dark";
-  const id = typeof params?.id === "string" ? params.id : "";
-  const astrologer = getAstrologerById(id);
-  const validId = VALID_PERSONAS.has(id);
+function parseTime(value: string): string | null {
+  const text = value.trim().toLowerCase();
+  const match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2] || "0");
+  const suffix = match[3];
+  if (minute > 59 || hour > 23) return null;
+  if (suffix === "pm" && hour < 12) hour += 12;
+  if (suffix === "am" && hour === 12) hour = 0;
+  if (!suffix && hour > 23) return null;
+  return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
+}
 
+function questionFor(step: Step, lang: "en" | "hi" | "hinglish", name: string): string {
+  const hi: Record<Step, string> = {
+    language: "नमस्ते, मैं गीता हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?",
+    name: "आपका नाम क्या है?",
+    dob: "जन्म तिथि लिखें, जैसे 15/08/1990।",
+    time: "जन्म का समय लिखें, जैसे 08:30 AM।",
+    place: "जन्म स्थान लिखें: शहर और राज्य, जैसे Patna, Bihar।",
+    done: "मैं यहीं हूँ। करियर, पढ़ाई, संबंध या कुंडली पर आगे पूछ सकते हैं।",
+  };
+  const en: Record<Step, string> = {
+    language: `Hello, I am ${name}. Would you like Hindi, Hinglish, or English?`,
+    name: "What is your name?",
+    dob: "Please share your date of birth, for example 15/08/1990.",
+    time: "What was your birth time? For example 08:30 AM.",
+    place: "Where were you born? City and state, for example Patna, Bihar.",
+    done: "I am here. You can ask about career, study, relationships, or your chart.",
+  };
+  const hg: Record<Step, string> = {
+    language: `Namaste, main ${name} hoon. Aap Hindi, Hinglish ya English mein baat karna chahenge?`,
+    name: "Aapka naam kya hai?",
+    dob: "Janm tithi likhiye, jaise 15/08/1990.",
+    time: "Janm ka samay likhiye, jaise 08:30 AM.",
+    place: "Janm sthan likhiye: sheher aur rajya, jaise Patna, Bihar.",
+    done: "Main yahin hoon. Career, padhai, relationships ya kundli par aage poochhiye.",
+  };
+  if (lang === "hi") return hi[step];
+  if (lang === "hinglish") return hg[step];
+  return en[step];
+}
+
+export default function ChatPage() {
+  const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
+  
+  const [persona, setPersona] = useState("gita");
+  const [topic, setTopic] = useState("general");
+  const [step, setStep] = useState<Step>("language");
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [chart, setChart] = useState<PublicChart | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [historyLoading, setHistoryLoading] = useState(true);
-  const [conversationId, setConversationId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Wallet aur Paywall ke liye states
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [showPaywall, setShowPaywall] = useState(false);
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+  const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
-  const requestInProgress = useRef(false);
-  const activePersonaRef = useRef(id);
 
-  // Wallet Balance fetch karne ka function
-  const fetchProfile = useCallback(async () => {
-    try {
-      const res = await fetch("/api/me", { cache: "no-store" });
-      const data = await res.json();
-      if (data.user) {
-        setWalletBalance(data.user.walletBalancePaise || 0);
-      }
-    } catch (e) {
-      console.error("Failed to fetch wallet balance", e);
+  const isDark = theme === "dark";
+  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
+  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]";
+  const inputClass = isDark 
+    ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
+    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
+
+  const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
+  const freeMessagesUsed = me?.user?.freeMessagesUsed ?? 0;
+  const hasFreeMessagesLeft = freeMessagesUsed < 3;
+  const isPremium = !!me?.user?.premiumUntil && new Date(me.user.premiumUntil) > new Date();
+  
+  const isLowBalance = walletBalanceRupees < 2 && !hasFreeMessagesLeft && !isPremium;
+  const shouldShowUpsell = !isPremium && !hasFreeMessagesLeft;
+
+  const personaDetails = getPersonaDetails(persona);
+
+  useEffect(() => {
+    // URL se persona aur topic read karein
+    const urlParams = new URLSearchParams(window.location.search);
+    const p = urlParams.get("persona");
+    if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) {
+      setPersona(p);
     }
+    
+    const rawTopic = urlParams.get("topic") || "";
+    const cleaned = rawTopic.toLowerCase().replace(/[^a-z]/g, "");
+    if (["palm", "love", "money", "remedies", "health", "career", "family"].includes(cleaned)) {
+      setTopic(cleaned);
+    }
+
+    const stored = sessionStorage.getItem("gita_conversation_id");
+    conversationId.current =
+      stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
+    sessionStorage.setItem("gita_conversation_id", conversationId.current);
+    
+    const savedDraft = sessionStorage.getItem("gita_birth_draft");
+    if (savedDraft) {
+      try {
+        setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) });
+      } catch {
+        setDraft(EMPTY_DRAFT);
+      }
+    }
+    if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
   }, []);
 
   useEffect(() => {
-    void fetchProfile();
-  }, [fetchProfile]);
+    if (me?.birth?.name && me.birth.dob && me.birth.birthTime && me.birth.birthPlace) {
+      setStep("done");
+      setDraft({
+        name: me.birth.name,
+        dob: me.birth.dob,
+        time: me.birth.birthTime,
+        place: me.birth.birthPlace,
+      });
+    }
+  }, [me]);
 
-  const loadHistory = useCallback(
-    async (signal?: AbortSignal) => {
-      if (!VALID_PERSONAS.has(id)) return;
-
-      setHistoryLoading(true);
-
-      try {
-        const guestRes = await fetch("/api/auth/guest", { method: "POST" });
-        
-        if (!guestRes.ok) {
-          const guestData = await guestRes.json().catch(() => ({}));
-          throw new Error(guestData.error || "Guest session could not be created. Database error.");
-        }
-
-        const query = new URLSearchParams({ persona: id });
-        const response = await fetch(`/api/chat?${query.toString()}`, {
-          method: "GET",
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-          signal,
-        });
-
-        const data = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(typeof data.error === "string" ? data.error : "Chat history load nahi hui.");
-        }
-
-        if (signal?.aborted || activePersonaRef.current !== id) return;
-
-        const history: Message[] = [];
-        if (Array.isArray(data.messages)) {
-          for (const item of data.messages) {
-            if (item && typeof item === "object" && typeof item.id === "string" && (item.role === "user" || item.role === "assistant") && typeof item.content === "string") {
-              history.push({ id: item.id, role: item.role, content: item.content });
-            }
-          }
-        }
-
-        setConversationId(typeof data.conversationId === "string" ? data.conversationId : null);
-        setMessages(history);
-      } catch (error) {
-        if (signal?.aborted) return;
-        console.error("Astrologer history load failed:", error);
-        
-        if (activePersonaRef.current === id) {
-          setMessages([
-            {
-              id: createMessageId(),
-              role: "assistant",
-              content: error instanceof Error ? error.message : "Session not found. Please refresh the page."
-            }
-          ]);
-          setConversationId(null);
-        }
-      } finally {
-        if (!signal?.aborted && activePersonaRef.current === id) {
-          setHistoryLoading(false);
-        }
+  const loadConversationMessages = async (convId: string) => {
+    if (!convId) return;
+    try {
+      const response = await fetch("/api/chat?conversationId=" + encodeURIComponent(convId), { cache: "no-store" });
+      const data = await response.json();
+      if (response.ok && data.messages) {
+        setMessages(data.messages);
+      } else {
+        setMessages([]);
       }
-    },
-    [id],
-  );
+    } catch (error) {
+      console.error("Failed to load messages", error);
+    }
+  };
 
   useEffect(() => {
-    activePersonaRef.current = id;
-
-    if (!validId || !astrologer) {
-      router.replace("/");
-      return;
-    }
-
-    const controller = new AbortController();
-    setMessages([]);
-    setConversationId(null);
-    setInput("");
-    void loadHistory(controller.signal);
-
-    return () => { controller.abort(); };
-  }, [id, validId, astrologer, router, loadHistory]);
+    if (loading || !me?.user) return; 
+    if (!conversationId.current) return;
+    loadConversationMessages(conversationId.current);
+  }, [loading, me?.user]); 
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
+  }, [messages, isLoading, chart]);
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading || !astrologer || !validId || historyLoading || requestInProgress.current) return;
+  function push(role: "user" | "assistant", content: string) {
+    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role, content }]);
+  }
 
-    const selectedPersona = id;
-    const content = text.trim();
+  function remember(next: Draft, nextStep: Step) {
+    setDraft(next);
+    setStep(nextStep);
+    sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+  }
 
-    const userMessage: Message = { id: createMessageId(), role: "user", content };
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
 
-    setMessages((previous) => [...previous, userMessage]);
-    setInput("");
-    setLoading(true);
-    requestInProgress.current = true;
+  const handleNewChat = () => {
+    const newId = crypto.randomUUID();
+    conversationId.current = newId;
+    sessionStorage.setItem("gita_conversation_id", newId);
+    setMessages([]);
+    setChart(null);
+    setSidebarOpen(false);
+    setDoneQuestionsCount(0);
+    if (me?.birth?.name) {
+      setStep("done");
+    } else {
+      setStep("name");
+    }
+  };
 
+  const handleSelectChat = (id: string) => {
+    conversationId.current = id;
+    sessionStorage.setItem("gita_conversation_id", id);
+    loadConversationMessages(id);
+    setStep("done");
+    setSidebarOpen(false);
+  };
+
+  async function sendToAi(text: string) {
+    setIsLoading(true);
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
-        signal: AbortSignal.timeout(50_000),
+        signal: AbortSignal.timeout(90000),
         body: JSON.stringify({
-          message: content,
+          message: text,
           language: lang,
-          topic: astrologer.topic || "general",
-          conversationId: conversationId || undefined,
-          persona: selectedPersona,
+          topic,
+          conversationId: conversationId.current,
+          persona: persona, // 🔥 FIX: Backend ko persona bhejein
         }),
       });
-
       const data = await response.json().catch(() => ({}));
-
-      if (activePersonaRef.current !== selectedPersona) return;
-
-      // Agar backend se 402 (Payment Required) aata hai, toh Paywall dikhao
-      if (response.status === 402) {
-        setShowPaywall(true);
-        setLoading(false);
-        requestInProgress.current = false;
-        return;
+      
+      if (typeof data.conversationId === "string") {
+        conversationId.current = data.conversationId;
+        sessionStorage.setItem("gita_conversation_id", data.conversationId);
       }
-
+      
       if (!response.ok) {
-        setMessages((previous) => [
-          ...previous,
-          { id: createMessageId(), role: "assistant", content: typeof data.error === "string" ? data.error : "क्षमा करें, अभी उत्तर नहीं मिल पाया। कृपया फिर कोशिश करें।" },
-        ]);
+        if (data.code === "INSUFFICIENT_BALANCE") {
+          setShowInsufficientBalance(true);
+          return;
+        }
+        push("assistant", typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।");
         return;
       }
-
-      if (typeof data.conversationId === "string") setConversationId(data.conversationId);
-
-      if (typeof data.reply === "string" && data.reply.trim()) {
-        setMessages((previous) => [
-          ...previous,
-          { id: createMessageId(), role: "assistant", content: data.reply },
-        ]);
-        
-        // Message successful hone par wallet balance update karo
-        void fetchProfile(); 
-      } else {
-        setMessages((previous) => [
-          ...previous,
-          { id: createMessageId(), role: "assistant", content: "अभी उत्तर खाली आया। कृपया फिर कोशिश करें।" },
-        ]);
-      }
+      
+      push("assistant", typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।");
+      await refresh(); 
     } catch (error) {
-      if (activePersonaRef.current === selectedPersona) {
-        const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
-        setMessages((previous) => [
-          ...previous,
-          { id: createMessageId(), role: "assistant", content: timedOut ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।" : "नेटवर्क की समस्या है। कृपया इंटरनेट जाँचकर फिर कोशिश करें।" },
-        ]);
-      }
+      const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+      push(
+        "assistant",
+        timedOut
+          ? lang === "hi"
+            ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।"
+            : "The reply took too long. Please try again."
+          : lang === "hi"
+            ? "सर्वर से संपर्क नहीं हो पाया।"
+            : "Could not reach the server."
+      );
     } finally {
-      requestInProgress.current = false;
-      if (activePersonaRef.current === selectedPersona) setLoading(false);
+      setIsLoading(false);
     }
   }
 
-  if (!astrologer || !validId) {
+  async function finishKundli(next: Draft) {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/kundli", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: next.name,
+          dateOfBirth: next.dob,
+          timeOfBirth: next.time,
+          placeOfBirth: next.place,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.chart) {
+        push("assistant", typeof data.error === "string" ? data.error : "कुंडली गणना नहीं हो सकी। स्थान फिर लिखें।");
+        setStep("place");
+        return;
+      }
+      setChart(data.chart as PublicChart);
+      setStep("done");
+      sessionStorage.removeItem("gita_birth_draft");
+      push(
+        "assistant",
+        lang === "hi"
+          ? "आपकी गणना की गई कुंडली तैयार है। नीचे कार्ड देखें।"
+          : "Your calculated kundli is ready. The card is below."
+      );
+      await refresh();
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
+    setInput("");
+    push("user", text);
+
+    if (step === "done" && !showUpsell && shouldShowUpsell && hasFreeMessagesLeft) {
+      const newCount = doneQuestionsCount + 1;
+      setDoneQuestionsCount(newCount);
+      if (newCount >= 3) {
+        setShowUpsell(true);
+      }
+    }
+
+    if (looksLikeQuestion(text) && step !== "language") {
+      await sendToAi(text);
+      return;
+    }
+
+    if (step === "language") {
+      const value = /hindi|हिंदी|हिन्दी/i.test(text)
+        ? "hi"
+        : /hinglish|हिंग्लिश/i.test(text)
+          ? "hinglish"
+          : /english|angrezi|अंग्रेजी/i.test(text)
+            ? "en"
+            : null;
+      if (!value) {
+        push("assistant", questionFor("language", lang, personaDetails.name));
+        return;
+      }
+      await setLanguage(value);
+      sessionStorage.setItem("gita_lang_confirmed", "1");
+      setStep(me?.birth?.name ? "done" : "name");
+      push("assistant", questionFor(me?.birth?.name ? "done" : "name", value, personaDetails.name));
+      return;
+    }
+
+    if (step === "name") {
+      if (text.length < 2 || text.length > 100) {
+        push("assistant", questionFor("name", lang, personaDetails.name));
+        return;
+      }
+      const next = { ...draft, name: text };
+      remember(next, "dob");
+      push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang, personaDetails.name));
+      return;
+    }
+
+    if (step === "dob") {
+      const dob = parseDate(text);
+      if (!dob) {
+        push("assistant", questionFor("dob", lang, personaDetails.name));
+        return;
+      }
+      const next = { ...draft, dob };
+      remember(next, "time");
+      push("assistant", questionFor("time", lang, personaDetails.name));
+      return; 
+    }
+
+    if (step === "time") {
+      const time = parseTime(text);
+      if (!time) {
+        push("assistant", questionFor("time", lang, personaDetails.name));
+        return;
+      }
+      const next = { ...draft, time };
+      remember(next, "place");
+      push("assistant", questionFor("place", lang, personaDetails.name));
+      return;
+    }
+
+    if (step === "place") {
+      if (text.length < 2) {
+        push("assistant", questionFor("place", lang, personaDetails.name));
+        return;
+      }
+      const next = { ...draft, place: text };
+      remember(next, "place");
+      push("assistant", lang === "hi" ? "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" : "Place noted. I am calculating the chart.");
+      await finishKundli(next);
+      return;
+    }
+
+    await sendToAi(text);
+  }
+
+  if (loading) {
     return (
-      <div className={`flex min-h-screen items-center justify-center ${isDark ? "bg-slate-950 text-white" : "bg-[#FFF9E6] text-gray-600"}`}>
-        <p>Loading...</p>
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center ${pageClass}`}>
+        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
+        <p className="text-sm font-semibold text-orange-500">Setting up your session...</p>
       </div>
     );
   }
 
+  if (sessionError || !me?.user) {
+    return (
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
+        <p className="text-3xl mb-4">⚠️</p>
+        <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
+        <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
+        <button
+          onClick={() => refresh()}
+          className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const shownMessages =
+    messages.length > 0
+      ? messages
+      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
+
   return (
-    <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
+    <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
-      {/* HEADER */}
-      <header className={`sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Link href="/" aria-label="Back" className={`text-2xl leading-none transition-transform active:scale-95 ${isDark ? "text-white" : "text-black"}`}>
-            ←
-          </Link>
+      <HistorySidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        currentConversationId={conversationId.current}
+        onSelectChat={handleSelectChat}
+        onNewChat={handleNewChat}
+      />
 
-          <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
-            <img
-              src={astrologer.photo}
-              alt={astrologer.name}
-              className="h-full w-full object-cover"
-            />
+      <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}
+          >
+            <Menu size={20} />
+          </button>
+          
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
+            <img src={personaDetails.img} alt={personaDetails.name} className="h-full w-full object-cover" />
           </div>
-
-          <div className="min-w-0 flex-1">
-            <h1 className={`truncate text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-              {astrologer.name}
-            </h1>
-            <p className="text-[11px] font-semibold text-green-600 flex items-center gap-1">
+          <div>
+            <h1 className="text-sm font-bold text-orange-500">{personaDetails.name}</h1>
+            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
             </p>
           </div>
         </div>
-
-        <Link 
-          href="/wallet" 
-          className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold transition hover:scale-105 cursor-pointer ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}
-        >
+        
+        <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
           <Wallet size={12} />
-          ₹{walletBalance / 100}
+          ₹{walletBalanceRupees}
+          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
+          <Plus size={12} className="font-black" />
         </Link>
       </header>
 
-      <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
-        {historyLoading && (
-          <div className={`py-10 text-center text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            ज्योतिषी जुड़ रही हैं...
+      {isLowBalance && step === "done" && (
+        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <div className="flex items-center gap-2">
+            <Heart size={14} className="text-red-500 animate-pulse" />
+            <span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span>
+          </div>
+          <span className="underline">Add Cash</span>
+        </Link>
+      )}
+
+      {step !== "done" && (
+        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
+          ✨ Pehli Chat 100% FREE ✨
+        </div>
+      )}
+
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
+        {step === "language" && messages.length === 0 && (
+          <div className="flex flex-wrap gap-2">
+            {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
+              <button
+                key={code}
+                type="button"
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
+                onClick={() => {
+                  void setLanguage(code);
+                  sessionStorage.setItem("gita_lang_confirmed", "1");
+                  setStep(me?.birth?.name ? "done" : "name");
+                  push("assistant", questionFor(me?.birth?.name ? "done" : "name", code, personaDetails.name));
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {shownMessages.map((message) => (
+          <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
+              {message.content}
+              {message.role === "assistant" && (
+                <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`} aria-label="Copy message">
+                  {copiedId === message.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {chart && (
+          <div className={`max-w-[85%] space-y-3 rounded-2xl p-4 text-sm border shadow-sm ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-orange-100"}`}>
+            <p className="font-bold text-orange-500">कुंडली तैयार है</p>
+            <div className={`space-y-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+              <p>लग्न: {chart.lagna.rashiNameHi} ({chart.lagna.degreeInSign}°)</p>
+              <p>राशि: {chart.moonSign.rashiNameHi}</p>
+              <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
+              {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
+            </div>
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">
+              कुंडली देखें
+            </Link>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs border shadow-sm ${isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-orange-100 text-gray-500"}`}>
+            <Sparkles size={14} className="animate-spin text-orange-500" />
+            <span>{lang === "hi" ? `${personaDetails.name} लिख रही है...` : `${personaDetails.name} is writing...`}</span>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div className={`shrink-0 border-t p-3 pb-4 sm:pb-3 z-20 ${inputWrapperClass}`}>
+        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            maxLength={8000}
+            disabled={isLoading}
+            placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
+            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
+          />
+          <button type="submit" disabled={!input.trim() || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
+            <Send size={18} />
+          </button>
+        </form>
+      </div>
+
+      {showUpsell && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20 text-rose-500 mb-4">
+              <Heart size={32} className="animate-pulse" />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Ruko! Ek Baat Suno...</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              {personaDetails.name} ne aapki kundli me ek aur gehri baat dhoondhi hai. Apne 3 free messages use ho gaye hain — kya aap apni kundli ka pura vishleshan jaanna chahte hain?
+            </p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Per Message</span>
+              <span className="text-lg font-black text-white">₹2 <span className="text-xs text-slate-400">/ message</span></span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3.5 text-sm font-black text-white shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
+              Recharge & Continue with {personaDetails.name}
+            </Link>
+            <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
+              <X size={14} /> Baad me dekhenge
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showInsufficientBalance && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4">
+              <Sparkles size={32} />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Hamari Baat Adhuri Hai...</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              {personaDetails.name} aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.
+            </p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Current Balance</span>
+              <span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
+              Recharge & Continue with {personaDetails.name}
+            </Link>
+            <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
+              <X size={14} /> Band Karein
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
