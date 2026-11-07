@@ -1,378 +1,609 @@
-// app/api/chat/route.ts
-import { NextResponse } from "next/server";
-import { and, desc, eq, sql, gte, lt } from "drizzle-orm";
-import { GoogleGenAI } from "@google/genai";
+// app/chat/page.tsx
+"use client";
 
-import { getUser } from "@/auth";
-import { db } from "@/index";
-import {
-  birthDetails,
-  charts,
-  conversations,
-  messages,
-  remedies,
-  users 
-} from "@/schema";
+import { useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import Link from "next/link";
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
 
-import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
+import { Avatar } from "../../Avatar";
+import { useApp } from "../Providers";
+import HistorySidebar from "../components/HistorySidebar";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-// 🔥 Sahi Model ID (Aapke Environment Variable se aayega, warna default)
-const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
-
-type PersonaConfig = {
-  name: string;
-  specializations: string;
-  tone: string;
-  rules: string;
+type Message = { id: string; role: "user" | "assistant"; content: string };
+type Step = "language" | "name" | "dob" | "time" | "place" | "done";
+type Draft = { name: string; dob: string; time: string; place: string };
+type PublicChart = {
+  lagna: { rashiNameHi: string; degreeInSign: number };
+  moonSign: { rashiNameHi: string };
+  nakshatra: { name: string; pada: number };
+  currentDasha: { maha: string } | null;
 };
 
-const PERSONAS: Record<string, PersonaConfig> = {
-  gita: {
-    name: "Gita",
-    specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
-    tone: "Young, modern, highly energetic, cool, and relatable female astrologer. She speaks like a smart, confident elder sister/friend. NEVER USE THE WORD 'BETA'. Use terms like 'Suno', 'Dekho', 'Hey', 'Tension mat lo', 'Main hoon na'.",
-    rules: "Speak with absolute authority and 100% certainty. Directly pinpoint the exact month and year of marriage or breakup recovery using the 7th house and Venus. GYAN PELNA 0%. Never give disclaimers. Sound 100% like a real young female astrologer.",
-  },
-  kriti: {
-    name: "Acharya Kriti",
-    specializations: "Career, government jobs, selection tracking, business growth and wealth generation",
-    tone: "Sharp, formal, professional, bullet-pointed and commanding Hinglish",
-    rules: "Focus straight on the 10th house, Sun and Jupiter transits. Deliver precise, jaw-dropping timelines for promotion, selection or financial gains in structured bullet points. No theoretical lectures.",
-  },
-  devaki: {
-    name: "Dr. Devaki Shastri",
-    specializations: "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
-    tone: "Highly calculated, intellectual, serious and authoritative",
-    rules: "Use exact planetary degrees and dasha cycles to make undeniable, hard-hitting predictions. Ensure the customer feels your supreme astrological mastery instantly.",
-  },
-  gargi: {
-    name: "Gargi Maa",
-    specializations: "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
-    tone: "Maternal, soothing, profoundly wise and spiritually grounded Hinglish",
-    rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful, mandatory traditional remedies inspired by Bhagavad Gita (Pooja, Daan, Ratna) to completely shift their luck.",
-  },
-};
+const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
 
-const SUPPORTED_LANGUAGES = ["hi", "hinglish", "en"] as const;
-type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
-
-function cleanText(value: unknown, maxLength = 6000): string {
-  if (typeof value !== "string") return "";
-  return value.trim().slice(0, maxLength);
+function looksLikeQuestion(text: string): boolean {
+  if (/[?？]/.test(text)) return true;
+  if (text.trim().split(/\s+/).length > 8) return true;
+  return /क्या|कैसे|क्यों|कब|कहाँ|कौन|what|why|how|when|where|who|kaise|kya|kyun|kab|exam|career|नौकरी|शादी|भविष्य/i.test(text);
 }
 
-function isPersona(value: unknown): value is keyof typeof PERSONAS {
-  return typeof value === "string" && value in PERSONAS;
+function parseDate(value: string): string | null {
+  const text = value.trim();
+  let match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (match) return text;
+  match = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if (!match) return null;
+  const day = match[1].padStart(2, "0");
+  const month = match[2].padStart(2, "0");
+  return match[3] + "-" + month + "-" + day;
 }
 
-function getLanguage(value: unknown): SupportedLanguage {
-  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage) ? (value as SupportedLanguage) : "hinglish";
+function parseTime(value: string): string | null {
+  const text = value.trim().toLowerCase();
+  const match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
+  if (!match) return null;
+  let hour = Number(match[1]);
+  const minute = Number(match[2] || "0");
+  const suffix = match[3];
+  if (minute > 59 || hour > 23) return null;
+  if (suffix === "pm" && hour < 12) hour += 12;
+  if (suffix === "am" && hour === 12) hour = 0;
+  if (!suffix && hour > 23) return null;
+  return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
 }
 
-function extractRemedy(response: string) {
-  const marker = "||REMEDY_EXTRACT||";
-  const index = response.indexOf(marker);
-  if (index === -1) return { message: response.trim(), remedy: null as null | { title: string; description: string } };
-  const message = response.slice(0, index).trim();
-  const payload = response.slice(index + marker.length).trim();
-  if (!payload) return { message, remedy: null };
-  const lines = payload.split("\n");
-  const title = lines[0]?.trim() || "ग्रह शांति महा-उपाय";
-  const description = lines.slice(1).join("\n").trim();
-  return { message, remedy: description ? { title, description } : null };
+function questionFor(step: Step, lang: "en" | "hi" | "hinglish"): string {
+  const hi: Record<Step, string> = {
+    language: "नमस्ते, मैं गीता हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?",
+    name: "आपका नाम क्या है?",
+    dob: "जन्म तिथि लिखें, जैसे 15/08/1990।",
+    time: "जन्म का समय लिखें, जैसे 08:30 AM।",
+    place: "जन्म स्थान लिखें: शहर और राज्य, जैसे Patna, Bihar।",
+    done: "मैं यहीं हूँ। करियर, पढ़ाई, संबंध या कुंडली पर आगे पूछ सकते हैं।",
+  };
+  const en: Record<Step, string> = {
+    language: "Hello, I am Gita. Would you like Hindi, Hinglish, or English?",
+    name: "What is your name?",
+    dob: "Please share your date of birth, for example 15/08/1990.",
+    time: "What was your birth time? For example 08:30 AM.",
+    place: "Where were you born? City and state, for example Patna, Bihar.",
+    done: "I am here. You can ask about career, study, relationships, or your chart.",
+  };
+  const hg: Record<Step, string> = {
+    language: "Namaste, main Gita hoon. Aap Hindi, Hinglish ya English mein baat karna chahenge?",
+    name: "Aapka naam kya hai?",
+    dob: "Janm tithi likhiye, jaise 15/08/1990.",
+    time: "Janm ka samay likhiye, jaise 08:30 AM.",
+    place: "Janm sthan likhiye: sheher aur rajya, jaise Patna, Bihar.",
+    done: "Main yahin hoon. Career, padhai, relationships ya kundli par aage poochhiye.",
+  };
+  if (lang === "hi") return hi[step];
+  if (lang === "hinglish") return hg[step];
+  return en[step];
 }
 
-function getRelevantKnowledge(query: string): string {
-  const q = query.toLowerCase();
-  const allEntries = getExtendedKnowledgeEntries();
+export default function ChatPage() {
+  const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
   
-  const scoredEntries = allEntries.map((entry) => {
-    let score = 0;
-    if (entry.keywords) entry.keywords.forEach((kw) => { if (q.includes(kw.toLowerCase())) score += 5; });
-    if (entry.aliases) entry.aliases.forEach((alias) => { if (q.includes(alias.toLowerCase())) score += 3; });
-    if (entry.question) {
-      const words = q.split(" ").filter(w => w.length > 3);
-      words.forEach(word => { if (entry.question.toLowerCase().includes(word)) score += 2; });
+  const [topic, setTopic] = useState("general");
+  const [step, setStep] = useState<Step>("language");
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [chart, setChart] = useState<PublicChart | null>(null);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [showUpsell, setShowUpsell] = useState(false);
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
+  const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const conversationId = useRef("");
+  const endRef = useRef<HTMLDivElement>(null);
+
+  const isDark = theme === "dark";
+  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
+  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]";
+  const inputClass = isDark 
+    ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
+    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
+
+  const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
+  const isLowBalance = walletBalanceRupees < 2;
+
+  useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("topic") || "";
+    const cleaned = raw.toLowerCase().replace(/[^a-z]/g, "");
+    if (["palm", "love", "money", "remedies", "health", "career", "family"].includes(cleaned)) {
+      setTopic(cleaned);
     }
-    return { entry, score };
-  });
-
-  const topMatches = scoredEntries.filter((item) => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
-  if (topMatches.length === 0) return "";
-
-  return topMatches.map(({ entry }) => {
-    const answerText = entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
-    return `[Context Topic: ${entry.topic.toUpperCase()}]\nAstrological Logic: ${answerText}`;
-  }).join("\n\n");
-}
-
-async function getOrCreateConversation(userId: string, persona: keyof typeof PERSONAS, topic: string, conversationId?: string) {
-  if (conversationId) {
-    const [existing] = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId))).limit(1);
-    if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
-    return existing;
-  }
-  const [existing] = await db.select().from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
-  if (existing) return existing;
-  const [created] = await db.insert(conversations).values({ userId, title: "New Astro Consultation", topic: topic || "general", persona }).returning();
-  if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
-  return created;
-}
-
-export async function GET(request: Request) {
-  try {
-    const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
-
-    const { searchParams } = new URL(request.url);
-    const persona = isPersona(searchParams.get("persona")) ? searchParams.get("persona") as keyof typeof PERSONAS : "gita";
-
-    const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
-    const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
-      .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
-
-    return NextResponse.json({
-      success: true,
-      conversationId: conversation.id,
-      messages: history.reverse().map((item) => ({ id: item.id, role: item.role === "assistant" ? "assistant" : "user", content: item.content })),
-    });
-  } catch (error) {
-    return NextResponse.json({ error: "Chat history could not be loaded." }, { status: 500 });
-  }
-}
-
-export async function POST(request: Request) {
-  let isDeducted = false;
-  let deductedType: "wallet" | "free" | "none" = "none";
-  let userId = "";
-
-  try {
-    const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
-    userId = user.id;
-
-    if (!process.env.GEMINI_API_KEY) return NextResponse.json({ error: "AI service not configured." }, { status: 503 });
-
-    const COST_PER_MESSAGE_PAISE = 200; // ₹2
-    const isPremium = user.premiumUntil && new Date(user.premiumUntil) > new Date();
-    const canAffordWallet = user.walletBalancePaise >= COST_PER_MESSAGE_PAISE;
-    const hasFreeMessages = user.freeMessagesUsed < 3;
-
-    if (!isPremium && !canAffordWallet && !hasFreeMessages) {
-      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein." }, { status: 402 });
+    const stored = sessionStorage.getItem("gita_conversation_id");
+    conversationId.current =
+      stored && /^[0-9a-f-]{36}$/i.test(stored) ? stored : crypto.randomUUID();
+    sessionStorage.setItem("gita_conversation_id", conversationId.current);
+    
+    const savedDraft = sessionStorage.getItem("gita_birth_draft");
+    if (savedDraft) {
+      try {
+        setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) });
+      } catch {
+        setDraft(EMPTY_DRAFT);
+      }
     }
+    if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
+  }, []);
 
-    let body: Record<string, unknown>;
+  useEffect(() => {
+    if (me?.birth?.name && me.birth.dob && me.birth.birthTime && me.birth.birthPlace) {
+      setStep("done");
+      setDraft({
+        name: me.birth.name,
+        dob: me.birth.dob,
+        time: me.birth.birthTime,
+        place: me.birth.birthPlace,
+      });
+    }
+  }, [me]);
+
+  const loadConversationMessages = async (convId: string) => {
+    if (!convId) return;
     try {
-      const parsed: unknown = await request.json();
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-      body = parsed as Record<string, unknown>;
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
-    }
-
-    const userMessage = cleanText(body.message);
-    const persona = isPersona(body.persona) ? body.persona : "gita";
-    const language = getLanguage(body.language);
-    const topic = cleanText(body.topic, 100) || "general";
-    const requestedConversationId = cleanText(body.conversationId, 100);
-
-    if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
-
-    const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
-
-    const [birthRows, chartRows, previousMessages] = await Promise.all([
-      db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
-      db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
-      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
-    ]);
-
-    if (!isPremium) {
-      if (canAffordWallet) {
-        const updated = await db.update(users)
-          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
-          .where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)))
-          .returning();
-        
-        if (updated.length === 0) return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Balance insufficient due to concurrent request." }, { status: 402 });
-        deductedType = "wallet";
-        isDeducted = true;
-      } else if (hasFreeMessages) {
-        const updated = await db.update(users)
-          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
-          .where(and(eq(users.id, userId), lt(users.freeMessagesUsed, 3)))
-          .returning();
-        
-        if (updated.length === 0) return NextResponse.json({ code: "FREE_LIMIT_REACHED", error: "Free limit reached due to concurrent request." }, { status: 402 });
-        deductedType = "free";
-        isDeducted = true;
-      }
-    }
-
-    const birth = birthRows[0];
-    const chart = chartRows[0];
-    const personaConfig = PERSONAS[persona];
-    const relevantKnowledge = getRelevantKnowledge(userMessage);
-
-    // Chart data limit kam kiya taaki prompt token limit cross na ho
-    const astrologyContext = [
-      birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
-      chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 3000)}` : "No chart available.",
-    ].join("\n\n");
-
-    let instructionPrompt = "";
-    const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
-
-    if (!isPremium && !canAffordWallet) { 
-      if (freeMessagesLeft === 1) {
-        instructionPrompt = `🚨 THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
-YOUR GOAL: Provide an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame. 
-Then, tell them gently that for the detailed remedy and full roadmap to solve this, they need to recharge their wallet.`;
+      const response = await fetch("/api/chat?conversationId=" + encodeURIComponent(convId), { cache: "no-store" });
+      const data = await response.json();
+      if (response.ok && data.messages) {
+        setMessages(data.messages);
       } else {
-        instructionPrompt = `🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain with deep empathy. Give them an accurate astrological reason for their problem. Give them a small, free remedy.`;
+        setMessages([]);
       }
-    } else {
-      instructionPrompt = `🚨 USER IS A PAID/PREMIUM CUSTOMER. 
-YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply, find the exact dosha, and give exact remedies.`;
+    } catch (error) {
+      console.error("Failed to load messages", error);
     }
+  };
 
-    const systemPrompt = `
-You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit.
+  useEffect(() => {
+    if (loading || !me?.user) return; 
+    if (!conversationId.current) return;
+    loadConversationMessages(conversationId.current);
+  }, [loading, me?.user]); 
 
-YOUR TONE: ${personaConfig.tone}
-YOUR RULES: ${personaConfig.rules}
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages, isLoading, chart]);
 
-🔴 USER'S BIRTH DETAILS:
-${astrologyContext}
-
-🔴 KNOWLEDGE BASE:
-${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles."}
-
-${instructionPrompt}
-
-CRITICAL LAWS:
-1. 100% CONFIDENCE: Never use 'maybe'.
-2. HARD TIMELINES: Give exact date/month brackets.
-3. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
-||REMEDY_EXTRACT||
-Remedy Title
-Description
-4. NEVER say you are AI.
-5. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi" : language === "en" ? "English" : "natural Hinglish"}).
-`.trim();
-
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
-    const contents = previousMessages.reverse().map((m) => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }],
-    }));
-    contents.push({ role: "user", parts: [{ text: userMessage }] });
-
-    // 🔥 NEW ROBUST RETRY LOGIC WITH EXACT ERROR LOGGING 🔥
-    let response;
-    let retries = 3;
-    
-    while (retries > 0) {
-      try {
-        console.log(`[GEMINI API] Sending request to model: ${GEMINI_MODEL}. Retries left: ${retries}`);
-        
-        response = await ai.models.generateContent({
-          model: GEMINI_MODEL,
-          contents: contents,
-          config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
-        });
-        break; // Success
-      } catch (err: any) {
-        retries--;
-        
-        // 🔥 EXACT GOOGLE ERROR PRINT KARO 🔥
-        const status = err.status || err.code;
-        const errorMsg = err.message || "Unknown Error";
-        const errorDetails = err.response?.data || "No detailed response";
-        
-        console.error(`[GEMINI ERROR - Attempt Failed]:`, {
-          model: GEMINI_MODEL,
-          status: status,
-          message: errorMsg,
-          details: JSON.stringify(errorDetails),
-          retriesRemaining: retries
-        });
-
-        // Agar 400 (Bad Request) ya 404 (Not Found) hai, toh retry mat karo
-        if (status === 400 || status === 404) {
-           throw err; 
-        }
-
-        if (retries === 0) {
-          throw new Error(`AI_MAX_RETRIES_REACHED. Last status: ${status}`);
-        }
-
-        // 429 (Rate Limit) par zyada wait, 503 (Overload) par kam wait
-        const waitTime = status === 429 ? 5000 : 2000; 
-        console.log(`[GEMINI API] Waiting for ${waitTime}ms before retry...`);
-        await new Promise(r => setTimeout(r, waitTime));
-      }
-    }
-
-    const rawReply = response?.text?.trim() || "";
-    if (!rawReply) throw new Error("EMPTY_AI_RESPONSE");
-
-    const extracted = extractRemedy(rawReply);
-    const finalMessage = extracted.message;
-    const remedy = extracted.remedy;
-
-    await db.transaction(async (tx) => {
-      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
-      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
-
-      if (remedy) {
-        await tx.insert(remedies).values({ userId: userId, title: remedy.title, description: remedy.description });
-      }
-    });
-
-    return NextResponse.json({
-      success: true,
-      conversationId: conversation.id,
-      reply: finalMessage,
-      remedy: remedy ? { title: remedy.title, description: remedy.description } : null,
-    });
-
-  } catch (error: any) {
-    console.error("POST /api/chat FINAL CATCH:", error.message);
-
-    if (isDeducted && userId) {
-      try {
-        if (deductedType === "wallet") {
-          await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + 200` }).where(eq(users.id, userId));
-        } else if (deductedType === "free") {
-          await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId)); 
-        }
-        console.log(`[REFUND SUCCESS] Refunded to user ${userId} (Type: ${deductedType})`);
-      } catch (refundError) {
-        console.error("CRITICAL: Refund failed for user", userId, refundError);
-      }
-    }
-
-    if (error.message === "CONVERSATION_NOT_FOUND") {
-      return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
-    }
-
-    // Agar API limit/overload hai, toh user ko clear message do
-    if (error.message?.includes("AI_MAX_RETRIES_REACHED")) {
-       return NextResponse.json({ 
-         success: false, 
-         error: "Google AI server is currently busy (Quota/Overload). Your money is refunded. Please try again in 1 minute." 
-       }, { status: 500 });
-    }
-
-    return NextResponse.json({ 
-      success: false, 
-      error: "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa refund kar diya gaya hai." 
-    }, { status: 500 });
+  function push(role: "user" | "assistant", content: string) {
+    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role, content }]);
   }
+
+  function remember(next: Draft, nextStep: Step) {
+    setDraft(next);
+    setStep(nextStep);
+    sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+  }
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleNewChat = () => {
+    const newId = crypto.randomUUID();
+    conversationId.current = newId;
+    sessionStorage.setItem("gita_conversation_id", newId);
+    setMessages([]);
+    setChart(null);
+    setSidebarOpen(false);
+    setDoneQuestionsCount(0);
+    if (me?.birth?.name) {
+      setStep("done");
+    } else {
+      setStep("name");
+    }
+  };
+
+  const handleSelectChat = (id: string) => {
+    conversationId.current = id;
+    sessionStorage.setItem("gita_conversation_id", id);
+    loadConversationMessages(id);
+    setStep("done");
+    setSidebarOpen(false);
+  };
+
+  async function sendToAi(text: string) {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        cache: "no-store",
+        signal: AbortSignal.timeout(35000),
+        body: JSON.stringify({
+          message: text,
+          language: lang,
+          topic,
+          conversationId: conversationId.current,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      
+      if (typeof data.conversationId === "string") {
+        conversationId.current = data.conversationId;
+        sessionStorage.setItem("gita_conversation_id", data.conversationId);
+      }
+      
+      if (!response.ok) {
+        if (data.code === "INSUFFICIENT_BALANCE") {
+          setShowInsufficientBalance(true);
+          return;
+        }
+        push("assistant", typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।");
+        return;
+      }
+      
+      push("assistant", typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।");
+      await refresh(); 
+    } catch (error) {
+      const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+      push(
+        "assistant",
+        timedOut
+          ? lang === "hi"
+            ? "उत्तर आने में ज़्यादा समय लग गया। कृपया फिर कोशिश करें।"
+            : "The reply took too long. Please try again."
+          : lang === "hi"
+            ? "सर्वर से संपर्क नहीं हो पाया।"
+            : "Could not reach the server."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function finishKundli(next: Draft) {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/kundli", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: next.name,
+          dateOfBirth: next.dob,
+          timeOfBirth: next.time,
+          placeOfBirth: next.place,
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.chart) {
+        push("assistant", typeof data.error === "string" ? data.error : "कुंडली गणना नहीं हो सकी। स्थान फिर लिखें।");
+        setStep("place");
+        return;
+      }
+      setChart(data.chart as PublicChart);
+      setStep("done");
+      sessionStorage.removeItem("gita_birth_draft");
+      push(
+        "assistant",
+        lang === "hi"
+          ? "आपकी गणना की गई कुंडली तैयार है। नीचे कार्ड देखें।"
+          : "Your calculated kundli is ready. The card is below."
+      );
+      await refresh();
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const text = input.trim();
+    if (!text || isLoading) return;
+    setInput("");
+    push("user", text);
+
+    if (step === "done" && !showUpsell) {
+      const newCount = doneQuestionsCount + 1;
+      setDoneQuestionsCount(newCount);
+      if (newCount >= 3) {
+        setShowUpsell(true);
+      }
+    }
+
+    if (looksLikeQuestion(text) && step !== "language") {
+      await sendToAi(text);
+      return;
+    }
+
+    if (step === "language") {
+      const value = /hindi|हिंदी|हिन्दी/i.test(text)
+        ? "hi"
+        : /hinglish|हिंग्लिश/i.test(text)
+          ? "hinglish"
+          : /english|angrezi|अंग्रेजी/i.test(text)
+            ? "en"
+            : null;
+      if (!value) {
+        push("assistant", questionFor("language", lang));
+        return;
+      }
+      await setLanguage(value);
+      sessionStorage.setItem("gita_lang_confirmed", "1");
+      setStep(me?.birth?.name ? "done" : "name");
+      push("assistant", questionFor(me?.birth?.name ? "done" : "name", value));
+      return;
+    }
+
+    if (step === "name") {
+      if (text.length < 2 || text.length > 100) {
+        push("assistant", questionFor("name", lang));
+        return;
+      }
+      const next = { ...draft, name: text };
+      remember(next, "dob");
+      push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang));
+      return;
+    }
+
+    if (step === "dob") {
+      const dob = parseDate(text);
+      if (!dob) {
+        push("assistant", questionFor("dob", lang));
+        return;
+      }
+      const next = { ...draft, dob };
+      remember(next, "time");
+      push("assistant", questionFor("time", lang));
+      return; 
+    }
+
+    if (step === "time") {
+      const time = parseTime(text);
+      if (!time) {
+        push("assistant", questionFor("time", lang));
+        return;
+      }
+      const next = { ...draft, time };
+      remember(next, "place");
+      push("assistant", questionFor("place", lang));
+      return;
+    }
+
+    if (step === "place") {
+      if (text.length < 2) {
+        push("assistant", questionFor("place", lang));
+        return;
+      }
+      const next = { ...draft, place: text };
+      remember(next, "place");
+      push("assistant", lang === "hi" ? "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" : "Place noted. I am calculating the chart.");
+      await finishKundli(next);
+      return;
+    }
+
+    await sendToAi(text);
+  }
+
+  if (loading) {
+    return (
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center ${pageClass}`}>
+        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
+        <p className="text-sm font-semibold text-orange-500">Setting up your session...</p>
+      </div>
+    );
+  }
+
+  if (sessionError || !me?.user) {
+    return (
+      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
+        <p className="text-3xl mb-4">⚠️</p>
+        <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
+        <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
+        <button
+          onClick={() => refresh()}
+          className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  const shownMessages =
+    messages.length > 0
+      ? messages
+      : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang) }];
+
+  return (
+    <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
+      
+      <HistorySidebar 
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        currentConversationId={conversationId.current}
+        onSelectChat={handleSelectChat}
+        onNewChat={handleNewChat}
+      />
+
+      <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setSidebarOpen(true)}
+            className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}
+          >
+            <Menu size={20} />
+          </button>
+          
+          <Avatar size={42} glow={false} />
+          <div>
+            <h1 className="text-sm font-bold text-orange-500">Gita AI</h1>
+            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
+            </p>
+          </div>
+        </div>
+        
+        <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
+          <Wallet size={12} />
+          ₹{walletBalanceRupees}
+          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
+          <Plus size={12} className="font-black" />
+        </Link>
+      </header>
+
+      {isLowBalance && step === "done" && (
+        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <div className="flex items-center gap-2">
+            <Heart size={14} className="text-red-500 animate-pulse" />
+            <span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span>
+          </div>
+          <span className="underline">Add Cash</span>
+        </Link>
+      )}
+
+      {step !== "done" && (
+        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
+          ✨ Pehli Chat 100% FREE ✨
+        </div>
+      )}
+
+      <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
+        {step === "language" && messages.length === 0 && (
+          <div className="flex flex-wrap gap-2">
+            {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
+              <button
+                key={code}
+                type="button"
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
+                onClick={() => {
+                  void setLanguage(code);
+                  sessionStorage.setItem("gita_lang_confirmed", "1");
+                  setStep(me?.birth?.name ? "done" : "name");
+                  push("assistant", questionFor(me?.birth?.name ? "done" : "name", code));
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {shownMessages.map((message) => (
+          <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
+            <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
+              {message.content}
+              {message.role === "assistant" && (
+                <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`} aria-label="Copy message">
+                  {copiedId === message.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {chart && (
+          <div className={`max-w-[85%] space-y-3 rounded-2xl p-4 text-sm border shadow-sm ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-orange-100"}`}>
+            <p className="font-bold text-orange-500">कुंडली तैयार है</p>
+            <div className={`space-y-1 ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+              <p>लग्न: {chart.lagna.rashiNameHi} ({chart.lagna.degreeInSign}°)</p>
+              <p>राशि: {chart.moonSign.rashiNameHi}</p>
+              <p>नक्षत्र: {chart.nakshatra.name}, पद {chart.nakshatra.pada}</p>
+              {chart.currentDasha && <p>महादशा: {chart.currentDasha.maha}</p>}
+            </div>
+            <Link href="/kundli" className="inline-flex items-center justify-center rounded-xl bg-orange-500 px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-colors shadow-sm">
+              कुंडली देखें
+            </Link>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs border shadow-sm ${isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-orange-100 text-gray-500"}`}>
+            <Sparkles size={14} className="animate-spin text-orange-500" />
+            <span>{lang === "hi" ? "गीता लिख रही है..." : "Gita is writing..."}</span>
+          </div>
+        )}
+        <div ref={endRef} />
+      </div>
+
+      <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
+        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
+          <input
+            value={input}
+            onChange={(event) => setInput(event.target.value)}
+            maxLength={8000}
+            disabled={isLoading}
+            placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
+            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
+          />
+          <button type="submit" disabled={!input.trim() || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
+            <Send size={18} />
+          </button>
+        </form>
+      </div>
+
+      {step === "done" && !showUpsell && (
+        <Link href="/astrologers" className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full">
+          <div className="flex items-center gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20 animate-pulse"><Phone size={16} /></span>
+            <div className="leading-tight">
+              <p className="text-[10px] font-black uppercase tracking-wider text-rose-100">24x7 Available</p>
+              <p className="text-xs font-black">Talk to Astrologer - First Chat FREE</p>
+            </div>
+          </div>
+          <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-rose-700 uppercase">Chat</span>
+        </Link>
+      )}
+
+      {/* 🔥 EMOTIONAL UPSELL MODAL 🔥 */}
+      {showUpsell && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20 text-rose-500 mb-4">
+              <Heart size={32} className="animate-pulse" />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Ruko! Ek Baat Suno...</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Gita AI ne aapki kundli me ek bahut gehri baat dhoondhi hai jo aapki life badal sakti hai. <b className="text-orange-400">Lekin yeh adhuri hai.</b> Kya aap apni adhuri kismat ka raaz jaanna chahte hain?
+            </p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Pura Solution Unlock Karein</span>
+              <span className="text-lg font-black text-white">₹9 <span className="text-xs line-through text-slate-500 font-medium">₹49</span> / min</span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3.5 text-sm font-black text-white shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
+              Gita Se Baat Puri Karein
+            </Link>
+            <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
+              <X size={14} /> Baad me dekhenge
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 EMOTIONAL INSUFFICIENT BALANCE MODAL 🔥 */}
+      {showInsufficientBalance && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4">
+              <Sparkles size={32} />
+            </div>
+            <h2 className="text-xl font-black text-white mb-2">Hamari Baat Adhuri Hai...</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
+              Gita aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.
+            </p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Current Balance</span>
+              <span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
+              Recharge & Continue with Gita
+            </Link>
+            <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
+              <X size={14} /> Band Karein
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
