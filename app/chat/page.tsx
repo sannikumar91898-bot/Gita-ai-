@@ -186,6 +186,8 @@ function ChatPageContent() {
         if (response.ok) {
           if (Array.isArray(data.messages) && data.messages.length > 0) {
             setMessages(data.messages);
+          } else {
+            setMessages([]);
           }
           if (data.conversationId) {
             conversationId.current = data.conversationId;
