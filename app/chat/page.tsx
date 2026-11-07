@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
-import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check } from "lucide-react";
 
 import { Avatar } from "../../Avatar";
 import { useApp } from "../Providers";
@@ -92,10 +92,10 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  
-  // MARKETING UPSELL STATES
   const [showUpsell, setShowUpsell] = useState(false);
+  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -111,7 +111,7 @@ export default function ChatPage() {
 
   // ✅ Live Wallet Balance
   const walletBalanceRupees = (me?.user?.walletBalancePaise || 0) / 100;
-  const isLowBalance = walletBalanceRupees < 2; // ₹2 per message cost
+  const isLowBalance = walletBalanceRupees < 2;
 
   useEffect(() => {
     const raw = new URLSearchParams(window.location.search).get("topic") || "";
@@ -192,6 +192,12 @@ export default function ChatPage() {
     sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
   }
 
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   async function sendToAi(text: string) {
     setIsLoading(true);
     try {
@@ -208,16 +214,24 @@ export default function ChatPage() {
         }),
       });
       const data = await response.json().catch(() => ({}));
+      
       if (typeof data.conversationId === "string") {
         conversationId.current = data.conversationId;
         sessionStorage.setItem("gita_conversation_id", data.conversationId);
       }
+      
+      // 🔥 INSUFFICIENT BALANCE MODAL LOGIC 🔥
       if (!response.ok) {
+        if (data.code === "INSUFFICIENT_BALANCE") {
+          setShowInsufficientBalance(true);
+          return;
+        }
         push("assistant", typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।");
         return;
       }
+      
       push("assistant", typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।");
-      await refresh(); // 🔥 Balance turant update karne ke liye
+      await refresh(); 
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
       push(
@@ -391,7 +405,6 @@ export default function ChatPage() {
   return (
     <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
       
-      {/* HEADER with Live Balance & Recharge Button */}
       <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
         <div className="flex items-center gap-3">
           <Link href="/" aria-label="Back" className={`rounded-xl p-2 hover:bg-orange-50 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600"}`}>
@@ -406,11 +419,7 @@ export default function ChatPage() {
           </div>
         </div>
         
-        {/* 🔥 Live Balance aur Add Cash Button 🔥 */}
-        <Link 
-          href="/wallet"
-          className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}
-        >
+        <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
           <Wallet size={12} />
           ₹{walletBalanceRupees}
           <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
@@ -418,7 +427,6 @@ export default function ChatPage() {
         </Link>
       </header>
 
-      {/* LOW BALANCE WARNING BANNER */}
       {isLowBalance && step === "done" && (
         <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
           <div className="flex items-center gap-2">
@@ -429,14 +437,12 @@ export default function ChatPage() {
         </Link>
       )}
 
-      {/* FREE CHAT BANNER */}
       {step !== "done" && (
         <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
           ✨ Pehli Chat 100% FREE ✨
         </div>
       )}
 
-      {/* CHAT AREA */}
       <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
         {step === "language" && (
           <div className="flex flex-wrap gap-2">
@@ -460,8 +466,19 @@ export default function ChatPage() {
 
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-            <div className={"max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
+            <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
               {message.content}
+              
+              {/* 🔥 COPY BUTTON (Only for AI messages) 🔥 */}
+              {message.role === "assistant" && (
+                <button
+                  onClick={() => handleCopy(message.id, message.content)}
+                  className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`}
+                  aria-label="Copy message"
+                >
+                  {copiedId === message.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
+                </button>
+              )}
             </div>
           </div>
         ))}
@@ -490,7 +507,6 @@ export default function ChatPage() {
         <div ref={endRef} />
       </div>
 
-      {/* INPUT FIELD */}
       <div className={`shrink-0 border-t p-3 pb-24 sm:pb-3 z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
           <input
@@ -507,7 +523,6 @@ export default function ChatPage() {
         </form>
       </div>
 
-      {/* UPSELL BANNER */}
       {step === "done" && !showUpsell && (
         <Link href="/astrologers" className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.2)] animate-in slide-in-from-bottom-full">
           <div className="flex items-center gap-3">
@@ -521,7 +536,7 @@ export default function ChatPage() {
         </Link>
       )}
 
-      {/* UPSELL MODAL */}
+      {/* 🔥 UPSELL MODAL 🔥 */}
       {showUpsell && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
@@ -534,6 +549,23 @@ export default function ChatPage() {
             </div>
             <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">Add Money & Continue</Link>
             <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Maybe Later</button>
+          </div>
+        </div>
+      )}
+
+      {/* 🔥 INSUFFICIENT BALANCE MODAL 🔥 */}
+      {showInsufficientBalance && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-red-500/30 p-6 text-center shadow-[0_0_50px_rgba(239,68,68,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-red-500/20 text-red-500 mb-4"><Wallet size={32} /></div>
+            <h2 className="text-xl font-black text-white mb-2">Balance Exhausted</h2>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">Aapka wallet balance khatam ho gaya hai. Chat continue karne ke liye please recharge karein.</p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
+              <span className="text-xs font-semibold text-slate-400">Current Balance</span>
+              <span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">Add Cash Now</Link>
+            <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Close</button>
           </div>
         </div>
       )}
