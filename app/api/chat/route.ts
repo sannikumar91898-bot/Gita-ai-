@@ -19,7 +19,7 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 लेटेस्ट गूगल मॉडल (आपके डॉक्यूमेंट के अनुसार)
+// 🔥 Model configuration
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
 type PersonaConfig = {
@@ -217,9 +217,10 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const relevantKnowledge = getRelevantKnowledge(userMessage);
 
+    // Context limit reduce
     const astrologyContext = [
       birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
-      chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 10000)}` : "No chart available.",
+      chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 3000)}` : "No chart available.",
     ].join("\n\n");
 
     let instructionPrompt = "";
@@ -229,14 +230,14 @@ export async function POST(request: Request) {
       if (freeMessagesLeft === 1) {
         instructionPrompt = `🚨 THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
 YOUR GOAL: Provide an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame. 
-Then, tell them gently that for the detailed remedy and full roadmap to solve this, they need to recharge their wallet. Do NOT use fear. Use value. Make them feel that paying for the full solution is the obvious next step.`;
+Then, tell them gently that for the detailed remedy and full roadmap to solve this, they need to recharge their wallet.`;
       } else {
         instructionPrompt = `🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain with deep empathy. Give them an accurate astrological reason for their problem. Give them a small, free remedy that helps them immediately, but save the "Maha-Upay" (Master Remedy) for the paid version.`;
+YOUR GOAL: Validate their pain with deep empathy. Give them an accurate astrological reason for their problem. Give them a small, free remedy.`;
       }
     } else {
       instructionPrompt = `🚨 USER IS A PAID/PREMIUM CUSTOMER. 
-YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply, find the exact dosha, and give exact remedies. Tell them exactly when their problem will be solved. Give them 10x the value of what they paid.`;
+YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply, find the exact dosha, and give exact remedies.`;
     }
 
     const systemPrompt = `
@@ -254,14 +255,14 @@ ${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles."}
 ${instructionPrompt}
 
 CRITICAL LAWS:
-1. 100% CONFIDENCE: Never use 'maybe'. Always state 'This WILL happen'.
+1. 100% CONFIDENCE: Never use 'maybe'.
 2. HARD TIMELINES: Give exact date/month brackets.
 3. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
 ||REMEDY_EXTRACT||
 Remedy Title
 Description
 4. NEVER say you are AI.
-5. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi (Devanagari)" : language === "en" ? "English" : "natural Hinglish"}).
+5. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi" : language === "en" ? "English" : "natural Hinglish"}).
 `.trim();
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -272,31 +273,63 @@ Description
     }));
     contents.push({ role: "user", parts: [{ text: userMessage }] });
 
-    // 🔥 SMART RETRY LOGIC (429, 503, Network Errors के लिए) 🔥
+    // 🔥 FINAL ROBUST RETRY LOGIC WITH EXACT ERROR LOGGING 🔥
     let response;
     let retries = 3;
+    const MAX_RETRIES = 3;
+    const BASE_DELAY = 2000; // 2 seconds
     
     while (retries > 0) {
       try {
-        console.log(`[GEMINI] Attempt with model: ${GEMINI_MODEL}, Retries left: ${retries - 1}`);
+        console.log(`[GEMINI API] Attempt ${MAX_RETRIES - retries + 1}/${MAX_RETRIES}. Model: ${GEMINI_MODEL}`);
+        
         response = await ai.models.generateContent({
-          model: GEMINI_MODEL, // ✅ नया मॉडल यहाँ इस्तेमाल हो रहा है
+          model: GEMINI_MODEL,
           contents: contents,
           config: { systemInstruction: systemPrompt, temperature: 0.75, maxOutputTokens: 1500 },
         });
-        break; // Success! Loop से बाहर
-      } catch (err: any) {
-        const errMsg = err?.message || "";
-        console.error(`[GEMINI ERROR] Attempt failed:`, errMsg);
         
-        // अगर सर्वर ओवरलोड है या लिमिट क्रॉस हुई है, तो रिट्राई करें
-        if (errMsg.includes("503") || errMsg.includes("429") || errMsg.includes("fetch") || errMsg.includes("overloaded")) {
-          retries--;
-          if (retries === 0) throw new Error("AI_SERVER_OVERLOADED");
-          await new Promise(r => setTimeout(r, 3000)); // 3 सेकंड रुककर फिर ट्राई करें
-        } else {
-          throw err; // अगर API Key गलत है या मॉडल नहीं मिला (404), तो सीधे एरर दें
+        console.log(`[GEMINI API] Success with model: ${GEMINI_MODEL}`);
+        break; // Success
+      } catch (err: any) {
+        retries--;
+        
+        // 🔥 EXACT ERROR PRINT KARO 🔥
+        const status = err.status || err.code;
+        const errorMsg = err.message || "Unknown Error";
+        const errorDetails = err.response?.data || err.details || "No detailed response";
+        const retryAfterHeader = err.response?.headers?.["retry-after"];
+        
+        console.error(`[GEMINI API ERROR]`, {
+          attempt: MAX_RETRIES - retries,
+          status: status,
+          message: errorMsg,
+          details: typeof errorDetails === 'object' ? JSON.stringify(errorDetails) : errorDetails,
+          retryAfter: retryAfterHeader,
+          retriesRemaining: retries
+        });
+
+        // Agar 400 (Bad Request) ya 404 (Not Found) hai, toh retry mat karo
+        if (status === 400 || status === 404) {
+           throw err; 
         }
+
+        if (retries === 0) {
+          throw new Error(`AI_MAX_RETRIES_REACHED. Last status: ${status}`);
+        }
+
+        // Exponential Backoff + Retry-After handling
+        let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
+        if (retryAfterHeader) {
+          const retryAfterSeconds = parseInt(retryAfterHeader, 10);
+          if (!isNaN(retryAfterSeconds)) waitTime = retryAfterSeconds * 1000;
+        }
+        
+        // 429 (Rate Limit) par zyada wait
+        if (status === 429) waitTime = Math.max(waitTime, 5000);
+
+        console.log(`[GEMINI API] Waiting for ${waitTime}ms before retry...`);
+        await new Promise(r => setTimeout(r, waitTime));
       }
     }
 
@@ -324,9 +357,8 @@ Description
     });
 
   } catch (error: any) {
-    console.error("POST /api/chat error:", error);
+    console.error("POST /api/chat FINAL CATCH:", error.message);
 
-    // 🔥 REFUND LOGIC 🔥
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
@@ -334,7 +366,7 @@ Description
         } else if (deductedType === "free") {
           await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId)); 
         }
-        console.log(`Refund successful for user ${userId} (Type: ${deductedType})`);
+        console.log(`[REFUND SUCCESS] Refunded to user ${userId} (Type: ${deductedType})`);
       } catch (refundError) {
         console.error("CRITICAL: Refund failed for user", userId, refundError);
       }
@@ -344,11 +376,16 @@ Description
       return NextResponse.json({ error: "Chat history not found." }, { status: 404 });
     }
 
-    if (error.message === "AI_SERVER_OVERLOADED") {
-       return NextResponse.json({ success: false, error: "Google AI server is currently busy. Your money is refunded. Please try again in 1 minute." }, { status: 500 });
+    if (error.message?.includes("AI_MAX_RETRIES_REACHED")) {
+       return NextResponse.json({ 
+         success: false, 
+         error: "Google AI server is currently busy (Quota/Overload). Your money is refunded. Please try again in 1 minute." 
+       }, { status: 500 });
     }
 
-    const errorMsg = "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa/msg wapas kar diya gaya hai. Kripya thodi der baad try karein.";
-    return NextResponse.json({ success: false, error: errorMsg }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: "Kuch takniki karanon se jawab nahi aa paya. Aapka paisa refund kar diya gaya hai." 
+    }, { status: 500 });
   }
 }
