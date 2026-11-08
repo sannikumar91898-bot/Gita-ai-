@@ -6,12 +6,13 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
 import { useApp } from "../../Providers";
-import { Wallet, Lock, ArrowLeft, Send, Sparkles, X } from "lucide-react"; 
+import { Wallet, Lock, ArrowLeft, Send, Sparkles, X, Plus, Heart, Image as ImageIcon } from "lucide-react"; 
 
 type Message = {
   id: string;
   role: "user" | "assistant";
   content: string;
+  image?: string;
 };
 
 const INTENT_CHIPS = [
@@ -48,6 +49,11 @@ export default function AstrologerChatPage() {
   
   const [walletBalance, setWalletBalance] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+
+  // 🔥 NAYA: Image Upload State
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const endRef = useRef<HTMLDivElement>(null);
   const requestInProgress = useRef(false);
@@ -152,15 +158,37 @@ export default function AstrologerChatPage() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading]);
+  }, [messages, loading, imagePreview]);
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading || !astrologer || !validId || historyLoading || requestInProgress.current) return;
+  // 🔥 Image Handlers
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image 5MB se choti honi chahiye.");
+      return;
+    }
+
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  async function sendMessage(text: string, imageFile?: File | null) {
+    if ((!text.trim() && !imageFile) || loading || !astrologer || !validId || historyLoading || requestInProgress.current) return;
 
     const selectedPersona = id;
     const content = text.trim();
 
-    const userMessage: Message = { id: createMessageId(), role: "user", content };
+    // Add to UI
+    const tempImageUrl = imageFile ? URL.createObjectURL(imageFile) : undefined;
+    const userMessage: Message = { id: createMessageId(), role: "user", content: content || "Photo bheji hai", image: tempImageUrl };
 
     setMessages((previous) => [...previous, userMessage]);
     setInput("");
@@ -168,18 +196,19 @@ export default function AstrologerChatPage() {
     requestInProgress.current = true;
 
     try {
+      const formData = new FormData();
+      formData.append("message", content);
+      formData.append("language", lang);
+      formData.append("topic", astrologer.topic || "general");
+      formData.append("persona", selectedPersona);
+      if (conversationId) formData.append("conversationId", conversationId);
+      if (imageFile) formData.append("image", imageFile);
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(90_000),
-        body: JSON.stringify({
-          message: content,
-          language: lang,
-          topic: astrologer.topic || "general",
-          conversationId: conversationId || undefined,
-          persona: selectedPersona,
-        }),
+        body: formData, // Send as FormData
       });
 
       const data = await response.json().catch(() => ({}));
@@ -224,6 +253,7 @@ export default function AstrologerChatPage() {
     } finally {
       requestInProgress.current = false;
       if (activePersonaRef.current === selectedPersona) setLoading(false);
+      clearImage();
     }
   }
 
@@ -238,6 +268,7 @@ export default function AstrologerChatPage() {
   return (
     <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
       
+      {/* HEADER */}
       <header className={`sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <Link href="/" aria-label="Back" className={`text-2xl leading-none transition-transform active:scale-95 ${isDark ? "text-white" : "text-black"}`}>
@@ -245,31 +276,36 @@ export default function AstrologerChatPage() {
           </Link>
 
           <div className="h-10 w-10 flex-shrink-0 overflow-hidden rounded-full border border-orange-200">
-            <img
-              src={astrologer.photo}
-              alt={astrologer.name}
-              className="h-full w-full object-cover"
-            />
+            <img src={astrologer.photo} alt={astrologer.name} className="h-full w-full object-cover" />
           </div>
 
           <div className="min-w-0 flex-1">
-            <h1 className={`truncate text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-              {astrologer.name}
-            </h1>
+            <h1 className={`truncate text-sm font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{astrologer.name}</h1>
             <p className="text-[11px] font-semibold text-green-600 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
             </p>
           </div>
         </div>
 
-        <Link 
-          href="/wallet" 
-          className={`flex items-center gap-1 rounded-full px-2.5 py-1.5 text-xs font-bold transition hover:scale-105 cursor-pointer ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}
-        >
+        {/* 🔥 WALLET BALANCE DISPLAY */}
+        <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
           <Wallet size={12} />
           ₹{walletBalance / 100}
+          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
+          <Plus size={12} className="font-black" />
         </Link>
       </header>
+
+      {/* LOW BALANCE BANNER */}
+      {walletBalance < 200 && (
+         <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <div className="flex items-center gap-2">
+            <Heart size={14} className="text-red-500 animate-pulse" />
+            <span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span>
+          </div>
+          <span className="underline">Add Cash</span>
+        </Link>
+      )}
 
       <main className="flex-1 space-y-3 overflow-y-auto px-3 py-4" aria-live="polite">
         {historyLoading ? (
@@ -299,6 +335,9 @@ export default function AstrologerChatPage() {
                     ? "bg-orange-500 text-white rounded-br-sm"
                     : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm"
                 }`}>
+                  {message.image && (
+                    <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />
+                  )}
                   {message.content}
                 </div>
               </div>
@@ -315,32 +354,58 @@ export default function AstrologerChatPage() {
         <div ref={endRef} />
       </main>
 
+      {/* IMAGE PREVIEW */}
+      {imagePreview && (
+        <div className={`shrink-0 p-3 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+          <div className="relative inline-block">
+            <img src={imagePreview} alt="Selected" className="h-20 w-20 object-cover rounded-lg border-2 border-orange-500" />
+            <button onClick={clearImage} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* INPUT AREA */}
       <div className={`shrink-0 border-t p-3 pb-6 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
         <form
-          onSubmit={(e) => { e.preventDefault(); void sendMessage(input); }}
-          className="relative flex items-center max-w-xl mx-auto"
+          onSubmit={(e) => { e.preventDefault(); void sendMessage(input, selectedImage); }}
+          className="relative flex items-center max-w-xl mx-auto gap-2"
         >
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            disabled={loading || historyLoading}
-            placeholder="अपना सवाल लिखें..."
-            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${
-              isDark 
-                ? "bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" 
-                : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400"
-            }`}
-          />
-          <button
-            type="submit"
-            disabled={!input.trim() || loading || historyLoading}
-            className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}
           >
-            <Send size={18} />
+            <ImageIcon size={20} />
           </button>
+          
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
+
+          <div className="relative flex-1">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={loading || historyLoading}
+              placeholder="अपना सवाल लिखें..."
+              className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${
+                isDark 
+                  ? "bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" 
+                  : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400"
+              }`}
+            />
+            <button
+              type="submit"
+              disabled={(!input.trim() && !selectedImage) || loading || historyLoading}
+              className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"
+            >
+              <Send size={18} />
+            </button>
+          </div>
         </form>
       </div>
 
+      {/* PAYWALL MODAL */}
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
