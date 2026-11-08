@@ -392,3 +392,101 @@ export default function ChatPage() {
     </Suspense>
   );
 }
+nded-full shadow-md transition ${copiedId === message.id ? "bg-green-500 text-white opacity-100" : isDark ? "bg-slate-700 text-slate-300 opacity-0 group-hover:opacity-100" : "bg-orange-100 text-orange-600 opacity-0 group-hover:opacity-100"}`}>
+                  {copiedId === message.id ? <Check size={12} /> : <Copy size={12} />}
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {chart && (
+          <div className={`rounded-2xl border p-4 ${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-orange-100 shadow-sm"}`}>
+            <h3 className="text-xs font-bold text-orange-500 mb-2">✨ आपकी कुंडली</h3>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div><span className="opacity-60">Lagna:</span> <span className="font-bold">{chart.lagna.rashiNameHi}</span></div>
+              <div><span className="opacity-60">Rashi:</span> <span className="font-bold">{chart.moonSign.rashiNameHi}</span></div>
+              <div><span className="opacity-60">Nakshatra:</span> <span className="font-bold">{chart.nakshatra.name} ({chart.nakshatra.pada})</span></div>
+              <div><span className="opacity-60">Dasha:</span> <span className="font-bold">{chart.currentDasha?.maha ?? "—"}</span></div>
+            </div>
+          </div>
+        )}
+
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className={`rounded-2xl px-4 py-3 ${isDark ? "bg-slate-800" : "bg-white border border-orange-100"}`}>
+              <div className="flex gap-1">
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+                <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div ref={endRef} />
+      </div>
+
+      {showUpsell && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50" onClick={() => setShowUpsell(false)}>
+          <div className={`w-full max-w-md rounded-t-3xl p-6 ${isDark ? "bg-[#151E2E]" : "bg-white"}`} onClick={(e) => e.stopPropagation()}>
+            <div className="text-center">
+              <Sparkles className="mx-auto mb-3 text-orange-500" size={32} />
+              <h2 className="text-lg font-bold mb-2">Aur jaane ke liye recharge karein</h2>
+              <p className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Aapke free messages khatam ho gaye hain. Wallet recharge karke baat jaari rakhein.</p>
+              <Link href="/wallet" className="block w-full rounded-xl bg-orange-500 py-3 text-sm font-bold text-white">Recharge Wallet</Link>
+              <button onClick={() => setShowUpsell(false)} className={`mt-2 w-full py-2 text-xs ${isDark ? "text-slate-400" : "text-gray-500"}`}>Baad mein</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showInsufficientBalance && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${isDark ? "bg-[#151E2E]" : "bg-white"}`}>
+            <div className="text-center">
+              <Wallet className="mx-auto mb-3 text-orange-500" size={32} />
+              <h2 className="text-lg font-bold mb-2">Balance kam hai</h2>
+              <p className={`text-sm mb-4 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Wallet balance kam hai. Recharge karein aur baat jaari rakhein.</p>
+              <Link href="/wallet" className="block w-full rounded-xl bg-orange-500 py-3 text-sm font-bold text-white">Recharge</Link>
+              <button onClick={() => setShowInsufficientBalance(false)} className={`mt-2 w-full py-2 text-xs ${isDark ? "text-slate-400" : "text-gray-500"}`}>Band karein</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <footer className={`shrink-0 border-t px-3 py-3 ${inputWrapperClass}`}>
+        {imagePreview && (
+          <div className="mb-2 relative inline-block">
+            <img src={imagePreview} alt="preview" className="h-16 w-16 rounded-lg object-cover border-2 border-orange-300" />
+            <button onClick={clearImage} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-0.5"><X size={12} /></button>
+          </div>
+        )}
+        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+          <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+          <button type="button" onClick={() => fileInputRef.current?.click()} className={`shrink-0 rounded-xl p-2.5 ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"}`}>
+            <ImageIcon size={18} />
+          </button>
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder={step === "done" ? "Apna sawaal likhein..." : "Yahan likhein..."}
+            className={`flex-1 rounded-xl border px-3 py-2.5 text-sm outline-none ${inputClass}`}
+          />
+          <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="shrink-0 rounded-xl bg-orange-500 p-2.5 text-white disabled:opacity-40 active:scale-95 transition">
+            <Send size={18} />
+          </button>
+        </form>
+      </footer>
+    </div>
+  );
+}
+
+export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="flex h-screen w-full items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-orange-500" size={32} /></div>}>
+      <ChatPageContent />
+    </Suspense>
+  );
+}
