@@ -66,11 +66,16 @@ export default function WalletPage() {
     setSuccess(false);
 
     try {
-      // 1. Server par order create karo (Amount bhej rahe hain Rs. mein)
+      // 🔥 FIX: Bonus calculate kar rahe hain
+      const bonusAmount = amount >= 51 ? Math.floor(amount * 0.1) : 0;
+      const totalCredit = amount + bonusAmount;
+
+      // 1. Server par order create karo
       const orderRes = await fetch("/api/payment/create-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount }),
+        // 🔥 FIX: Bonus aur totalCredit bhi bhej rahe hain
+        body: JSON.stringify({ amount, bonusAmount, totalCredit }),
       });
 
       const orderData = await orderRes.json();
@@ -81,15 +86,15 @@ export default function WalletPage() {
 
       // 2. Razorpay popup kholo
       const options = {
-        key: orderData.key, // Backend se aayega
-        amount: orderData.amount, // Backend se paise mein aayega (e.g. 1100)
+        key: orderData.key,
+        amount: orderData.amount,
         currency: "INR",
         name: "Gita AI Astrologer",
         description: `Dakshina - ₹${amount}`,
         order_id: orderData.orderId,
-        image: "/icons/geeta_ai_icon_192.png",
+        // 🔥 FIX: Path sahi kiya
+        image: "/icon-192.png",
         handler: async function (response: any) {
-          // 3. Server par verify karo (Amount NAHI bhej rahe, security ke liye)
           const verifyRes = await fetch("/api/payment/verify", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -133,7 +138,6 @@ export default function WalletPage() {
     }
   };
 
-  // 🔥 NAYE PACKAGES (11, 21, 51, 101, 121, 151) 🔥
   const offers = [
     { price: 11, desc: "1 Question", tag: "Trial" },
     { price: 21, desc: "5 Mins Chat", tag: "Budget" },
@@ -144,7 +148,8 @@ export default function WalletPage() {
   ];
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
+    // 🔥 FIX: pb-44 se pb-32 kiya taaki banner overlap na kare
+    <main className={`min-h-screen w-full px-4 pb-32 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         
         {/* HEADER */}
