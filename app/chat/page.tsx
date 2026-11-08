@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -105,13 +105,11 @@ function ChatPageContent() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
-  
   const [showUpsell, setShowUpsell] = useState(false);
   const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
   const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -123,382 +121,163 @@ function ChatPageContent() {
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
   const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]";
-  const inputClass = isDark 
-    ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500/50" 
-    : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400 focus:ring-1 focus:ring-orange-400/50";
+  const inputClass = isDark ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400";
 
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
   const freeMessagesUsed = me?.user?.freeMessagesUsed ?? 0;
   const hasFreeMessagesLeft = freeMessagesUsed < 3;
   const isPremium = !!me?.user?.premiumUntil && new Date(me.user.premiumUntil) > new Date();
-  
   const isLowBalance = walletBalanceRupees < 2 && !hasFreeMessagesLeft && !isPremium;
   const shouldShowUpsell = !isPremium && !hasFreeMessagesLeft;
-
   const personaDetails = getPersonaDetails(persona);
 
   useEffect(() => {
     const p = searchParams.get("persona");
-    if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) {
-      setPersona(p);
-    }
-    
-    const rawTopic = searchParams.get("topic") || "";
-    const cleaned = rawTopic.toLowerCase().replace(/[^a-z]/g, "");
-    if (["palm", "love", "money", "remedies", "health", "career", "family"].includes(cleaned)) {
-      setTopic(cleaned);
-    }
-
+    if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) setPersona(p);
     const savedDraft = sessionStorage.getItem("gita_birth_draft");
-    if (savedDraft) {
-      try {
-        setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) });
-      } catch {
-        setDraft(EMPTY_DRAFT);
-      }
-    }
+    if (savedDraft) try { setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) }); } catch { setDraft(EMPTY_DRAFT); }
     if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
   }, [searchParams]);
 
   useEffect(() => {
-    if (me?.birth?.name && me.birth.dob && me.birth.birthTime && me.birth.birthPlace) {
-      setStep("done");
-      setDraft({
-        name: me.birth.name,
-        dob: me.birth.dob,
-        time: me.birth.birthTime,
-        place: me.birth.birthPlace,
-      });
-    }
+    if (me?.birth?.name) { setStep("done"); setDraft({ name: me.birth.name, dob: me.birth.dob, time: me.birth.birthTime, place: me.birth.birthPlace }); }
   }, [me]);
 
   useEffect(() => {
     if (loading || !me?.user) return;
-
     let cancelled = false;
-    setHistoryLoading(true);
-    setMessages([]); 
-    conversationId.current = ""; 
-
-    const fetchHistory = async () => {
-      try {
-        const response = await fetch(`/api/chat?persona=${persona}`, { cache: "no-store" });
-        const data = await response.json();
-        
+    setHistoryLoading(true); setMessages([]); conversationId.current = ""; 
+    fetch(`/api/chat?persona=${persona}`, { cache: "no-store" })
+      .then(res => res.json())
+      .then(data => {
         if (cancelled) return;
-        
-        if (response.ok) {
-          if (Array.isArray(data.messages) && data.messages.length > 0) {
-            setMessages(data.messages);
-          } else {
-            setMessages([]);
-          }
-          if (data.conversationId) {
-            conversationId.current = data.conversationId;
-          }
-        }
-      } catch (error) {
-        console.error("Failed to load history", error);
-      } finally {
-        if (!cancelled) setHistoryLoading(false);
-      }
-    };
-
-    fetchHistory();
-
+        if (Array.isArray(data.messages) && data.messages.length > 0) setMessages(data.messages);
+        if (data.conversationId) conversationId.current = data.conversationId;
+      }).catch(console.error).finally(() => { if (!cancelled) setHistoryLoading(false); });
     return () => { cancelled = true; };
   }, [persona, loading, me?.user]);
 
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isLoading, chart, imagePreview]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, isLoading, chart, imagePreview]);
 
-  function push(role: "user" | "assistant", content: string, image?: string) {
-    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role, content, image }]);
-  }
-
-  function remember(next: Draft, nextStep: Step) {
-    setDraft(next);
-    setStep(nextStep);
-    sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
-  }
-
-  const handleCopy = (id: string, text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
-  const handleNewChat = () => {
-    conversationId.current = ""; 
-    setMessages([]);
-    setChart(null);
-    setSidebarOpen(false);
-    setDoneQuestionsCount(0);
-    if (me?.birth?.name) {
-      setStep("done");
-    } else {
-      setStep("name");
-    }
-  };
-
-  const handleSelectChat = (id: string) => {
-    conversationId.current = id;
-    setMessages([]); 
-    setStep("done");
-    setSidebarOpen(false);
-  };
-
+  const handleCopy = (id: string, text: string) => { navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); };
+  const handleNewChat = () => { conversationId.current = ""; setMessages([]); setChart(null); setSidebarOpen(false); setDoneQuestionsCount(0); setStep(me?.birth?.name ? "done" : "name"); };
+  
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image 5MB se choti honi chahiye.");
-      return;
-    }
-
-    setSelectedImage(file);
-    setImagePreview(URL.createObjectURL(file));
+    if (file.size > 5 * 1024 * 1024) return alert("Image 5MB se choti honi chahiye.");
+    setSelectedImage(file); setImagePreview(URL.createObjectURL(file));
   };
-
-  const clearImage = () => {
-    setSelectedImage(null);
-    setImagePreview(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+  const clearImage = () => { setSelectedImage(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; };
 
   async function sendToAi(text: string, imageFile?: File | null) {
     setIsLoading(true);
-    
     const tempImageUrl = imageFile ? URL.createObjectURL(imageFile) : undefined;
-    if (text || tempImageUrl) {
-        push("user", text || "Photo bheji hai", tempImageUrl);
-    }
+    if (text || tempImageUrl) setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text || "Photo bheji hai", image: tempImageUrl }]);
 
     try {
       const formData = new FormData();
-      formData.append("message", text);
-      formData.append("language", lang);
-      formData.append("topic", topic);
-      formData.append("persona", persona);
+      formData.append("message", text); formData.append("language", lang); formData.append("topic", topic); formData.append("persona", persona);
       if (conversationId.current) formData.append("conversationId", conversationId.current);
       if (imageFile) formData.append("image", imageFile);
 
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        cache: "no-store",
-        signal: AbortSignal.timeout(90000),
-        body: formData, 
-      });
-      
+      const response = await fetch("/api/chat", { method: "POST", cache: "no-store", signal: AbortSignal.timeout(90000), body: formData });
       const data = await response.json().catch(() => ({}));
       
-      if (typeof data.conversationId === "string") {
-        conversationId.current = data.conversationId;
-      }
-      
+      if (typeof data.conversationId === "string") conversationId.current = data.conversationId;
       if (!response.ok) {
-        if (data.code === "INSUFFICIENT_BALANCE") {
-          setShowInsufficientBalance(true);
-          return;
-        }
-        push("assistant", typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।");
-        return;
+        if (data.code === "INSUFFICIENT_BALANCE") return setShowInsufficientBalance(true);
+        return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।" }]);
       }
-      
-      push("assistant", typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।");
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: typeof data.reply === "string" ? data.reply : "अभी उत्तर खाली आया।" }]);
       await refresh(); 
     } catch (error) {
       const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
-      push(
-        "assistant",
-        timedOut
-          ? lang === "hi" ? "उत्तर आने में ज़्यादा समय लग गया।" : "The reply took too long."
-          : lang === "hi" ? "सर्वर से संपर्क नहीं हो पाया।" : "Could not reach the server."
-      );
-    } finally {
-      setIsLoading(false);
-      clearImage();
-    }
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: timedOut ? "उत्तर आने में ज़्यादा समय लग गया।" : "सर्वर से संपर्क नहीं हो पाया।" }]);
+    } finally { setIsLoading(false); clearImage(); }
   }
 
   async function finishKundli(next: Draft) {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/kundli", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: next.name,
-          dateOfBirth: next.dob,
-          timeOfBirth: next.time,
-          placeOfBirth: next.place,
-        }),
-      });
+      const response = await fetch("/api/kundli", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: next.name, dateOfBirth: next.dob, timeOfBirth: next.time, placeOfBirth: next.place }) });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.chart) {
-        push("assistant", typeof data.error === "string" ? data.error : "कुंडली गणना नहीं हो सकी। स्थान फिर लिखें।");
-        setStep("place");
-        return;
-      }
-      setChart(data.chart as PublicChart);
-      setStep("done");
-      sessionStorage.removeItem("gita_birth_draft");
-      push(
-        "assistant",
-        lang === "hi"
-          ? "आपकी गणना की गई कुंडली तैयार है। नीचे कार्ड देखें।"
-          : "Your calculated kundli is ready. The card is below."
-      );
+      if (!response.ok || !data.chart) { setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "कुंडली गणना नहीं हो सकी।" }]); return setStep("place"); }
+      setChart(data.chart as PublicChart); setStep("done"); sessionStorage.removeItem("gita_birth_draft");
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "आपकी कुंडली तैयार है। नीचे कार्ड देखें।" }]);
       await refresh();
-    } finally {
-      setIsLoading(false);
-    }
+    } finally { setIsLoading(false); }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
     if ((!text && !selectedImage) || isLoading) return;
-    
     setInput("");
 
     if (step === "done" && !showUpsell && shouldShowUpsell && hasFreeMessagesLeft) {
-      const newCount = doneQuestionsCount + 1;
-      setDoneQuestionsCount(newCount);
-      if (newCount >= 3) {
-        setShowUpsell(true);
-      }
+      const newCount = doneQuestionsCount + 1; setDoneQuestionsCount(newCount);
+      if (newCount >= 3) setShowUpsell(true);
     }
 
-    if (step === "done" || (looksLikeQuestion(text) && step !== "language")) {
-      await sendToAi(text, selectedImage);
-      return;
-    }
-
+    if (step === "done" || (looksLikeQuestion(text) && step !== "language")) return await sendToAi(text, selectedImage);
     if (step === "language") {
-      const value = /hindi|हिंदी|हिन्दी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi|अंग्रेजी/i.test(text) ? "en" : null;
-      if (!value) {
-        push("assistant", questionFor("language", lang, personaDetails.name));
-        return;
-      }
-      await setLanguage(value);
-      sessionStorage.setItem("gita_lang_confirmed", "1");
-      setStep(me?.birth?.name ? "done" : "name");
-      push("assistant", questionFor(me?.birth?.name ? "done" : "name", value, personaDetails.name));
-      return;
+      const value = /hindi|हिंदी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi/i.test(text) ? "en" : null;
+      if (!value) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("language", lang, personaDetails.name) }]);
+      await setLanguage(value); sessionStorage.setItem("gita_lang_confirmed", "1"); setStep(me?.birth?.name ? "done" : "name");
+      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", value, personaDetails.name) }]);
     }
-
     if (step === "name") {
-      if (text.length < 2 || text.length > 100) {
-        push("assistant", questionFor("name", lang, personaDetails.name));
-        return;
-      }
-      const next = { ...draft, name: text };
-      remember(next, "dob");
-      push("assistant", (lang === "hi" ? "धन्यवाद " + text + "। " : "Thank you, " + text + ". ") + questionFor("dob", lang, personaDetails.name));
-      return;
+      if (text.length < 2) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("name", lang, personaDetails.name) }]);
+      const next = { ...draft, name: text }; setDraft(next); setStep("dob"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "धन्यवाद " + text + "। " + questionFor("dob", lang, personaDetails.name) }]);
     }
-
     if (step === "dob") {
-      const dob = parseDate(text);
-      if (!dob) {
-        push("assistant", questionFor("dob", lang, personaDetails.name));
-        return;
-      }
-      const next = { ...draft, dob };
-      remember(next, "time");
-      push("assistant", questionFor("time", lang, personaDetails.name));
-      return; 
+      const dob = parseDate(text); if (!dob) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("dob", lang, personaDetails.name) }]);
+      const next = { ...draft, dob }; setDraft(next); setStep("time"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("time", lang, personaDetails.name) }]);
     }
-
     if (step === "time") {
-      const time = parseTime(text);
-      if (!time) {
-        push("assistant", questionFor("time", lang, personaDetails.name));
-        return;
-      }
-      const next = { ...draft, time };
-      remember(next, "place");
-      push("assistant", questionFor("place", lang, personaDetails.name));
-      return;
+      const time = parseTime(text); if (!time) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("time", lang, personaDetails.name) }]);
+      const next = { ...draft, time }; setDraft(next); setStep("place"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("place", lang, personaDetails.name) }]);
     }
-
     if (step === "place") {
-      if (text.length < 2) {
-        push("assistant", questionFor("place", lang, personaDetails.name));
-        return;
-      }
-      const next = { ...draft, place: text };
-      remember(next, "place");
-      push("assistant", lang === "hi" ? "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" : "Place noted. I am calculating the chart.");
-      await finishKundli(next);
-      return;
+      if (text.length < 2) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("place", lang, personaDetails.name) }]);
+      const next = { ...draft, place: text }; setDraft(next); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" }]);
+      return await finishKundli(next);
     }
-
     await sendToAi(text, selectedImage);
   }
 
-  if (loading || historyLoading) {
-    return (
-      <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}>
-        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
-        <p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p>
-      </div>
-    );
-  }
-
-  if (sessionError || !me?.user) {
-    return (
-      <div className={`flex h-[100dvh] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
-        <p className="text-3xl mb-4">⚠️</p>
-        <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
-        <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
-        <button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all active:scale-95 shadow-md">Try Again</button>
-      </div>
-    );
-  }
+  if (loading || historyLoading) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}><Sparkles size={32} className="animate-spin text-orange-500 mb-4" /><p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p></div>;
+  if (sessionError || !me?.user) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}><p className="text-3xl mb-4">⚠️</p><h2 className="text-lg font-bold text-red-500">Connection Failed</h2><button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white">Try Again</button></div>;
 
   const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
       
-      <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={handleSelectChat} onNewChat={handleNewChat} />
+      <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={(id) => { conversationId.current = id; setMessages([]); setStep("done"); setSidebarOpen(false); }} onNewChat={handleNewChat} />
 
       <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
         <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(true)} className={`rounded-xl p-2 transition-colors ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}>
-            <Menu size={20} />
-          </button>
-          
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-orange-200">
-            <img src={personaDetails.img} alt={personaDetails.name} className="h-full w-full object-cover" />
-          </div>
+          <button onClick={() => setSidebarOpen(true)} className={`rounded-xl p-2 ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}><Menu size={20} /></button>
+          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-orange-200"><img src={personaDetails.img} alt={personaDetails.name} className="h-full w-full object-cover" /></div>
           <div>
             <h1 className="text-sm font-bold text-orange-500">{personaDetails.name}</h1>
-            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online
-            </p>
+            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online</p>
           </div>
         </div>
-        
         <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
-          <Wallet size={12} />
-          ₹{walletBalanceRupees}
-          <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span>
-          <Plus size={12} className="font-black" />
+          <Wallet size={12} /> ₹{walletBalanceRupees} <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span> <Plus size={12} className="font-black" />
         </Link>
       </header>
 
       {isLowBalance && step === "done" && (
-        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-          <div className="flex items-center gap-2">
-            <Heart size={14} className="text-red-500 animate-pulse" />
-            <span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span>
-          </div>
-          <span className="underline">Add Cash</span>
+        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 shrink-0 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
+          <div className="flex items-center gap-2"><Heart size={14} className="text-red-500 animate-pulse" /><span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span></div><span className="underline">Add Cash</span>
         </Link>
       )}
 
@@ -512,17 +291,11 @@ function ChatPageContent() {
         {step === "language" && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
-              <button
-                key={code}
-                type="button"
-                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
+              <button key={code} type="button" className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
                 onClick={() => {
-                  void setLanguage(code);
-                  sessionStorage.setItem("gita_lang_confirmed", "1");
-                  setStep(me?.birth?.name ? "done" : "name");
-                  push("assistant", questionFor(me?.birth?.name ? "done" : "name", code, personaDetails.name));
-                }}
-              >
+                  void setLanguage(code); sessionStorage.setItem("gita_lang_confirmed", "1"); setStep(me?.birth?.name ? "done" : "name");
+                  setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", code, personaDetails.name) }]);
+                }}>
                 {label}
               </button>
             ))}
@@ -532,9 +305,7 @@ function ChatPageContent() {
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
             <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
-              {message.image && (
-                <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />
-              )}
+              {message.image && <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />}
               {message.content}
               {message.role === "assistant" && (
                 <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`} aria-label="Copy message">
@@ -567,46 +338,21 @@ function ChatPageContent() {
         <div ref={endRef} />
       </div>
 
-      {/* FIX: Input area is shrink-0 and handles safe area padding */}
       <div className={`shrink-0 border-t p-3 pb-[env(safe-area-inset-bottom,12px)] z-20 ${inputWrapperClass}`}>
-        
-        {/* FIX: Clean Photo Preview instead of big box */}
         {imagePreview && (
           <div className="mb-2 relative inline-block">
             <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-orange-300 shadow-sm" />
-            <button 
-              onClick={clearImage} 
-              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
-            >
-              <X size={10} />
-            </button>
+            <button onClick={clearImage} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"><X size={10} /></button>
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto gap-2">
-          
-          <button 
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}
-          >
-            <ImageIcon size={20} />
-          </button>
-          
+          <button type="button" onClick={() => fileInputRef.current?.click()} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}><ImageIcon size={20} /></button>
           <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
 
           <div className="relative flex-1">
-            <input
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              maxLength={8000}
-              disabled={isLoading}
-              placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
-              className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
-            />
-            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} aria-label="Send" className="absolute right-2 top-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
-              <Send size={18} />
-            </button>
+            <input value={input} onChange={(e) => setInput(e.target.value)} maxLength={8000} disabled={isLoading} placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."} className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`} />
+            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="absolute right-2 top-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"><Send size={18} /></button>
           </div>
         </form>
       </div>
@@ -614,23 +360,12 @@ function ChatPageContent() {
       {showUpsell && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20 text-rose-500 mb-4">
-              <Heart size={32} className="animate-pulse" />
-            </div>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-rose-500/20 text-rose-500 mb-4"><Heart size={32} className="animate-pulse" /></div>
             <h2 className="text-xl font-black text-white mb-2">Ruko! Ek Baat Suno...</h2>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              {personaDetails.name} ne aapki kundli me ek aur gehri baat dhoondhi hai. Apne 3 free messages use ho gaye hain — kya aap apni kundli ka pura vishleshan jaanna chahte hain?
-            </p>
-            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
-              <span className="text-xs font-semibold text-slate-400">Per Message</span>
-              <span className="text-lg font-black text-white">₹2 <span className="text-xs text-slate-400">/ message</span></span>
-            </div>
-            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3.5 text-sm font-black text-white shadow-lg shadow-rose-500/20 active:scale-95 transition-transform">
-              Recharge & Continue with {personaDetails.name}
-            </Link>
-            <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
-              <X size={14} /> Baad me dekhenge
-            </button>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">{personaDetails.name} ne aapki kundli me ek aur gehri baat dhoondhi hai. Apne 3 free messages use ho gaye hain — kya aap apni kundli ka pura vishleshan jaanna chahte hain?</p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700"><span className="text-xs font-semibold text-slate-400">Per Message</span><span className="text-lg font-black text-white">₹2 <span className="text-xs text-slate-400">/ message</span></span></div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-rose-600 to-orange-500 py-3.5 text-sm font-black text-white shadow-lg active:scale-95 transition-transform">Recharge & Continue with {personaDetails.name}</Link>
+            <button onClick={() => setShowUpsell(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Baad me dekhenge</button>
           </div>
         </div>
       )}
@@ -638,23 +373,12 @@ function ChatPageContent() {
       {showInsufficientBalance && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4">
-              <Sparkles size={32} />
-            </div>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4"><Sparkles size={32} /></div>
             <h2 className="text-xl font-black text-white mb-2">Hamari Baat Adhuri Hai...</h2>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">
-              {personaDetails.name} aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.
-            </p>
-            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
-              <span className="text-xs font-semibold text-slate-400">Current Balance</span>
-              <span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span>
-            </div>
-            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
-              Recharge & Continue with {personaDetails.name}
-            </Link>
-            <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full">
-              <X size={14} /> Band Karein
-            </button>
+            <p className="text-sm text-slate-300 mb-6 leading-relaxed">{personaDetails.name} aapse aur baatein karna chahti hai, par aapka wallet balance khatam ho gaya hai. Aapki kundli ke raaz abhi bhi baki hain.</p>
+            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700"><span className="text-xs font-semibold text-slate-400">Current Balance</span><span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span></div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg active:scale-95 transition-transform">Recharge & Continue with {personaDetails.name}</Link>
+            <button onClick={() => setShowInsufficientBalance(false)} className="mt-4 text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Band Karein</button>
           </div>
         </div>
       )}
@@ -664,12 +388,7 @@ function ChatPageContent() {
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={
-      <div className="flex h-[100dvh] w-full flex-col items-center justify-center bg-[#0B0F19] text-white">
-        <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
-        <p className="text-sm font-semibold text-orange-500">Loading Chat...</p>
-      </div>
-    }>
+    <Suspense fallback={<div className="flex h-[100dvh] w-full flex-col items-center justify-center bg-[#0B0F19] text-white"><Sparkles size={32} className="animate-spin text-orange-500 mb-4" /><p className="text-sm font-semibold text-orange-500">Loading Chat...</p></div>}>
       <ChatPageContent />
     </Suspense>
   );
