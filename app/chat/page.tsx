@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -112,7 +112,6 @@ function ChatPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // 🔥 Image Upload States
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -173,7 +172,6 @@ function ChatPageContent() {
     }
   }, [me]);
 
-  // 🔥 FIX: Fetch history specifically for the selected persona
   useEffect(() => {
     if (loading || !me?.user) return;
 
@@ -251,7 +249,6 @@ function ChatPageContent() {
     setSidebarOpen(false);
   };
 
-  // 🔥 Image Select Handler
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -445,7 +442,7 @@ function ChatPageContent() {
 
   if (loading || historyLoading) {
     return (
-      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center ${pageClass}`}>
+      <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}>
         <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
         <p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p>
       </div>
@@ -454,7 +451,7 @@ function ChatPageContent() {
 
   if (sessionError || !me?.user) {
     return (
-      <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
+      <div className={`flex h-[100dvh] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}>
         <p className="text-3xl mb-4">⚠️</p>
         <h2 className="text-lg font-bold text-red-500">Connection Failed</h2>
         <p className={`text-sm mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Could not start your session. Please check your internet or try again.</p>
@@ -466,7 +463,7 @@ function ChatPageContent() {
   const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
-    <div className={`flex h-[calc(100dvh-80px)] min-h-[400px] w-full flex-col transition-colors duration-300 ${pageClass}`}>
+    <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
       
       <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={handleSelectChat} onNewChat={handleNewChat} />
 
@@ -506,12 +503,12 @@ function ChatPageContent() {
       )}
 
       {step !== "done" && (
-        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
+        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 shrink-0 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
           ✨ Pehli Chat 100% FREE ✨
         </div>
       )}
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-4 pb-6" aria-live="polite">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4" aria-live="polite">
         {step === "language" && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
             {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
@@ -535,14 +532,10 @@ function ChatPageContent() {
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
             <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
-              
-              {/* 🔥 Render Image if exists */}
               {message.image && (
                 <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />
               )}
-              
               {message.content}
-              
               {message.role === "assistant" && (
                 <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`} aria-label="Copy message">
                   {copiedId === message.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -574,41 +567,33 @@ function ChatPageContent() {
         <div ref={endRef} />
       </div>
 
-      {/* IMAGE PREVIEW AREA */}
-      {imagePreview && (
-        <div className={`shrink-0 p-3 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
-          <div className="relative inline-block">
-            <img src={imagePreview} alt="Selected" className="h-20 w-20 object-cover rounded-lg border-2 border-orange-500" />
+      {/* FIX: Input area is shrink-0 and handles safe area padding */}
+      <div className={`shrink-0 border-t p-3 pb-[env(safe-area-inset-bottom,12px)] z-20 ${inputWrapperClass}`}>
+        
+        {/* FIX: Clean Photo Preview instead of big box */}
+        {imagePreview && (
+          <div className="mb-2 relative inline-block">
+            <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border border-orange-300 shadow-sm" />
             <button 
               onClick={clearImage} 
-              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+              className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
             >
-              <X size={12} />
+              <X size={10} />
             </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <div className={`shrink-0 border-t p-3 pb-4 sm:pb-3 z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto gap-2">
           
-          {/* 🔥 PHOTO UPLOAD BUTTON */}
           <button 
             type="button"
             onClick={() => fileInputRef.current?.click()}
             className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}
-            title="Photo attach karein"
           >
             <ImageIcon size={20} />
           </button>
           
-          <input
-            type="file"
-            accept="image/*"
-            ref={fileInputRef}
-            onChange={handleImageSelect}
-            className="hidden"
-          />
+          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
 
           <div className="relative flex-1">
             <input
@@ -619,7 +604,7 @@ function ChatPageContent() {
               placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
               className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
             />
-            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
+            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} aria-label="Send" className="absolute right-2 top-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
               <Send size={18} />
             </button>
           </div>
@@ -680,7 +665,7 @@ function ChatPageContent() {
 export default function ChatPage() {
   return (
     <Suspense fallback={
-      <div className="flex h-[calc(100dvh-80px)] w-full flex-col items-center justify-center bg-[#0B0F19] text-white">
+      <div className="flex h-[100dvh] w-full flex-col items-center justify-center bg-[#0B0F19] text-white">
         <Sparkles size={32} className="animate-spin text-orange-500 mb-4" />
         <p className="text-sm font-semibold text-orange-500">Loading Chat...</p>
       </div>
