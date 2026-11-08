@@ -2,15 +2,15 @@
 "use client";
 
 import { useEffect, useRef, useState, Suspense } from "react";
-import type { FormEvent } from "react";
+import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Send, Sparkles, Phone, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart } from "lucide-react";
+import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
 
-type Message = { id: string; role: "user" | "assistant"; content: string };
+type Message = { id: string; role: "user" | "assistant"; content: string; image?: string };
 type Step = "language" | "name" | "dob" | "time" | "place" | "done";
 type Draft = { name: string; dob: string; time: string; place: string };
 type PublicChart = {
@@ -112,8 +112,13 @@ function ChatPageContent() {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // 🔥 Image Upload States
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isDark = theme === "dark";
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
@@ -168,6 +173,7 @@ function ChatPageContent() {
     }
   }, [me]);
 
+  // 🔥 FIX: Fetch history specifically for the selected persona
   useEffect(() => {
     if (loading || !me?.user) return;
 
@@ -207,10 +213,10 @@ function ChatPageContent() {
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, isLoading, chart]);
+  }, [messages, isLoading, chart, imagePreview]);
 
-  function push(role: "user" | "assistant", content: string) {
-    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role, content }]);
+  function push(role: "user" | "assistant", content: string, image?: string) {
+    setMessages((previous) => [...previous, { id: crypto.randomUUID(), role, content, image }]);
   }
 
   function remember(next: Draft, nextStep: Step) {
@@ -245,22 +251,50 @@ function ChatPageContent() {
     setSidebarOpen(false);
   };
 
-  async function sendToAi(text: string) {
+  // 🔥 Image Select Handler
+  const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image 5MB se choti honi chahiye.");
+      return;
+    }
+
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const clearImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  async function sendToAi(text: string, imageFile?: File | null) {
     setIsLoading(true);
+    
+    const tempImageUrl = imageFile ? URL.createObjectURL(imageFile) : undefined;
+    if (text || tempImageUrl) {
+        push("user", text || "Photo bheji hai", tempImageUrl);
+    }
+
     try {
+      const formData = new FormData();
+      formData.append("message", text);
+      formData.append("language", lang);
+      formData.append("topic", topic);
+      formData.append("persona", persona);
+      if (conversationId.current) formData.append("conversationId", conversationId.current);
+      if (imageFile) formData.append("image", imageFile);
+
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
         cache: "no-store",
         signal: AbortSignal.timeout(90000),
-        body: JSON.stringify({
-          message: text,
-          language: lang,
-          topic,
-          conversationId: conversationId.current || undefined,
-          persona: persona,
-        }),
+        body: formData, 
       });
+      
       const data = await response.json().catch(() => ({}));
       
       if (typeof data.conversationId === "string") {
@@ -288,6 +322,7 @@ function ChatPageContent() {
       );
     } finally {
       setIsLoading(false);
+      clearImage();
     }
   }
 
@@ -328,9 +363,9 @@ function ChatPageContent() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const text = input.trim();
-    if (!text || isLoading) return;
+    if ((!text && !selectedImage) || isLoading) return;
+    
     setInput("");
-    push("user", text);
 
     if (step === "done" && !showUpsell && shouldShowUpsell && hasFreeMessagesLeft) {
       const newCount = doneQuestionsCount + 1;
@@ -340,8 +375,8 @@ function ChatPageContent() {
       }
     }
 
-    if (looksLikeQuestion(text) && step !== "language") {
-      await sendToAi(text);
+    if (step === "done" || (looksLikeQuestion(text) && step !== "language")) {
+      await sendToAi(text, selectedImage);
       return;
     }
 
@@ -405,7 +440,7 @@ function ChatPageContent() {
       return;
     }
 
-    await sendToAi(text);
+    await sendToAi(text, selectedImage);
   }
 
   if (loading || historyLoading) {
@@ -500,7 +535,14 @@ function ChatPageContent() {
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
             <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
+              
+              {/* 🔥 Render Image if exists */}
+              {message.image && (
+                <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />
+              )}
+              
               {message.content}
+              
               {message.role === "assistant" && (
                 <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full border shadow-sm transition-all ${isDark ? "bg-slate-700 border-slate-600 text-slate-300 hover:text-white" : "bg-white border-gray-200 text-gray-400 hover:text-orange-500"}`} aria-label="Copy message">
                   {copiedId === message.id ? <Check size={12} className="text-green-500" /> : <Copy size={12} />}
@@ -532,19 +574,55 @@ function ChatPageContent() {
         <div ref={endRef} />
       </div>
 
+      {/* IMAGE PREVIEW AREA */}
+      {imagePreview && (
+        <div className={`shrink-0 p-3 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
+          <div className="relative inline-block">
+            <img src={imagePreview} alt="Selected" className="h-20 w-20 object-cover rounded-lg border-2 border-orange-500" />
+            <button 
+              onClick={clearImage} 
+              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className={`shrink-0 border-t p-3 pb-4 sm:pb-3 z-20 ${inputWrapperClass}`}>
-        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto">
-          <input
-            value={input}
-            onChange={(event) => setInput(event.target.value)}
-            maxLength={8000}
-            disabled={isLoading}
-            placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
-            className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
-          />
-          <button type="submit" disabled={!input.trim() || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
-            <Send size={18} />
+        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto gap-2">
+          
+          {/* 🔥 PHOTO UPLOAD BUTTON */}
+          <button 
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}
+            title="Photo attach karein"
+          >
+            <ImageIcon size={20} />
           </button>
+          
+          <input
+            type="file"
+            accept="image/*"
+            ref={fileInputRef}
+            onChange={handleImageSelect}
+            className="hidden"
+          />
+
+          <div className="relative flex-1">
+            <input
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              maxLength={8000}
+              disabled={isLoading}
+              placeholder={lang === "hi" ? "अपना संदेश लिखें..." : "Type a message..."}
+              className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`}
+            />
+            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} aria-label="Send" className="absolute right-2 flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md">
+              <Send size={18} />
+            </button>
+          </div>
         </form>
       </div>
 
