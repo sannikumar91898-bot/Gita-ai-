@@ -1,7 +1,7 @@
 // app/settings/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, 
   Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, 
@@ -35,6 +35,12 @@ export default function SettingsPage() {
   const [showAvatarModal, setShowAvatarModal] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
 
+  // 🔥 FIX 1: Profile Photo ko LocalStorage se load karo taaki save rahe
+  useEffect(() => {
+    const savedAvatar = localStorage.getItem("gita_avatar");
+    if (savedAvatar) setSelectedAvatar(savedAvatar);
+  }, []);
+
   const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
   const isLoggedIn = Boolean(me?.user && !me.user.isGuest && me.user.email);
@@ -47,7 +53,8 @@ export default function SettingsPage() {
 
   const exploreItems = [
     { name: t("होम", "Home", "Home"), icon: Home, href: "/" },
-    { name: t("गीता AI से चैट करें", "Chat with Gita AI", "Chat with Gita AI"), icon: MessageCircle, href: "/chat" },
+    // 🔥 FIX 2: Chat link ko persona ke sath bhejo
+    { name: t("गीता AI से चैट करें", "Chat with Gita AI", "Chat with Gita AI"), icon: MessageCircle, href: "/chat?persona=gita" },
     { name: t("मेरी कुंडली", "My Kundli", "My Kundli"), icon: Scroll, href: "/kundli" },
   ];
 
@@ -58,15 +65,16 @@ export default function SettingsPage() {
     { name: t("ऑर्डर हिस्ट्री", "Order History", "Order History"), icon: List, href: "/orders" },
   ];
 
-  // 🔥 NAYA: Legal & Support Links for Play Store Compliance 🔥
   const legalItems = [
     { name: t("प्राइवेसी पॉलिसी", "Privacy Policy", "Privacy Policy"), icon: Shield, href: "/privacy" },
     { name: t("नियम और शर्तें", "Terms of Service", "Terms of Service"), icon: FileText, href: "/terms" },
     { name: t("संपर्क करें", "Contact Us", "Contact Us"), icon: Mail, href: "/contact" },
   ];
 
+  // 🔥 FIX 3: Avatar select karne par LocalStorage me save karo
   const handleAvatarSelect = (url: string) => {
     setSelectedAvatar(url);
+    localStorage.setItem("gita_avatar", url);
     setShowAvatarModal(false);
   };
 
@@ -87,7 +95,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-40 pt-5 ${pageClass}`}>
+    // 🔥 FIX 4: pb-40 se pb-32 kiya taaki content banner ke niche na chhupe
+    <main className={`min-h-screen w-full px-4 pb-32 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-6">
         
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
@@ -141,7 +150,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 🔥 NAYA SECTION: Legal & Support 🔥 */}
         <section className="space-y-2">
           <h3 className={`px-1 text-xs font-bold uppercase ${mutedClass}`}>{t("कानूनी जानकारी", "Legal & Support", "Legal & Support")}</h3>
           <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
@@ -175,7 +183,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* LOGOUT SECTION */}
         <section className="pt-2">
           <button
             onClick={handleLogout}
