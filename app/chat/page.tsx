@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ArrowLeft, Send, Sparkles, Plus, Wallet, AlertTriangle, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
+import { Send, Sparkles, Plus, Wallet, X, Lock, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -97,7 +97,6 @@ function ChatPageContent() {
   const searchParams = useSearchParams();
   
   const [persona, setPersona] = useState("gita");
-  const [topic, setTopic] = useState("general");
   const [step, setStep] = useState<Step>("language");
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [chart, setChart] = useState<PublicChart | null>(null);
@@ -177,7 +176,7 @@ function ChatPageContent() {
 
     try {
       const formData = new FormData();
-      formData.append("message", text); formData.append("language", lang); formData.append("topic", topic); formData.append("persona", persona);
+      formData.append("message", text); formData.append("language", lang); formData.append("persona", persona);
       if (conversationId.current) formData.append("conversationId", conversationId.current);
       if (imageFile) formData.append("image", imageFile);
 
@@ -304,7 +303,7 @@ function ChatPageContent() {
 
         {shownMessages.map((message) => (
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-            <div className={"relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm " + (message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm")}>
+            <div className={`relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-4 py-3 text-[15px] leading-relaxed shadow-sm ${message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm"}`}>
               {message.image && <img src={message.image} alt="User uploaded" className="mb-2 max-w-full rounded-lg h-40 object-cover" />}
               {message.content}
               {message.role === "assistant" && (
