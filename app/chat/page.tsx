@@ -248,16 +248,13 @@ function ChatPageContent() {
       return await finishKundli(next);
     }
     await sendToAi(text, selectedImage);
-  }
-
-  if (loading || historyLoading) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}><Sparkles size={32} className="animate-spin text-orange-500 mb-4" /><p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p></div>;
+  }  if (loading || historyLoading) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}><Sparkles size={32} className="animate-spin text-orange-500 mb-4" /><p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p></div>;
   if (sessionError || !me?.user) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}><p className="text-3xl mb-4">⚠️</p><h2 className="text-lg font-bold text-red-500">Connection Failed</h2><button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white">Try Again</button></div>;
 
   const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
-
       <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={(id) => { conversationId.current = id; setMessages([]); setStep("done"); setSidebarOpen(false); }} onNewChat={handleNewChat} />
 
       <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
