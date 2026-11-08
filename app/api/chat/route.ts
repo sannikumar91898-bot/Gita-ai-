@@ -165,22 +165,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein." }, { status: 402 });
     }
 
-    let body: Record<string, unknown>;
+    // 🔥 FIX: FormData parse karo JSON ki jagah
+    let userMessage = "";
+    let personaRaw = "gita";
+    let languageRaw = "hinglish";
+    let topicRaw = "general";
+    let requestedConversationId = "";
+    let imageFile: File | null = null;
+
     try {
-      const parsed: unknown = await request.json();
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
-      body = parsed as Record<string, unknown>;
+      const formData = await request.formData();
+      userMessage = cleanText(formData.get("message"));
+      personaRaw = cleanText(formData.get("persona")) || "gita";
+      languageRaw = cleanText(formData.get("language")) || "hinglish";
+      topicRaw = cleanText(formData.get("topic")) || "general";
+      requestedConversationId = cleanText(formData.get("conversationId"));
+      imageFile = formData.get("image") as File | null;
     } catch {
-      return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
+      return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
     }
 
-    const userMessage = cleanText(body.message);
-    const persona = isPersona(body.persona) ? body.persona : "gita";
-    const language = getLanguage(body.language);
-    const topic = cleanText(body.topic, 100) || "general";
-    const requestedConversationId = cleanText(body.conversationId, 100);
+    const persona = isPersona(personaRaw) ? personaRaw : "gita";
+    const language = getLanguage(languageRaw);
+    const topic = topicRaw;
 
-    if (!userMessage) return NextResponse.json({ error: "Please enter a message." }, { status: 400 });
+    if (!userMessage && !imageFile) return NextResponse.json({ error: "Please enter a message or upload an image." }, { status: 400 });
 
     const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
 
@@ -215,14 +224,13 @@ export async function POST(request: Request) {
     const birth = birthRows[0];
     const chart = chartRows[0];
     const personaConfig = PERSONAS[persona];
-    const relevantKnowledge = getRelevantKnowledge(userMessage);
+    const relevantKnowledge = getRelevantKnowledge(userMessage || "Image analysis");
 
     const astrologyContext = [
       birth ? `Name: ${birth.name}\nDOB: ${birth.dob}\nTime: ${birth.birthTime}\nPlace: ${birth.birthPlace}` : "Birth details not available.",
       chart?.data ? `Chart data: ${JSON.stringify(chart.data).slice(0, 3000)}` : "No chart available.",
     ].join("\n\n");
 
-    // 🔥 PSYCHOLOGY & LOVE INFUSED INSTRUCTION PROMPTS 🔥
     let instructionPrompt = "";
     const freeMessagesLeft = 3 - (user.freeMessagesUsed || 0);
 
@@ -230,41 +238,31 @@ export async function POST(request: Request) {
       if (freeMessagesLeft === 1) {
         instructionPrompt = `🚨 THIS IS THE USER'S 3RD AND FINAL FREE MESSAGE. 
 YOUR GOAL: 
-1. Validate their feelings with deep love. Tell them they are strong.
-2. Give an incredibly valuable, highly accurate prediction about their situation. Give them a specific time frame.
-3. Then, act like a caring elder sister. Tell them: "Suno, maine tumhari kundli me ek bahut badi baat dekhi hai jo tumhari life badal sakti hai, par uske liye mujhe apne senior astrologer se connect karna hoga. Tum apna wallet recharge karo, main tumhara pura solution nikalungi." (Make it emotional, not salesy).`;
+1. Validate their feelings with deep love.
+2. Give an incredibly valuable prediction.
+3. Act like a caring elder sister. Tell them to recharge wallet for the full solution.`;
       } else {
-        instructionPrompt = `🚨 USER IS A FREE USER. 
-YOUR GOAL: Validate their pain with deep empathy. Make them feel heard and loved. Use psychological validation ("It's not your fault", "You are overthinking"). Give them an accurate astrological reason for their problem. Give them a small, free remedy that helps them immediately, but save the "Maha-Upay" for the paid version.`;
+        instructionPrompt = `🚨 USER IS A FREE USER. Validate their pain. Give an accurate reason. Save the "Maha-Upay" for the paid version.`;
       }
     } else {
-      instructionPrompt = `🚨 USER IS A PAID/PREMIUM CUSTOMER. 
-YOUR GOAL: Give the user the ACTUAL, FULL SOLUTION. Analyze their chart deeply. Be their personal protector. Tell them exactly what remedies to do. Give them 10x the value of what they paid.`;
+      instructionPrompt = `🚨 USER IS A PAID CUSTOMER. Give the FULL SOLUTION. Give them 10x the value.`;
     }
 
     const systemPrompt = `
 You are the absolute premium, elite human female Astrologer named "${personaConfig.name}" from AstroPandit.
-
 YOUR TONE: ${personaConfig.tone}
 YOUR RULES: ${personaConfig.rules}
-
 🔴 USER'S BIRTH DETAILS:
 ${astrologyContext}
-
 🔴 KNOWLEDGE BASE:
 ${relevantKnowledge ? relevantKnowledge : "Use general Vedic principles."}
-
 ${instructionPrompt}
-
 CRITICAL LAWS:
-1. 100% CONFIDENCE: Never use 'maybe'. Always state 'This WILL happen'.
+1. 100% CONFIDENCE: Never use 'maybe'.
 2. HARD TIMELINES: Give exact date/month brackets.
-3. REMEDIES: Prescribe 1-2 traditional Upay. At the very end, append exactly:
-||REMEDY_EXTRACT||
-Remedy Title
-Description
+3. REMEDIES: Append exactly ||REMEDY_EXTRACT|| \n Remedy Title \n Description
 4. NEVER say you are AI.
-5. LANGUAGE: Reply only in the user's selected language (${language === "hi" ? "pure Hindi" : language === "en" ? "English" : "natural Hinglish"}).
+5. LANGUAGE: Reply only in (${language === "hi" ? "pure Hindi" : language === "en" ? "English" : "natural Hinglish"}).
 `.trim();
 
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -273,7 +271,24 @@ Description
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
-    contents.push({ role: "user", parts: [{ text: userMessage }] });
+
+    // 🔥 FIX: Image processing (Agar user ne photo bheji hai)
+    const currentParts: any[] = [];
+    if (userMessage) currentParts.push({ text: userMessage });
+    else currentParts.push({ text: "Kripya is photo ko dekh kar batayein ki isme kya hai aur iska astrology se kya connection hai." });
+
+    if (imageFile) {
+      const buffer = await imageFile.arrayBuffer();
+      const base64Image = Buffer.from(buffer).toString("base64");
+      currentParts.push({
+        inlineData: {
+          data: base64Image,
+          mimeType: imageFile.type,
+        },
+      });
+    }
+
+    contents.push({ role: "user", parts: currentParts });
 
     let response;
     let lastError: any = null;
@@ -292,7 +307,7 @@ Description
           response = await ai.models.generateContent({
             model: modelName,
             contents: contents,
-            config: { systemInstruction: systemPrompt, temperature: 0.85, maxOutputTokens: 1500 }, // Temp 0.85 for more emotion
+            config: { systemInstruction: systemPrompt, temperature: 0.85, maxOutputTokens: 1500 },
           });
           
           console.log(`[GEMINI API] Success with model: ${modelName}`);
@@ -304,25 +319,15 @@ Description
           
           const status = err.status || err.code;
           const errorMsg = err.message || "Unknown Error";
-          const retryAfterHeader = err.response?.headers?.["retry-after"];
           
           console.error(`[GEMINI API ERROR]`, {
-            model: modelName, attempt: MAX_RETRIES - retries, status, message: errorMsg, retryAfter: retryAfterHeader, retriesRemaining: retries
+            model: modelName, attempt: MAX_RETRIES - retries, status, message: errorMsg
           });
 
           if (status === 400 || status === 404) break;
           if (retries === 0) break;
 
           let waitTime = BASE_DELAY * Math.pow(2, MAX_RETRIES - retries - 1);
-          if (retryAfterHeader) {
-            const retryAfterSeconds = parseInt(retryAfterHeader, 10);
-            if (!isNaN(retryAfterSeconds)) {
-              waitTime = retryAfterSeconds * 1000;
-            } else {
-              const retryDate = new Date(retryAfterHeader).getTime();
-              if (!isNaN(retryDate)) waitTime = Math.max(0, retryDate - Date.now());
-            }
-          }
           if (status === 429) waitTime = Math.max(waitTime, 5000);
 
           await new Promise(r => setTimeout(r, waitTime));
@@ -340,8 +345,11 @@ Description
     const finalMessage = extracted.message;
     const remedy = extracted.remedy;
 
+    // Agar image bheji thi, toh DB me text bhi save karein taaki history me dikhe
+    const messageToSave = userMessage || "[Image Uploaded]";
+
     await db.transaction(async (tx) => {
-      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: userMessage });
+      await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "user", content: messageToSave });
       await tx.insert(messages).values({ conversationId: conversation.id, userId: userId, role: "assistant", content: finalMessage });
       if (remedy) {
         await tx.insert(remedies).values({ userId: userId, title: remedy.title, description: remedy.description });
