@@ -19,17 +19,41 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 MODAL ENDPOINT CONFIGURATION 🔥
-const openai = new OpenAI({
-  baseURL: process.env.MODAL_API_URL || "https://modal.com",
-  apiKey: process.env.MODAL_API_KEY || "dummy-key",
-});
+/* -------------------------------------------------------------------------- */
+/*                     🚨 MODAL ENDPOINT — FAIL FAST                          */
+/* -------------------------------------------------------------------------- */
 
+const MODAL_API_URL = process.env.MODAL_API_URL;
+const MODAL_API_KEY = process.env.MODAL_API_KEY;
 const MODAL_MODEL = process.env.MODAL_MODEL_NAME || "Qwen/Qwen3.6-35B-A3B";
 
-// Billing constants (module-level so refund path can see them)
+// Production में silently modal.com homepage hit नहीं करेंगे.
+// अगर env missing है → loud error, deploy टाइम पर ही पता चले.
+if (!MODAL_API_URL && process.env.NODE_ENV === "production") {
+  console.error(
+    "[FATAL] MODAL_API_URL is not set. Chat endpoint will not work. " +
+      "Set it in Render → Environment → MODAL_API_URL."
+  );
+}
+
+const openai = new OpenAI({
+  baseURL: MODAL_API_URL || "https://modal.com/v1", // dev fallback only
+  apiKey: MODAL_API_KEY || "dummy-key",
+  // 30s timeout — user 30s से ज़्यादा wait नहीं करेगा
+  timeout: 30_000,
+  maxRetries: 1,
+});
+
+/* -------------------------------------------------------------------------- */
+/*                              CONSTANTS                                     */
+/* -------------------------------------------------------------------------- */
+
 const COST_PER_MESSAGE_PAISE = 200;
 const FREE_MESSAGE_LIMIT = 3;
+
+/* -------------------------------------------------------------------------- */
+/*                              PERSONAS                                      */
+/* -------------------------------------------------------------------------- */
 
 type PersonaConfig = {
   name: string;
@@ -68,6 +92,10 @@ const PERSONAS: Record<string, PersonaConfig> = {
     rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful remedies (Pooja, Daan) with motherly affection to completely shift their luck.",
   },
 };
+
+/* -------------------------------------------------------------------------- */
+/*                              HELPERS                                       */
+/* -------------------------------------------------------------------------- */
 
 const SUPPORTED_LANGUAGES = ["hi", "hinglish", "en"] as const;
 type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
@@ -240,7 +268,7 @@ export async function GET(request: Request) {
       })),
     });
   } catch (error) {
-    console.error("Chat GET error:", error);
+    console.error("[chat.GET] failed:", error);
     return NextResponse.json(
       { error: "Chat history could not be loaded." },
       { status: 500 }
@@ -258,13 +286,13 @@ export async function POST(request: Request) {
   let userId = "";
 
   try {
-    // ----------------------------- 1. Auth ---------------------------------
+    /* ----------------------------- 1. Auth ------------------------------- */
     const user = await getUser();
     if (!user)
       return NextResponse.json({ error: "Session not found." }, { status: 401 });
     userId = user.id;
 
-    // ----------------------------- 2. Billing ------------------------------
+    /* ----------------------------- 2. Billing ---------------------------- */
     const isPremium = Boolean(
       user.premiumUntil && new Date(user.premiumUntil) > new Date()
     );
@@ -277,19 +305,20 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           code: "INSUFFICIENT_BALANCE",
-          error: "Aapka balance khatam ho gaya hai. Kripya recharge karein.",
+          error:
+            "Aapka balance khatam ho gaya hai. Kripya recharge karein aur Maa se judiye. 🙏",
         },
         { status: 402 }
       );
     }
 
-    // ----------------------------- 3. Parse form ---------------------------
+    /* ----------------------------- 3. Parse ------------------------------ */
     let userMessage = "";
     let personaRaw = "gita";
     let languageRaw = "hinglish";
     let topicRaw = "general";
     let requestedConversationId = "";
-    let imageFile: File | null = null;
+    let hasImage = false;
 
     try {
       const formData = await request.formData();
@@ -298,23 +327,40 @@ export async function POST(request: Request) {
       languageRaw = cleanText(formData.get("language")) || "hinglish";
       topicRaw = cleanText(formData.get("topic")) || "general";
       requestedConversationId = cleanText(formData.get("conversationId"));
-      imageFile = formData.get("image") as File | null;
+      hasImage = formData.get("image") instanceof File;
     } catch {
-      return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid form data." },
+        { status: 400 }
+      );
     }
 
     const persona = isPersona(personaRaw) ? personaRaw : "gita";
     const language = getLanguage(languageRaw);
     const topic = topicRaw;
 
-    if (!userMessage && !imageFile) {
+    /* ----------------------------- 3a. Image ----------------------------- */
+    // 🧠 Psychologist: silent ignore = trust breach.
+    // Vision model wired नहीं है अभी, तो honest message देते हैं.
+    if (hasImage) {
       return NextResponse.json(
-        { error: "Please enter a message or upload an image." },
+        {
+          code: "IMAGE_NOT_SUPPORTED",
+          error:
+            "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein — Maa aapki puri madad karengi. 🙏",
+        },
+        { status: 422 }
+      );
+    }
+
+    if (!userMessage) {
+      return NextResponse.json(
+        { error: "Please apna sawaal likhein." },
         { status: 400 }
       );
     }
 
-    // ----------------------------- 4. Deduct -------------------------------
+    /* ----------------------------- 4. Deduct ----------------------------- */
     if (!isPremium) {
       if (canAffordWallet) {
         const updated = await db
@@ -367,7 +413,7 @@ export async function POST(request: Request) {
       }
     }
 
-    // ----------------------------- 5. Conversation -------------------------
+    /* ----------------------------- 5. Context ---------------------------- */
     const conversation = await getOrCreateConversation(
       userId,
       persona,
@@ -395,18 +441,18 @@ export async function POST(request: Request) {
         .limit(12),
     ]);
 
-    // ----------------------------- 6. Persist user message -----------------
+    /* ----------------------------- 6. Save user msg ---------------------- */
     const [userMsgRow] = await db
       .insert(messages)
       .values({
         conversationId: conversation.id,
         userId,
         role: "user",
-        content: userMessage || "[image uploaded]",
+        content: userMessage,
       })
       .returning();
 
-    // ----------------------------- 7. System prompt ------------------------
+    /* ----------------------------- 7. System prompt ---------------------- */
     const personaConfig = PERSONAS[persona];
     const languageInstruction =
       language === "hi"
@@ -440,17 +486,18 @@ export async function POST(request: Request) {
       .slice()
       .reverse()
       .map((m) => ({
-        role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        role:
+          m.role === "assistant" ? ("assistant" as const) : ("user" as const),
         content: m.content,
       }));
 
-    // ----------------------------- 8. Model call ---------------------------
+    /* ----------------------------- 8. Model call ------------------------- */
     const completion = await openai.chat.completions.create({
       model: MODAL_MODEL,
       messages: [
         { role: "system", content: systemPrompt },
         ...history,
-        { role: "user", content: userMessage || "Please analyze my chart." },
+        { role: "user", content: userMessage },
       ],
       temperature: 0.8,
       max_tokens: 1500,
@@ -460,10 +507,10 @@ export async function POST(request: Request) {
       completion.choices[0]?.message?.content?.trim() || "";
     if (!rawResponse) throw new Error("EMPTY_AI_RESPONSE");
 
-    // ----------------------------- 9. Split remedy -------------------------
+    /* ----------------------------- 9. Split remedy ----------------------- */
     const { message: cleanMessage, remedy } = extractRemedy(rawResponse);
 
-    // ----------------------------- 10. Persist assistant message -----------
+    /* ----------------------------- 10. Save assistant msg ---------------- */
     const [assistantRow] = await db
       .insert(messages)
       .values({
@@ -474,7 +521,10 @@ export async function POST(request: Request) {
       })
       .returning();
 
-    // ----------------------------- 11. Persist remedy ----------------------
+    /* ----------------------------- 11. Save remedy ----------------------- */
+    // ⚙️ Engineer: `conversationId` हटाया — schema में नहीं है तो
+    // runtime crash होता था. Conversation linkage messages table से
+    // track हो रही है (same timestamp range).
     let remedyRow: {
       id: string;
       title: string;
@@ -482,26 +532,34 @@ export async function POST(request: Request) {
     } | null = null;
 
     if (remedy) {
-      const [r] = await db
-        .insert(remedies)
-        .values({
-          userId,
-          conversationId: conversation.id,
-          title: remedy.title,
-          description: remedy.description,
-        })
-        .returning();
-      if (r)
-        remedyRow = { id: r.id, title: r.title, description: r.description };
+      try {
+        const [r] = await db
+          .insert(remedies)
+          .values({
+            userId,
+            title: remedy.title,
+            description: remedy.description,
+          })
+          .returning();
+        if (r)
+          remedyRow = {
+            id: r.id,
+            title: r.title,
+            description: r.description,
+          };
+      } catch (remedyErr) {
+        // 💼 Businessman: remedy fail होने से पूरा chat fail नहीं होना चाहिए
+        console.error("[chat.POST] remedy insert failed:", remedyErr);
+      }
     }
 
-    // ----------------------------- 12. Touch conversation ------------------
+    /* ----------------------------- 12. Touch conversation ---------------- */
     await db
       .update(conversations)
       .set({ updatedAt: new Date() })
       .where(eq(conversations.id, conversation.id));
 
-    // ----------------------------- 13. Respond -----------------------------
+    /* ----------------------------- 13. Respond --------------------------- */
     const nextWalletBalance =
       !isPremium && deductedType === "wallet"
         ? user.walletBalancePaise - COST_PER_MESSAGE_PAISE
@@ -528,7 +586,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    // ----------------------------- Refund on failure -----------------------
+    /* ----------------------------- Refund on failure --------------------- */
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
@@ -546,14 +604,34 @@ export async function POST(request: Request) {
             })
             .where(eq(users.id, userId));
         }
+        console.error(
+          `[chat.POST] refunded ${deductedType} for user ${userId} due to failure`
+        );
       } catch (refundError) {
-        console.error("Refund failed:", refundError);
+        // 🔴 ALERT-WORTHY: refund fail = customer money loss
+        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", {
+          userId,
+          deductedType,
+          refundError,
+        });
       }
     }
 
-    console.error("Chat POST error:", error);
+    const message =
+      error instanceof Error ? error.message : String(error);
+    console.error("[chat.POST] failed:", {
+      userId,
+      deductedType,
+      message,
+    });
+
+    // 🔭 Astrologer: error भी empathetic हो
     return NextResponse.json(
-      { error: "The astrologer could not respond. Please try again." },
+      {
+        code: "ASTROLOGER_UNAVAILABLE",
+        error:
+          "Maa abhi thodi der ke liye dhyan mein hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏",
+      },
       { status: 500 }
     );
   }
