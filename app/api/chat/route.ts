@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql, gte, lt } from "drizzle-orm";
-import OpenAI from "openai"; 
+import { and, desc, eq, sql, gte } from "drizzle-orm";
+import OpenAI from "openai";
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
@@ -11,7 +11,7 @@ import {
   conversations,
   messages,
   remedies,
-  users 
+  users,
 } from "@/schema";
 
 import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
@@ -27,6 +27,10 @@ const openai = new OpenAI({
 
 const MODAL_MODEL = process.env.MODAL_MODEL_NAME || "Qwen/Qwen3.6-35B-A3B";
 
+// Billing constants (module-level so refund path can see them)
+const COST_PER_MESSAGE_PAISE = 200;
+const FREE_MESSAGE_LIMIT = 3;
+
 type PersonaConfig = {
   name: string;
   specializations: string;
@@ -37,25 +41,29 @@ type PersonaConfig = {
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
-    specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
+    specializations:
+      "Love, relationships, modern dating, breakups, and deep emotional bonding",
     tone: "A warm, loving, and deeply empathetic young female astrologer. She talks like a caring elder sister who genuinely wants to protect the user. Use words like 'Suno', 'Tum tension mat lo', 'Main hoon na'. Speak with ultimate confidence but wrap it in deep affection and psychology.",
     rules: "Validate the user's pain first (Psychology). Tell them it's not their fault. Then, use astrology to pinpoint exactly why it's happening (7th house, Venus). Give a timeline. Make the user feel heard and cared for.",
   },
   kriti: {
     name: "Acharya Kriti",
-    specializations: "Career, government jobs, selection tracking, business growth and wealth generation",
+    specializations:
+      "Career, government jobs, selection tracking, business growth and wealth generation",
     tone: "A sharp, highly intelligent, and professional female mentor. She is direct but deeply invested in the user's success. She uses powerful, motivating language.",
     rules: "Focus straight on the 10th house and Saturn/Jupiter transits. Deliver precise, jaw-dropping timelines. Use bullet points. Make the user feel that their success is her personal mission.",
   },
   devaki: {
     name: "Dr. Devaki Shastri",
-    specializations: "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
+    specializations:
+      "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
     tone: "A highly intellectual, serious, and authoritative older female guru. She commands immense respect and speaks with absolute divine authority.",
     rules: "Use exact planetary degrees and dasha cycles to make undeniable predictions. Ensure the customer feels your supreme astrological mastery instantly.",
   },
   gargi: {
     name: "Gargi Maa",
-    specializations: "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
+    specializations:
+      "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
     tone: "A maternal, soothing, and profoundly wise spiritual figure. She speaks with extreme love and spiritual depth. Calls the user 'Beta' but with deep emotion.",
     rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful remedies (Pooja, Daan) with motherly affection to completely shift their luck.",
   },
@@ -74,13 +82,19 @@ function isPersona(value: unknown): value is keyof typeof PERSONAS {
 }
 
 function getLanguage(value: unknown): SupportedLanguage {
-  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage) ? (value as SupportedLanguage) : "hinglish";
+  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)
+    ? (value as SupportedLanguage)
+    : "hinglish";
 }
 
 function extractRemedy(response: string) {
   const marker = "||REMEDY_EXTRACT||";
   const index = response.indexOf(marker);
-  if (index === -1) return { message: response.trim(), remedy: null as null | { title: string; description: string } };
+  if (index === -1)
+    return {
+      message: response.trim(),
+      remedy: null as null | { title: string; description: string },
+    };
   const message = response.slice(0, index).trim();
   const payload = response.slice(index + marker.length).trim();
   if (!payload) return { message, remedy: null };
@@ -93,61 +107,150 @@ function extractRemedy(response: string) {
 function getRelevantKnowledge(query: string): string {
   const q = query.toLowerCase();
   const allEntries = getExtendedKnowledgeEntries();
-  
+
   const scoredEntries = allEntries.map((entry) => {
     let score = 0;
-    if (entry.keywords) entry.keywords.forEach((kw) => { if (q.includes(kw.toLowerCase())) score += 5; });
-    if (entry.aliases) entry.aliases.forEach((alias) => { if (q.includes(alias.toLowerCase())) score += 3; });
+    if (entry.keywords)
+      entry.keywords.forEach((kw) => {
+        if (q.includes(kw.toLowerCase())) score += 5;
+      });
+    if (entry.aliases)
+      entry.aliases.forEach((alias) => {
+        if (q.includes(alias.toLowerCase())) score += 3;
+      });
     if (entry.question) {
-      const words = q.split(" ").filter(w => w.length > 3);
-      words.forEach(word => { if (entry.question.toLowerCase().includes(word)) score += 2; });
+      const words = q.split(" ").filter((w) => w.length > 3);
+      words.forEach((word) => {
+        if (entry.question.toLowerCase().includes(word)) score += 2;
+      });
     }
     return { entry, score };
   });
 
-  const topMatches = scoredEntries.filter((item) => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+  const topMatches = scoredEntries
+    .filter((item) => item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
   if (topMatches.length === 0) return "";
 
-  return topMatches.map(({ entry }) => {
-    const answerText = entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
-    return `[Context Topic: ${entry.topic.toUpperCase()}]\nAstrological Logic: ${answerText}`;
-  }).join("\n\n");
+  return topMatches
+    .map(({ entry }) => {
+      const answerText =
+        entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
+      return `[Context Topic: ${entry.topic.toUpperCase()}]\nAstrological Logic: ${answerText}`;
+    })
+    .join("\n\n");
 }
 
-async function getOrCreateConversation(userId: string, persona: keyof typeof PERSONAS, topic: string, conversationId?: string) {
+async function getOrCreateConversation(
+  userId: string,
+  persona: keyof typeof PERSONAS,
+  topic: string,
+  conversationId?: string
+) {
   if (conversationId) {
-    const [existing] = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId))).limit(1);
+    const [existing] = await db
+      .select()
+      .from(conversations)
+      .where(
+        and(
+          eq(conversations.id, conversationId),
+          eq(conversations.userId, userId)
+        )
+      )
+      .limit(1);
     if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
     return existing;
   }
-  const [existing] = await db.select().from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
+
+  const [existing] = await db
+    .select()
+    .from(conversations)
+    .where(
+      and(
+        eq(conversations.userId, userId),
+        eq(conversations.persona, persona)
+      )
+    )
+    .orderBy(desc(conversations.updatedAt))
+    .limit(1);
+
   if (existing) return existing;
-  const [created] = await db.insert(conversations).values({ userId, title: "New Astro Consultation", topic: topic || "general", persona }).returning();
+
+  const [created] = await db
+    .insert(conversations)
+    .values({
+      userId,
+      title: "New Astro Consultation",
+      topic: topic || "general",
+      persona,
+    })
+    .returning();
+
   if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
   return created;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                   GET                                      */
+/* -------------------------------------------------------------------------- */
+
 export async function GET(request: Request) {
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    if (!user)
+      return NextResponse.json({ error: "Session not found." }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-    const persona = isPersona(searchParams.get("persona")) ? searchParams.get("persona") as keyof typeof PERSONAS : "gita";
+    const persona = isPersona(searchParams.get("persona"))
+      ? (searchParams.get("persona") as keyof typeof PERSONAS)
+      : "gita";
 
-    const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
-    const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
-      .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
+    const conversation = await getOrCreateConversation(
+      user.id,
+      persona,
+      PERSONAS[persona].specializations
+    );
+
+    const history = await db
+      .select({
+        id: messages.id,
+        role: messages.role,
+        content: messages.content,
+        createdAt: messages.createdAt,
+      })
+      .from(messages)
+      .where(
+        and(
+          eq(messages.conversationId, conversation.id),
+          eq(messages.userId, user.id)
+        )
+      )
+      .orderBy(desc(messages.createdAt))
+      .limit(50);
 
     return NextResponse.json({
       success: true,
       conversationId: conversation.id,
-      messages: history.reverse().map((item) => ({ id: item.id, role: item.role === "assistant" ? "assistant" : "user", content: item.content })),
+      messages: history.reverse().map((item) => ({
+        id: item.id,
+        role: item.role === "assistant" ? "assistant" : "user",
+        content: item.content,
+      })),
     });
   } catch (error) {
-    return NextResponse.json({ error: "Chat history could not be loaded." }, { status: 500 });
+    console.error("Chat GET error:", error);
+    return NextResponse.json(
+      { error: "Chat history could not be loaded." },
+      { status: 500 }
+    );
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                                   POST                                     */
+/* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
   let isDeducted = false;
@@ -155,19 +258,32 @@ export async function POST(request: Request) {
   let userId = "";
 
   try {
+    // ----------------------------- 1. Auth ---------------------------------
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    if (!user)
+      return NextResponse.json({ error: "Session not found." }, { status: 401 });
     userId = user.id;
 
-    const COST_PER_MESSAGE_PAISE = 200; 
-    const isPremium = user.premiumUntil && new Date(user.premiumUntil) > new Date();
-    const canAffordWallet = user.walletBalancePaise >= COST_PER_MESSAGE_PAISE;
-    const hasFreeMessages = user.freeMessagesUsed < 3;
+    // ----------------------------- 2. Billing ------------------------------
+    const isPremium = Boolean(
+      user.premiumUntil && new Date(user.premiumUntil) > new Date()
+    );
+    const canAffordWallet =
+      (user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE;
+    const hasFreeMessages =
+      (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
 
     if (!isPremium && !canAffordWallet && !hasFreeMessages) {
-      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein." }, { status: 402 });
+      return NextResponse.json(
+        {
+          code: "INSUFFICIENT_BALANCE",
+          error: "Aapka balance khatam ho gaya hai. Kripya recharge karein.",
+        },
+        { status: 402 }
+      );
     }
 
+    // ----------------------------- 3. Parse form ---------------------------
     let userMessage = "";
     let personaRaw = "gita";
     let languageRaw = "hinglish";
@@ -191,17 +307,254 @@ export async function POST(request: Request) {
     const language = getLanguage(languageRaw);
     const topic = topicRaw;
 
-    if (!userMessage && !imageFile) return NextResponse.json({ error: "Please enter a message or upload an image." }, { status: 400 });
+    if (!userMessage && !imageFile) {
+      return NextResponse.json(
+        { error: "Please enter a message or upload an image." },
+        { status: 400 }
+      );
+    }
 
-    const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
-
-    const [birthRows, chartRows, previousMessages] = await Promise.all([
-      db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
-      db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
-      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
-    ]);
-
+    // ----------------------------- 4. Deduct -------------------------------
     if (!isPremium) {
       if (canAffordWallet) {
-        const updated = await db.update(users)
-          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
+        const updated = await db
+          .update(users)
+          .set({
+            walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}`,
+          })
+          .where(
+            and(
+              eq(users.id, userId),
+              gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)
+            )
+          )
+          .returning({ walletBalancePaise: users.walletBalancePaise });
+
+        if (updated.length === 0) {
+          return NextResponse.json(
+            {
+              code: "INSUFFICIENT_BALANCE",
+              error: "Wallet balance is insufficient.",
+            },
+            { status: 402 }
+          );
+        }
+        isDeducted = true;
+        deductedType = "wallet";
+      } else if (hasFreeMessages) {
+        const updated = await db
+          .update(users)
+          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
+          .where(eq(users.id, userId))
+          .returning({ freeMessagesUsed: users.freeMessagesUsed });
+
+        if (updated.length === 0) {
+          return NextResponse.json(
+            { error: "Could not start free trial." },
+            { status: 500 }
+          );
+        }
+        isDeducted = true;
+        deductedType = "free";
+      } else {
+        return NextResponse.json(
+          {
+            code: "INSUFFICIENT_BALANCE",
+            error: "Aapka balance khatam ho gaya hai.",
+          },
+          { status: 402 }
+        );
+      }
+    }
+
+    // ----------------------------- 5. Conversation -------------------------
+    const conversation = await getOrCreateConversation(
+      userId,
+      persona,
+      topic,
+      requestedConversationId || undefined
+    );
+
+    const [birthRows, chartRows, previousMessages] = await Promise.all([
+      db
+        .select()
+        .from(birthDetails)
+        .where(eq(birthDetails.userId, userId))
+        .limit(1),
+      db
+        .select()
+        .from(charts)
+        .where(eq(charts.userId, userId))
+        .orderBy(desc(charts.createdAt))
+        .limit(1),
+      db
+        .select({ role: messages.role, content: messages.content })
+        .from(messages)
+        .where(eq(messages.conversationId, conversation.id))
+        .orderBy(desc(messages.createdAt))
+        .limit(12),
+    ]);
+
+    // ----------------------------- 6. Persist user message -----------------
+    const [userMsgRow] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        userId,
+        role: "user",
+        content: userMessage || "[image uploaded]",
+      })
+      .returning();
+
+    // ----------------------------- 7. System prompt ------------------------
+    const personaConfig = PERSONAS[persona];
+    const languageInstruction =
+      language === "hi"
+        ? "Respond only in Hindi (Devanagari script)."
+        : language === "en"
+        ? "Respond only in English."
+        : "Respond in Hinglish (Roman-script Hindi mixed naturally with English).";
+
+    const birth = birthRows[0];
+    const chart = chartRows[0];
+    const knowledge = getRelevantKnowledge(userMessage);
+
+    const systemPrompt = [
+      `You are ${personaConfig.name}. ${personaConfig.tone}`,
+      `Specializations: ${personaConfig.specializations}.`,
+      `Rules: ${personaConfig.rules}`,
+      languageInstruction,
+      birth
+        ? `User birth details: ${JSON.stringify(birth).slice(0, 1500)}`
+        : "",
+      chart
+        ? `User chart data: ${JSON.stringify(chart).slice(0, 2500)}`
+        : "",
+      knowledge ? `Reference knowledge:\n${knowledge}` : "",
+      `If you want to attach a remedy, output it AFTER the marker ||REMEDY_EXTRACT|| on its own line, then the remedy title on the next line, then the description.`,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+
+    const history = previousMessages
+      .slice()
+      .reverse()
+      .map((m) => ({
+        role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        content: m.content,
+      }));
+
+    // ----------------------------- 8. Model call ---------------------------
+    const completion = await openai.chat.completions.create({
+      model: MODAL_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        ...history,
+        { role: "user", content: userMessage || "Please analyze my chart." },
+      ],
+      temperature: 0.8,
+      max_tokens: 1500,
+    });
+
+    const rawResponse =
+      completion.choices[0]?.message?.content?.trim() || "";
+    if (!rawResponse) throw new Error("EMPTY_AI_RESPONSE");
+
+    // ----------------------------- 9. Split remedy -------------------------
+    const { message: cleanMessage, remedy } = extractRemedy(rawResponse);
+
+    // ----------------------------- 10. Persist assistant message -----------
+    const [assistantRow] = await db
+      .insert(messages)
+      .values({
+        conversationId: conversation.id,
+        userId,
+        role: "assistant",
+        content: cleanMessage,
+      })
+      .returning();
+
+    // ----------------------------- 11. Persist remedy ----------------------
+    let remedyRow: {
+      id: string;
+      title: string;
+      description: string;
+    } | null = null;
+
+    if (remedy) {
+      const [r] = await db
+        .insert(remedies)
+        .values({
+          userId,
+          conversationId: conversation.id,
+          title: remedy.title,
+          description: remedy.description,
+        })
+        .returning();
+      if (r)
+        remedyRow = { id: r.id, title: r.title, description: r.description };
+    }
+
+    // ----------------------------- 12. Touch conversation ------------------
+    await db
+      .update(conversations)
+      .set({ updatedAt: new Date() })
+      .where(eq(conversations.id, conversation.id));
+
+    // ----------------------------- 13. Respond -----------------------------
+    const nextWalletBalance =
+      !isPremium && deductedType === "wallet"
+        ? user.walletBalancePaise - COST_PER_MESSAGE_PAISE
+        : user.walletBalancePaise;
+
+    const nextFreeUsed =
+      !isPremium && deductedType === "free"
+        ? (user.freeMessagesUsed ?? 0) + 1
+        : user.freeMessagesUsed;
+
+    return NextResponse.json({
+      success: true,
+      conversationId: conversation.id,
+      userMessageId: userMsgRow?.id ?? null,
+      message: {
+        id: assistantRow?.id ?? null,
+        role: "assistant",
+        content: cleanMessage,
+      },
+      remedy: remedyRow,
+      balance: {
+        walletBalancePaise: nextWalletBalance,
+        freeMessagesUsed: nextFreeUsed,
+      },
+    });
+  } catch (error) {
+    // ----------------------------- Refund on failure -----------------------
+    if (isDeducted && userId) {
+      try {
+        if (deductedType === "wallet") {
+          await db
+            .update(users)
+            .set({
+              walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}`,
+            })
+            .where(eq(users.id, userId));
+        } else if (deductedType === "free") {
+          await db
+            .update(users)
+            .set({
+              freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)`,
+            })
+            .where(eq(users.id, userId));
+        }
+      } catch (refundError) {
+        console.error("Refund failed:", refundError);
+      }
+    }
+
+    console.error("Chat POST error:", error);
+    return NextResponse.json(
+      { error: "The astrologer could not respond. Please try again." },
+      { status: 500 }
+    );
+  }
+}
