@@ -24,19 +24,26 @@ export const dynamic = "force-dynamic";
 /* -------------------------------------------------------------------------- */
 
 const MODAL_API_URL = process.env.MODAL_API_URL;
-const MODAL_API_KEY = process.env.MODAL_API_KEY;
+const MODAL_API_KEY_ID = process.env.MODAL_API_KEY; // wk-...
+const MODAL_API_SECRET = process.env.MODAL_API_SECRET; // ws-...
 const MODAL_MODEL = process.env.MODAL_MODEL_NAME || "Qwen/Qwen3.6-35B-A3B";
 
-// Agar Render pe URL set nahi hai, toh error throw karo taaki pata chale
 if (!MODAL_API_URL) {
   console.error("[FATAL] MODAL_API_URL is not set in Environment Variables!");
 }
 
+// 🔥 Dono keys ko combine karke Bearer Token banaya
+let finalApiKey = "dummy-key";
+if (MODAL_API_KEY_ID && MODAL_API_SECRET) {
+  finalApiKey = `${MODAL_API_KEY_ID}.${MODAL_API_SECRET}`;
+} else if (MODAL_API_KEY_ID) {
+  finalApiKey = MODAL_API_KEY_ID; 
+}
+
 const openai = new OpenAI({
-  // Default to localhost to force failure if env is missing, rather than hitting modal.com
   baseURL: MODAL_API_URL || "http://localhost:8000/v1", 
-  apiKey: MODAL_API_KEY || "dummy-key",
-  timeout: 40_000, // 40 seconds timeout
+  apiKey: finalApiKey,
+  timeout: 40_000, 
   maxRetries: 1,
 });
 
@@ -276,6 +283,7 @@ export async function POST(request: Request) {
   let isDeducted = false;
   let deductedType: "wallet" | "free" | "none" = "none";
   let userId = "";
+  let personaName = "Astrologer"; // 🔥 For dynamic error messages
 
   try {
     /* ----------------------------- 1. Auth ------------------------------- */
@@ -329,6 +337,7 @@ export async function POST(request: Request) {
     const persona = isPersona(personaRaw) ? personaRaw : "gita";
     const language = getLanguage(languageRaw);
     const topic = topicRaw;
+    personaName = PERSONAS[persona].name; // Set dynamic name
 
     /* ----------------------------- 3a. Image ----------------------------- */
     if (hasImage) {
@@ -474,7 +483,7 @@ export async function POST(request: Request) {
         ...history,
         { role: "user", content: userMessage },
       ],
-      temperature: 0.7, // Thoda kam kiya taaki AI zyada hallucinate na kare
+      temperature: 0.6, 
       max_tokens: 1200,
     });
 
@@ -573,10 +582,11 @@ export async function POST(request: Request) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[chat.POST] failed:", { userId, deductedType, message });
 
+    // 🔥 DYNAMIC ERROR MESSAGE
     return NextResponse.json(
       {
         code: "ASTROLOGER_UNAVAILABLE",
-        error: "Maa abhi thodi der ke liye dhyan mein hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏",
+        error: `${personaName} abhi thodi der ke liye busy hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏`,
       },
       { status: 500 }
     );
