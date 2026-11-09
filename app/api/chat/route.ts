@@ -1,7 +1,7 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
 import { and, desc, eq, sql, gte, lt } from "drizzle-orm";
-import OpenAI from "openai"; // 🔥 Modal OpenAI SDK se connect hoga
+import OpenAI from "openai"; 
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
@@ -159,7 +159,7 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     userId = user.id;
 
-    const COST_PER_MESSAGE_PAISE = 200; // ₹2
+    const COST_PER_MESSAGE_PAISE = 200; 
     const isPremium = user.premiumUntil && new Date(user.premiumUntil) > new Date();
     const canAffordWallet = user.walletBalancePaise >= COST_PER_MESSAGE_PAISE;
     const hasFreeMessages = user.freeMessagesUsed < 3;
