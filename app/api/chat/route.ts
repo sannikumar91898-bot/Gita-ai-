@@ -1,6 +1,6 @@
 // app/api/chat/route.ts
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql, gte } from "drizzle-orm";
+import { and, desc, eq, sql, gte, lt } from "drizzle-orm";
 import OpenAI from "openai";
 
 import { getUser } from "@/auth";
@@ -169,14 +169,6 @@ export async function POST(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     userId = user.id;
 
-    const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
-    const canAffordWallet = (user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE;
-    const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
-
-    if (!isPremium && !canAffordWallet && !hasFreeMessages) {
-      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein. 🙏" }, { status: 402 });
-    }
-
     let userMessage = "";
     let personaRaw = "gita";
     let languageRaw = "hinglish";
@@ -201,9 +193,19 @@ export async function POST(request: Request) {
     const topic = topicRaw;
     personaName = PERSONAS[persona].name;
 
+    // 🔥 FIX 1: Image Check pehle kar diya, taaki wallet se paisa na kate!
     if (hasImage) return NextResponse.json({ code: "IMAGE_NOT_SUPPORTED", error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein. 🙏" }, { status: 422 });
     if (!userMessage) return NextResponse.json({ error: "Please apna sawaal likhein." }, { status: 400 });
 
+    const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
+    const canAffordWallet = (user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE;
+    const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
+
+    if (!isPremium && !canAffordWallet && !hasFreeMessages) {
+      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein. 🙏" }, { status: 402 });
+    }
+
+    // Billing Deduction
     if (!isPremium) {
       if (canAffordWallet) {
         const updated = await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` }).where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE))).returning({ walletBalancePaise: users.walletBalancePaise });
@@ -211,8 +213,13 @@ export async function POST(request: Request) {
         isDeducted = true;
         deductedType = "wallet";
       } else if (hasFreeMessages) {
-        const updated = await db.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(eq(users.id, userId)).returning({ freeMessagesUsed: users.freeMessagesUsed });
-        if (updated.length === 0) return NextResponse.json({ error: "Could not start free trial." }, { status: 500 });
+        // 🔥 FIX 2: Free Message check ke saath update kiya taaki double request pe limit bypass na ho
+        const updated = await db.update(users)
+          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
+          .where(and(eq(users.id, userId), lt(users.freeMessagesUsed, FREE_MESSAGE_LIMIT)))
+          .returning({ freeMessagesUsed: users.freeMessagesUsed });
+          
+        if (updated.length === 0) return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka free trial khatam ho gaya hai." }, { status: 402 });
         isDeducted = true;
         deductedType = "free";
       } else {
@@ -253,6 +260,9 @@ export async function POST(request: Request) {
 
     const history = previousMessages.slice().reverse().map((m) => ({ role: m.role === "assistant" ? ("assistant" as const) : ("user" as const), content: m.content }));
 
+    // 🔥 FIX 3: Better Error logging. Agar yahan error aayega to Render logs me exact reason dikhega.
+    console.log(`[chat.POST] Calling Modal API at: ${MODAL_API_URL}`);
+    
     const completion = await openai.chat.completions.create({
       model: MODAL_MODEL,
       messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: userMessage }],
@@ -292,6 +302,12 @@ export async function POST(request: Request) {
         else if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
       } catch (refundError) { console.error("[chat.POST] REFUND FAILED:", refundError); }
     }
+
+    // 🔥 Yahan exact error print hoga Render logs me
+    console.error("=== [chat.POST] CRITICAL ERROR ===");
+    console.error(error);
+    console.error("==================================");
+
     return NextResponse.json({ code: "ASTROLOGER_UNAVAILABLE", error: `${personaName} abhi thodi der ke liye busy hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏` }, { status: 500 });
   }
 }
