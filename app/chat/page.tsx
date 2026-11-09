@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, Image as ImageIcon, Lock } from "lucide-react";
+import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -88,8 +88,7 @@ function ChatPageContent() {
   const isDark = theme === "dark";
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
-  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-[0_-5px_20px_-10px_rgba(0,0,0,0.05)]";
-  const inputClass = isDark ? "bg-slate-800/50 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400";
+  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100";
 
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
   const freeMessagesUsed = me?.user?.freeMessagesUsed ?? 0;
@@ -301,22 +300,66 @@ function ChatPageContent() {
         <div ref={endRef} />
       </div>
 
-      {imagePreview && (
-        <div className={`shrink-0 p-3 border-t ${isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-gray-200"}`}>
-          <div className="relative inline-block">
-            <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border-2 border-orange-500" />
-            <button onClick={clearImage} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"><X size={12} /></button>
-          </div>
-        </div>
-      )}
-
+      {/* 🔥 MODERN DEEPSEEK STYLE INPUT BOX */}
       <div className={`shrink-0 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] z-20 ${inputWrapperClass}`}>
-        <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto gap-2">
-          <button type="button" onClick={() => fileInputRef.current?.click()} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}><ImageIcon size={20} /></button>
-          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
-          <div className="relative flex-1">
-            <input value={input} onChange={(e) => setInput(e.target.value)} disabled={isLoading || historyLoading} placeholder="अपना सवाल लिखें..." className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${inputClass}`} />
-            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading || historyLoading} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"><Send size={16} /></button>
+        <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-2">
+          
+          {/* Image Preview Thumbnail (if selected) */}
+          {imagePreview && (
+            <div className="px-2">
+              <div className="relative inline-block">
+                <img 
+                  src={imagePreview} 
+                  alt="Selected" 
+                  className="h-16 w-16 object-cover rounded-xl border-2 border-orange-500 shadow-sm" 
+                />
+                <button 
+                  type="button"
+                  onClick={clearImage} 
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition"
+                >
+                  <X size={12} strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Input Pill */}
+          <div className={`flex items-end gap-2 rounded-[28px] p-1.5 border transition-all ${
+            isDark ? "bg-[#1A1D27] border-slate-700 focus-within:border-orange-500/50" : "bg-white border-gray-300 shadow-sm focus-within:border-orange-400 focus-within:shadow-md"
+          }`}>
+            
+            {/* Photo Upload Button (Replaced Plus Icon) */}
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()} 
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+                isDark ? "text-slate-400 hover:bg-slate-700 hover:text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+              }`}
+            >
+              <ImageIcon size={22} />
+            </button>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
+
+            {/* Text Input */}
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={isLoading || historyLoading}
+              placeholder="अपना सवाल लिखें..."
+              className={`flex-1 bg-transparent py-2.5 text-[15px] outline-none ${
+                isDark ? "text-white placeholder-slate-500" : "text-slate-900 placeholder-gray-400"
+              }`}
+            />
+
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={(!input.trim() && !selectedImage) || isLoading || historyLoading}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white disabled:opacity-40 hover:bg-orange-600 transition-transform active:scale-95 shadow-sm"
+            >
+              <Send size={18} className="ml-0.5" />
+            </button>
           </div>
         </form>
       </div>
