@@ -134,87 +134,33 @@ function extractRemedy(response: string) {
 function getRelevantKnowledge(query: string): string {
   const q = query.toLowerCase();
   const allEntries = getExtendedKnowledgeEntries();
-
   const scoredEntries = allEntries.map((entry) => {
     let score = 0;
-    if (entry.keywords)
-      entry.keywords.forEach((kw) => {
-        if (q.includes(kw.toLowerCase())) score += 5;
-      });
-    if (entry.aliases)
-      entry.aliases.forEach((alias) => {
-        if (q.includes(alias.toLowerCase())) score += 3;
-      });
+    if (entry.keywords) entry.keywords.forEach((kw) => { if (q.includes(kw.toLowerCase())) score += 5; });
+    if (entry.aliases) entry.aliases.forEach((alias) => { if (q.includes(alias.toLowerCase())) score += 3; });
     if (entry.question) {
       const words = q.split(" ").filter((w) => w.length > 3);
-      words.forEach((word) => {
-        if (entry.question.toLowerCase().includes(word)) score += 2;
-      });
+      words.forEach((word) => { if (entry.question.toLowerCase().includes(word)) score += 2; });
     }
     return { entry, score };
   });
-
-  const topMatches = scoredEntries
-    .filter((item) => item.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
+  const topMatches = scoredEntries.filter((item) => item.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
   if (topMatches.length === 0) return "";
-
-  return topMatches
-    .map(({ entry }) => {
-      const answerText =
-        entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
+  return topMatches.map(({ entry }) => {
+      const answerText = entry.answers.hinglish || entry.answers.hi || entry.answers.en || "";
       return `[Context Topic: ${entry.topic.toUpperCase()}]\nAstrological Logic: ${answerText}`;
-    })
-    .join("\n\n");
+    }).join("\n\n");
 }
 
-async function getOrCreateConversation(
-  userId: string,
-  persona: keyof typeof PERSONAS,
-  topic: string,
-  conversationId?: string
-) {
+async function getOrCreateConversation(userId: string, persona: keyof typeof PERSONAS, topic: string, conversationId?: string) {
   if (conversationId) {
-    const [existing] = await db
-      .select()
-      .from(conversations)
-      .where(
-        and(
-          eq(conversations.id, conversationId),
-          eq(conversations.userId, userId)
-        )
-      )
-      .limit(1);
+    const [existing] = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId))).limit(1);
     if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
     return existing;
   }
-
-  const [existing] = await db
-    .select()
-    .from(conversations)
-    .where(
-      and(
-        eq(conversations.userId, userId),
-        eq(conversations.persona, persona)
-      )
-    )
-    .orderBy(desc(conversations.updatedAt))
-    .limit(1);
-
+  const [existing] = await db.select().from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
   if (existing) return existing;
-
-  const [created] = await db
-    .insert(conversations)
-    .values({
-      userId,
-      title: "New Astro Consultation",
-      topic: topic || "general",
-      persona,
-    })
-    .returning();
-
+  const [created] = await db.insert(conversations).values({ userId, title: "New Astro Consultation", topic: topic || "general", persona }).returning();
   if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
   return created;
 }
@@ -226,36 +172,15 @@ async function getOrCreateConversation(
 export async function GET(request: Request) {
   try {
     const user = await getUser();
-    if (!user)
-      return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
-    const persona = isPersona(searchParams.get("persona"))
-      ? (searchParams.get("persona") as keyof typeof PERSONAS)
-      : "gita";
+    const persona = isPersona(searchParams.get("persona")) ? (searchParams.get("persona") as keyof typeof PERSONAS) : "gita";
 
-    const conversation = await getOrCreateConversation(
-      user.id,
-      persona,
-      PERSONAS[persona].specializations
-    );
+    const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
 
-    const history = await db
-      .select({
-        id: messages.id,
-        role: messages.role,
-        content: messages.content,
-        createdAt: messages.createdAt,
-      })
-      .from(messages)
-      .where(
-        and(
-          eq(messages.conversationId, conversation.id),
-          eq(messages.userId, user.id)
-        )
-      )
-      .orderBy(desc(messages.createdAt))
-      .limit(50);
+    const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
+      .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
 
     return NextResponse.json({
       success: true,
@@ -268,10 +193,7 @@ export async function GET(request: Request) {
     });
   } catch (error) {
     console.error("[chat.GET] failed:", error);
-    return NextResponse.json(
-      { error: "Chat history could not be loaded." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Chat history could not be loaded." }, { status: 500 });
   }
 }
 
@@ -283,35 +205,21 @@ export async function POST(request: Request) {
   let isDeducted = false;
   let deductedType: "wallet" | "free" | "none" = "none";
   let userId = "";
-  let personaName = "Astrologer"; // 🔥 For dynamic error messages
+  let personaName = "Astrologer";
 
   try {
-    /* ----------------------------- 1. Auth ------------------------------- */
     const user = await getUser();
-    if (!user)
-      return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     userId = user.id;
 
-    /* ----------------------------- 2. Billing ---------------------------- */
-    const isPremium = Boolean(
-      user.premiumUntil && new Date(user.premiumUntil) > new Date()
-    );
-    const canAffordWallet =
-      (user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE;
-    const hasFreeMessages =
-      (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
+    const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
+    const canAffordWallet = (user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE;
+    const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
 
     if (!isPremium && !canAffordWallet && !hasFreeMessages) {
-      return NextResponse.json(
-        {
-          code: "INSUFFICIENT_BALANCE",
-          error: "Aapka balance khatam ho gaya hai. Kripya recharge karein aur Maa se judiye. 🙏",
-        },
-        { status: 402 }
-      );
+      return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai. Kripya recharge karein. 🙏" }, { status: 402 });
     }
 
-    /* ----------------------------- 3. Parse ------------------------------ */
     let userMessage = "";
     let personaRaw = "gita";
     let languageRaw = "hinglish";
@@ -328,95 +236,37 @@ export async function POST(request: Request) {
       requestedConversationId = cleanText(formData.get("conversationId"));
       hasImage = formData.get("image") instanceof File;
     } catch {
-      return NextResponse.json(
-        { error: "Invalid form data." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid form data." }, { status: 400 });
     }
 
     const persona = isPersona(personaRaw) ? personaRaw : "gita";
     const language = getLanguage(languageRaw);
     const topic = topicRaw;
-    personaName = PERSONAS[persona].name; // Set dynamic name
+    personaName = PERSONAS[persona].name;
 
-    /* ----------------------------- 3a. Image ----------------------------- */
     if (hasImage) {
-      return NextResponse.json(
-        {
-          code: "IMAGE_NOT_SUPPORTED",
-          error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein — Maa aapki puri madad karengi. 🙏",
-        },
-        { status: 422 }
-      );
+      return NextResponse.json({ code: "IMAGE_NOT_SUPPORTED", error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein. 🙏" }, { status: 422 });
     }
 
-    if (!userMessage) {
-      return NextResponse.json(
-        { error: "Please apna sawaal likhein." },
-        { status: 400 }
-      );
-    }
+    if (!userMessage) return NextResponse.json({ error: "Please apna sawaal likhein." }, { status: 400 });
 
-    /* ----------------------------- 4. Deduct ----------------------------- */
     if (!isPremium) {
       if (canAffordWallet) {
-        const updated = await db
-          .update(users)
-          .set({
-            walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}`,
-          })
-          .where(
-            and(
-              eq(users.id, userId),
-              gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)
-            )
-          )
-          .returning({ walletBalancePaise: users.walletBalancePaise });
-
-        if (updated.length === 0) {
-          return NextResponse.json(
-            {
-              code: "INSUFFICIENT_BALANCE",
-              error: "Wallet balance is insufficient.",
-            },
-            { status: 402 }
-          );
-        }
+        const updated = await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` }).where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE))).returning({ walletBalancePaise: users.walletBalancePaise });
+        if (updated.length === 0) return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Wallet balance is insufficient." }, { status: 402 });
         isDeducted = true;
         deductedType = "wallet";
       } else if (hasFreeMessages) {
-        const updated = await db
-          .update(users)
-          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
-          .where(eq(users.id, userId))
-          .returning({ freeMessagesUsed: users.freeMessagesUsed });
-
-        if (updated.length === 0) {
-          return NextResponse.json(
-            { error: "Could not start free trial." },
-            { status: 500 }
-          );
-        }
+        const updated = await db.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(eq(users.id, userId)).returning({ freeMessagesUsed: users.freeMessagesUsed });
+        if (updated.length === 0) return NextResponse.json({ error: "Could not start free trial." }, { status: 500 });
         isDeducted = true;
         deductedType = "free";
       } else {
-        return NextResponse.json(
-          {
-            code: "INSUFFICIENT_BALANCE",
-            error: "Aapka balance khatam ho gaya hai.",
-          },
-          { status: 402 }
-        );
+        return NextResponse.json({ code: "INSUFFICIENT_BALANCE", error: "Aapka balance khatam ho gaya hai." }, { status: 402 });
       }
     }
 
-    /* ----------------------------- 5. Context ---------------------------- */
-    const conversation = await getOrCreateConversation(
-      userId,
-      persona,
-      topic,
-      requestedConversationId || undefined
-    );
+    const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
 
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
@@ -424,29 +274,19 @@ export async function POST(request: Request) {
       db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
     ]);
 
-    /* ----------------------------- 6. Save user msg ---------------------- */
-    const [userMsgRow] = await db
-      .insert(messages)
-      .values({
-        conversationId: conversation.id,
-        userId,
-        role: "user",
-        content: userMessage,
-      })
-      .returning();
+    const [userMsgRow] = await db.insert(messages).values({ conversationId: conversation.id, userId, role: "user", content: userMessage }).returning();
 
-    /* ----------------------------- 7. System prompt ---------------------- */
     const personaConfig = PERSONAS[persona];
     
-    // Force Current Date & Language
     const today = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    const currentYear = new Date().getFullYear();
     
     const languageInstruction =
       language === "hi"
         ? "CRITICAL: Reply ONLY in pure Hindi (Devanagari script)."
         : language === "en"
         ? "CRITICAL: Reply ONLY in English."
-        : "CRITICAL: Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English). DO NOT use pure English or pure Hindi sentences. Address the user affectionately.";
+        : "CRITICAL: Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English). DO NOT use pure English. Address the user affectionately.";
 
     const birth = birthRows[0];
     const chart = chartRows[0];
@@ -456,133 +296,71 @@ export async function POST(request: Request) {
       `You are ${personaConfig.name}, a real female astrologer. ${personaConfig.tone}`,
       `Your Specializations: ${personaConfig.specializations}.`,
       `Strict Rules: ${personaConfig.rules}`,
-      `Today's Date is: ${today}. ALWAYS use this date to calculate dashas or timelines. DO NOT mention past years like 2024 or 2025.`,
+      `Today's Date is: ${today} (Year ${currentYear}). You MUST calculate all timelines and dashas based on ${currentYear}. DO NOT mention past years like 2024 or 2025.`,
       languageInstruction,
-      `Never break character. If user asks "who are you", say your persona name and that you are an astrologer.`,
-      birth ? `User Birth Details (DOB/Time/Place): ${JSON.stringify(birth).slice(0, 1500)}` : "",
+      `Never break character. You are strictly ${personaConfig.name}. If user asks who you are, say your name.`,
+      birth ? `User Birth Details: ${JSON.stringify(birth).slice(0, 1500)}` : "",
       chart ? `User Kundli Data: ${JSON.stringify(chart).slice(0, 2500)}` : "",
       knowledge ? `Reference Astrological Knowledge:\n${knowledge}` : "",
-      `If you want to attach a remedy, output it AFTER the marker ||REMEDY_EXTRACT|| on its own line, then the remedy title on the next line, then the description.`,
+      `If you want to attach a remedy, output it AFTER the marker ||REMEDY_EXTRACT|| on its own line.`,
     ]
       .filter(Boolean)
       .join("\n\n");
 
-    const history = previousMessages
-      .slice()
-      .reverse()
-      .map((m) => ({
+    const history = previousMessages.slice().reverse().map((m) => ({
         role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
         content: m.content,
-      }));
+    }));
 
-    /* ----------------------------- 8. Model call ------------------------- */
     const completion = await openai.chat.completions.create({
       model: MODAL_MODEL,
-      messages: [
-        { role: "system", content: systemPrompt },
-        ...history,
-        { role: "user", content: userMessage },
-      ],
-      temperature: 0.6, 
+      messages: [{ role: "system", content: systemPrompt }, ...history, { role: "user", content: userMessage }],
+      temperature: 0.6,
       max_tokens: 1200,
     });
 
     const rawResponse = completion.choices[0]?.message?.content?.trim() || "";
     if (!rawResponse) throw new Error("EMPTY_AI_RESPONSE");
 
-    /* ----------------------------- 9. Split remedy ----------------------- */
     const { message: cleanMessage, remedy } = extractRemedy(rawResponse);
+    const [assistantRow] = await db.insert(messages).values({ conversationId: conversation.id, userId, role: "assistant", content: cleanMessage }).returning();
 
-    /* ----------------------------- 10. Save assistant msg ---------------- */
-    const [assistantRow] = await db
-      .insert(messages)
-      .values({
-        conversationId: conversation.id,
-        userId,
-        role: "assistant",
-        content: cleanMessage,
-      })
-      .returning();
-
-    /* ----------------------------- 11. Save remedy ----------------------- */
     let remedyRow: { id: string; title: string; description: string } | null = null;
     if (remedy) {
       try {
-        const [r] = await db
-          .insert(remedies)
-          .values({
-            userId,
-            title: remedy.title,
-            description: remedy.description,
-          })
-          .returning();
+        const [r] = await db.insert(remedies).values({ userId, title: remedy.title, description: remedy.description }).returning();
         if (r) remedyRow = { id: r.id, title: r.title, description: r.description };
-      } catch (remedyErr) {
-        console.error("[chat.POST] remedy insert failed:", remedyErr);
-      }
+      } catch (remedyErr) { console.error("[chat.POST] remedy insert failed:", remedyErr); }
     }
 
-    /* ----------------------------- 12. Touch conversation ---------------- */
-    await db
-      .update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, conversation.id));
+    await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, conversation.id));
 
-    /* ----------------------------- 13. Respond --------------------------- */
-    const nextWalletBalance =
-      !isPremium && deductedType === "wallet"
-        ? user.walletBalancePaise - COST_PER_MESSAGE_PAISE
-        : user.walletBalancePaise;
-
-    const nextFreeUsed =
-      !isPremium && deductedType === "free"
-        ? (user.freeMessagesUsed ?? 0) + 1
-        : user.freeMessagesUsed;
+    const nextWalletBalance = !isPremium && deductedType === "wallet" ? user.walletBalancePaise - COST_PER_MESSAGE_PAISE : user.walletBalancePaise;
+    const nextFreeUsed = !isPremium && deductedType === "free" ? (user.freeMessagesUsed ?? 0) + 1 : user.freeMessagesUsed;
 
     return NextResponse.json({
       success: true,
       conversationId: conversation.id,
       userMessageId: userMsgRow?.id ?? null,
-      message: {
-        id: assistantRow?.id ?? null,
-        role: "assistant",
-        content: cleanMessage,
-      },
+      message: { id: assistantRow?.id ?? null, role: "assistant", content: cleanMessage },
       remedy: remedyRow,
-      balance: {
-        walletBalancePaise: nextWalletBalance,
-        freeMessagesUsed: nextFreeUsed,
-      },
+      balance: { walletBalancePaise: nextWalletBalance, freeMessagesUsed: nextFreeUsed },
     });
+
   } catch (error) {
-    /* ----------------------------- Refund on failure --------------------- */
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
-          await db
-            .update(users)
-            .set({
-              walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}`,
-            })
-            .where(eq(users.id, userId));
+          await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
         } else if (deductedType === "free") {
-          await db
-            .update(users)
-            .set({
-              freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)`,
-            })
-            .where(eq(users.id, userId));
+          await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
         }
-        console.error(`[chat.POST] refunded ${deductedType} for user ${userId} due to failure`);
-      } catch (refundError) {
-        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", refundError);
-      }
+      } catch (refundError) { console.error("[chat.POST] REFUND FAILED:", refundError); }
     }
 
     const message = error instanceof Error ? error.message : String(error);
     console.error("[chat.POST] failed:", { userId, deductedType, message });
 
-    // 🔥 DYNAMIC ERROR MESSAGE
     return NextResponse.json(
       {
         code: "ASTROLOGER_UNAVAILABLE",
