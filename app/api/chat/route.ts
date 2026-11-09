@@ -19,20 +19,15 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* -------------------------------------------------------------------------- */
-/*                     🚨 MODAL ENDPOINT CONFIGURATION                        */
-/* -------------------------------------------------------------------------- */
-
 const MODAL_API_URL = process.env.MODAL_API_URL;
-const MODAL_API_KEY_ID = process.env.MODAL_API_KEY; // wk-...
-const MODAL_API_SECRET = process.env.MODAL_API_SECRET; // ws-...
+const MODAL_API_KEY_ID = process.env.MODAL_API_KEY; 
+const MODAL_API_SECRET = process.env.MODAL_API_SECRET; 
 const MODAL_MODEL = process.env.MODAL_MODEL_NAME || "Qwen/Qwen3.6-35B-A3B";
 
 if (!MODAL_API_URL) {
   console.error("[FATAL] MODAL_API_URL is not set in Environment Variables!");
 }
 
-// 🔥 Dono keys ko combine karke Bearer Token banaya
 let finalApiKey = "dummy-key";
 if (MODAL_API_KEY_ID && MODAL_API_SECRET) {
   finalApiKey = `${MODAL_API_KEY_ID}.${MODAL_API_SECRET}`;
@@ -47,23 +42,10 @@ const openai = new OpenAI({
   maxRetries: 1,
 });
 
-/* -------------------------------------------------------------------------- */
-/*                              CONSTANTS                                     */
-/* -------------------------------------------------------------------------- */
-
 const COST_PER_MESSAGE_PAISE = 200;
 const FREE_MESSAGE_LIMIT = 3;
 
-/* -------------------------------------------------------------------------- */
-/*                              PERSONAS                                      */
-/* -------------------------------------------------------------------------- */
-
-type PersonaConfig = {
-  name: string;
-  specializations: string;
-  tone: string;
-  rules: string;
-};
+type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
@@ -92,10 +74,6 @@ const PERSONAS: Record<string, PersonaConfig> = {
   },
 };
 
-/* -------------------------------------------------------------------------- */
-/*                              HELPERS                                       */
-/* -------------------------------------------------------------------------- */
-
 const SUPPORTED_LANGUAGES = ["hi", "hinglish", "en"] as const;
 type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
@@ -109,19 +87,13 @@ function isPersona(value: unknown): value is keyof typeof PERSONAS {
 }
 
 function getLanguage(value: unknown): SupportedLanguage {
-  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage)
-    ? (value as SupportedLanguage)
-    : "hinglish";
+  return SUPPORTED_LANGUAGES.includes(value as SupportedLanguage) ? (value as SupportedLanguage) : "hinglish";
 }
 
 function extractRemedy(response: string) {
   const marker = "||REMEDY_EXTRACT||";
   const index = response.indexOf(marker);
-  if (index === -1)
-    return {
-      message: response.trim(),
-      remedy: null as null | { title: string; description: string },
-    };
+  if (index === -1) return { message: response.trim(), remedy: null as null | { title: string; description: string } };
   const message = response.slice(0, index).trim();
   const payload = response.slice(index + marker.length).trim();
   if (!payload) return { message, remedy: null };
@@ -165,41 +137,26 @@ async function getOrCreateConversation(userId: string, persona: keyof typeof PER
   return created;
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                   GET                                      */
-/* -------------------------------------------------------------------------- */
-
 export async function GET(request: Request) {
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
-
     const { searchParams } = new URL(request.url);
     const persona = isPersona(searchParams.get("persona")) ? (searchParams.get("persona") as keyof typeof PERSONAS) : "gita";
-
     const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
-
     const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
       .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
-
     return NextResponse.json({
       success: true,
       conversationId: conversation.id,
       messages: history.reverse().map((item) => ({
-        id: item.id,
-        role: item.role === "assistant" ? "assistant" : "user",
-        content: item.content,
+        id: item.id, role: item.role === "assistant" ? "assistant" : "user", content: item.content,
       })),
     });
   } catch (error) {
-    console.error("[chat.GET] failed:", error);
     return NextResponse.json({ error: "Chat history could not be loaded." }, { status: 500 });
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/*                                   POST                                     */
-/* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
   let isDeducted = false;
@@ -244,10 +201,7 @@ export async function POST(request: Request) {
     const topic = topicRaw;
     personaName = PERSONAS[persona].name;
 
-    if (hasImage) {
-      return NextResponse.json({ code: "IMAGE_NOT_SUPPORTED", error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein. 🙏" }, { status: 422 });
-    }
-
+    if (hasImage) return NextResponse.json({ code: "IMAGE_NOT_SUPPORTED", error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein. 🙏" }, { status: 422 });
     if (!userMessage) return NextResponse.json({ error: "Please apna sawaal likhein." }, { status: 400 });
 
     if (!isPremium) {
@@ -267,7 +221,6 @@ export async function POST(request: Request) {
     }
 
     const conversation = await getOrCreateConversation(userId, persona, topic, requestedConversationId || undefined);
-
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
       db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
@@ -277,16 +230,9 @@ export async function POST(request: Request) {
     const [userMsgRow] = await db.insert(messages).values({ conversationId: conversation.id, userId, role: "user", content: userMessage }).returning();
 
     const personaConfig = PERSONAS[persona];
-    
     const today = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
     const currentYear = new Date().getFullYear();
-    
-    const languageInstruction =
-      language === "hi"
-        ? "CRITICAL: Reply ONLY in pure Hindi (Devanagari script)."
-        : language === "en"
-        ? "CRITICAL: Reply ONLY in English."
-        : "CRITICAL: Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English). DO NOT use pure English. Address the user affectionately.";
+    const languageInstruction = language === "hi" ? "CRITICAL: Reply ONLY in pure Hindi (Devanagari script)." : language === "en" ? "CRITICAL: Reply ONLY in English." : "CRITICAL: Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English). DO NOT use pure English. Address the user affectionately.";
 
     const birth = birthRows[0];
     const chart = chartRows[0];
@@ -303,14 +249,9 @@ export async function POST(request: Request) {
       chart ? `User Kundli Data: ${JSON.stringify(chart).slice(0, 2500)}` : "",
       knowledge ? `Reference Astrological Knowledge:\n${knowledge}` : "",
       `If you want to attach a remedy, output it AFTER the marker ||REMEDY_EXTRACT|| on its own line.`,
-    ]
-      .filter(Boolean)
-      .join("\n\n");
+    ].filter(Boolean).join("\n\n");
 
-    const history = previousMessages.slice().reverse().map((m) => ({
-        role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
-        content: m.content,
-    }));
+    const history = previousMessages.slice().reverse().map((m) => ({ role: m.role === "assistant" ? ("assistant" as const) : ("user" as const), content: m.content }));
 
     const completion = await openai.chat.completions.create({
       model: MODAL_MODEL,
@@ -339,34 +280,18 @@ export async function POST(request: Request) {
     const nextFreeUsed = !isPremium && deductedType === "free" ? (user.freeMessagesUsed ?? 0) + 1 : user.freeMessagesUsed;
 
     return NextResponse.json({
-      success: true,
-      conversationId: conversation.id,
-      userMessageId: userMsgRow?.id ?? null,
+      success: true, conversationId: conversation.id, userMessageId: userMsgRow?.id ?? null,
       message: { id: assistantRow?.id ?? null, role: "assistant", content: cleanMessage },
-      remedy: remedyRow,
-      balance: { walletBalancePaise: nextWalletBalance, freeMessagesUsed: nextFreeUsed },
+      remedy: remedyRow, balance: { walletBalancePaise: nextWalletBalance, freeMessagesUsed: nextFreeUsed },
     });
 
   } catch (error) {
     if (isDeducted && userId) {
       try {
-        if (deductedType === "wallet") {
-          await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
-        } else if (deductedType === "free") {
-          await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
-        }
+        if (deductedType === "wallet") await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
+        else if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
       } catch (refundError) { console.error("[chat.POST] REFUND FAILED:", refundError); }
     }
-
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("[chat.POST] failed:", { userId, deductedType, message });
-
-    return NextResponse.json(
-      {
-        code: "ASTROLOGER_UNAVAILABLE",
-        error: `${personaName} abhi thodi der ke liye busy hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏`,
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ code: "ASTROLOGER_UNAVAILABLE", error: `${personaName} abhi thodi der ke liye busy hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏` }, { status: 500 });
   }
 }
