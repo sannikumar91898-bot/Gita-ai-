@@ -28,11 +28,16 @@ if (!MODAL_API_URL) {
   console.error("[FATAL] MODAL_API_URL is not set in Environment Variables!");
 }
 
+// 🔥 SMART KEY LOGIC (Handles both combined and separated keys)
 let finalApiKey = "dummy-key";
-if (MODAL_API_KEY_ID && MODAL_API_SECRET) {
-  finalApiKey = `${MODAL_API_KEY_ID}.${MODAL_API_SECRET}`;
-} else if (MODAL_API_KEY_ID) {
-  finalApiKey = MODAL_API_KEY_ID; 
+if (MODAL_API_KEY_ID) {
+  if (MODAL_API_KEY_ID.includes(".")) {
+    finalApiKey = MODAL_API_KEY_ID; 
+  } else if (MODAL_API_SECRET) {
+    finalApiKey = `${MODAL_API_KEY_ID}.${MODAL_API_SECRET}`;
+  } else {
+    finalApiKey = MODAL_API_KEY_ID;
+  }
 }
 
 const openai = new OpenAI({
@@ -124,14 +129,15 @@ function getRelevantKnowledge(query: string): string {
     }).join("\n\n");
 }
 
+// 🔥 NEW CHAT FIX: Agar conversationId nahi hai, toh naya banayega
 async function getOrCreateConversation(userId: string, persona: keyof typeof PERSONAS, topic: string, conversationId?: string) {
   if (conversationId) {
     const [existing] = await db.select().from(conversations).where(and(eq(conversations.id, conversationId), eq(conversations.userId, userId))).limit(1);
     if (!existing) throw new Error("CONVERSATION_NOT_FOUND");
     return existing;
   }
-  const [existing] = await db.select().from(conversations).where(and(eq(conversations.userId, userId), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
-  if (existing) return existing;
+  
+  // Naya conversation create karo
   const [created] = await db.insert(conversations).values({ userId, title: "New Astro Consultation", topic: topic || "general", persona }).returning();
   if (!created) throw new Error("CONVERSATION_CREATE_FAILED");
   return created;
@@ -143,12 +149,20 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const persona = isPersona(searchParams.get("persona")) ? (searchParams.get("persona") as keyof typeof PERSONAS) : "gita";
-    const conversation = await getOrCreateConversation(user.id, persona, PERSONAS[persona].specializations);
+    
+    // Fetch latest conversation for this persona
+    const [latestConv] = await db.select().from(conversations).where(and(eq(conversations.userId, user.id), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
+    
+    if (!latestConv) {
+      return NextResponse.json({ success: true, conversationId: null, messages: [] });
+    }
+
     const history = await db.select({ id: messages.id, role: messages.role, content: messages.content, createdAt: messages.createdAt })
-      .from(messages).where(and(eq(messages.conversationId, conversation.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
+      .from(messages).where(and(eq(messages.conversationId, latestConv.id), eq(messages.userId, user.id))).orderBy(desc(messages.createdAt)).limit(50);
+      
     return NextResponse.json({
       success: true,
-      conversationId: conversation.id,
+      conversationId: latestConv.id,
       messages: history.reverse().map((item) => ({
         id: item.id, role: item.role === "assistant" ? "assistant" : "user", content: item.content,
       })),
@@ -163,6 +177,7 @@ export async function POST(request: Request) {
   let deductedType: "wallet" | "free" | "none" = "none";
   let userId = "";
   let personaName = "Astrologer";
+  let savedUserMsgId: string | null = null; // 🔥 Track karega taaki fail hone par delete kar sakein
 
   try {
     const user = await getUser();
@@ -193,7 +208,7 @@ export async function POST(request: Request) {
     const topic = topicRaw;
     personaName = PERSONAS[persona].name;
 
-    // 🔥 FIX 1: Image Check pehle kar diya, taaki wallet se paisa na kate!
+    // 🔥 IMAGE FIX (Billing se pehle)
     if (hasImage) return NextResponse.json({ code: "IMAGE_NOT_SUPPORTED", error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein. 🙏" }, { status: 422 });
     if (!userMessage) return NextResponse.json({ error: "Please apna sawaal likhein." }, { status: 400 });
 
@@ -213,7 +228,6 @@ export async function POST(request: Request) {
         isDeducted = true;
         deductedType = "wallet";
       } else if (hasFreeMessages) {
-        // 🔥 FIX 2: Free Message check ke saath update kiya taaki double request pe limit bypass na ho
         const updated = await db.update(users)
           .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
           .where(and(eq(users.id, userId), lt(users.freeMessagesUsed, FREE_MESSAGE_LIMIT)))
@@ -235,6 +249,7 @@ export async function POST(request: Request) {
     ]);
 
     const [userMsgRow] = await db.insert(messages).values({ conversationId: conversation.id, userId, role: "user", content: userMessage }).returning();
+    savedUserMsgId = userMsgRow?.id ?? null; // Save for cleanup
 
     const personaConfig = PERSONAS[persona];
     const today = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -260,7 +275,6 @@ export async function POST(request: Request) {
 
     const history = previousMessages.slice().reverse().map((m) => ({ role: m.role === "assistant" ? ("assistant" as const) : ("user" as const), content: m.content }));
 
-    // 🔥 FIX 3: Better Error logging. Agar yahan error aayega to Render logs me exact reason dikhega.
     console.log(`[chat.POST] Calling Modal API at: ${MODAL_API_URL}`);
     
     const completion = await openai.chat.completions.create({
@@ -303,7 +317,15 @@ export async function POST(request: Request) {
       } catch (refundError) { console.error("[chat.POST] REFUND FAILED:", refundError); }
     }
 
-    // 🔥 Yahan exact error print hoga Render logs me
+    // 🔥 ORPHANED MESSAGE CLEANUP FIX
+    if (savedUserMsgId) {
+      try {
+        await db.delete(messages).where(eq(messages.id, savedUserMsgId));
+      } catch (delError) {
+        console.error("[chat.POST] Failed to delete orphaned user message:", delError);
+      }
+    }
+
     console.error("=== [chat.POST] CRITICAL ERROR ===");
     console.error(error);
     console.error("==================================");
