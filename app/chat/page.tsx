@@ -5,7 +5,8 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, Image as ImageIcon } from "lucide-react";
+// 👇 YAHAN LOCK IMPORT KIYA HAI
+import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, Image as ImageIcon, Lock } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -230,7 +231,6 @@ function ChatPageContent() {
   const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
 
   return (
-    // 🔥 FIX 1: h-[100dvh]
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
       <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={(id) => { conversationId.current = id; setMessages([]); setStep("done"); setSidebarOpen(false); }} onNewChat={handleNewChat} />
 
@@ -260,7 +260,6 @@ function ChatPageContent() {
         </div>
       )}
 
-      {/* 🔥 FIX 2: MAIN CHAT AREA (flex-1 overflow-y-auto) */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20" aria-live="polite">
         {step === "language" && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
@@ -280,7 +279,6 @@ function ChatPageContent() {
           <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
             <div className={`relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[15px] leading-relaxed shadow-sm ${message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm"}`}>
               
-              {/* 🔥 FIX 3: IMAGE UI */}
               {message.image && (
                 <div className="mb-2 overflow-hidden rounded-xl border border-black/10">
                   <img src={message.image} alt="User upload" className="max-w-[250px] max-h-[300px] object-cover w-full" />
@@ -305,7 +303,6 @@ function ChatPageContent() {
         <div ref={endRef} />
       </div>
 
-      {/* IMAGE PREVIEW */}
       {imagePreview && (
         <div className={`shrink-0 p-3 border-t ${isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-gray-200"}`}>
           <div className="relative inline-block">
@@ -315,7 +312,6 @@ function ChatPageContent() {
         </div>
       )}
 
-      {/* 🔥 FIX 4: INPUT AREA (Sticky bottom, safe area for mobile keyboard) */}
       <div className={`shrink-0 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] z-20 ${inputWrapperClass}`}>
         <form onSubmit={handleSubmit} className="relative flex items-center max-w-xl mx-auto gap-2">
           <button type="button" onClick={() => fileInputRef.current?.click()} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}><ImageIcon size={20} /></button>
@@ -327,7 +323,6 @@ function ChatPageContent() {
         </form>
       </div>
 
-      {/* PAYWALL MODAL */}
       {showInsufficientBalance && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
