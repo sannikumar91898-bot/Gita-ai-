@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
 import { useApp } from "../../Providers";
-import { Wallet, Lock, ArrowLeft, Send, Sparkles, X, Plus, Heart, Image as ImageIcon } from "lucide-react"; 
+import { Wallet, Lock, ArrowLeft, Send, Sparkles, X, Plus, Heart, ImageIcon } from "lucide-react"; 
 
 type Message = {
   id: string;
@@ -203,7 +203,6 @@ export default function AstrologerChatPage() {
 
       if (typeof data.conversationId === "string") setConversationId(data.conversationId);
 
-      // 🔥 BUG FIX: data.reply ki jagah data.message.content check kiya
       if (data.message && typeof data.message.content === "string" && data.message.content.trim()) {
         setMessages((previous) => [
           ...previous,
@@ -236,10 +235,8 @@ export default function AstrologerChatPage() {
   }
 
   return (
-    // 🔥 FIX 1: h-[100dvh] and flex-col for keyboard handling
     <div className={`flex h-[100dvh] flex-col overflow-hidden ${isDark ? "bg-slate-950" : "bg-[#FFF9E6]"}`}>
       
-      {/* HEADER */}
       <header className={`sticky top-0 z-30 flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
         <div className="flex items-center gap-3 min-w-0 flex-1">
           <Link href="/" aria-label="Back" className={`text-2xl leading-none transition-transform active:scale-95 ${isDark ? "text-white" : "text-black"}`}><ArrowLeft size={20} /></Link>
@@ -260,7 +257,6 @@ export default function AstrologerChatPage() {
         </Link>
       )}
 
-      {/* 🔥 FIX 2: MAIN CHAT AREA (flex-1 overflow-y-auto) */}
       <main className="flex-1 space-y-4 overflow-y-auto px-3 py-4 pb-20" aria-live="polite">
         {historyLoading ? (
           <div className={`py-10 text-center text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>ज्योतिषी जुड़ रही हैं...</div>
@@ -279,7 +275,6 @@ export default function AstrologerChatPage() {
                 <div className={`max-w-[85%] rounded-2xl px-3 py-2 text-[15px] leading-relaxed shadow-sm ${
                   message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm"
                 }`}>
-                  {/* 🔥 FIX 3: IMAGE UI (max-w, max-h, object-cover) */}
                   {message.image && (
                     <div className="mb-2 overflow-hidden rounded-xl border border-black/10">
                       <img src={message.image} alt="User upload" className="max-w-[250px] max-h-[300px] object-cover w-full" />
@@ -300,29 +295,70 @@ export default function AstrologerChatPage() {
         <div ref={endRef} />
       </main>
 
-      {/* IMAGE PREVIEW */}
-      {imagePreview && (
-        <div className={`shrink-0 p-3 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-gray-50 border-gray-200"}`}>
-          <div className="relative inline-block">
-            <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-lg border-2 border-orange-500" />
-            <button onClick={clearImage} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600"><X size={12} /></button>
-          </div>
-        </div>
-      )}
-
-      {/* 🔥 FIX 4: INPUT AREA (Sticky bottom, safe area for mobile keyboard) */}
+      {/* 🔥 MODERN DEEPSEEK STYLE INPUT BOX */}
       <div className={`shrink-0 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] z-20 ${isDark ? "border-slate-800 bg-slate-900" : "border-orange-100 bg-white"}`}>
-        <form onSubmit={(e) => { e.preventDefault(); void sendMessage(input, selectedImage); }} className="relative flex items-center max-w-xl mx-auto gap-2">
-          <button type="button" onClick={() => fileInputRef.current?.click()} className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-gray-200 text-gray-600 hover:bg-gray-300"}`}><ImageIcon size={20} /></button>
-          <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
-          <div className="relative flex-1">
-            <input value={input} onChange={(e) => setInput(e.target.value)} disabled={loading || historyLoading} placeholder="अपना सवाल लिखें..." className={`w-full rounded-2xl border py-3.5 pl-4 pr-14 text-[15px] outline-none transition-colors ${isDark ? "bg-slate-800 border-slate-700 text-white placeholder-slate-400 focus:border-orange-500" : "bg-gray-50 border-gray-200 text-slate-900 placeholder-gray-400 focus:border-orange-400"}`} />
-            <button type="submit" disabled={(!input.trim() && !selectedImage) || loading || historyLoading} className="absolute right-2 top-1/2 -translate-y-1/2 flex h-9 w-9 items-center justify-center rounded-xl bg-orange-500 text-white disabled:opacity-50 hover:bg-orange-600 transition-all active:scale-95 shadow-md"><Send size={16} /></button>
+        <form onSubmit={(e) => { e.preventDefault(); void sendMessage(input, selectedImage); }} className="mx-auto flex max-w-xl flex-col gap-2">
+          
+          {/* Image Preview Thumbnail */}
+          {imagePreview && (
+            <div className="px-2">
+              <div className="relative inline-block">
+                <img 
+                  src={imagePreview} 
+                  alt="Selected" 
+                  className="h-16 w-16 object-cover rounded-xl border-2 border-orange-500 shadow-sm" 
+                />
+                <button 
+                  type="button"
+                  onClick={clearImage} 
+                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition"
+                >
+                  <X size={12} strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Main Input Pill */}
+          <div className={`flex items-end gap-2 rounded-[28px] p-1.5 border transition-all ${
+            isDark ? "bg-slate-800 border-slate-700 focus-within:border-orange-500/50" : "bg-gray-50 border-gray-200 shadow-sm focus-within:border-orange-400 focus-within:shadow-md"
+          }`}>
+            
+            {/* Photo Button */}
+            <button 
+              type="button" 
+              onClick={() => fileInputRef.current?.click()} 
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
+                isDark ? "text-slate-400 hover:bg-slate-700 hover:text-white" : "text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+              }`}
+            >
+              <ImageIcon size={22} />
+            </button>
+            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
+
+            {/* Text Input */}
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              disabled={loading || historyLoading}
+              placeholder="अपना सवाल लिखें..."
+              className={`flex-1 bg-transparent py-2.5 text-[15px] outline-none ${
+                isDark ? "text-white placeholder-slate-500" : "text-slate-900 placeholder-gray-400"
+              }`}
+            />
+
+            {/* Send Button */}
+            <button
+              type="submit"
+              disabled={(!input.trim() && !selectedImage) || loading || historyLoading}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white disabled:opacity-40 hover:bg-orange-600 transition-transform active:scale-95 shadow-sm"
+            >
+              <Send size={18} className="ml-0.5" />
+            </button>
           </div>
         </form>
       </div>
 
-      {/* PAYWALL MODAL */}
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
