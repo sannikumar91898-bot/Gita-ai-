@@ -20,27 +20,23 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* -------------------------------------------------------------------------- */
-/*                     🚨 MODAL ENDPOINT — FAIL FAST                          */
+/*                     🚨 MODAL ENDPOINT CONFIGURATION                        */
 /* -------------------------------------------------------------------------- */
 
 const MODAL_API_URL = process.env.MODAL_API_URL;
 const MODAL_API_KEY = process.env.MODAL_API_KEY;
 const MODAL_MODEL = process.env.MODAL_MODEL_NAME || "Qwen/Qwen3.6-35B-A3B";
 
-// Production में silently modal.com homepage hit नहीं करेंगे.
-// अगर env missing है → loud error, deploy टाइम पर ही पता चले.
-if (!MODAL_API_URL && process.env.NODE_ENV === "production") {
-  console.error(
-    "[FATAL] MODAL_API_URL is not set. Chat endpoint will not work. " +
-      "Set it in Render → Environment → MODAL_API_URL."
-  );
+// Agar Render pe URL set nahi hai, toh error throw karo taaki pata chale
+if (!MODAL_API_URL) {
+  console.error("[FATAL] MODAL_API_URL is not set in Environment Variables!");
 }
 
 const openai = new OpenAI({
-  baseURL: MODAL_API_URL || "https://modal.com/v1", // dev fallback only
+  // Default to localhost to force failure if env is missing, rather than hitting modal.com
+  baseURL: MODAL_API_URL || "http://localhost:8000/v1", 
   apiKey: MODAL_API_KEY || "dummy-key",
-  // 30s timeout — user 30s से ज़्यादा wait नहीं करेगा
-  timeout: 30_000,
+  timeout: 40_000, // 40 seconds timeout
   maxRetries: 1,
 });
 
@@ -65,29 +61,25 @@ type PersonaConfig = {
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
     name: "Gita",
-    specializations:
-      "Love, relationships, modern dating, breakups, and deep emotional bonding",
+    specializations: "Love, relationships, modern dating, breakups, and deep emotional bonding",
     tone: "A warm, loving, and deeply empathetic young female astrologer. She talks like a caring elder sister who genuinely wants to protect the user. Use words like 'Suno', 'Tum tension mat lo', 'Main hoon na'. Speak with ultimate confidence but wrap it in deep affection and psychology.",
     rules: "Validate the user's pain first (Psychology). Tell them it's not their fault. Then, use astrology to pinpoint exactly why it's happening (7th house, Venus). Give a timeline. Make the user feel heard and cared for.",
   },
   kriti: {
     name: "Acharya Kriti",
-    specializations:
-      "Career, government jobs, selection tracking, business growth and wealth generation",
+    specializations: "Career, government jobs, selection tracking, business growth and wealth generation",
     tone: "A sharp, highly intelligent, and professional female mentor. She is direct but deeply invested in the user's success. She uses powerful, motivating language.",
     rules: "Focus straight on the 10th house and Saturn/Jupiter transits. Deliver precise, jaw-dropping timelines. Use bullet points. Make the user feel that their success is her personal mission.",
   },
   devaki: {
     name: "Dr. Devaki Shastri",
-    specializations:
-      "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
+    specializations: "Advanced KP Astrology, complex dasha calculations and absolute chart mapping",
     tone: "A highly intellectual, serious, and authoritative older female guru. She commands immense respect and speaks with absolute divine authority.",
     rules: "Use exact planetary degrees and dasha cycles to make undeniable predictions. Ensure the customer feels your supreme astrological mastery instantly.",
   },
   gargi: {
     name: "Gargi Maa",
-    specializations:
-      "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
+    specializations: "Vedic spirituality, Vastu balancing, high-converting traditional remedies and total mental peace",
     tone: "A maternal, soothing, and profoundly wise spiritual figure. She speaks with extreme love and spiritual depth. Calls the user 'Beta' but with deep emotion.",
     rules: "Instantly spot negative Vastu dashas or mental blocks. Prescribe powerful remedies (Pooja, Daan) with motherly affection to completely shift their luck.",
   },
@@ -305,8 +297,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           code: "INSUFFICIENT_BALANCE",
-          error:
-            "Aapka balance khatam ho gaya hai. Kripya recharge karein aur Maa se judiye. 🙏",
+          error: "Aapka balance khatam ho gaya hai. Kripya recharge karein aur Maa se judiye. 🙏",
         },
         { status: 402 }
       );
@@ -340,14 +331,11 @@ export async function POST(request: Request) {
     const topic = topicRaw;
 
     /* ----------------------------- 3a. Image ----------------------------- */
-    // 🧠 Psychologist: silent ignore = trust breach.
-    // Vision model wired नहीं है अभी, तो honest message देते हैं.
     if (hasImage) {
       return NextResponse.json(
         {
           code: "IMAGE_NOT_SUPPORTED",
-          error:
-            "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein — Maa aapki puri madad karengi. 🙏",
+          error: "Abhi image se sawaal puchhna available nahi hai. Kripya apna sawaal text mein likhein — Maa aapki puri madad karengi. 🙏",
         },
         { status: 422 }
       );
@@ -422,23 +410,9 @@ export async function POST(request: Request) {
     );
 
     const [birthRows, chartRows, previousMessages] = await Promise.all([
-      db
-        .select()
-        .from(birthDetails)
-        .where(eq(birthDetails.userId, userId))
-        .limit(1),
-      db
-        .select()
-        .from(charts)
-        .where(eq(charts.userId, userId))
-        .orderBy(desc(charts.createdAt))
-        .limit(1),
-      db
-        .select({ role: messages.role, content: messages.content })
-        .from(messages)
-        .where(eq(messages.conversationId, conversation.id))
-        .orderBy(desc(messages.createdAt))
-        .limit(12),
+      db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
+      db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
+      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, conversation.id)).orderBy(desc(messages.createdAt)).limit(12),
     ]);
 
     /* ----------------------------- 6. Save user msg ---------------------- */
@@ -454,29 +428,31 @@ export async function POST(request: Request) {
 
     /* ----------------------------- 7. System prompt ---------------------- */
     const personaConfig = PERSONAS[persona];
+    
+    // Force Current Date & Language
+    const today = new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' });
+    
     const languageInstruction =
       language === "hi"
-        ? "Respond only in Hindi (Devanagari script)."
+        ? "CRITICAL: Reply ONLY in pure Hindi (Devanagari script)."
         : language === "en"
-        ? "Respond only in English."
-        : "Respond in Hinglish (Roman-script Hindi mixed naturally with English).";
+        ? "CRITICAL: Reply ONLY in English."
+        : "CRITICAL: Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English). DO NOT use pure English or pure Hindi sentences. Address the user affectionately.";
 
     const birth = birthRows[0];
     const chart = chartRows[0];
     const knowledge = getRelevantKnowledge(userMessage);
 
     const systemPrompt = [
-      `You are ${personaConfig.name}. ${personaConfig.tone}`,
-      `Specializations: ${personaConfig.specializations}.`,
-      `Rules: ${personaConfig.rules}`,
+      `You are ${personaConfig.name}, a real female astrologer. ${personaConfig.tone}`,
+      `Your Specializations: ${personaConfig.specializations}.`,
+      `Strict Rules: ${personaConfig.rules}`,
+      `Today's Date is: ${today}. ALWAYS use this date to calculate dashas or timelines. DO NOT mention past years like 2024 or 2025.`,
       languageInstruction,
-      birth
-        ? `User birth details: ${JSON.stringify(birth).slice(0, 1500)}`
-        : "",
-      chart
-        ? `User chart data: ${JSON.stringify(chart).slice(0, 2500)}`
-        : "",
-      knowledge ? `Reference knowledge:\n${knowledge}` : "",
+      `Never break character. If user asks "who are you", say your persona name and that you are an astrologer.`,
+      birth ? `User Birth Details (DOB/Time/Place): ${JSON.stringify(birth).slice(0, 1500)}` : "",
+      chart ? `User Kundli Data: ${JSON.stringify(chart).slice(0, 2500)}` : "",
+      knowledge ? `Reference Astrological Knowledge:\n${knowledge}` : "",
       `If you want to attach a remedy, output it AFTER the marker ||REMEDY_EXTRACT|| on its own line, then the remedy title on the next line, then the description.`,
     ]
       .filter(Boolean)
@@ -486,8 +462,7 @@ export async function POST(request: Request) {
       .slice()
       .reverse()
       .map((m) => ({
-        role:
-          m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+        role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
         content: m.content,
       }));
 
@@ -499,12 +474,11 @@ export async function POST(request: Request) {
         ...history,
         { role: "user", content: userMessage },
       ],
-      temperature: 0.8,
-      max_tokens: 1500,
+      temperature: 0.7, // Thoda kam kiya taaki AI zyada hallucinate na kare
+      max_tokens: 1200,
     });
 
-    const rawResponse =
-      completion.choices[0]?.message?.content?.trim() || "";
+    const rawResponse = completion.choices[0]?.message?.content?.trim() || "";
     if (!rawResponse) throw new Error("EMPTY_AI_RESPONSE");
 
     /* ----------------------------- 9. Split remedy ----------------------- */
@@ -522,15 +496,7 @@ export async function POST(request: Request) {
       .returning();
 
     /* ----------------------------- 11. Save remedy ----------------------- */
-    // ⚙️ Engineer: `conversationId` हटाया — schema में नहीं है तो
-    // runtime crash होता था. Conversation linkage messages table से
-    // track हो रही है (same timestamp range).
-    let remedyRow: {
-      id: string;
-      title: string;
-      description: string;
-    } | null = null;
-
+    let remedyRow: { id: string; title: string; description: string } | null = null;
     if (remedy) {
       try {
         const [r] = await db
@@ -541,14 +507,8 @@ export async function POST(request: Request) {
             description: remedy.description,
           })
           .returning();
-        if (r)
-          remedyRow = {
-            id: r.id,
-            title: r.title,
-            description: r.description,
-          };
+        if (r) remedyRow = { id: r.id, title: r.title, description: r.description };
       } catch (remedyErr) {
-        // 💼 Businessman: remedy fail होने से पूरा chat fail नहीं होना चाहिए
         console.error("[chat.POST] remedy insert failed:", remedyErr);
       }
     }
@@ -604,33 +564,19 @@ export async function POST(request: Request) {
             })
             .where(eq(users.id, userId));
         }
-        console.error(
-          `[chat.POST] refunded ${deductedType} for user ${userId} due to failure`
-        );
+        console.error(`[chat.POST] refunded ${deductedType} for user ${userId} due to failure`);
       } catch (refundError) {
-        // 🔴 ALERT-WORTHY: refund fail = customer money loss
-        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", {
-          userId,
-          deductedType,
-          refundError,
-        });
+        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", refundError);
       }
     }
 
-    const message =
-      error instanceof Error ? error.message : String(error);
-    console.error("[chat.POST] failed:", {
-      userId,
-      deductedType,
-      message,
-    });
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[chat.POST] failed:", { userId, deductedType, message });
 
-    // 🔭 Astrologer: error भी empathetic हो
     return NextResponse.json(
       {
         code: "ASTROLOGER_UNAVAILABLE",
-        error:
-          "Maa abhi thodi der ke liye dhyan mein hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏",
+        error: "Maa abhi thodi der ke liye dhyan mein hain. Aapka paisa safe hai. Kripya 1 minute baad try karein. 🙏",
       },
       { status: 500 }
     );
