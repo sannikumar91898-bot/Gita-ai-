@@ -118,53 +118,72 @@ export default function HomePage() {
   useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    // 🔥 Full Screen (w-full)
-    <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
+    // 🔥 min-h-screen lagaya hai taaki pure page ko cover kare
+    <main className="min-h-screen w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30 flex flex-col">
       
-      <header className="sticky top-0 z-40 flex items-center justify-between px-3 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
         <div className="flex items-center gap-2.5">
-          <img src="/icon-192.png" alt="Logo" className="h-[34px] w-[34px] rounded-full object-cover border border-orange-500/50" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=G&background=ff6b00&color=fff'; }} />
-          <span className="text-[18px] font-bold tracking-tight text-white">{t("appName")}</span>
+          <img src="/icon-192.png" alt="Logo" className="h-[38px] w-[38px] rounded-full object-cover border border-orange-500/50" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=G&background=ff6b00&color=fff'; }} />
+          <span className="text-[20px] font-bold tracking-tight text-white">{t("appName")}</span>
         </div>
         <div className="flex items-center gap-2.5">
-          <Link href="/settings" className="rounded-full p-2 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937]">
-            <Settings size={18} />
+          <Link href="/settings" className="rounded-full p-2.5 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937]">
+            <Settings size={20} />
           </Link>
-          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700">
+          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700">
             ₹{me?.user ? walletBalanceRupees : "0"} 
-            <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff6b00] text-[11px] text-white ml-0.5">+</span>
+            <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#ff6b00] text-[12px] text-white ml-0.5">+</span>
           </Link>
         </div>
       </header>
 
-      {/* 🔥 Main Container: padding ko kam karke px-2 kiya gaya hai taaki cards full width lein */}
-      <div className="w-full space-y-5 px-2 py-4">
+      {/* 🔥 Main Container: space-y-6 aur px-3 kiya gaya hai taaki sab bada aur faila hua dikhe */}
+      <div className="w-full flex-1 space-y-6 px-3 py-5">
         
-        {/* HERO BANNER */}
-        <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-lg min-h-[145px] flex flex-col justify-center w-full">
-          <div className="relative z-10 space-y-1.5 w-[80%]">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-orange-100">
-              <Sparkles size={12} className="text-amber-200" /> {t("specialOffer")}
+        {/* HERO BANNER (Wapas Mandala ke saath) */}
+        <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-6 shadow-xl min-h-[170px] flex flex-col justify-center w-full">
+          
+          {/* Background Mandala (Kundli Chakra) */}
+          <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 w-[220px] h-[220px] opacity-70 pointer-events-none mix-blend-screen">
+            <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.8" className="drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
+              <circle cx="50" cy="50" r="45" strokeWidth="1" />
+              <circle cx="50" cy="50" r="35" />
+              <circle cx="50" cy="50" r="20" />
+              <circle cx="50" cy="50" r="5" fill="#FFD700" />
+              {[...Array(12)].map((_, i) => (
+                <line key={i} x1="50" y1="5" x2="50" y2="95" transform={`rotate(${i * 30} 50 50)`} />
+              ))}
+            </svg>
+          </div>
+          <div className="absolute right-0 top-0 w-[60%] h-full bg-gradient-to-l from-orange-400/30 to-transparent blur-xl pointer-events-none"></div>
+
+          <div className="relative z-10 space-y-2 w-[75%]">
+            <p className="flex items-center gap-1.5 text-[12px] font-semibold text-orange-100">
+              <Sparkles size={14} className="text-amber-200" /> {t("specialOffer")}
             </p>
-            <h2 className="text-[28px] font-black leading-tight text-white tracking-tight">{t("freeChat")}</h2>
-            <p className="text-[11.5px] font-medium text-orange-100/90 leading-snug">{t("heroSub")}</p>
-            <div className="pt-2">
-              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-extrabold text-[#FF3D00] shadow-sm">
-                {t("startFreeChat")} <ChevronRight size={15} strokeWidth={3} />
+            <h2 className="text-[32px] font-black leading-tight text-white tracking-tight">{t("freeChat")}</h2>
+            <p className="text-[13px] font-medium text-orange-100/90 leading-snug">{t("heroSub")}</p>
+            <div className="pt-3">
+              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-extrabold text-[#FF3D00] shadow-md">
+                {t("startFreeChat")} <ChevronRight size={16} strokeWidth={3} />
               </Link>
             </div>
           </div>
         </section>
 
-        {/* FREE TOOLS */}
-        <section className="space-y-3 pt-1 w-full">
+        {/* FREE TOOLS (Icons Bade Kiye Gaye Hain) */}
+        <section className="space-y-3.5 pt-1 w-full">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
-              <h2 className="text-[15px] font-bold text-white tracking-wide">{t("freeTools")}</h2>
+              <div className="w-2 h-5 bg-[#ff6b00] rounded-full"></div>
+              <h2 className="text-[17px] font-bold text-white tracking-wide">{t("freeTools")}</h2>
             </div>
+            <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-400 bg-[#121927] px-3 py-1.5 rounded-full border border-emerald-500/30">
+              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span> {t("online")}
+            </span>
           </div>
-          <div className="flex justify-between items-start w-full gap-1 px-1">
+          
+          <div className="flex justify-between items-start w-full gap-2 px-1">
             {[
               { name: t("kundli"), icon: Scroll, href: "/kundli" },
               { name: t("matching"), icon: Heart, href: "/matching" },
@@ -174,64 +193,66 @@ export default function HomePage() {
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
               { name: t("calSetting"), icon: ScanFace, href: "/settings" },
             ].map((tool, idx) => (
-              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-1.5 flex-1">
-                <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full border border-slate-700/80 bg-[#121927] text-[#ff6b00]">
-                  <tool.icon size={20} strokeWidth={1.5} />
+              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 flex-1">
+                <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-transform hover:scale-105">
+                  <tool.icon size={24} strokeWidth={1.5} />
                 </div>
-                <span className="text-[9.5px] text-center font-semibold text-slate-300 w-full truncate">{tool.name}</span>
+                <span className="text-[10.5px] text-center font-bold text-slate-300 w-full truncate">{tool.name}</span>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* ASTROLOGER LIST */}
+        {/* ASTROLOGER LIST (Cards Bade Kiye Gaye Hain) */}
         <section className="space-y-4 w-full">
           <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
-              <h2 className="text-[15px] font-bold text-white tracking-wide">{t("talkTo")}</h2>
+              <div className="w-2 h-5 bg-[#ff6b00] rounded-full"></div>
+              <h2 className="text-[17px] font-bold text-white tracking-wide">{t("talkTo")}</h2>
             </div>
           </div>
-          <div className="space-y-3.5 w-full">
+          
+          <div className="space-y-5 w-full">
             {ASTROLOGERS.map((astro) => {
               const firstReview = astro.reviews[0];
               const isExpanded = expandedReview === astro.id;
 
               return (
-                <article key={astro.id} className="rounded-[1.2rem] bg-[#151d2c] p-3.5 shadow-md border border-slate-800/80 relative w-full">
-                  <div className="flex gap-3.5">
-                    <div className="relative h-[72px] w-[72px] shrink-0">
-                      <img src={astro.image} alt={astro.name} className="h-full w-full object-cover object-top rounded-full border border-slate-600 shadow-sm" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=ff6b00&color=fff`; }} />
-                      <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-[2.5px] border-[#151d2c] bg-emerald-500"></span>
+                <article key={astro.id} className="rounded-[1.5rem] bg-[#151d2c] p-4 sm:p-5 shadow-lg border border-slate-800/80 relative w-full">
+                  <div className="flex gap-4">
+                    <div className="relative h-[80px] w-[80px] shrink-0">
+                      <img src={astro.image} alt={astro.name} className="h-full w-full object-cover object-top rounded-full border-2 border-slate-600 shadow-md" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=ff6b00&color=fff`; }} />
+                      <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full border-[3px] border-[#151d2c] bg-emerald-500"></span>
                     </div>
-                    <div className="flex flex-1 flex-col justify-between py-0.5">
+                    <div className="flex flex-1 flex-col justify-between py-1">
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-[16px] font-bold text-white">{astro.name}</h3>
-                          {astro.isCelebrity && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Celebrity</span>}
+                          <h3 className="text-[18px] font-bold text-white">{astro.name}</h3>
+                          {astro.isCelebrity && <span className="rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Celebrity</span>}
                         </div>
-                        <p className="text-[11.5px] font-medium text-slate-400 mt-0.5">{astro.specialty}</p>
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-300 mt-1">
-                          <Star size={11} fill="#ff6b00" className="text-[#ff6b00]" /> {astro.rating}
+                        <p className="text-[12.5px] font-medium text-slate-400 mt-1">{astro.specialty}</p>
+                        <div className="flex items-center gap-2 text-[12px] font-medium text-slate-300 mt-1.5">
+                          <Star size={13} fill="#ff6b00" className="text-[#ff6b00]" /> {astro.rating}
                           <span className="text-slate-500">•</span>
                           <span>{astro.experience}</span>
                         </div>
                       </div>
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-[16px] font-black text-[#ff6b00]">
-                          ₹{astro.price} <span className="text-[11px] font-medium text-slate-400">/ {t("min")}</span>
+                      <div className="flex items-center justify-between mt-3">
+                        <p className="text-[18px] font-black text-[#ff6b00]">
+                          ₹{astro.price} <span className="text-[12px] font-medium text-slate-400">/ {t("min")}</span>
                         </p>
-                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-5 py-1.5 text-[12.5px] font-bold text-white shadow-sm">
+                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
                           {t("chatNow")}
                         </Link>
                       </div>
                     </div>
                   </div>
+                  
                   {firstReview && (
-                    <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11.5px] leading-relaxed text-slate-300 border border-slate-800/50">
-                      <div className="flex items-center gap-1 mb-1">
+                    <div className="mt-4 bg-[#0c111b] rounded-[1rem] p-3.5 text-[12.5px] leading-relaxed text-slate-300 border border-slate-800/50">
+                      <div className="flex items-center gap-1.5 mb-1.5">
                         {[...Array(5)].map((_, i) => (
-                          <Star key={i} size={10} fill={i < firstReview.rating ? "#ff6b00" : "transparent"} className={i < firstReview.rating ? "text-[#ff6b00]" : "text-slate-600"} />
+                          <Star key={i} size={11} fill={i < firstReview.rating ? "#ff6b00" : "transparent"} className={i < firstReview.rating ? "text-[#ff6b00]" : "text-slate-600"} />
                         ))}
                         <span className="ml-1 font-semibold text-slate-400">- {firstReview.author}</span>
                       </div>
@@ -252,20 +273,23 @@ export default function HomePage() {
 
       {/* Sticky Bottom Banner */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
-        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
+        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-5 py-3 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10"><Crown size={16} className="text-white" /></div>
+             <div className="h-9 w-9 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10"><Crown size={18} className="text-white" /></div>
              <div>
-               <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
-               <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
+               <p className="text-[12px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
+               <p className="text-[14px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
              </div>
           </div>
+          <div className="h-9 w-9 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
+               <Crown size={18} className="text-[#d81b60]" fill="#d81b60" />
+          </div>
         </div>
-        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2 pb-5 px-2 w-full">
-          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]"><Home size={20} strokeWidth={2.5} /><span className="text-[10px] font-bold">{t("home")}</span></Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400"><MessageCircle size={20} /><span className="text-[10px] font-medium">{t("chat")}</span></Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400"><Sun size={20} /><span className="text-[10px] font-medium">{t("daily")}</span></Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400"><User size={20} /><span className="text-[10px] font-medium">{t("profile")}</span></Link>
+        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-6 px-2 w-full">
+          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]"><Home size={22} strokeWidth={2.5} /><span className="text-[11px] font-bold">{t("home")}</span></Link>
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400"><MessageCircle size={22} /><span className="text-[11px] font-medium">{t("chat")}</span></Link>
+          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400"><Sun size={22} /><span className="text-[11px] font-medium">{t("daily")}</span></Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400"><User size={22} /><span className="text-[11px] font-medium">{t("profile")}</span></Link>
         </nav>
       </div>
     </main>
