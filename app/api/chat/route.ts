@@ -19,7 +19,7 @@ import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 GROQ AI CONFIGURATION (Fast, Free, No Setup)
+// 🔥 GROQ AI CONFIGURATION
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const openai = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -81,8 +81,11 @@ export async function GET(request: Request) {
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    
     const { searchParams } = new URL(request.url);
-    const persona = isPersona(searchParams.get("persona")) ? searchParams.get("persona") : "gita";
+    const rawPersona = searchParams.get("persona");
+    const persona = isPersona(rawPersona) ? rawPersona : "gita";
+    
     const reqConvId = searchParams.get("conversationId"); 
 
     let conv;
@@ -116,7 +119,11 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const userMessage = cleanText(formData.get("message"));
-    const persona = isPersona(formData.get("persona")) ? (formData.get("persona") as any) : "gita";
+    
+    // 🔥 FIX: Proper Type inference
+    const rawPersona = formData.get("persona");
+    const persona = isPersona(rawPersona) ? rawPersona : "gita";
+    
     const requestedConversationId = cleanText(formData.get("conversationId"));
     const imageFile = formData.get("image") as File | null;
 
@@ -152,8 +159,6 @@ export async function POST(request: Request) {
 
     // 🔥 AI CALL
     const personaConfig = PERSONAS[persona];
-    
-    // Strict Prompt for Formatting & Language
     const systemPrompt = `
 You are ${personaConfig.name}. ${personaConfig.tone}.
 Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. You MUST calculate all timelines based on the current year (2026). NEVER mention 2024 or 2025.
