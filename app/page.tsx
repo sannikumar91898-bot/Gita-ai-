@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// 🔥 10 Languages Translation Helper (Restored)
+// 🔥 10 Languages Translation Helper
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
@@ -110,8 +110,8 @@ const ASTROLOGERS: Astrologer[] = [
     rating: 4.9, 
     experience: "5 Years", 
     price: 19, 
-    // ध्यान दें: यहाँ अपनी असली फाइल का नाम डालें (जैसे /astrologers/riya.jpg या gita.jpg)
-    image: "/astrologers/gita.jpg", 
+    // 🔥 FIXED: Path changed to riya.jpg based on your GitHub screenshot
+    image: "/astrologers/riya.jpg", 
     reviews: [
       { text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 }
     ]
@@ -167,8 +167,8 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
-    // pb-36 (144px) जो नीचे के बैनर के लिए पर्याप्त है
-    <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
+    // 🔥 pb-32 ensures content doesn't hide behind the bottom banner
+    <main className="min-h-[100dvh] w-full pb-32 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
       
       {/* HEADER */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
@@ -196,12 +196,12 @@ export default function HomePage() {
         
         {/* HERO BANNER */}
         <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-[0_10px_40px_-10px_rgba(255,61,0,0.4)] min-h-[145px] flex flex-col justify-center w-full">
-          <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[180px] h-[180px] opacity-60 pointer-events-none mix-blend-screen">
-            <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.5">
+          <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[180px] h-[180px] opacity-80 pointer-events-none mix-blend-screen">
+            <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.8" className="drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]">
               <circle cx="50" cy="50" r="45" strokeWidth="1" />
               <circle cx="50" cy="50" r="35" />
               <circle cx="50" cy="50" r="20" />
-              <circle cx="50" cy="50" r="5" />
+              <circle cx="50" cy="50" r="5" fill="#FFD700" />
               {[...Array(12)].map((_, i) => (
                 <line key={i} x1="50" y1="5" x2="50" y2="95" transform={`rotate(${i * 30} 50 50)`} />
               ))}
@@ -224,7 +224,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* FREE TOOLS (Removed overflow-x-auto and adjusted icon sizes to fit all 7) */}
+        {/* FREE TOOLS */}
         <section className="space-y-3 pt-1 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -311,7 +311,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Bottom Section: Reviews (Now Clickable to Expand) */}
+                  {/* Bottom Section: Reviews */}
                   {firstReview && (
                     <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11.5px] leading-relaxed text-slate-300 border border-slate-800/50">
                       <div className="flex items-center gap-1 mb-1">
