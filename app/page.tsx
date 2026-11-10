@@ -121,7 +121,7 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
-    <main className={`min-h-screen w-full pb-32 transition-colors duration-300 ${isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900"}`}>
+    <main className={`min-h-screen w-full pb-44 transition-colors duration-300 ${isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900"}`}>
       
       {/* PREMIUM HEADER */}
       <header className={`sticky top-0 z-40 flex items-center justify-between px-4 py-3 shadow-sm backdrop-blur-xl ${isDark ? "bg-[#0B0F19]/80 border-b border-white/5" : "bg-white/80 border-b border-gray-100"}`}>
