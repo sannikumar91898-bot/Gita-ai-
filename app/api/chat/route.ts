@@ -10,6 +10,7 @@ import { birthDetails, charts, conversations, messages, remedies, users } from "
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// ✅ GROQ API CONFIGURATION
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const openai = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -32,11 +33,11 @@ function cleanText(value: unknown, maxLength = 6000): string {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maxLength);
 }
+
 function isPersona(value: unknown): value is keyof typeof PERSONAS {
   return typeof value === "string" && value in PERSONAS;
 }
 
-// 🔥 DYNAMIC LANGUAGE PROMPT
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
     hi: "Reply strictly in pure Hindi (Devanagari script).",
@@ -113,6 +114,7 @@ export async function POST(request: Request) {
 
     if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
 
+    // Billing Logic
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
     const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
     
@@ -148,36 +150,26 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
-    // 🔥 NEW CONTEXT: Gender, Unknown Time, aur Kundli Data
+    // Kundli Context
     const birth = birthRows[0];
     let kundliContext = "Birth details not provided yet.";
-    
     if (birth) {
-      kundliContext = `User Name: ${birth.name}. User Gender: ${birth.gender}. `;
-      if (birth.isBirthTimeUnknown) {
-        kundliContext += `Note: User's exact birth time is unknown, 12:00 PM has been assumed for calculation. `;
-      }
-      kundliContext += `DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}. `;
+      kundliContext = `User Name: ${birth.name}. Gender: ${birth.gender}. DOB: ${birth.dob}, Place: ${birth.birthPlace}.`;
     }
 
     const systemPrompt = `
 You are ${personaConfig.name}, a female astrologer. ${personaConfig.tone}
-Your Rules: ${personaConfig.rules}
-Today's Date is ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. The current year is STRICTLY 2026. Do NOT use 2024 or 2025.
-
-USER CONTEXT:
-${kundliContext}
-
+Today's Date is ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. Year is 2026. Do NOT use 2024/2025.
 ${getLanguageInstruction(language)}
-
+${kundliContext}
 CRITICAL RULES:
 1. NEVER use markdown, stars (**), hashtags (#), or bullet points. 
 2. Output plain text paragraphs with single line breaks.
-3. Address the user according to their Gender. Do not call a Male user 'Beta' or 'Behen' if they are male.
+3. Address the user according to their Gender.
 `;
 
-    // 🔥 STABLE GROQ MODELS
-    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
+    // 🔥 NEW SUPPORTED GROQ MODELS
+    const modelName = imageFile ? "qwen/qwen3.8-27b" : "openai/gpt-oss-120b"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
@@ -205,7 +197,6 @@ CRITICAL RULES:
     let raw = completion.choices[0]?.message?.content?.trim() || "";
     if (!raw) throw new Error("Empty response from AI");
 
-    // 🔥 Strict Markdown Remover
     raw = raw.replace(/[\*\#]/g, ""); 
 
     const { message, remedy } = extractRemedy(raw);
@@ -216,7 +207,7 @@ CRITICAL RULES:
     return NextResponse.json({ success: true, conversationId: convId, message: { role: "assistant", content: message }, remedy });
 
   } catch (error: any) {
-    // Refund & Cleanup Logic
+    // Refund & Cleanup
     if (isDeducted && userId) {
       if (deductedType === "wallet") await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
       if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
