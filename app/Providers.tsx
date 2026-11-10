@@ -93,6 +93,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const hasLocalLanguageRef = useRef(false);
   const refreshInProgressRef = useRef(false);
 
+  // 1. Initial Load
   useEffect(() => {
     mountedRef.current = true;
 
@@ -112,6 +113,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // 2. Update HTML Theme
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
@@ -119,6 +121,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("gita_theme", theme);
     } catch {}
   }, [theme]);
+
+  const lang: Lang = isLang(localLang) ? localLang : "en";
+
+  // 🔥 3. Update HTML Lang Attribute (SEO Fix)
+  useEffect(() => {
+    // Agar Hindi hai to 'hi', warna 'en' (Hinglish ke liye bhi en tag use hota hai SEO me)
+    document.documentElement.lang = lang === "hi" ? "hi" : "en";
+  }, [lang]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
     if (nextTheme === "dark" || nextTheme === "light") {
@@ -249,7 +259,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMe((current) => (current ? { ...current, entitlement } : current));
   }, []);
 
-  const lang: Lang = isLang(localLang) ? localLang : "en";
   const t = useCallback((key: string) => translate(lang, key), [lang]);
 
   const value = useMemo<Ctx>(
