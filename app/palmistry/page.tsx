@@ -2,26 +2,30 @@
 "use client";
 
 import { useRef, useState, useEffect, ChangeEvent } from "react";
-import { 
-  ArrowLeft, Hand, Loader2, MessageCircle, Upload, 
-  Star, AlertCircle, RefreshCw, ShieldAlert 
-} from "lucide-react";
+import { ArrowLeft, Hand, MessageCircle, Upload, Star, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
-type PalmResult = {
-  title: string;
-  insight: string;
-  hook: string;
+type PalmResult = { title: string; insight: string; hook: string; };
+
+// 🔥 Loading Text in 10 Languages
+const getLoadingSteps = (lang: string) => {
+  const steps: Record<string, string[]> = {
+    hi: ["हथेली की रेखाएं स्कैन हो रही हैं...", "ग्रहों की स्थिति देखी जा रही है...", "भाग्य का विश्लेषण हो रहा है...", "रिपोर्ट तैयार हो रही है..."],
+    hinglish: ["Hatheli scan ho rahi hai...", "Planets check kiye ja rahe hain...", "Bhagya decode ho raha hai...", "Report taiyaar ho rahi hai..."],
+    en: ["Scanning palm lines...", "Analyzing mount positions...", "Decoding destiny markers...", "Generating Vedic report..."],
+    te: ["అరచేతి రేఖలు స్కాన్ అవుతున్నాయి...", "గ్రహాల స్థితి విశ్లేషిస్తోంది...", "విధి విశ్లేషిస్తోంది...", "నివేదిక సిద్ధమవుతోంది..."],
+    ta: ["கைரேகைகள் ஸ்கேன் செய்யப்படுகிறது...", "கிரக நிலைகள் ஆராயப்படுகிறது...", "விதி பகுப்பாய்வு செய்யப்படுகிறது...", "அறிக்கை தயாராகிறது..."],
+    kn: ["ಹಸ್ತರೇಖೆ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿದೆ...", "ಗ್ರಹಗಳ ಸ್ಥಿತಿ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ಭವಿಷ್ಯ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ವರದಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..."],
+    bn: ["হাতের রেখা স্ক্যান হচ্ছে...", "গ্রহের অবস্থান বিশ্লেষণ হচ্ছে...", "ভাগ্য বিশ্লেষণ হচ্ছে...", "রিপোর্ট তৈরি হচ্ছে..."],
+    mr: ["हस्तरेषा स्कॅन होत आहे...", "ग्रहांची स्थिती तपासत आहे...", "नशीब विश्लेषण करत आहे...", "अहवाल तयार होत आहे..."],
+    gu: ["હસ્તરેખા સ્કેન થઈ રહી છે...", "ગ્રહોની સ્થિતિ તપાસાઈ રહી છે...", "ભાગ્ય વિશ્લેષણ થઈ રહ્યું છે...", "રિપોર્ટ તૈયાર થઈ રહ્યો છે..."],
+    ml: ["കൈരേഖ സ്കാൻ ചെയ്യുന്നു...", "ഗ്രഹങ്ങളുടെ സ്ഥിതി പരിശോധിക്കുന്നു...", "വിധി വിശകലനം ചെയ്യുന്നു...", "റിപ്പോർട്ട് തയ്യാറാക്കുന്നു..."],
+  };
+  return steps[lang] || steps["hinglish"];
 };
 
-const LOADING_STEPS = [
-  "Scanning palm lines...",
-  "Analyzing mount positions...",
-  "Decoding destiny markers...",
-  "Generating Vedic report..."
-];
-
+// 🔥 FIXED: Image Compression (Sirf badi images ko chota karega, choti ko nahi)
 const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -31,8 +35,9 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const scaleSize = maxWidth / img.width;
-        canvas.width = maxWidth;
+        // Agar image pehle se maxWidth se choti hai, toh size same rakho
+        const scaleSize = img.width > maxWidth ? maxWidth / img.width : 1;
+        canvas.width = img.width * scaleSize;
         canvas.height = img.height * scaleSize;
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject("Canvas error");
@@ -41,14 +46,8 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
         canvas.toBlob(
           (blob) => {
             if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: "image/jpeg",
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
-            } else {
-              reject("Compression failed");
-            }
+              resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+            } else reject("Compression failed");
           },
           "image/jpeg",
           quality
@@ -61,36 +60,36 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
 };
 
 export default function PalmistryPage() {
-  const { lang, theme } = useApp(); // 🔥 lang yahan se aa rahi hai
+  const { lang, theme } = useApp();
   const isDark = theme === "dark";
-  const isHindi = lang === "hi";
-  const isHinglish = lang === "hinglish";
-
+  
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState(LOADING_STEPS[0]);
+  const [loadingText, setLoadingText] = useState("");
   const [result, setResult] = useState<PalmResult | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
+  const t = (hi: string, hing: string, en: string) => lang === "hi" ? hi : lang === "hinglish" ? hing : en;
 
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-xl" : "border-orange-100 bg-white shadow-xl";
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
+    const steps = getLoadingSteps(lang);
     if (loading) {
+      setLoadingText(steps[0]);
       let i = 0;
       interval = setInterval(() => {
-        i = (i + 1) % LOADING_STEPS.length;
-        setLoadingText(LOADING_STEPS[i]);
+        i = (i + 1) % steps.length;
+        setLoadingText(steps[i]);
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [loading]);
+  }, [loading, lang]);
 
   useEffect(() => {
     return () => { abortRef.current?.abort(); };
@@ -123,12 +122,6 @@ export default function PalmistryPage() {
 
     const reader = new FileReader();
 
-    reader.onerror = () => {
-      setLoading(false);
-      setPhoto(null);
-      setErrorMsg(t("फोटो पढ़ने में समस्या हुई।", "Photo read karne mein problem hui.", "Unable to read image."));
-    };
-
     reader.onload = async () => {
       if (typeof reader.result !== "string") return;
 
@@ -137,10 +130,9 @@ export default function PalmistryPage() {
 
       try {
         const compressedFile = await compressImage(file);
-
         const formData = new FormData();
         formData.append("image", compressedFile);
-        formData.append("language", lang); // 🔥 NAYA: Language bhej rahe hain
+        formData.append("language", lang); 
 
         const res = await fetch("/api/palm", {
           method: "POST",
@@ -160,29 +152,12 @@ export default function PalmistryPage() {
           throw new Error(data?.message || data?.error || "Analysis failed");
         }
 
-        if (!data?.success || !data?.result) {
-          throw new Error("Invalid response format from server.");
-        }
-
+        if (!data?.success || !data?.result) throw new Error("Invalid response format.");
         setResult(data.result);
 
       } catch (error: any) {
         if (error.name === "AbortError") return;
-        console.error("Palm reading error:", error);
-        
-        let displayError = error.message;
-        
-        if (displayError.includes("404") || displayError.includes("not found")) {
-           displayError = "AI Model currently unavailable. Please check backend config.";
-        }
-        else if (displayError.includes("429") || displayError.includes("quota")) {
-           displayError = t("सर्वर पर बहुत ज्यादा लोड है। 1 मिनट बाद प्रयास करें।", "Server load high. Try again in 1 min.", "Server busy. Try again in 1 min.");
-        }
-        else if (displayError === "Analysis failed") {
-           displayError = t("विश्लेषण विफल रहा। सर्वर से संपर्क नहीं हो पाया।", "Analysis failed. Server issue.", "Analysis failed. Server issue.");
-        }
-
-        setErrorMsg(displayError);
+        setErrorMsg(error.message || "Analysis failed.");
         setPhoto(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
       } finally {
@@ -196,17 +171,13 @@ export default function PalmistryPage() {
   const reset = () => {
     abortRef.current?.abort();
     abortRef.current = null;
-    setPhoto(null);
-    setResult(null);
-    setErrorMsg("");
-    setLoading(false);
+    setPhoto(null); setResult(null); setErrorMsg(""); setLoading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   return (
     <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
-        
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
             <ArrowLeft size={18} />
@@ -222,7 +193,7 @@ export default function PalmistryPage() {
           <div className={`rounded-xl border p-4 flex items-start gap-3 animate-in fade-in ${isDark ? "border-red-900/50 bg-red-950/30" : "border-red-200 bg-red-50"}`}>
             <AlertCircle className={`shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} size={20} />
             <div>
-              <h3 className={`text-sm font-bold ${isDark ? "text-red-300" : "text-red-800"}`}>Analysis Error</h3>
+              <h3 className={`text-sm font-bold ${isDark ? "text-red-300" : "text-red-800"}`}>Error</h3>
               <p className={`text-xs font-medium mt-1 leading-relaxed ${isDark ? "text-red-200/80" : "text-red-700"}`}>{errorMsg}</p>
             </div>
           </div>
@@ -230,20 +201,12 @@ export default function PalmistryPage() {
 
         {!photo && !loading && (
           <section className={`space-y-5 rounded-3xl border p-6 text-center ${cardClass}`}>
-            <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-500/30`}>
-              <Hand size={48} className="opacity-90" />
-            </div>
+            <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-500/30`}><Hand size={48} className="opacity-90" /></div>
             <div>
               <h2 className="text-xl font-bold">{t("हथेली की फोटो अपलोड करें", "Apni hatheli ki photo upload karein", "Upload your palm photo")}</h2>
-              <p className={`text-sm mt-2 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-                {t("हथेली की रेखाएं आपके भविष्य का राज बताती हैं। (सिर्फ साफ हथेली की फोटो डालें, Max 10MB)", 
-                   "Hatheli ki rekhaayein aapke bhavishya ka raaj batati hain. (Sirf clear palm ki photo daalein, Max 10MB)", 
-                   "Your palm lines reveal the secrets of your future. (Upload clear palm only, Max 10MB)")}
-              </p>
+              <p className={`text-sm mt-2 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("हथेली की रेखाएं आपके भविष्य का राज बताती हैं।", "Hatheli ki rekhaayein aapke bhavishya ka raaj batati hain.", "Your palm lines reveal the secrets of your future.")}</p>
             </div>
-            
             <input ref={fileInputRef} type="file" accept="image/jpeg, image/png, image/webp" onChange={handleFile} className="hidden" id="palm-upload" />
-            
             <label htmlFor="palm-upload" className="mt-2 inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-4 text-sm font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-[1.02] active:scale-[0.98]">
               <Upload size={18} /> {t("फोटो चुनें", "Choose Photo", "Choose Photo")}
             </label>
@@ -255,16 +218,10 @@ export default function PalmistryPage() {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <img src={photo} alt="preview" className={`h-32 w-32 rounded-2xl border-4 object-cover shadow-lg ${loading ? "border-orange-500 animate-pulse" : "border-emerald-500"}`} />
-                {loading && (
-                  <div className="absolute inset-0 rounded-2xl border-4 border-t-transparent border-orange-500 animate-spin"></div>
-                )}
+                {loading && <div className="absolute inset-0 rounded-2xl border-4 border-t-transparent border-orange-500 animate-spin"></div>}
               </div>
-              
               <div className="text-center">
-                <p className={`text-base font-bold ${loading ? "text-orange-500 animate-pulse" : "text-emerald-500"}`}>
-                  {loading ? loadingText : t("विश्लेषण पूरा हुआ", "Analysis Complete", "Analysis Complete")}
-                </p>
-                {loading && <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("कृपया प्रतीक्षा करें...", "Please wait...", "Please wait...")}</p>}
+                <p className={`text-base font-bold ${loading ? "text-orange-500 animate-pulse" : "text-emerald-500"}`}>{loading ? loadingText : t("विश्लेषण पूरा हुआ", "Analysis Complete", "Analysis Complete")}</p>
               </div>
             </div>
           </section>
@@ -272,14 +229,11 @@ export default function PalmistryPage() {
 
         {result && !loading && (
           <section className={`space-y-5 rounded-3xl border-2 p-5 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${isDark ? "border-orange-900/30 bg-[#151E2E]" : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
-            
             <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-700/50 pb-3">
               <Star className="text-amber-500" size={20} fill="currentColor" />
               <h2 className="text-lg font-black text-orange-500 uppercase tracking-wide">{result.title}</h2>
             </div>
-            
             <p className={`text-sm font-medium leading-7 ${isDark ? "text-slate-300" : "text-gray-800"}`}>{result.insight}</p>
-            
             <div className={`rounded-xl border p-4 relative overflow-hidden ${isDark ? "border-rose-900/50 bg-rose-950/30" : "border-red-200 bg-red-50 shadow-inner"}`}>
               <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
               <div className="flex items-start gap-2">
@@ -287,7 +241,6 @@ export default function PalmistryPage() {
                 <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-800"}`}>{result.hook}</p>
               </div>
             </div>
-            
             <div className="space-y-3 pt-2">
               <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-red-500/30 transition-transform active:scale-[0.98] animate-pulse">
                 <MessageCircle size={18} /> {t("ज्योतिषी से बात करें — FREE", "Talk to Astrologer — FREE", "Talk to Astrologer — FREE")}
