@@ -22,13 +22,12 @@ const FREE_MESSAGE_LIMIT = 3;
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first." },
+  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister.", rules: "Validate pain first." },
   kriti: { name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house." },
   devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees." },
-  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies with affection." },
+  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing.", rules: "Prescribe remedies." },
 };
 
-const SUPPORTED_LANGUAGES = ["hi", "hinglish", "en"] as const;
 function cleanText(value: unknown, maxLength = 6000): string {
   if (typeof value !== "string") return "";
   return value.trim().slice(0, maxLength);
@@ -36,6 +35,24 @@ function cleanText(value: unknown, maxLength = 6000): string {
 function isPersona(value: unknown): value is keyof typeof PERSONAS {
   return typeof value === "string" && value in PERSONAS;
 }
+
+// 🔥 DYNAMIC LANGUAGE PROMPT
+function getLanguageInstruction(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "Reply strictly in pure Hindi (Devanagari script).",
+    hinglish: "Reply strictly in Hinglish (Roman Hindi mixed with English).",
+    en: "Reply strictly in English.",
+    te: "Reply strictly in Telugu (తెలుగు).",
+    ta: "Reply strictly in Tamil (தமிழ்).",
+    kn: "Reply strictly in Kannada (ಕನ್ನಡ).",
+    bn: "Reply strictly in Bengali (বাংলা).",
+    mr: "Reply strictly in Marathi (मराठी).",
+    gu: "Reply strictly in Gujarati (ગુજરાતી).",
+    ml: "Reply strictly in Malayalam (മലയാളം).",
+  };
+  return map[lang] || map["hinglish"];
+}
+
 function extractRemedy(response: string) {
   const marker = "||REMEDY_EXTRACT||";
   const index = response.indexOf(marker);
@@ -66,7 +83,6 @@ export async function GET(request: Request) {
     }
     
     if (!conv) return NextResponse.json({ success: true, conversationId: null, messages: [] });
-
     const history = await db.select().from(messages).where(eq(messages.conversationId, conv.id)).orderBy(messages.createdAt);
     return NextResponse.json({ success: true, conversationId: conv.id, messages: history });
   } catch (error) {
@@ -89,12 +105,12 @@ export async function POST(request: Request) {
     const userMessage = cleanText(formData.get("message"));
     const rawPersona = formData.get("persona");
     const persona = isPersona(rawPersona) ? rawPersona : "gita";
+    const language = cleanText(formData.get("language")) || "hinglish"; // 🔥 Language input
     const requestedConversationId = cleanText(formData.get("conversationId"));
     const imageFile = formData.get("image") as File | null;
 
     if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
 
-    // Billing Logic
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
     const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
     
@@ -112,14 +128,12 @@ export async function POST(request: Request) {
       }
     }
 
-    // Conversation Setup
     let convId = requestedConversationId;
     if (!convId) {
       const [newConv] = await db.insert(conversations).values({ userId, title: "New Chat", persona }).returning();
       convId = newConv.id;
     }
 
-    // 🔥 PREMIUM FEATURE 1: Fetch Context (Last 10 Messages + Kundli Data)
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
       db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
@@ -129,49 +143,23 @@ export async function POST(request: Request) {
     const [uMsg] = await db.insert(messages).values({ conversationId: convId, userId, role: "user", content: userMessage || "Photo" }).returning();
     savedUserMsgId = uMsg.id;
 
-    const birth = birthRows[0];
-    const chart = chartRows[0];
-    
-    // Formatting Previous Context
+    const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
-    const personaConfig = PERSONAS[persona];
-    
-    // Building Kundli Context
-    let kundliContext = "No birth details provided yet. Ask the user for their birth details (Date, Time, Place) to give accurate predictions.";
-    if (birth) {
-      kundliContext = `User's Birth Details: DOB: ${birth.dob}, Time: ${birth.birthTime}, Place: ${birth.birthPlace}. `;
-      if (chart) {
-        kundliContext += `User's Chart Data: ${JSON.stringify(chart.data).slice(0, 1500)}`;
-      }
-    }
-
-    // 🔥 PREMIUM FEATURE 2: Ultimate Strict Prompt (No Markdown, 2026 Only)
     const systemPrompt = `
-You are an elite premium application assistant named ${personaConfig.name}.
-You are a real female astrologer. ${personaConfig.tone}
-Your Specializations: ${personaConfig.specializations}.
-Strict Rules: ${personaConfig.rules}
-
-Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}.
-The current year is strictly 2026. You MUST use this year for all calculations. Do NOT mention 2024 or 2025.
-
-KUNDLI & CONTEXT:
-${kundliContext}
-Use this context to personalize the response. Do not ask for details if they are already provided above.
-
-STRICT FORMATTING & LANGUAGE RULES:
-1. Do not output markdown. Do not output asterisks or hashtags under any circumstances.
-2. Reply ONLY in clean plain-text paragraph format with single line breaks.
-3. If the user speaks in Hindi or Hinglish, reply in Hinglish (Roman-script). If English, reply in English.
-4. Address the user affectionately (e.g., 'Suno', 'Beta', 'Tum tension mat lo').
+You are ${personaConfig.name}, a female astrologer.
+The current year is STRICTLY 2026. Do not use 2024 or 2025.
+${getLanguageInstruction(language)}
+CRITICAL RULES:
+1. NEVER use markdown, stars (**), hashtags (#), or bullet points. 
+2. Output plain text paragraphs with single line breaks.
 `;
 
-    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
+    const modelName = imageFile ? "qwen/qwen3.6-27b" : "openai/gpt-oss-120b"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
-      ...history, // Context injected here
+      ...history,
       { role: "user", content: userMessage || "Is image ko analyze karo." }
     ];
 
@@ -188,15 +176,14 @@ STRICT FORMATTING & LANGUAGE RULES:
     const completion = await openai.chat.completions.create({
       model: modelName,
       messages: messagesPayload,
-      temperature: 0.5,
-      max_tokens: 1200,
+      temperature: 0.4,
+      max_tokens: 1000,
     });
 
     let raw = completion.choices[0]?.message?.content?.trim() || "";
     if (!raw) throw new Error("Empty response from AI");
 
-    // 🔥 CODE-LEVEL FIX: Guaranteed removal of stars and hashtags
-    raw = raw.replace(/\*\*/g, "").replace(/\*/g, "").replace(/#/g, "");
+    raw = raw.replace(/[\*\#]/g, ""); 
 
     const { message, remedy } = extractRemedy(raw);
     
@@ -211,11 +198,6 @@ STRICT FORMATTING & LANGUAGE RULES:
       if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
     }
     if (savedUserMsgId) await db.delete(messages).where(eq(messages.id, savedUserMsgId)); 
-
-    // 🔥 PREMIUM FEATURE 3: Smart Error Handling for Rate Limits
-    if (error?.status === 429 || error?.message?.includes("rate limit")) {
-       return NextResponse.json({ code: "RATE_LIMIT", error: "Aapne jaldi message bheja hai, kripya 30 second rukein." }, { status: 429 });
-    }
 
     console.error("=== GROQ AI ERROR ===", error.message || error);
     return NextResponse.json({ code: "AI_ERROR", error: "Server thoda busy hai. Kripya 1 minute baad try karein." }, { status: 500 });
