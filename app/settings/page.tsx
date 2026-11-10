@@ -5,82 +5,45 @@ import { useState, useEffect } from "react";
 import { 
   ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, 
   Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, 
-  X, LogOut, Shield, FileText, Mail, Check
+  X, LogOut, Shield, FileText, Mail, Check, CreditCard, Trash2
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
-// 🔥 FIX: Path ko ../../i18n kiya gaya hai
 import { LANGUAGES } from "../../i18n"; 
-
-const ZODIAC_AVATARS = [
-  { id: "aries", name: "Aries", url: "https://cdn-icons-png.flaticon.com/512/1565/1565470.png" },
-  { id: "taurus", name: "Taurus", url: "https://cdn-icons-png.flaticon.com/512/1565/1565477.png" },
-  { id: "gemini", name: "Gemini", url: "https://cdn-icons-png.flaticon.com/512/1565/1565484.png" },
-  { id: "cancer", name: "Cancer", url: "https://cdn-icons-png.flaticon.com/512/1565/1565488.png" },
-  { id: "leo", name: "Leo", url: "https://cdn-icons-png.flaticon.com/512/1565/1565493.png" },
-  { id: "virgo", name: "Virgo", url: "https://cdn-icons-png.flaticon.com/512/1565/1565499.png" },
-  { id: "libra", name: "Libra", url: "https://cdn-icons-png.flaticon.com/512/1565/1565505.png" },
-  { id: "scorpio", name: "Scorpio", url: "https://cdn-icons-png.flaticon.com/512/1565/1565510.png" },
-  { id: "sagittarius", name: "Sagittarius", url: "https://cdn-icons-png.flaticon.com/512/1565/1565513.png" },
-  { id: "capricorn", name: "Capricorn", url: "https://cdn-icons-png.flaticon.com/512/1565/1565519.png" },
-  { id: "aquarius", name: "Aquarius", url: "https://cdn-icons-png.flaticon.com/512/1565/1565524.png" },
-  { id: "pisces", name: "Pisces", url: "https://cdn-icons-png.flaticon.com/512/1565/1565530.png" },
-];
 
 export default function SettingsPage() {
   const { lang, setLanguage, theme, setTheme, me } = useApp();
 
   const isDark = theme === "dark";
-  const isHindi = lang === "hi";
-  const isHinglish = lang === "hinglish";
+  
+  // Modal state for Language
+  const [showLangModal, setShowLangModal] = useState(false);
 
-  const [showAvatarModal, setShowAvatarModal] = useState(false);
-  const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
-
-  // Profile Photo ko LocalStorage se load karo
-  useEffect(() => {
-    const savedAvatar = localStorage.getItem("gita_avatar");
-    if (savedAvatar) setSelectedAvatar(savedAvatar);
-  }, []);
-
-  const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
-
-  const isLoggedIn = Boolean(me?.user && !me.user.isGuest && me.user.email);
-  const userName = isLoggedIn ? me?.user?.name || "User" : t("अतिथि उपयोगकर्ता", "Guest User", "Guest User");
-  const userEmail = isLoggedIn ? me?.user?.email || "" : t("लॉगिन करने के लिए टैप करें", "Login karne ke liye tap karein", "Tap to login");
-
-  const pageClass = isDark ? "bg-slate-950 text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-sm" : "border-orange-100 bg-white shadow-sm";
-  const mutedClass = isDark ? "text-slate-400" : "text-gray-500";
-
-  const exploreItems = [
-    { name: t("होम", "Home", "Home"), icon: Home, href: "/" },
-    { name: t("गीता AI से चैट करें", "Chat with Gita AI", "Chat with Gita AI"), icon: MessageCircle, href: "/chat?persona=gita" },
-    { name: t("मेरी कुंडली", "My Kundli", "My Kundli"), icon: Scroll, href: "/kundli" },
-  ];
-
-  const accountItems = [
-    { name: t("हेल्प सेंटर (FAQ)", "Help Center (FAQ)", "Help Center (FAQ)"), icon: HelpCircle, href: "/help" },
-    { name: t("सपोर्ट टिकट", "Support Ticket", "Support Ticket"), icon: Headphones, href: "/support" },
-    { name: t("वॉलेट ट्रांजैक्शन", "Wallet Transactions", "Wallet Transactions"), icon: Wallet, href: "/wallet" },
-    { name: t("ऑर्डर हिस्ट्री", "Order History", "Order History"), icon: List, href: "/orders" },
-  ];
-
-  const legalItems = [
-    { name: t("प्राइवेसी पॉलिसी", "Privacy Policy", "Privacy Policy"), icon: Shield, href: "/privacy" },
-    { name: t("नियम और शर्तें", "Terms of Service", "Terms of Service"), icon: FileText, href: "/terms" },
-    { name: t("संपर्क करें", "Contact Us", "Contact Us"), icon: Mail, href: "/contact" },
-  ];
-
-  const handleAvatarSelect = (url: string) => {
-    setSelectedAvatar(url);
-    localStorage.setItem("gita_avatar", url);
-    setShowAvatarModal(false);
+  // Ekdum simple translation helper
+  const t = (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      hi: { title: "सेटिंग्स", edit: "प्रोफाइल एडिट करें", sub: "सब्सक्राइब करें", policy: "पॉलिसीज", help: "हेल्प और सपोर्ट", lang: "भाषा", logout: "लॉगआउट करें", delete: "अकाउंट डिलीट करें", theme: "थीम", light: "लाइट", dark: "डार्क", selectLang: "भाषा चुनें" },
+      hinglish: { title: "Settings", edit: "Edit Profile", sub: "Subscribe Now", policy: "Policies", help: "Help and Support", lang: "Language", logout: "Log out", delete: "Delete Account", theme: "Theme", light: "Light", dark: "Dark", selectLang: "Select Language" },
+      en: { title: "Settings", edit: "Edit Profile", sub: "Subscribe Now", policy: "Policies", help: "Help and Support", lang: "Language", logout: "Log out", delete: "Delete Account", theme: "Theme", light: "Light", dark: "Dark", selectLang: "Select Language" },
+      te: { title: "సెట్టింగ్స్", edit: "ప్రొఫైల్ సవరించండి", sub: "సబ్స్క్రైబ్ చేయండి", policy: "విధానాలు", help: "సహాయం మరియు మద్దతు", lang: "భాష", logout: "లాగ్ అవుట్", delete: "ఖాతా తొలగించండి", theme: "థీమ్", light: "లైట్", dark: "డార్క్", selectLang: "భాషను ఎంచుకోండి" },
+      ta: { title: "அமைப்புகள்", edit: "சுயவிவரத்தைத் திருத்து", sub: "இப்போது குழுசேர்", policy: "கொள்கைகள்", help: "உதவி மற்றும் ஆதரவு", lang: "மொழி", logout: "வெளியேறு", delete: "கணக்கை நீக்கு", theme: "தீம்", light: "லைட்", dark: "டார்க்", selectLang: "மொழியைத் தேர்ந்தெடுக்கவும்" },
+      kn: { title: "ಸೆಟ್ಟಿಂಗ್ಸ್", edit: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", sub: "ಚಂದಾದಾರರಾಗಿ", policy: "ನೀತಿಗಳು", help: "ಸಹಾಯ ಮತ್ತು ಬೆಂಬಲ", lang: "ಭಾಷೆ", logout: "ಲಾಗ್ ಔಟ್", delete: "ಖಾತೆ ಅಳಿಸಿ", theme: "ಥೀಮ್", light: "ಲೈಟ್", dark: "ಡಾರ್ಕ್", selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ" },
+      bn: { title: "সেটিংস", edit: "প্রোফাইল সম্পাদনা করুন", sub: "এখন সাবস্ক্রাইব করুন", policy: "নীতিমালা", help: "সহায়তা এবং সমর্থন", lang: "ভাষা", logout: "লগ আউট", delete: "অ্যাকাউন্ট মুছুন", theme: "থিম", light: "লাইট", dark: "ডার্ক", selectLang: "ভাষা নির্বাচন করুন" },
+      mr: { title: "सेटिंग्ज", edit: "प्रोफाइल संपादित करा", sub: "सदस्यता घ्या", policy: "धोरणे", help: "मदत आणि समर्थन", lang: "भाषा", logout: "लॉग आउट", delete: "खाते हटवा", theme: "थीम", light: "लाइट", dark: "डार्क", selectLang: "भाषा निवडा" },
+      gu: { title: "સેટિંગ્સ", edit: "પ્રોફાઇલ સંપાદિત કરો", sub: "સબ્સ્ક્રાઇબ કરો", policy: "નીતિઓ", help: "મદદ અને સપોર્ટ", lang: "ભાષા", logout: "લોગ આઉટ", delete: "એકાઉન્ટ કાઢી નાખો", theme: "થીમ", light: "લાઇટ", dark: "ડાર્ક", selectLang: "ભાષા પસંદ કરો" },
+      ml: { title: "ക്രമീകരണങ്ങൾ", edit: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", sub: "സബ്സ്ക്രൈബ് ചെയ്യുക", policy: "നയങ്ങൾ", help: "സഹായവും പിന്തുണയും", lang: "ഭാഷ", logout: "ലോഗ് ഔട്ട്", delete: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", theme: "തീം", light: "ലൈറ്റ്", dark: "ഡാർക്ക്", selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക" },
+    };
+    return dict[lang]?.[key] || dict["en"][key];
   };
 
+  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const listItemClass = isDark ? "border-slate-800/50 hover:bg-white/5" : "border-gray-100 hover:bg-black/5";
+
+  // Current language label (e.g., Telugu, Hindi)
+  const currentLangLabel = LANGUAGES.find((l) => l.code === lang)?.label || "English";
+
   const handleLogout = () => {
-    const confirmLogout = window.confirm(t("क्या आप सच में लॉगआउट करना चाहते हैं?", "Kya aap sach me logout karna chahte hain?", "Are you sure you want to logout?"));
-    if (confirmLogout) {
+    if (window.confirm("Are you sure you want to logout?")) {
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = "/login";
@@ -88,186 +51,158 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className={`min-h-screen w-full px-4 pb-32 pt-5 ${pageClass}`}>
+    <main className={`min-h-screen w-full px-4 pb-24 pt-6 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-6">
         
         {/* HEADER */}
-        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
-          <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
-            <ArrowLeft size={18} />
+        <header className="flex items-center gap-4 px-2">
+          <Link href="/" className={`rounded-full p-2 transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}>
+            <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-base font-black uppercase tracking-tight text-orange-600">{t("प्रोफाइल", "Profile", "Profile")}</h1>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
         </header>
 
-        {/* PROFILE CARD */}
-        <div 
-          onClick={() => isLoggedIn ? setShowAvatarModal(true) : window.location.href = "/login"}
-          className={`flex items-center gap-4 rounded-2xl border p-4 ${cardClass} active:scale-95 transition-transform cursor-pointer`}
-        >
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-orange-100 text-orange-500 border-2 border-orange-300 overflow-hidden shadow-sm">
-            {selectedAvatar ? <img src={selectedAvatar} alt="Avatar" className="w-full h-full object-cover bg-yellow-400 p-1" /> : <User size={32} />}
-          </div>
-          <div className="flex-1">
-            <h2 className="text-lg font-bold">{userName}</h2>
-            <p className={`text-xs ${mutedClass}`}>{userEmail}</p>
-          </div>
-          {isLoggedIn && <div className="text-orange-500 bg-orange-500/10 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">Edit</div>}
+        {/* MAIN MENU LIST */}
+        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
+          
+          {/* Edit Profile */}
+          <Link href="/profile" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
+                <User size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("edit")}</span>
+            </div>
+            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+          </Link>
+
+          {/* Subscribe Now */}
+          <Link href="/wallet" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
+                <CreditCard size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("sub")}</span>
+            </div>
+            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+          </Link>
+
+          {/* Policies */}
+          <Link href="/privacy" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
+                <Shield size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("policy")}</span>
+            </div>
+            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+          </Link>
+
+          {/* Help & Support */}
+          <Link href="/support" className={`flex items-center justify-between p-4 ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
+                <HelpCircle size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("help")}</span>
+            </div>
+            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+          </Link>
         </div>
 
-        {/* QUICK LINKS */}
-        <section className="grid grid-cols-3 gap-3">
-          <Link href="/orders" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-all hover:scale-105 ${cardClass}`}><Clock size={22} className="text-orange-500" /><span className="text-[11px] font-bold">{t("मेरे ऑर्डर्स", "My Orders", "My Orders")}</span></Link>
-          <Link href="/wallet" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-all hover:scale-105 ${cardClass}`}><Wallet size={22} className="text-orange-500" /><span className="text-[11px] font-bold">{t("वॉलेट", "Wallet", "Wallet")}</span></Link>
-          <Link href="/help" className={`flex flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center transition-all hover:scale-105 ${cardClass}`}><Headphones size={22} className="text-orange-500" /><span className="text-[11px] font-bold">{t("सपोर्ट", "Support", "Support")}</span></Link>
-        </section>
-
-        {/* EXPLORE */}
-        <section className="space-y-2">
-          <h3 className={`px-1 text-xs font-bold uppercase tracking-wider ${mutedClass}`}>{t("एक्सप्लोर करें", "Explore", "Explore")}</h3>
-          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-            {exploreItems.map((item, idx) => (
-              <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${idx !== exploreItems.length - 1 ? (isDark ? "border-b border-slate-700/50" : "border-b border-gray-100") : ""}`}>
-                <div className="flex items-center gap-3"><item.icon size={18} className="text-orange-500" /><span className="text-sm font-semibold">{item.name}</span></div>
-                <ChevronRight size={16} className={mutedClass} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* ACCOUNT */}
-        <section className="space-y-2">
-          <h3 className={`px-1 text-xs font-bold uppercase tracking-wider ${mutedClass}`}>{t("अकाउंट", "Account", "Account")}</h3>
-          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-            {accountItems.map((item, idx) => (
-              <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${idx !== accountItems.length - 1 ? (isDark ? "border-b border-slate-700/50" : "border-b border-gray-100") : ""}`}>
-                <div className="flex items-center gap-3"><item.icon size={18} className="text-orange-500" /><span className="text-sm font-semibold">{item.name}</span></div>
-                <ChevronRight size={16} className={mutedClass} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* LEGAL */}
-        <section className="space-y-2">
-          <h3 className={`px-1 text-xs font-bold uppercase tracking-wider ${mutedClass}`}>{t("कानूनी जानकारी", "Legal & Support", "Legal & Support")}</h3>
-          <div className={`overflow-hidden rounded-2xl border ${cardClass}`}>
-            {legalItems.map((item, idx) => (
-              <Link key={idx} href={item.href} className={`flex items-center justify-between p-4 transition-colors hover:bg-black/5 dark:hover:bg-white/5 ${idx !== legalItems.length - 1 ? (isDark ? "border-b border-slate-700/50" : "border-b border-gray-100") : ""}`}>
-                <div className="flex items-center gap-3"><item.icon size={18} className="text-orange-500" /><span className="text-sm font-semibold">{item.name}</span></div>
-                <ChevronRight size={16} className={mutedClass} />
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        {/* APP SETTINGS (Premium Look) */}
-        <section className="space-y-2">
-          <h3 className={`px-1 text-xs font-bold uppercase tracking-wider ${mutedClass}`}>{t("ऐप सेटिंग्स", "App Settings", "App Settings")}</h3>
-          <div className={`overflow-hidden rounded-2xl border p-5 space-y-6 ${cardClass}`}>
-            
-            {/* THEME TOGGLE */}
-            <div className="space-y-3">
-              <h4 className="flex items-center gap-2 text-sm font-bold text-orange-500">
-                {isDark ? <Moon size={18} /> : <Sun size={18} />}{t("थीम", "Theme", "Theme")}
-              </h4>
-              <div className={`flex p-1 rounded-xl ${isDark ? "bg-slate-800" : "bg-gray-100"}`}>
-                <button 
-                  onClick={() => setTheme("light")} 
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${!isDark ? "bg-white text-orange-600 shadow-sm" : "text-slate-400 hover:text-slate-200"}`}
-                >
-                  <Sun size={14} /> {t("लाइट", "Light", "Light")}
-                </button>
-                <button 
-                  onClick={() => setTheme("dark")} 
-                  className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${isDark ? "bg-slate-700 text-orange-400 shadow-sm" : "text-gray-500 hover:text-gray-700"}`}
-                >
-                  <Moon size={14} /> {t("डार्क", "Dark", "Dark")}
-                </button>
-              </div>
-            </div>
-
-            {/* LANGUAGES GRID (10 Languages) */}
-            <div className="space-y-3">
-              <h4 className="flex items-center gap-2 text-sm font-bold text-orange-500">
-                <Globe size={18} />{t("भाषा", "Language", "Language")}
-              </h4>
-              <div className="grid grid-cols-2 gap-2">
-                {LANGUAGES.map((l) => (
-                  <button
-                    key={l.code}
-                    onClick={() => setLanguage(l.code)}
-                    className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition-all ${
-                      lang === l.code
-                        ? "border-orange-500 bg-orange-500 text-white shadow-md shadow-orange-500/20"
-                        : isDark
-                        ? "border-slate-700 bg-slate-800/50 text-slate-300 hover:bg-slate-800"
-                        : "border-gray-200 bg-white text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    {l.native}
-                    {lang === l.code && <Check size={16} />}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* LOGOUT */}
-        <section className="pt-2">
-          <button
-            onClick={handleLogout}
-            className={`w-full flex items-center justify-center gap-2 rounded-2xl border py-3.5 text-sm font-bold transition-all active:scale-95 ${
-              isDark
-                ? "border-red-900/50 bg-red-950/30 text-red-400 hover:bg-red-950/50"
-                : "border-red-200 bg-red-50 text-red-600 hover:bg-red-100 shadow-sm"
-            }`}
+        {/* LANGUAGE SECTION (Single Row) */}
+        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
+          <button 
+            onClick={() => setShowLangModal(true)}
+            className={`w-full flex items-center justify-between p-4 ${listItemClass}`}
           >
-            <LogOut size={18} />
-            {t("लॉगआउट करें", "Logout Karein", "Logout")}
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
+                <MessageCircle size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("lang")}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>{currentLangLabel}</span>
+              <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+            </div>
           </button>
-        </section>
+        </div>
+
+        {/* LOGOUT & DELETE */}
+        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
+          <button onClick={handleLogout} className={`w-full flex items-center justify-between p-4 border-b ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"}`}>
+                <LogOut size={18} />
+              </div>
+              <span className="font-semibold text-[15px]">{t("logout")}</span>
+            </div>
+          </button>
+
+          <button className={`w-full flex items-center justify-between p-4 ${listItemClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`p-2 rounded-full ${isDark ? "bg-rose-950/50 text-rose-500" : "bg-rose-50 text-rose-600"}`}>
+                <Trash2 size={18} />
+              </div>
+              <span className="font-semibold text-[15px] text-rose-500">{t("delete")}</span>
+            </div>
+          </button>
+        </div>
+
+        {/* FOOTER INFO */}
+        <div className="text-center pt-8 space-y-1">
+          <p className={`text-xs ${isDark ? "text-slate-600" : "text-gray-400"}`}>User ID: {me?.user?.id?.slice(0, 10) || "Guest"}</p>
+          <p className={`text-xs ${isDark ? "text-slate-600" : "text-gray-400"}`}>Version 2026.22.2</p>
+        </div>
 
       </div>
 
-      {/* AVATAR MODAL */}
-      {showAvatarModal && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-          <div className="bg-white rounded-t-3xl sm:rounded-3xl w-full max-w-md overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 sm:zoom-in-95">
-            <div className="flex items-center justify-between p-5 border-b border-gray-200">
-              <div>
-                <h2 className="text-xl font-bold text-gray-900">Change Profile Pic</h2>
-                <p className="text-xs text-gray-500 mt-1">Select from library</p>
-              </div>
-              <button onClick={() => setShowAvatarModal(false)} className="p-2 bg-gray-100 rounded-full hover:bg-gray-200"><X size={18} /></button>
+      {/* LANGUAGE MODAL (Popup) */}
+      {showLangModal && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
+          <div className={`w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151E2E] border border-slate-800" : "bg-white"}`}>
+            
+            {/* Modal Header */}
+            <div className={`flex items-center justify-between p-5 border-b ${isDark ? "border-slate-800" : "border-gray-200"}`}>
+              <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("selectLang")}</h2>
+              <button onClick={() => setShowLangModal(false)} className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                <X size={18} />
+              </button>
             </div>
-            <div className="p-5 overflow-y-auto">
-              <div className="grid grid-cols-4 gap-y-6 gap-x-2">
-                {ZODIAC_AVATARS.map((avatar) => (
-                  <button key={avatar.id} onClick={() => handleAvatarSelect(avatar.url)} className="flex flex-col items-center gap-2 group">
-                    <div className={`w-16 h-16 rounded-full overflow-hidden border-2 p-1 bg-yellow-400 transition-all ${selectedAvatar === avatar.url ? 'border-orange-500 scale-110 shadow-lg' : 'border-transparent group-hover:scale-105'}`}>
-                      <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover" />
-                    </div>
-                    <span className={`text-[10px] font-semibold ${selectedAvatar === avatar.url ? 'text-orange-600' : 'text-gray-700'}`}>{avatar.name}</span>
-                  </button>
-                ))}
-              </div>
+            
+            {/* Modal Body (Scrollable) */}
+            <div className="p-3 overflow-y-auto">
+              {LANGUAGES.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => { setLanguage(l.code); setShowLangModal(false); }}
+                  className={`w-full flex items-center justify-between p-4 mb-1 rounded-xl transition-all ${
+                    lang === l.code 
+                      ? (isDark ? "bg-orange-500/10 border border-orange-500/30" : "bg-orange-50 border border-orange-200") 
+                      : "border border-transparent hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  <div className="flex flex-col text-left">
+                    <span className={`text-[15px] font-bold ${lang === l.code ? "text-orange-500" : isDark ? "text-slate-200" : "text-gray-800"}`}>
+                      {l.native}
+                    </span>
+                    <span className="text-xs text-gray-500">{l.label}</span>
+                  </div>
+                  
+                  {/* Radio Button Indicator */}
+                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
+                    lang === l.code ? "border-orange-500 bg-orange-500" : (isDark ? "border-slate-600" : "border-gray-300")
+                  }`}>
+                    {lang === l.code && <Check size={12} className="text-white" />}
+                  </div>
+                </button>
+              ))}
             </div>
           </div>
         </div>
       )}
 
-      {/* BOTTOM BANNER */}
-      <Link href="/chat" className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-2xl">
-        <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/20"><Phone size={18} /></span>
-          <div className="leading-tight">
-            <p className="text-[10px] font-black uppercase text-rose-100">{isHindi ? "ज्योतिषी • 24x7 उपलब्ध" : "Astrologer • 24x7 Available"}</p>
-            <p className="text-sm font-black">{isHindi ? "अभी बात करें — पहली चैट FREE" : "Talk Now — First Chat FREE"}</p>
-          </div>
-        </div>
-        <span className="rounded-full bg-white px-3 py-1.5 text-xs font-black text-rose-700">{isHindi ? "चैट" : "Chat"}</span>
-      </Link>
     </main>
   );
 }
