@@ -37,10 +37,11 @@ function ChatPageContent() {
   
   // Onboarding State
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [onboardStep, setOnboardStep] = useState(1); // 1: Name, 2: Gender, 3: DOB, 4: Time, 5: Place
+  const [onboardStep, setOnboardStep] = useState(0); // 0: Lang, 1: Name, 2: Gender, 3: DOB, 4: Time, 5: Place
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [showLangModal, setShowLangModal] = useState(false);
   const [notSureTime, setNotSureTime] = useState(false);
+  const [hasConsent, setHasConsent] = useState(false); // 🔥 NAYA
+  const [sidebarOpen, setSidebarOpen] = useState(false); // 🔥 NAYA
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -60,19 +61,17 @@ function ChatPageContent() {
         dob: me.birth.dob, 
         time: me.birth.birthTime, 
         place: me.birth.birthPlace,
-        gender: "Not specified"
+        gender: me.birth.gender || "Not specified"
       });
+      setHistoryLoading(false);
     } else {
       setShowOnboarding(true);
-      setOnboardStep(0); // Start with Language
+      setOnboardStep(0);
     }
   }, [me]);
 
   const handleNextStep = () => {
-    if (onboardStep === 0 && !draft.gender) {
-      // Language is handled separately, move to Name
-      setOnboardStep(1);
-    }
+    if (onboardStep === 0) { setOnboardStep(1); } // Language to Name
     else if (onboardStep === 1) { if(draft.name.length < 2) return; setOnboardStep(2); }
     else if (onboardStep === 2) { if(!draft.gender) return; setOnboardStep(3); }
     else if (onboardStep === 3) { if(!draft.dob) return; setOnboardStep(4); }
@@ -81,7 +80,7 @@ function ChatPageContent() {
       setOnboardStep(5); 
     }
     else if (onboardStep === 5) {
-      if(draft.place.length < 2) return;
+      if(draft.place.length < 2 || !hasConsent) return;
       finishOnboarding();
     }
   };
@@ -94,18 +93,19 @@ function ChatPageContent() {
         headers: { "Content-Type": "application/json" }, 
         body: JSON.stringify({ 
           name: draft.name, 
+          gender: draft.gender, // 🔥 Send Gender
           dateOfBirth: draft.dob, 
           timeOfBirth: notSureTime ? "12:00" : draft.time, 
+          isTimeUnknown: notSureTime, // 🔥 Send Unknown Time
           placeOfBirth: draft.place,
-          gender: draft.gender
+          consent: hasConsent // 🔥 Send Consent
         }) 
       });
       
       if (!response.ok) throw new Error("Kundli failed");
       
-      await refresh(); // Update user data
+      await refresh(); 
       setShowOnboarding(false);
-      setHistoryLoading(false);
     } catch (error) {
       alert("Kundli generate nahi ho payi. Kripya details check karein.");
     } finally {
@@ -113,7 +113,7 @@ function ChatPageContent() {
     }
   };
 
-  // --- Chat Logic (Same as before) ---
+  // --- Chat Logic ---
   useEffect(() => {
     if (showOnboarding || loading || !me?.user) return;
     setHistoryLoading(true); setMessages([]); conversationId.current = "";
@@ -125,7 +125,7 @@ function ChatPageContent() {
       }).catch(console.error).finally(() => setHistoryLoading(false));
   }, [persona, loading, me?.user, showOnboarding]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading, imagePreview]);
 
   const handleCopy = (id: string, text: string) => { navigator.clipboard.writeText(text); };
 
@@ -141,13 +141,16 @@ function ChatPageContent() {
     if ((!msg && !selectedImage) || isLoading) return;
     
     setInput(""); setIsLoading(true);
-    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: msg || "Photo" }]);
+    const tempImage = imagePreview;
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: msg || "Photo", image: tempImage || undefined }]);
+    const imgFile = selectedImage;
+    setSelectedImage(null); setImagePreview(null);
 
     try {
       const formData = new FormData();
       formData.append("message", msg); formData.append("language", lang); formData.append("persona", persona);
       if (conversationId.current) formData.append("conversationId", conversationId.current);
-      if (selectedImage) formData.append("image", selectedImage);
+      if (imgFile) formData.append("image", imgFile);
 
       const response = await fetch("/api/chat", { method: "POST", body: formData });
       const data = await response.json();
@@ -155,16 +158,15 @@ function ChatPageContent() {
       if (data.message) {
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.message.content }]);
       }
-      setSelectedImage(null); setImagePreview(null);
     } catch (error) {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error." }]);
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error. Please try again." }]);
     } finally { setIsLoading(false); }
   }
 
   if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-yellow-500" size={32} /></div>;
 
   // ==========================================
-  // 🔥 PREMIUM ONBOARDING UI (Matches Screenshots)
+  // 🔥 PREMIUM ONBOARDING UI
   // ==========================================
   if (showOnboarding) {
     return (
@@ -182,10 +184,11 @@ function ChatPageContent() {
 
         {/* Progress Dots */}
         <div className="flex gap-2 mb-8">
-          {[1, 2, 3, 4, 5].map((s) => (
-            <div key={s} className={`h-8 w-8 rounded-full flex items-center justify-center ${onboardStep >= s ? "bg-yellow-400 text-black" : "bg-gray-200 text-gray-400"}`}>
+          {[0, 1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${onboardStep >= s ? "bg-yellow-400 text-black" : "bg-gray-200 text-gray-400"}`}>
+               {s === 0 && <Sparkles size={14} />}
                {s === 1 && <User size={16} />}
-               {s === 2 && <User size={16} />}
+               {s === 2 && <Heart size={16} />}
                {s === 3 && <Calendar size={16} />}
                {s === 4 && <Clock size={16} />}
                {s === 5 && <MapPin size={16} />}
@@ -200,7 +203,7 @@ function ChatPageContent() {
             <div className="grid grid-cols-2 gap-3">
               {LANGUAGES.map(l => (
                 <button key={l.code} onClick={() => { setLanguage(l.code); setOnboardStep(1); }} 
-                  className={`p-4 rounded-xl border-2 text-left ${lang === l.code ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white"}`}>
+                  className={`p-4 rounded-xl border-2 text-left transition-all ${lang === l.code ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white hover:border-yellow-200"}`}>
                   <span className="block font-bold">{l.native}</span>
                   <span className="text-xs text-gray-500">{l.label}</span>
                 </button>
@@ -215,23 +218,23 @@ function ChatPageContent() {
             <h2 className="text-2xl font-bold mb-2">Hey there!</h2>
             <p className="text-gray-500 mb-6">What is your name?</p>
             <input autoFocus value={draft.name} onChange={e => setDraft({...draft, name: e.target.value})} placeholder="Enter name" 
-              className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg mb-6" />
+              className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg mb-6 text-black" />
             <button onClick={handleNextStep} disabled={draft.name.length < 2} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
           </div>
         )}
 
-        {/* STEP 2: Gender (With Transgender) */}
+        {/* STEP 2: Gender */}
         {onboardStep === 2 && (
           <div className="animate-in fade-in slide-in-from-right-4">
             <h2 className="text-2xl font-bold mb-6">What is your gender?</h2>
-            <div className="flex justify-between gap-4 mb-8">
+            <div className="flex justify-between gap-3 mb-8">
               {["Male", "Female", "Transgender"].map((g) => (
                 <button key={g} onClick={() => setDraft({...draft, gender: g})} 
-                  className={`flex-1 flex flex-col items-center gap-4 p-4 rounded-2xl border-2 transition-all ${draft.gender === g ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white"}`}>
-                  <div className={`h-20 w-20 rounded-full flex items-center justify-center ${draft.gender === g ? "bg-yellow-400" : "bg-gray-100"}`}>
-                    <User size={40} className={draft.gender === g ? "text-black" : "text-gray-400"} />
+                  className={`flex-1 flex flex-col items-center gap-3 p-3 rounded-2xl border-2 transition-all ${draft.gender === g ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white"}`}>
+                  <div className={`h-16 w-16 rounded-full flex items-center justify-center ${draft.gender === g ? "bg-yellow-400" : "bg-gray-100"}`}>
+                    <User size={32} className={draft.gender === g ? "text-black" : "text-gray-400"} />
                   </div>
-                  <span className="font-semibold text-sm">{g}</span>
+                  <span className="font-semibold text-xs text-center">{g}</span>
                 </button>
               ))}
             </div>
@@ -239,12 +242,12 @@ function ChatPageContent() {
           </div>
         )}
 
-        {/* STEP 3: DOB (Simplified Scroll/Input) */}
+        {/* STEP 3: DOB */}
         {onboardStep === 3 && (
           <div className="animate-in fade-in slide-in-from-right-4 text-center">
             <h2 className="text-2xl font-bold mb-8">Enter your birth date</h2>
             <input type="date" value={draft.dob} onChange={e => setDraft({...draft, dob: e.target.value})} 
-              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-8" />
+              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-8 text-black" />
             <button onClick={handleNextStep} disabled={!draft.dob} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
           </div>
         )}
@@ -254,7 +257,7 @@ function ChatPageContent() {
           <div className="animate-in fade-in slide-in-from-right-4 text-center">
             <h2 className="text-2xl font-bold mb-8">Enter your birth time</h2>
             <input type="time" value={draft.time} onChange={e => setDraft({...draft, time: e.target.value})} disabled={notSureTime}
-              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-4 disabled:opacity-30" />
+              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-4 disabled:opacity-30 text-black" />
             
             <label className="flex items-center justify-center gap-2 mb-8 cursor-pointer">
               <input type="checkbox" checked={notSureTime} onChange={e => setNotSureTime(e.target.checked)} className="w-5 h-5 accent-yellow-400" />
@@ -264,16 +267,24 @@ function ChatPageContent() {
           </div>
         )}
 
-        {/* STEP 5: Place */}
+        {/* STEP 5: Place & Consent */}
         {onboardStep === 5 && (
           <div className="animate-in fade-in slide-in-from-right-4">
             <h2 className="text-2xl font-bold mb-6">Where were you born?</h2>
-            <div className="relative mb-8">
+            <div className="relative mb-6">
               <input autoFocus value={draft.place} onChange={e => setDraft({...draft, place: e.target.value})} placeholder="Search city (e.g. Patna, Bihar)" 
-                className="w-full p-4 pl-12 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg" />
+                className="w-full p-4 pl-12 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg text-black" />
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             </div>
-            <button onClick={handleNextStep} disabled={draft.place.length < 2 || isLoading} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50 flex justify-center items-center">
+            
+            <label className="flex items-start gap-3 mb-8 cursor-pointer bg-white p-4 rounded-xl border border-gray-200">
+              <input type="checkbox" checked={hasConsent} onChange={e => setHasConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-yellow-400" />
+              <span className="text-sm text-gray-600 text-left">
+                I consent to storing my birth details securely to generate my personal kundli and readings.
+              </span>
+            </label>
+
+            <button onClick={handleNextStep} disabled={draft.place.length < 2 || !hasConsent || isLoading} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50 flex justify-center items-center">
               {isLoading ? <Sparkles className="animate-spin" /> : "Start chat with Astrologer"}
             </button>
           </div>
@@ -289,8 +300,18 @@ function ChatPageContent() {
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
       
+      {/* 🔥 ADDED: History Sidebar */}
+      <HistorySidebar 
+        isOpen={sidebarOpen} 
+        onClose={() => setSidebarOpen(false)} 
+        currentConversationId={conversationId.current} 
+        onSelectChat={(id) => { conversationId.current = id; setMessages([]); setSidebarOpen(false); }} 
+        onNewChat={() => { conversationId.current = ""; setMessages([]); setSidebarOpen(false); }} 
+      />
+
       <header className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100"}`}>
         <div className="flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(true)} className="p-2"><Menu size={20} className={isDark ? "text-white" : "text-black"} /></button>
           <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-yellow-400"><img src={personaDetails.img} alt="Astro" className="h-full w-full object-cover" /></div>
           <div>
             <h1 className={`text-sm font-bold ${isDark ? "text-white" : "text-black"}`}>{personaDetails.name}</h1>
@@ -311,6 +332,12 @@ function ChatPageContent() {
               <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] shadow-sm ${
                 message.role === "user" ? "bg-yellow-400 text-black rounded-br-sm" : isDark ? "bg-slate-800 text-white border border-slate-700" : "bg-white text-gray-800 border border-gray-100"
               }`}>
+                {/* 🔥 ADDED: Image in Chat */}
+                {message.image && (
+                  <div className="mb-2 overflow-hidden rounded-xl border border-black/10">
+                    <img src={message.image} alt="User upload" className="max-w-[250px] max-h-[300px] object-cover w-full" />
+                  </div>
+                )}
                 <div className="whitespace-pre-wrap">{message.content}</div>
               </div>
             </div>
@@ -321,12 +348,28 @@ function ChatPageContent() {
       </div>
 
       <div className={`shrink-0 p-4 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-100"}`}>
-        <form onSubmit={sendToAi} className={`flex items-center gap-2 rounded-full border p-1.5 ${isDark ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-500 hover:text-yellow-500 transition"><ImageIcon size={20} /></button>
-          <input type="file" hidden ref={fileInputRef} onChange={handleImageSelect} />
-          <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your question..." 
-            className={`flex-1 bg-transparent outline-none text-[15px] ${isDark ? "text-white placeholder-gray-500" : "text-black placeholder-gray-400"}`} />
-          <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="p-3 bg-yellow-400 text-black rounded-full disabled:opacity-50 hover:bg-yellow-500 transition"><Send size={18} /></button>
+        <form onSubmit={sendToAi} className="flex flex-col gap-2 max-w-xl mx-auto">
+          
+          {/* 🔥 ADDED: Image Preview Thumbnail */}
+          {imagePreview && (
+            <div className="px-2">
+              <div className="relative inline-block">
+                <img src={imagePreview} alt="Selected" className="h-16 w-16 object-cover rounded-xl border-2 border-yellow-400 shadow-sm" />
+                <button type="button" onClick={() => { setSelectedImage(null); setImagePreview(null); }} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-md hover:bg-red-600">
+                  <X size={12} strokeWidth={3} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Input Bar */}
+          <div className={`flex items-center gap-2 rounded-full border p-1.5 ${isDark ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+            <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-500 hover:text-yellow-500 transition"><ImageIcon size={20} /></button>
+            <input type="file" hidden ref={fileInputRef} onChange={handleImageSelect} />
+            <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your question..." 
+              className={`flex-1 bg-transparent outline-none text-[15px] ${isDark ? "text-white placeholder-gray-500" : "text-black placeholder-gray-400"}`} />
+            <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="p-3 bg-yellow-400 text-black rounded-full disabled:opacity-50 hover:bg-yellow-500 transition"><Send size={18} /></button>
+          </div>
         </form>
       </div>
     </div>
