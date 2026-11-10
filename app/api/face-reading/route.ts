@@ -15,18 +15,14 @@ const groqClient = new OpenAI({
   apiKey: process.env.GROQ_API_KEY || "dummy",
 });
 
-// 🔥 10 Language Prompt Helper
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
     hi: "Reply strictly in pure Hindi (Devanagari script).",
     hinglish: "Reply strictly in Hinglish (Roman Hindi mixed with English).",
     en: "Reply strictly in English.",
-    te: "Reply strictly in Telugu (తెలుగు).",
-    ta: "Reply strictly in Tamil (தமிழ்).",
-    kn: "Reply strictly in Kannada (ಕನ್ನಡ).",
-    bn: "Reply strictly in Bengali (বাংলা).",
-    mr: "Reply strictly in Marathi (मराठी).",
-    gu: "Reply strictly in Gujarati (ગુજરાતી).",
+    te: "Reply strictly in Telugu (తెలుగు).", ta: "Reply strictly in Tamil (தமிழ்).",
+    kn: "Reply strictly in Kannada (ಕನ್ನಡ).", bn: "Reply strictly in Bengali (বাংলা).",
+    mr: "Reply strictly in Marathi (मराठी).", gu: "Reply strictly in Gujarati (ગુજરાતી).",
     ml: "Reply strictly in Malayalam (മലയാളം).",
   };
   return map[lang] || map["hinglish"];
@@ -39,7 +35,7 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
-    const language = (formData.get("language") as string) || "hinglish"; // 🔥 Get Language
+    const language = (formData.get("language") as string) || "hinglish";
 
     if (!imageFile) return NextResponse.json({ error: "Missing image" }, { status: 400 });
 
@@ -48,13 +44,9 @@ export async function POST(request: Request) {
 
     const prompt = `You are an expert Vedic Face Reader. Analyze this face.
     If no clear human face is visible, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
-    Otherwise, return a JSON object with exactly these keys:
-    - "title": Short title of the reading.
-    - "insight": 2-paragraph reading about nature, career, and relationships.
-    - "hook": Short engaging 1-line summary.
+    Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
     
-    LANGUAGE RULES:
-    ${getLanguageInstruction(language)} // 🔥 Dynamic Language
+    LANGUAGE RULES: ${getLanguageInstruction(language)}
     Output ONLY raw JSON, no markdown formatting.`;
 
     let result: any = null;
@@ -83,7 +75,7 @@ export async function POST(request: Request) {
         const text = completion.choices[0]?.message?.content || "";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
       } catch (err) {
-        return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy. Please try again." }, { status: 500 });
+        return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy." }, { status: 500 });
       }
     }
 
