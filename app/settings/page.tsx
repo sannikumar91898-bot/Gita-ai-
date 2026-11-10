@@ -112,6 +112,9 @@ export default function SettingsPage() {
     }
   };
 
+  // 🔥 FIX: Use optional chaining and type assertion to safely access avatar
+  const userAvatar = (me?.user as any)?.avatar;
+
   return (
     <main className={`min-h-screen w-full px-4 pb-24 pt-6 ${pageClass}`}>
       
@@ -136,10 +139,10 @@ export default function SettingsPage() {
         <section>
           <div className={`flex items-center justify-between p-4 rounded-[2rem] border ${cardClass}`}>
             <div className="flex items-center gap-4">
-              {/* FIX: Added overflow-hidden and used (me?.user as any) to prevent TS error */}
+              {/* FIX: Using userAvatar variable and overflow-hidden */}
               <div className={`h-14 w-14 rounded-full flex items-center justify-center border-2 border-amber-500/30 overflow-hidden ${isDark ? "bg-slate-800" : "bg-orange-100"}`}>
-                {(me?.user as any)?.avatar ? (
-                  <img src={(me?.user as any).avatar} alt="Profile" className="h-full w-full object-cover" />
+                {userAvatar ? (
+                  <img src={userAvatar} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
                   <User size={26} className={isDark ? "text-slate-400" : "text-orange-500"} />
                 )}
