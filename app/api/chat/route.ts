@@ -6,12 +6,10 @@ import OpenAI from "openai";
 import { getUser } from "@/auth";
 import { db } from "@/index";
 import { birthDetails, charts, conversations, messages, remedies, users } from "@/schema";
-import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 GROQ AI CONFIGURATION
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const openai = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -24,18 +22,10 @@ const FREE_MESSAGE_LIMIT = 3;
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: {
-    name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first.",
-  },
-  kriti: {
-    name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house.",
-  },
-  devaki: {
-    name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees.",
-  },
-  gargi: {
-    name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies with affection.",
-  },
+  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first." },
+  kriti: { name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house." },
+  devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees." },
+  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies with affection." },
 };
 
 const SUPPORTED_LANGUAGES = ["hi", "hinglish", "en"] as const;
@@ -104,6 +94,7 @@ export async function POST(request: Request) {
 
     if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
 
+    // Billing Logic
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
     const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
     
@@ -121,31 +112,66 @@ export async function POST(request: Request) {
       }
     }
 
+    // Conversation Setup
     let convId = requestedConversationId;
     if (!convId) {
       const [newConv] = await db.insert(conversations).values({ userId, title: "New Chat", persona }).returning();
       convId = newConv.id;
     }
 
+    // 🔥 PREMIUM FEATURE 1: Fetch Context (Last 10 Messages + Kundli Data)
+    const [birthRows, chartRows, previousMessages] = await Promise.all([
+      db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
+      db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
+      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, convId)).orderBy(desc(messages.createdAt)).limit(10),
+    ]);
+
     const [uMsg] = await db.insert(messages).values({ conversationId: convId, userId, role: "user", content: userMessage || "Photo" }).returning();
     savedUserMsgId = uMsg.id;
 
+    const birth = birthRows[0];
+    const chart = chartRows[0];
+    
+    // Formatting Previous Context
+    const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
+
     const personaConfig = PERSONAS[persona];
     
-    // 🔥 ULTRA STRICT PROMPT (Dates & English Fix)
+    // Building Kundli Context
+    let kundliContext = "No birth details provided yet. Ask the user for their birth details (Date, Time, Place) to give accurate predictions.";
+    if (birth) {
+      kundliContext = `User's Birth Details: DOB: ${birth.dob}, Time: ${birth.birthTime}, Place: ${birth.birthPlace}. `;
+      if (chart) {
+        kundliContext += `User's Chart Data: ${JSON.stringify(chart.data).slice(0, 1500)}`;
+      }
+    }
+
+    // 🔥 PREMIUM FEATURE 2: Ultimate Strict Prompt (No Markdown, 2026 Only)
     const systemPrompt = `
-You are ${personaConfig.name}. ${personaConfig.tone}.
-Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. 
-CRITICAL: The current year is 2026. You are FORBIDDEN from mentioning 2024 or 2025. All predictions must be for 2026 onwards.
-STRICT LANGUAGE RULES: Reply ONLY in Hinglish (Roman Hindi + English). NEVER reply in pure English.
-FORMATTING RULES: NEVER use markdown stars (**). Output plain text only. Use dashes (-) for lists.
+You are an elite premium application assistant named ${personaConfig.name}.
+You are a real female astrologer. ${personaConfig.tone}
+Your Specializations: ${personaConfig.specializations}.
+Strict Rules: ${personaConfig.rules}
+
+Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}.
+The current year is strictly 2026. You MUST use this year for all calculations. Do NOT mention 2024 or 2025.
+
+KUNDLI & CONTEXT:
+${kundliContext}
+Use this context to personalize the response. Do not ask for details if they are already provided above.
+
+STRICT FORMATTING & LANGUAGE RULES:
+1. Do not output markdown. Do not output asterisks or hashtags under any circumstances.
+2. Reply ONLY in clean plain-text paragraph format with single line breaks.
+3. If the user speaks in Hindi or Hinglish, reply in Hinglish (Roman-script). If English, reply in English.
+4. Address the user affectionately (e.g., 'Suno', 'Beta', 'Tum tension mat lo').
 `;
 
-    // 🔥 Faster model to prevent timeout
-    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.1-8b-instant"; 
+    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
+      ...history, // Context injected here
       { role: "user", content: userMessage || "Is image ko analyze karo." }
     ];
 
@@ -153,7 +179,7 @@ FORMATTING RULES: NEVER use markdown stars (**). Output plain text only. Use das
       const bytes = await imageFile.arrayBuffer();
       const buffer = Buffer.from(bytes);
       const base64Image = buffer.toString("base64");
-      messagesPayload[1].content = [
+      messagesPayload[messagesPayload.length - 1].content = [
         { type: "text", text: userMessage || "Is image ko analyze karo." },
         { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }
       ];
@@ -162,12 +188,15 @@ FORMATTING RULES: NEVER use markdown stars (**). Output plain text only. Use das
     const completion = await openai.chat.completions.create({
       model: modelName,
       messages: messagesPayload,
-      temperature: 0.6,
-      max_tokens: 1000,
+      temperature: 0.5,
+      max_tokens: 1200,
     });
 
-    const raw = completion.choices[0]?.message?.content?.trim() || "";
+    let raw = completion.choices[0]?.message?.content?.trim() || "";
     if (!raw) throw new Error("Empty response from AI");
+
+    // 🔥 CODE-LEVEL FIX: Guaranteed removal of stars and hashtags
+    raw = raw.replace(/\*\*/g, "").replace(/\*/g, "").replace(/#/g, "");
 
     const { message, remedy } = extractRemedy(raw);
     
@@ -182,6 +211,11 @@ FORMATTING RULES: NEVER use markdown stars (**). Output plain text only. Use das
       if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
     }
     if (savedUserMsgId) await db.delete(messages).where(eq(messages.id, savedUserMsgId)); 
+
+    // 🔥 PREMIUM FEATURE 3: Smart Error Handling for Rate Limits
+    if (error?.status === 429 || error?.message?.includes("rate limit")) {
+       return NextResponse.json({ code: "RATE_LIMIT", error: "Aapne jaldi message bheja hai, kripya 30 second rukein." }, { status: 429 });
+    }
 
     console.error("=== GROQ AI ERROR ===", error.message || error);
     return NextResponse.json({ code: "AI_ERROR", error: "Server thoda busy hai. Kripya 1 minute baad try karein." }, { status: 500 });
