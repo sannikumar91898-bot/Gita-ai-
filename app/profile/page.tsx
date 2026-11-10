@@ -8,7 +8,7 @@ import {
   HelpCircle, FileText, List, Shield, Mail, LogOut, Moon, Sun, PhoneCall, Check
 } from "lucide-react";
 import Link from "next/link";
-import { useApp } from "../Providers";
+import { useApp } from "../Providers"; // Path check kar lein (app/profile me hai to ../)
 import { LANGUAGES } from "../../i18n"; // Path check kar lein
 
 export default function ProfileDashboardPage() {
@@ -41,7 +41,6 @@ export default function ProfileDashboardPage() {
         appSettings: "APP SETTINGS", theme: "Theme", light: "Light", dark: "Dark", language: "Language", logout: "Logout",
         bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat", guest: "Guest User", noEmail: "No email available"
       },
-      // ... (Baki bhashao ke liye aap purana dictionary use kar sakte hain, maine short rakha hai)
     };
     return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
   };
@@ -53,10 +52,8 @@ export default function ProfileDashboardPage() {
   return (
     <main className="min-h-[100dvh] w-full bg-[#0A0F19] text-slate-100 font-sans pb-32">
       
-      {/* 🔥 Container: max-w hataya hai taaki Full Screen dikhe */}
       <div className="w-full px-4 pt-4 space-y-5">
         
-        {/* HEADER */}
         <header className="bg-[#151d2c] rounded-2xl flex items-center p-3 border border-slate-800">
           <Link href="/" className="p-2 rounded-full text-slate-400 hover:text-white transition-colors">
             <ArrowLeft size={20} />
@@ -64,7 +61,6 @@ export default function ProfileDashboardPage() {
           <h1 className="text-[15px] font-black text-[#ff6b00] ml-4 tracking-wider uppercase">{t("header")}</h1>
         </header>
 
-        {/* USER CARD */}
         <div className="bg-[#151d2c] rounded-2xl p-4 flex items-center justify-between border border-slate-800">
           <div className="flex items-center gap-4">
             <div className="h-14 w-14 rounded-full bg-[#FBBF24] flex items-center justify-center overflow-hidden border-2 border-[#151d2c]">
@@ -76,13 +72,12 @@ export default function ProfileDashboardPage() {
             </div>
           </div>
           
-          {/* 🔥 EDIT BUTTON: Isko naye edit page se link kiya gaya hai */}
+          {/* 🔥 EDIT BUTTON: Ye ab /profile/edit par jayega */}
           <Link href="/profile/edit" className="bg-[#3b2517] text-[#ff6b00] text-[10px] font-bold px-3.5 py-2 rounded-lg hover:bg-[#4a2e1c] transition-colors">
             {t("edit")}
           </Link>
         </div>
 
-        {/* QUICK ACTIONS */}
         <div className="grid grid-cols-3 gap-3">
           <Link href="/orders" className="bg-[#151d2c] rounded-2xl p-4 flex flex-col items-center justify-center gap-2 border border-slate-800 hover:bg-[#1f2937] transition-colors">
             <Clock size={22} className="text-[#ff6b00]" />
@@ -98,7 +93,6 @@ export default function ProfileDashboardPage() {
           </Link>
         </div>
 
-        {/* EXPLORE */}
         <section>
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2 px-1">{t("explore")}</h3>
           <div className="bg-[#151d2c] rounded-2xl border border-slate-800 overflow-hidden">
@@ -117,7 +111,6 @@ export default function ProfileDashboardPage() {
           </div>
         </section>
 
-        {/* ACCOUNT */}
         <section>
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2 px-1">{t("account")}</h3>
           <div className="bg-[#151d2c] rounded-2xl border border-slate-800 overflow-hidden">
@@ -140,7 +133,6 @@ export default function ProfileDashboardPage() {
           </div>
         </section>
 
-        {/* LEGAL & SUPPORT */}
         <section>
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2 px-1">{t("legalSupport")}</h3>
           <div className="bg-[#151d2c] rounded-2xl border border-slate-800 overflow-hidden">
@@ -159,12 +151,9 @@ export default function ProfileDashboardPage() {
           </div>
         </section>
 
-        {/* APP SETTINGS */}
         <section>
           <h3 className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mb-2 px-1">{t("appSettings")}</h3>
           <div className="bg-[#151d2c] rounded-2xl border border-slate-800 p-4 space-y-6">
-            
-            {/* Theme Toggle */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Moon size={16} className="text-[#ff6b00]" />
@@ -180,7 +169,6 @@ export default function ProfileDashboardPage() {
               </div>
             </div>
 
-            {/* Language Grid */}
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <Globe size={16} className="text-[#ff6b00]" />
@@ -206,7 +194,6 @@ export default function ProfileDashboardPage() {
           </div>
         </section>
 
-        {/* LOGOUT BUTTON */}
         <button 
           onClick={() => {
             if(window.confirm("Logout?")) {
@@ -220,7 +207,7 @@ export default function ProfileDashboardPage() {
 
       </div>
 
-      {/* 🔥 STICKY BOTTOM BANNER */}
+      {/* STICKY BOTTOM BANNER */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-gradient-to-r from-[#ef4444] to-[#dc2626] px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center">
