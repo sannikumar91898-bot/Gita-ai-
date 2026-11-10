@@ -2,7 +2,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User } from "lucide-react";
+// 🔥 FIX: Yahan ChevronDown add kar diya gaya hai
+import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -126,6 +127,7 @@ export default function ProfilePage() {
             </div>
             <button
               onClick={() => setPickerOpen(true)}
+              type="button"
               className="absolute bottom-0 right-0 rounded-full bg-[#151d2c] border-2 border-[#0A0F19] p-2.5 text-slate-300 shadow-lg transition hover:bg-[#1f2937]"
             >
               <Camera size={18} />
@@ -221,7 +223,7 @@ export default function ProfilePage() {
             
             <div className="border-b border-slate-800 px-5 py-4 text-center flex items-center justify-between">
               <h2 className="text-[16px] font-bold text-white flex-1 text-left">{t("changePic")}</h2>
-              <button onClick={() => setPickerOpen(false)} className="p-2 rounded-full bg-[#0A0F19] text-slate-400 hover:text-white transition-colors">
+              <button type="button" onClick={() => setPickerOpen(false)} className="p-2 rounded-full bg-[#0A0F19] text-slate-400 hover:text-white transition-colors">
                 <X size={18} />
               </button>
             </div>
@@ -260,7 +262,7 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* 🔥 BOTTOM NAVIGATION BAR (WAPAS JODA GAYA HAI) 🔥 */}
+      {/* 🔥 BOTTOM NAVIGATION BAR */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
         <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
           <Home size={22} />
