@@ -5,397 +5,337 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock } from "lucide-react";
+import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock, ChevronLeft, Search, User, Calendar, Clock, MapPin } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
-import { LANGUAGES, type Lang } from "../../i18n"; // 🔥 10 Languages Import
+import { LANGUAGES, type Lang } from "../../i18n"; 
 
 type Message = { id: string; role: "user" | "assistant"; content: string; image?: string };
-type Step = "language" | "name" | "dob" | "time" | "place" | "done";
-type Draft = { name: string; dob: string; time: string; place: string };
-type PublicChart = { lagna: { rashiNameHi: string; degreeInSign: number }; moonSign: { rashiNameHi: string }; nakshatra: { name: string; pada: number }; currentDasha: { maha: string } | null; };
+type Draft = { name: string; dob: string; time: string; place: string; gender: string };
 
-const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "" };
+const EMPTY_DRAFT: Draft = { name: "", dob: "", time: "", place: "", gender: "" };
 
 const getPersonaDetails = (p: string) => {
   switch (p) {
     case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
     case "devaki": return { name: "Dr. Devaki Shastri", img: "/astrologers/devaki.jpg" };
     case "gargi": return { name: "Gargi Maa", img: "/astrologers/gargi.jpg" };
-    default: return { name: "Gita", img: "/gita-portrait.jpg" }; // Fallback image
+    default: return { name: "Gita", img: "/gita-portrait.jpg" }; 
   }
 };
 
-function looksLikeQuestion(text: string): boolean {
-  if (/[?？]/.test(text)) return true;
-  if (text.trim().split(/\s+/).length > 8) return true;
-  return /क्या|कैसे|क्यों|कब|कहाँ|कौन|what|why|how|when|where|who|kaise|kya|kyun|kab|exam|career|नौकरी|शादी|भविष्य/i.test(text);
-}
-
-function parseDate(value: string): string | null {
-  const text = value.trim();
-  let match = text.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (match) return text;
-  match = text.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
-  if (!match) return null;
-  const day = match[1].padStart(2, "0"); const month = match[2].padStart(2, "0");
-  return match[3] + "-" + month + "-" + day;
-}
-
-function parseTime(value: string): string | null {
-  const text = value.trim().toLowerCase();
-  const match = text.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/);
-  if (!match) return null;
-  let hour = Number(match[1]); const minute = Number(match[2] || "0"); const suffix = match[3];
-  if (minute > 59 || hour > 23) return null;
-  if (suffix === "pm" && hour < 12) hour += 12;
-  if (suffix === "am" && hour === 12) hour = 0;
-  if (!suffix && hour > 23) return null;
-  return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
-}
-
-// 🔥 TYPE FIX: Lang type use kiya gaya hai
-function questionFor(step: Step, lang: Lang, name: string): string {
-  const hi: Record<Step, string> = { language: `नमस्ते, मैं ${name} हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?`, name: "आपका नाम क्या है?", dob: "जन्म तिथि लिखें, जैसे 15/08/1990।", time: "जन्म का समय लिखें, जैसे 08:30 AM।", place: "जन्म स्थान लिखें: शहर और राज्य, जैसे Patna, Bihar।", done: "मैं यहीं हूँ। करियर, पढ़ाई, संबंध या कुंडली पर आगे पूछ सकते हैं।" };
-  const en: Record<Step, string> = { language: `Hello, I am ${name}. Please select your language.`, name: "What is your name?", dob: "Please share your date of birth, for example 15/08/1990.", time: "What was your birth time? For example 08:30 AM.", place: "Where were you born? City and state, for example Patna, Bihar.", done: "I am here. You can ask about career, study, relationships, or your chart." };
-  const hg: Record<Step, string> = { language: `Namaste, main ${name} hoon. Aap apni language select karein.`, name: "Aapka naam kya hai?", dob: "Janm tithi likhiye, jaise 15/08/1990.", time: "Janm ka samay likhiye, jaise 08:30 AM.", place: "Janm sthan likhiye: sheher aur rajya, jaise Patna, Bihar.", done: "Main yahin hoon. Career, padhai, relationships ya kundli par aage poochhiye." };
-  
-  if (lang === "hi") return hi[step]; 
-  if (lang === "hinglish") return hg[step]; 
-  return en[step]; // Baaki 7 bhashaon ke liye abhi English fallback
-}
-
 function ChatPageContent() {
-  const { lang, me, setLanguage, refresh, loading, sessionError, theme } = useApp();
+  const { lang, setLanguage, me, refresh, loading, sessionError, theme } = useApp();
   const searchParams = useSearchParams();
 
   const [persona, setPersona] = useState("gita");
-  const [step, setStep] = useState<Step>("language");
-  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
-  const [chart, setChart] = useState<PublicChart | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [showUpsell, setShowUpsell] = useState(false);
-  const [showInsufficientBalance, setShowInsufficientBalance] = useState(false);
-  const [doneQuestionsCount, setDoneQuestionsCount] = useState(0);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Onboarding State
+  const [showOnboarding, setShowOnboarding] = useState(true);
+  const [onboardStep, setOnboardStep] = useState(1); // 1: Name, 2: Gender, 3: DOB, 4: Time, 5: Place
+  const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
+  const [showLangModal, setShowLangModal] = useState(false);
+  const [notSureTime, setNotSureTime] = useState(false);
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   const isDark = theme === "dark";
-  const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const headerClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100 shadow-sm";
-  const inputWrapperClass = isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100";
-
-  const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
-  const freeMessagesUsed = me?.user?.freeMessagesUsed ?? 0;
-  const hasFreeMessagesLeft = freeMessagesUsed < 3;
-  const isPremium = !!me?.user?.premiumUntil && new Date(me.user.premiumUntil) > new Date();
-  const isLowBalance = walletBalanceRupees < 2 && !hasFreeMessagesLeft && !isPremium;
-  const shouldShowUpsell = !isPremium && !hasFreeMessagesLeft;
   const personaDetails = getPersonaDetails(persona);
 
+  // Check if user already has birth details
   useEffect(() => {
-    const p = searchParams.get("persona");
-    if (p && ["gita", "kriti", "devaki", "gargi"].includes(p)) setPersona(p);
-    const savedDraft = sessionStorage.getItem("gita_birth_draft");
-    if (savedDraft) try { setDraft({ ...EMPTY_DRAFT, ...JSON.parse(savedDraft) }); } catch { setDraft(EMPTY_DRAFT); }
-    if (sessionStorage.getItem("gita_lang_confirmed") === "1") setStep("name");
-  }, [searchParams]);
-
-  useEffect(() => {
-    if (me?.birth?.name) { setStep("done"); setDraft({ name: me.birth.name, dob: me.birth.dob, time: me.birth.birthTime, place: me.birth.birthPlace }); }
+    if (me?.birth?.name) {
+      setShowOnboarding(false);
+      setDraft({ 
+        name: me.birth.name, 
+        dob: me.birth.dob, 
+        time: me.birth.birthTime, 
+        place: me.birth.birthPlace,
+        gender: "Not specified"
+      });
+    } else {
+      setShowOnboarding(true);
+      setOnboardStep(0); // Start with Language
+    }
   }, [me]);
 
+  const handleNextStep = () => {
+    if (onboardStep === 0 && !draft.gender) {
+      // Language is handled separately, move to Name
+      setOnboardStep(1);
+    }
+    else if (onboardStep === 1) { if(draft.name.length < 2) return; setOnboardStep(2); }
+    else if (onboardStep === 2) { if(!draft.gender) return; setOnboardStep(3); }
+    else if (onboardStep === 3) { if(!draft.dob) return; setOnboardStep(4); }
+    else if (onboardStep === 4) { 
+      if(!draft.time && !notSureTime) return; 
+      setOnboardStep(5); 
+    }
+    else if (onboardStep === 5) {
+      if(draft.place.length < 2) return;
+      finishOnboarding();
+    }
+  };
+
+  const finishOnboarding = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/kundli", { 
+        method: "POST", 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify({ 
+          name: draft.name, 
+          dateOfBirth: draft.dob, 
+          timeOfBirth: notSureTime ? "12:00" : draft.time, 
+          placeOfBirth: draft.place,
+          gender: draft.gender
+        }) 
+      });
+      
+      if (!response.ok) throw new Error("Kundli failed");
+      
+      await refresh(); // Update user data
+      setShowOnboarding(false);
+      setHistoryLoading(false);
+    } catch (error) {
+      alert("Kundli generate nahi ho payi. Kripya details check karein.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // --- Chat Logic (Same as before) ---
   useEffect(() => {
-    if (loading || !me?.user) return;
-    let cancelled = false;
+    if (showOnboarding || loading || !me?.user) return;
     setHistoryLoading(true); setMessages([]); conversationId.current = "";
     fetch(`/api/chat?persona=${persona}`, { cache: "no-store" })
       .then(res => res.json())
       .then(data => {
-        if (cancelled) return;
         if (Array.isArray(data.messages) && data.messages.length > 0) setMessages(data.messages);
         if (data.conversationId) conversationId.current = data.conversationId;
-      }).catch(console.error).finally(() => { if (!cancelled) setHistoryLoading(false); });
-    return () => { cancelled = true; };
-  }, [persona, loading, me?.user]);
+      }).catch(console.error).finally(() => setHistoryLoading(false));
+  }, [persona, loading, me?.user, showOnboarding]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" }); }, [messages, isLoading, chart, imagePreview]);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading]);
 
-  const handleCopy = (id: string, text: string) => { navigator.clipboard.writeText(text); setCopiedId(id); setTimeout(() => setCopiedId(null), 2000); };
-  const handleNewChat = () => { conversationId.current = ""; setMessages([]); setChart(null); setSidebarOpen(false); setDoneQuestionsCount(0); setStep(me?.birth?.name ? "done" : "name"); };
+  const handleCopy = (id: string, text: string) => { navigator.clipboard.writeText(text); };
 
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) return alert("Image 5MB se choti honi chahiye.");
     setSelectedImage(file); setImagePreview(URL.createObjectURL(file));
   };
-  const clearImage = () => { setSelectedImage(null); setImagePreview(null); if (fileInputRef.current) fileInputRef.current.value = ""; };
 
-  async function sendToAi(text: string, imageFile?: File | null) {
-    setIsLoading(true);
-    const tempImageUrl = imageFile ? URL.createObjectURL(imageFile) : undefined;
-    if (text || tempImageUrl) setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: text || "Photo bheji hai", image: tempImageUrl }]);
+  async function sendToAi(e?: FormEvent, text?: string) {
+    e?.preventDefault();
+    const msg = text || input.trim();
+    if ((!msg && !selectedImage) || isLoading) return;
+    
+    setInput(""); setIsLoading(true);
+    setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "user", content: msg || "Photo" }]);
 
     try {
       const formData = new FormData();
-      formData.append("message", text); formData.append("language", lang); formData.append("persona", persona);
+      formData.append("message", msg); formData.append("language", lang); formData.append("persona", persona);
       if (conversationId.current) formData.append("conversationId", conversationId.current);
-      if (imageFile) formData.append("image", imageFile);
+      if (selectedImage) formData.append("image", selectedImage);
 
-      const response = await fetch("/api/chat", { method: "POST", cache: "no-store", signal: AbortSignal.timeout(90000), body: formData });
-      const data = await response.json().catch(() => ({}));
-
-      if (typeof data.conversationId === "string") conversationId.current = data.conversationId;
-      if (!response.ok) {
-        if (data.code === "INSUFFICIENT_BALANCE") return setShowInsufficientBalance(true);
-        return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: typeof data.error === "string" ? data.error : "अभी उत्तर नहीं बन पाया।" }]);
-      }
+      const response = await fetch("/api/chat", { method: "POST", body: formData });
+      const data = await response.json();
       
-      setMessages(prev => [
-        ...prev, 
-        { id: crypto.randomUUID(), role: "assistant", content: data.message?.content && typeof data.message.content === "string" ? data.message.content : "अभी उत्तर खाली आया।" }
-      ]);
-      await refresh();
+      if (data.message) {
+        setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.message.content }]);
+      }
+      setSelectedImage(null); setImagePreview(null);
     } catch (error) {
-      const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: timedOut ? "उत्तर आने में ज़्यादा समय लग गया।" : "सर्वर से संपर्क नहीं हो पाया।" }]);
-    } finally { setIsLoading(false); clearImage(); }
-  }
-
-  async function finishKundli(next: Draft) {
-    setIsLoading(true);
-    try {
-      const response = await fetch("/api/kundli", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: next.name, dateOfBirth: next.dob, timeOfBirth: next.time, placeOfBirth: next.place }) });
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok || !data.chart) { setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "कुंडली गणना नहीं हो सकी।" }]); return setStep("place"); }
-      setChart(data.chart as PublicChart); setStep("done"); sessionStorage.removeItem("gita_birth_draft");
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "आपकी कुंडली तैयार है। नीचे कार्ड देखें।" }]);
-      await refresh();
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error." }]);
     } finally { setIsLoading(false); }
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const text = input.trim();
-    if ((!text && !selectedImage) || isLoading) return;
-    setInput("");
+  if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-yellow-500" size={32} /></div>;
 
-    if (step === "done" && !showUpsell && shouldShowUpsell && hasFreeMessagesLeft) {
-      const newCount = doneQuestionsCount + 1; setDoneQuestionsCount(newCount);
-      if (newCount >= 3) setShowUpsell(true);
-    }
+  // ==========================================
+  // 🔥 PREMIUM ONBOARDING UI (Matches Screenshots)
+  // ==========================================
+  if (showOnboarding) {
+    return (
+      <div className={`min-h-[100dvh] flex flex-col px-6 py-8 ${isDark ? "bg-slate-900 text-white" : "bg-[#FEF8EF] text-gray-800"}`}>
+        
+        {/* Header */}
+        <div className="flex items-center gap-4 mb-8">
+          {onboardStep > 0 && (
+            <button onClick={() => setOnboardStep(onboardStep - 1)} className="p-2 bg-gray-200/50 rounded-full">
+              <ChevronLeft size={20} />
+            </button>
+          )}
+          <h1 className="text-xl font-bold">Enter Your Details</h1>
+        </div>
 
-    if (step === "done" || (looksLikeQuestion(text) && step !== "language")) return await sendToAi(text, selectedImage);
-    if (step === "language") {
-      // Language detect from text
-      const value = /hindi|हिंदी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi/i.test(text) ? "en" : null;
-      if (!value) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("language", lang, personaDetails.name) }]);
-      await setLanguage(value); sessionStorage.setItem("gita_lang_confirmed", "1"); setStep(me?.birth?.name ? "done" : "name");
-      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", value, personaDetails.name) }]);
-    }
-    if (step === "name") {
-      if (text.length < 2) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("name", lang, personaDetails.name) }]);
-      const next = { ...draft, name: text }; setDraft(next); setStep("dob"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
-      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "धन्यवाद " + text + "। " + questionFor("dob", lang, personaDetails.name) }]);
-    }
-    if (step === "dob") {
-      const dob = parseDate(text); if (!dob) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("dob", lang, personaDetails.name) }]);
-      const next = { ...draft, dob }; setDraft(next); setStep("time"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
-      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("time", lang, personaDetails.name) }]);
-    }
-    if (step === "time") {
-      const time = parseTime(text); if (!time) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("time", lang, personaDetails.name) }]);
-      const next = { ...draft, time }; setDraft(next); setStep("place"); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
-      return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("place", lang, personaDetails.name) }]);
-    }
-    if (step === "place") {
-      if (text.length < 2) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("place", lang, personaDetails.name) }]);
-      const next = { ...draft, place: text }; setDraft(next); sessionStorage.setItem("gita_birth_draft", JSON.stringify(next));
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "स्थान नोट कर लिया। कुंडली गणना कर रही हूँ।" }]);
-      return await finishKundli(next);
-    }
-    await sendToAi(text, selectedImage);
-  }  
+        {/* Progress Dots */}
+        <div className="flex gap-2 mb-8">
+          {[1, 2, 3, 4, 5].map((s) => (
+            <div key={s} className={`h-8 w-8 rounded-full flex items-center justify-center ${onboardStep >= s ? "bg-yellow-400 text-black" : "bg-gray-200 text-gray-400"}`}>
+               {s === 1 && <User size={16} />}
+               {s === 2 && <User size={16} />}
+               {s === 3 && <Calendar size={16} />}
+               {s === 4 && <Clock size={16} />}
+               {s === 5 && <MapPin size={16} />}
+            </div>
+          ))}
+        </div>
 
-  if (loading || historyLoading) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center ${pageClass}`}><Sparkles size={32} className="animate-spin text-orange-500 mb-4" /><p className="text-sm font-semibold text-orange-500">Connecting to {personaDetails.name}...</p></div>;
-  if (sessionError || !me?.user) return <div className={`flex h-[100dvh] w-full flex-col items-center justify-center px-4 text-center ${pageClass}`}><p className="text-3xl mb-4">⚠️</p><h2 className="text-lg font-bold text-red-500">Connection Failed</h2><button onClick={() => refresh()} className="mt-6 rounded-xl bg-orange-500 px-6 py-2.5 text-sm font-bold text-white">Try Again</button></div>;
+        {/* STEP 0: Language */}
+        {onboardStep === 0 && (
+          <div className="animate-in fade-in slide-in-from-bottom-4">
+            <h2 className="text-2xl font-bold mb-6">Choose your language</h2>
+            <div className="grid grid-cols-2 gap-3">
+              {LANGUAGES.map(l => (
+                <button key={l.code} onClick={() => { setLanguage(l.code); setOnboardStep(1); }} 
+                  className={`p-4 rounded-xl border-2 text-left ${lang === l.code ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white"}`}>
+                  <span className="block font-bold">{l.native}</span>
+                  <span className="text-xs text-gray-500">{l.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-  const shownMessages = messages.length > 0 ? messages : [{ id: "welcome", role: "assistant" as const, content: questionFor(step, lang, personaDetails.name) }];
+        {/* STEP 1: Name */}
+        {onboardStep === 1 && (
+          <div className="animate-in fade-in slide-in-from-right-4">
+            <h2 className="text-2xl font-bold mb-2">Hey there!</h2>
+            <p className="text-gray-500 mb-6">What is your name?</p>
+            <input autoFocus value={draft.name} onChange={e => setDraft({...draft, name: e.target.value})} placeholder="Enter name" 
+              className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg mb-6" />
+            <button onClick={handleNextStep} disabled={draft.name.length < 2} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+          </div>
+        )}
 
+        {/* STEP 2: Gender (With Transgender) */}
+        {onboardStep === 2 && (
+          <div className="animate-in fade-in slide-in-from-right-4">
+            <h2 className="text-2xl font-bold mb-6">What is your gender?</h2>
+            <div className="flex justify-between gap-4 mb-8">
+              {["Male", "Female", "Transgender"].map((g) => (
+                <button key={g} onClick={() => setDraft({...draft, gender: g})} 
+                  className={`flex-1 flex flex-col items-center gap-4 p-4 rounded-2xl border-2 transition-all ${draft.gender === g ? "border-yellow-400 bg-yellow-50" : "border-gray-200 bg-white"}`}>
+                  <div className={`h-20 w-20 rounded-full flex items-center justify-center ${draft.gender === g ? "bg-yellow-400" : "bg-gray-100"}`}>
+                    <User size={40} className={draft.gender === g ? "text-black" : "text-gray-400"} />
+                  </div>
+                  <span className="font-semibold text-sm">{g}</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={handleNextStep} disabled={!draft.gender} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+          </div>
+        )}
+
+        {/* STEP 3: DOB (Simplified Scroll/Input) */}
+        {onboardStep === 3 && (
+          <div className="animate-in fade-in slide-in-from-right-4 text-center">
+            <h2 className="text-2xl font-bold mb-8">Enter your birth date</h2>
+            <input type="date" value={draft.dob} onChange={e => setDraft({...draft, dob: e.target.value})} 
+              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-8" />
+            <button onClick={handleNextStep} disabled={!draft.dob} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+          </div>
+        )}
+
+        {/* STEP 4: Time */}
+        {onboardStep === 4 && (
+          <div className="animate-in fade-in slide-in-from-right-4 text-center">
+            <h2 className="text-2xl font-bold mb-8">Enter your birth time</h2>
+            <input type="time" value={draft.time} onChange={e => setDraft({...draft, time: e.target.value})} disabled={notSureTime}
+              className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-4 disabled:opacity-30" />
+            
+            <label className="flex items-center justify-center gap-2 mb-8 cursor-pointer">
+              <input type="checkbox" checked={notSureTime} onChange={e => setNotSureTime(e.target.checked)} className="w-5 h-5 accent-yellow-400" />
+              <span className="text-sm text-gray-600">Don't know my exact time of birth</span>
+            </label>
+            <button onClick={handleNextStep} disabled={!draft.time && !notSureTime} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+          </div>
+        )}
+
+        {/* STEP 5: Place */}
+        {onboardStep === 5 && (
+          <div className="animate-in fade-in slide-in-from-right-4">
+            <h2 className="text-2xl font-bold mb-6">Where were you born?</h2>
+            <div className="relative mb-8">
+              <input autoFocus value={draft.place} onChange={e => setDraft({...draft, place: e.target.value})} placeholder="Search city (e.g. Patna, Bihar)" 
+                className="w-full p-4 pl-12 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+            </div>
+            <button onClick={handleNextStep} disabled={draft.place.length < 2 || isLoading} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50 flex justify-center items-center">
+              {isLoading ? <Sparkles className="animate-spin" /> : "Start chat with Astrologer"}
+            </button>
+          </div>
+        )}
+
+      </div>
+    );
+  }
+
+  // ==========================================
+  // 💬 CHAT UI (After Onboarding)
+  // ==========================================
   return (
-    <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${pageClass}`}>
-      <HistorySidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} currentConversationId={conversationId.current} onSelectChat={(id) => { conversationId.current = id; setMessages([]); setStep("done"); setSidebarOpen(false); }} onNewChat={handleNewChat} />
-
-      <header className={`flex shrink-0 items-center justify-between gap-3 border-b px-4 py-3 z-10 ${headerClass}`}>
+    <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
+      
+      <header className={`flex shrink-0 items-center justify-between border-b px-4 py-3 ${isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100"}`}>
         <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(true)} className={`rounded-xl p-2 ${isDark ? "text-slate-300 hover:bg-slate-800" : "text-slate-600 hover:bg-orange-50"}`}><Menu size={20} /></button>
-          <div className="h-10 w-10 shrink-0 overflow-hidden rounded-full border-2 border-orange-200"><img src={personaDetails.img} alt={personaDetails.name} className="h-full w-full object-cover" /></div>
+          <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-yellow-400"><img src={personaDetails.img} alt="Astro" className="h-full w-full object-cover" /></div>
           <div>
-            <h1 className="text-sm font-bold text-orange-500">{personaDetails.name}</h1>
-            <p className={`text-[10px] font-medium flex items-center gap-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}><span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span> Online</p>
+            <h1 className={`text-sm font-bold ${isDark ? "text-white" : "text-black"}`}>{personaDetails.name}</h1>
+            <p className="text-[10px] text-green-500 font-bold">● Online</p>
           </div>
         </div>
-        <Link href="/wallet" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-bold border shadow-sm transition active:scale-95 ${isDark ? "bg-slate-800 border-slate-700 text-orange-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
-          <Wallet size={12} /> ₹{walletBalanceRupees} <span className="h-3 w-px bg-current opacity-30 mx-0.5"></span> <Plus size={12} className="font-black" />
+        <Link href="/wallet" className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-bold border ${isDark ? "bg-slate-800 border-slate-700 text-yellow-400" : "bg-yellow-50 border-yellow-200 text-yellow-600"}`}>
+          <Wallet size={12} /> ₹{(me?.user?.walletBalancePaise ?? 0) / 100}
         </Link>
       </header>
 
-      {isLowBalance && step === "done" && (
-        <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2 text-xs font-bold border-b animate-in slide-in-from-top-2 shrink-0 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
-          <div className="flex items-center gap-2"><Heart size={14} className="text-red-500 animate-pulse" /><span>Hamari baat adhuri reh gayi... Recharge to hear the truth.</span></div><span className="underline">Add Cash</span>
-        </Link>
-      )}
-
-      {step !== "done" && (
-        <div className={`text-center py-1.5 text-[10px] font-black uppercase tracking-wider z-10 shrink-0 ${isDark ? "bg-orange-950/40 text-orange-400 border-b border-orange-900/30" : "bg-orange-100 text-orange-700 border-b border-orange-200"}`}>
-          ✨ Pehli Chat 100% FREE ✨
-        </div>
-      )}
-
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20" aria-live="polite">
-        {step === "language" && messages.length === 0 && (
-          <div className="flex flex-wrap gap-2">
-            {/* 🔥 Yahan humne 10 languages ke buttons laga diye hain */}
-            {LANGUAGES.map((langObj) => (
-              <button 
-                key={langObj.code} 
-                type="button" 
-                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
-                onClick={() => {
-                  void setLanguage(langObj.code); 
-                  sessionStorage.setItem("gita_lang_confirmed", "1"); 
-                  setStep(me?.birth?.name ? "done" : "name");
-                  setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", langObj.code, personaDetails.name) }]);
-                }}
-              >
-                {langObj.native}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {shownMessages.map((message) => (
-          <div key={message.id} className={"flex " + (message.role === "user" ? "justify-end" : "justify-start")}>
-            <div className={`relative group max-w-[85%] whitespace-pre-wrap break-words rounded-2xl px-3 py-2 text-[15px] leading-relaxed shadow-sm ${message.role === "user" ? "bg-orange-500 text-white rounded-br-sm" : isDark ? "bg-slate-800 text-slate-100 border border-slate-700 rounded-bl-sm" : "bg-white text-slate-800 border border-orange-100 rounded-bl-sm"}`}>
-              
-              {message.image && (
-                <div className="mb-2 overflow-hidden rounded-xl border border-black/10">
-                  <img src={message.image} alt="User upload" className="max-w-[250px] max-h-[300px] object-cover w-full" />
-                </div>
-              )}
-              <div>{message.content}</div>
-              
-              {message.role === "assistant" && (
-                <button onClick={() => handleCopy(message.id, message.content)} className={`absolute -right-2 -bottom-2 p-1.5 rounded-full shadow-md transition ${copiedId === message.id ? "bg-green-500 text-white" : isDark ? "bg-slate-700 text-slate-300 hover:bg-slate-600" : "bg-white text-gray-500 border border-gray-200 hover:bg-gray-50"}`}>
-                  {copiedId === message.id ? <Check size={12} /> : <Copy size={12} />}
-                </button>
-              )}
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
+        {historyLoading ? (
+           <div className="text-center py-10 text-gray-400"><Sparkles className="animate-spin mx-auto mb-2" /> Loading history...</div>
+        ) : (
+          messages.map((message) => (
+            <div key={message.id} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] shadow-sm ${
+                message.role === "user" ? "bg-yellow-400 text-black rounded-br-sm" : isDark ? "bg-slate-800 text-white border border-slate-700" : "bg-white text-gray-800 border border-gray-100"
+              }`}>
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              </div>
             </div>
-          </div>
-        ))}
-
-        {isLoading && (
-          <div className={`inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-xs border shadow-sm ${isDark ? "bg-slate-800 border-slate-700 text-slate-300" : "bg-white border-orange-100 text-gray-500"}`}>
-            <Sparkles size={14} className="animate-spin text-orange-500" /><span>{personaDetails.name} सोच रही हैं...</span>
-          </div>
+          ))
         )}
+        {isLoading && <div className="text-sm text-gray-400 animate-pulse">Astrologer is typing...</div>}
         <div ref={endRef} />
       </div>
 
-      {/* 🔥 MODERN DEEPSEEK STYLE INPUT BOX */}
-      <div className={`shrink-0 border-t p-3 pb-[calc(env(safe-area-inset-bottom)+12px)] z-20 ${inputWrapperClass}`}>
-        <form onSubmit={handleSubmit} className="mx-auto flex max-w-xl flex-col gap-2">
-          
-          {/* Image Preview Thumbnail (if selected) */}
-          {imagePreview && (
-            <div className="px-2">
-              <div className="relative inline-block">
-                <img 
-                  src={imagePreview} 
-                  alt="Selected" 
-                  className="h-16 w-16 object-cover rounded-xl border-2 border-orange-500 shadow-sm" 
-                />
-                <button 
-                  type="button"
-                  onClick={clearImage} 
-                  className="absolute -top-2 -right-2 bg-red-500 hover:bg-red-600 text-white rounded-full p-1 shadow-md transition"
-                >
-                  <X size={12} strokeWidth={3} />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Main Input Pill */}
-          <div className={`flex items-end gap-2 rounded-[28px] p-1.5 border transition-all ${
-            isDark ? "bg-[#1A1D27] border-slate-700 focus-within:border-orange-500/50" : "bg-white border-gray-300 shadow-sm focus-within:border-orange-400 focus-within:shadow-md"
-          }`}>
-            
-            {/* Photo Upload Button */}
-            <button 
-              type="button" 
-              onClick={() => fileInputRef.current?.click()} 
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full transition-colors ${
-                isDark ? "text-slate-400 hover:bg-slate-700 hover:text-white" : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
-              }`}
-            >
-              <ImageIcon size={22} />
-            </button>
-            <input type="file" accept="image/*" ref={fileInputRef} onChange={handleImageSelect} className="hidden" />
-
-            {/* Text Input */}
-            <input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={isLoading || historyLoading}
-              placeholder="अपना सवाल लिखें..."
-              className={`flex-1 bg-transparent py-2.5 text-[15px] outline-none ${
-                isDark ? "text-white placeholder-slate-500" : "text-slate-900 placeholder-gray-400"
-              }`}
-            />
-
-            {/* Send Button */}
-            <button
-              type="submit"
-              disabled={(!input.trim() && !selectedImage) || isLoading || historyLoading}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-orange-500 text-white disabled:opacity-40 hover:bg-orange-600 transition-transform active:scale-95 shadow-sm"
-            >
-              <Send size={18} className="ml-0.5" />
-            </button>
-          </div>
+      <div className={`shrink-0 p-4 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-100"}`}>
+        <form onSubmit={sendToAi} className={`flex items-center gap-2 rounded-full border p-1.5 ${isDark ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+          <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-500 hover:text-yellow-500 transition"><ImageIcon size={20} /></button>
+          <input type="file" hidden ref={fileInputRef} onChange={handleImageSelect} />
+          <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your question..." 
+            className={`flex-1 bg-transparent outline-none text-[15px] ${isDark ? "text-white placeholder-gray-500" : "text-black placeholder-gray-400"}`} />
+          <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="p-3 bg-yellow-400 text-black rounded-full disabled:opacity-50 hover:bg-yellow-500 transition"><Send size={18} /></button>
         </form>
       </div>
-
-      {showInsufficientBalance && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-sm rounded-3xl bg-[#151E2E] border border-orange-500/30 p-6 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-4"><Lock size={32} /></div>
-            <h2 className="text-xl font-black text-white mb-2">Balance Exhausted</h2>
-            <p className="text-sm text-slate-300 mb-6 leading-relaxed">Aapka free message limit ya wallet balance khatam ho gaya hai. {personaDetails.name} se aur baatein karne ke liye recharge karein.</p>
-            <div className="bg-slate-800/80 rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700"><span className="text-xs font-semibold text-slate-400">Current Balance</span><span className="text-lg font-black text-red-400">₹{walletBalanceRupees}</span></div>
-            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-3">Add Cash Now</Link>
-            <button onClick={() => setShowInsufficientBalance(false)} className="text-xs font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1 w-full"><X size={14} /> Maybe Later</button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 
 export default function ChatPage() {
   return (
-    <Suspense fallback={<div className="flex h-[100dvh] items-center justify-center bg-[#0B0F19] text-orange-500"><Sparkles className="animate-spin" size={32} /></div>}>
+    <Suspense fallback={<div className="flex h-[100dvh] items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-yellow-500" size={32} /></div>}>
       <ChatPageContent />
     </Suspense>
   );
