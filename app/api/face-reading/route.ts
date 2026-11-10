@@ -6,14 +6,20 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// Modal Config (PRIMARY)
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
 const modalClient = modalUrl ? new OpenAI({ baseURL: modalUrl, apiKey: modalApiKey || "dummy" }) : null;
 
+// Groq Config (FALLBACK)
 const groqClient = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY || "dummy",
 });
+
+// 🔥 Model names environment variables se aayenge
+const MODAL_VISION_MODEL = process.env.MODAL_VISION_MODEL || "Qwen/Qwen3.6-27B";
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -37,7 +43,7 @@ export async function POST(request: Request) {
     const imageFile = formData.get("image") as File | null;
     const language = (formData.get("language") as string) || "hinglish";
 
-    // 🔥 BACKEND VALIDATION (Security)
+    // Backend Validation
     if (!imageFile || imageFile.size === 0) {
       return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
     }
@@ -54,45 +60,59 @@ export async function POST(request: Request) {
     const prompt = `You are an expert Vedic Face Reader. Analyze this face.
     If no clear human face is visible, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
     Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
-    
     LANGUAGE RULES: ${getLanguageInstruction(language)}`;
 
     let result: any = null;
+    let errors: string[] = [];
 
-    // 1. Try Modal Vision
+    // 1. Try Modal (PRIMARY)
     if (modalClient) {
       try {
         const completion = await modalClient.chat.completions.create({
-          model: "Qwen/Qwen3.6-27B", 
-          messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
-          temperature: 0.4,
-          response_format: { type: "json_object" }, // 🔥 Force JSON
-        });
-        const text = completion.choices[0]?.message?.content || "{}";
-        result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err) {
-        console.warn("Modal failed, trying Groq...", err);
-      }
-    }
-
-    // 2. Fallback to Groq Vision
-    if (!result) {
-      try {
-        const completion = await groqClient.chat.completions.create({
-          model: "llama-3.2-11b-vision-preview",
+          model: MODAL_VISION_MODEL,
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
           response_format: { type: "json_object" },
         });
         const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err) {
-        console.error("Groq also failed:", err);
-        return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy." }, { status: 500 });
+      } catch (err: any) {
+        errors.push(`Modal: ${err.message}`);
+        console.warn("Modal failed:", err.message);
       }
     }
 
-    if (result.error === "INVALID_IMAGE") return NextResponse.json(result, { status: 422 });
+    // 2. Fallback to Groq
+    if (!result) {
+      try {
+        const completion = await groqClient.chat.completions.create({
+          model: GROQ_VISION_MODEL,
+          messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
+          temperature: 0.4,
+          response_format: { type: "json_object" },
+        });
+        const text = completion.choices[0]?.message?.content || "{}";
+        result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
+      } catch (err: any) {
+        errors.push(`Groq: ${err.message}`);
+        console.error("Groq failed:", err.message);
+      }
+    }
+
+    // Agar dono fail ho gaye
+    if (!result) {
+      console.error("=== BOTH AI PROVIDERS FAILED (FACE READING) ===");
+      console.error("Errors:", errors);
+      return NextResponse.json({ 
+        error: "AI_ERROR", 
+        message: "AI server is busy. Please try again.",
+        debug: process.env.NODE_ENV === "development" ? errors : undefined
+      }, { status: 500 });
+    }
+
+    if (result.error === "INVALID_IMAGE") {
+      return NextResponse.json(result, { status: 422 });
+    }
 
     return NextResponse.json({
       success: true,
