@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-// 🔥 10 Languages Translation Helper (Updated to "Free Tools")
+// 🔥 10 Languages Translation Helper
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
@@ -95,7 +95,7 @@ const getUIText = (lang: string, key: string) => {
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
 };
 
-// 🔥 Types & Data (Images mapped to local paths as requested)
+// 🔥 Types & Data
 type Review = { text: string; author: string; rating: number; };
 type Astrologer = { 
   id: string; name: string; specialty: string; rating: number; 
@@ -154,10 +154,11 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
+    // 🔥 Full Screen Layout (No max-width restriction)
     <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
       
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5">
+      {/* HEADER (Full Width) */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
             <div className="absolute inset-0 bg-orange-600 blur-md opacity-40 rounded-full"></div>
@@ -177,20 +178,19 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Container (Full Width with minimal side padding) */}
       <div className="w-full space-y-5 px-3 py-4">
         
         {/* HERO BANNER */}
-        <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-[0_10px_40px_-10px_rgba(255,61,0,0.4)] min-h-[145px] flex flex-col justify-center">
+        <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-[0_10px_40px_-10px_rgba(255,61,0,0.4)] min-h-[145px] flex flex-col justify-center w-full">
           
-          {/* Glowing Mandala/Zodiac Wheel Effect on Right */}
+          {/* Glowing Mandala/Zodiac Wheel Effect */}
           <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[180px] h-[180px] opacity-60 pointer-events-none mix-blend-screen">
             <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.5">
               <circle cx="50" cy="50" r="45" strokeWidth="1" />
               <circle cx="50" cy="50" r="35" />
               <circle cx="50" cy="50" r="20" />
               <circle cx="50" cy="50" r="5" />
-              {/* Simple radiating lines to mimic a chart */}
               {[...Array(12)].map((_, i) => (
                 <line key={i} x1="50" y1="5" x2="50" y2="95" transform={`rotate(${i * 30} 50 50)`} />
               ))}
@@ -213,20 +213,19 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* FREE TOOLS (Updated from Pro Tips) */}
-        <section className="space-y-3 pt-1">
+        {/* FREE TOOLS */}
+        <section className="space-y-3 pt-1 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
               <h2 className="text-[15px] font-bold text-white tracking-wide">{t("freeTools")}</h2>
             </div>
-            {/* Added Online indicator here as per user's new layout */}
             <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-[#121927] px-2.5 py-1 rounded-full border border-emerald-500/30">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span> {t("online")}
             </span>
           </div>
           
-          <div className="flex justify-between items-center overflow-x-auto gap-2 pb-1 scrollbar-hide px-1">
+          <div className="flex justify-between items-center overflow-x-auto gap-2 pb-1 scrollbar-hide w-full">
             {[
               { name: t("kundli"), icon: Scroll, href: "/kundli" },
               { name: t("matching"), icon: Heart, href: "/matching" },
@@ -247,7 +246,7 @@ export default function HomePage() {
         </section>
 
         {/* ASTROLOGER LIST */}
-        <section className="space-y-4">
+        <section className="space-y-4 w-full">
           <div className="flex items-center justify-between mt-2">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
@@ -255,11 +254,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="space-y-3.5">
+          <div className="space-y-3.5 w-full">
             {ASTROLOGERS.map((astro) => {
               const firstReview = astro.reviews[0];
               return (
-                <article key={astro.id} className="rounded-[1.2rem] bg-[#151d2c] p-3.5 shadow-md border border-slate-800/80 relative">
+                <article key={astro.id} className="rounded-[1.2rem] bg-[#151d2c] p-3.5 shadow-md border border-slate-800/80 relative w-full">
                   
                   {/* Top Section */}
                   <div className="flex gap-3.5">
@@ -301,7 +300,7 @@ export default function HomePage() {
                   </div>
 
                   {/* Bottom Section: Review Box */}
-                  <div className="mt-3 rounded-xl bg-[#0d131f] p-3 text-[12px] leading-relaxed border border-slate-800/60">
+                  <div className="mt-3 rounded-xl bg-[#0d131f] p-3 text-[12px] leading-relaxed border border-slate-800/60 w-full">
                     <div className="flex items-center gap-0.5 mb-1.5">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} size={11} fill={i < firstReview.rating ? "#ff6b00" : "none"} className="text-[#ff6b00]" />
@@ -325,9 +324,9 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* BOTTOM STICKY BANNER */}
-      <div className="fixed bottom-[64px] left-0 right-0 z-40 px-3 pb-2 bg-gradient-to-t from-[#070b14] via-[#070b14]/90 to-transparent pt-6 pointer-events-none">
-        <div className="mx-auto max-w-lg rounded-full bg-gradient-to-r from-[#F5156B] to-[#D30038] p-1.5 shadow-[0_4px_20px_rgba(245,21,107,0.3)] flex items-center justify-between pl-4 pr-1.5 border border-pink-500/30 pointer-events-auto">
+      {/* BOTTOM STICKY BANNER (Full Width) */}
+      <div className="fixed bottom-[60px] left-0 right-0 z-40 px-3 pb-2 bg-gradient-to-t from-[#070b14] via-[#070b14]/90 to-transparent pt-6 pointer-events-none w-full">
+        <div className="w-full rounded-full bg-gradient-to-r from-[#F5156B] to-[#D30038] p-1.5 shadow-[0_4px_20px_rgba(245,21,107,0.3)] flex items-center justify-between pl-4 pr-1.5 border border-pink-500/30 pointer-events-auto">
           <div className="flex items-center gap-3">
             <div className="bg-white/20 p-1.5 rounded-full">
               <Crown size={16} className="text-white" />
@@ -343,9 +342,9 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* BOTTOM NAVIGATION (History Removed, now 4 tabs) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070b14] border-t border-slate-800 pb-safe">
-        <div className="flex justify-between items-center px-8 py-2.5 max-w-lg mx-auto">
+      {/* BOTTOM NAVIGATION (Full Width) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070b14] border-t border-slate-800 pb-safe w-full">
+        <div className="flex justify-between items-center px-6 py-2.5 w-full">
           <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
             <Home size={22} strokeWidth={2.5} />
             <span className="text-[10px] font-bold">{t("home")}</span>
@@ -368,7 +367,7 @@ export default function HomePage() {
       {/* 🔥 MODAL / POPUP FOR ALL REVIEWS */}
       {selectedAstro && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl bg-[#151d2c] border-t sm:border border-slate-700 max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-5">
+          <div className="w-full rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl bg-[#151d2c] border-t sm:border border-slate-700 max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-5">
             
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/60">
               <div className="flex items-center gap-3">
