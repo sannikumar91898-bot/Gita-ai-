@@ -6,20 +6,16 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Modal Config (PRIMARY)
+// 1. PRIMARY: Modal API
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
 const modalClient = modalUrl ? new OpenAI({ baseURL: modalUrl, apiKey: modalApiKey || "dummy" }) : null;
 
-// Groq Config (FALLBACK)
-const groqClient = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY || "dummy",
-});
-
-// 🔥 Model names environment variables se aayenge (taaki kabhi fail na ho)
-const MODAL_VISION_MODEL = process.env.MODAL_VISION_MODEL || "Qwen/Qwen3.6-27B";
-const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
+// 2. FALLBACK: Gemini API (Using OpenAI compatible endpoint)
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const geminiClient = geminiApiKey 
+  ? new OpenAI({ baseURL: "https://generativelanguage.googleapis.com/v1beta/openai/", apiKey: geminiApiKey }) 
+  : null;
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -65,11 +61,11 @@ export async function POST(request: Request) {
     let result: any = null;
     let errors: string[] = [];
 
-    // 1. Try Modal (PRIMARY)
+    // 1. Try Modal (Primary)
     if (modalClient) {
       try {
         const completion = await modalClient.chat.completions.create({
-          model: MODAL_VISION_MODEL,
+          model: "Qwen/Qwen3.6-27B", // Aapka Modal model
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
           response_format: { type: "json_object" },
@@ -82,11 +78,11 @@ export async function POST(request: Request) {
       }
     }
 
-    // 2. Fallback to Groq
-    if (!result) {
+    // 2. Try Gemini (Fallback)
+    if (!result && geminiClient) {
       try {
-        const completion = await groqClient.chat.completions.create({
-          model: GROQ_VISION_MODEL,
+        const completion = await geminiClient.chat.completions.create({
+          model: "gemini-1.5-flash", // Gemini ka super fast vision model
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
           response_format: { type: "json_object" },
@@ -94,20 +90,15 @@ export async function POST(request: Request) {
         const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
       } catch (err: any) {
-        errors.push(`Groq: ${err.message}`);
-        console.error("Groq failed:", err.message);
+        errors.push(`Gemini: ${err.message}`);
+        console.error("Gemini failed:", err.message);
       }
     }
 
     // Agar dono fail ho gaye
     if (!result) {
-      console.error("=== BOTH AI PROVIDERS FAILED ===");
-      console.error("Errors:", errors);
-      return NextResponse.json({ 
-        error: "AI_ERROR", 
-        message: "AI server is busy. Please try again.",
-        debug: process.env.NODE_ENV === "development" ? errors : undefined
-      }, { status: 500 });
+      console.error("=== BOTH AI PROVIDERS FAILED ===", errors);
+      return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy. Please try again." }, { status: 500 });
     }
 
     if (result.error === "INVALID_IMAGE") {
