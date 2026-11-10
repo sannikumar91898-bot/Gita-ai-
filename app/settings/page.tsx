@@ -1,49 +1,52 @@
 // app/settings/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
-  ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, 
-  Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, 
-  X, LogOut, Shield, FileText, Mail, Check, CreditCard, Trash2
+  ArrowLeft, User, Globe, ChevronRight, Clock, 
+  Wallet, Headphones, List, Scroll, HelpCircle, 
+  X, LogOut, Shield, FileText, Mail, Check, CreditCard, Trash2, Sparkles, Star
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 import { LANGUAGES } from "../../i18n"; 
 
 export default function SettingsPage() {
-  const { lang, setLanguage, theme, setTheme, me } = useApp();
-
+  const { lang, setLanguage, theme, me } = useApp();
   const isDark = theme === "dark";
   
-  // Modal state for Language
   const [showLangModal, setShowLangModal] = useState(false);
 
-  // Ekdum simple translation helper
+  // 10 Language Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
-      hi: { title: "सेटिंग्स", edit: "प्रोफाइल एडिट करें", sub: "सब्सक्राइब करें", policy: "पॉलिसीज", help: "हेल्प और सपोर्ट", lang: "भाषा", logout: "लॉगआउट करें", delete: "अकाउंट डिलीट करें", theme: "थीम", light: "लाइट", dark: "डार्क", selectLang: "भाषा चुनें" },
-      hinglish: { title: "Settings", edit: "Edit Profile", sub: "Subscribe Now", policy: "Policies", help: "Help and Support", lang: "Language", logout: "Log out", delete: "Delete Account", theme: "Theme", light: "Light", dark: "Dark", selectLang: "Select Language" },
-      en: { title: "Settings", edit: "Edit Profile", sub: "Subscribe Now", policy: "Policies", help: "Help and Support", lang: "Language", logout: "Log out", delete: "Delete Account", theme: "Theme", light: "Light", dark: "Dark", selectLang: "Select Language" },
-      te: { title: "సెట్టింగ్స్", edit: "ప్రొఫైల్ సవరించండి", sub: "సబ్స్క్రైబ్ చేయండి", policy: "విధానాలు", help: "సహాయం మరియు మద్దతు", lang: "భాష", logout: "లాగ్ అవుట్", delete: "ఖాతా తొలగించండి", theme: "థీమ్", light: "లైట్", dark: "డార్క్", selectLang: "భాషను ఎంచుకోండి" },
-      ta: { title: "அமைப்புகள்", edit: "சுயவிவரத்தைத் திருத்து", sub: "இப்போது குழுசேர்", policy: "கொள்கைகள்", help: "உதவி மற்றும் ஆதரவு", lang: "மொழி", logout: "வெளியேறு", delete: "கணக்கை நீக்கு", theme: "தீம்", light: "லைட்", dark: "டார்க்", selectLang: "மொழியைத் தேர்ந்தெடுக்கவும்" },
-      kn: { title: "ಸೆಟ್ಟಿಂಗ್ಸ್", edit: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", sub: "ಚಂದಾದಾರರಾಗಿ", policy: "ನೀತಿಗಳು", help: "ಸಹಾಯ ಮತ್ತು ಬೆಂಬಲ", lang: "ಭಾಷೆ", logout: "ಲಾಗ್ ಔಟ್", delete: "ಖಾತೆ ಅಳಿಸಿ", theme: "ಥೀಮ್", light: "ಲೈಟ್", dark: "ಡಾರ್ಕ್", selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ" },
-      bn: { title: "সেটিংস", edit: "প্রোফাইল সম্পাদনা করুন", sub: "এখন সাবস্ক্রাইব করুন", policy: "নীতিমালা", help: "সহায়তা এবং সমর্থন", lang: "ভাষা", logout: "লগ আউট", delete: "অ্যাকাউন্ট মুছুন", theme: "থিম", light: "লাইট", dark: "ডার্ক", selectLang: "ভাষা নির্বাচন করুন" },
-      mr: { title: "सेटिंग्ज", edit: "प्रोफाइल संपादित करा", sub: "सदस्यता घ्या", policy: "धोरणे", help: "मदत आणि समर्थन", lang: "भाषा", logout: "लॉग आउट", delete: "खाते हटवा", theme: "थीम", light: "लाइट", dark: "डार्क", selectLang: "भाषा निवडा" },
-      gu: { title: "સેટિંગ્સ", edit: "પ્રોફાઇલ સંપાદિત કરો", sub: "સબ્સ્ક્રાઇબ કરો", policy: "નીતિઓ", help: "મદદ અને સપોર્ટ", lang: "ભાષા", logout: "લોગ આઉટ", delete: "એકાઉન્ટ કાઢી નાખો", theme: "થીમ", light: "લાઇટ", dark: "ડાર્ક", selectLang: "ભાષા પસંદ કરો" },
-      ml: { title: "ക്രമീകരണങ്ങൾ", edit: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", sub: "സബ്സ്ക്രൈബ് ചെയ്യുക", policy: "നയങ്ങൾ", help: "സഹായവും പിന്തുണയും", lang: "ഭാഷ", logout: "ലോഗ് ഔട്ട്", delete: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", theme: "തീം", light: "ലൈറ്റ്", dark: "ഡാർക്ക്", selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക" },
+      hi: { title: "सेटिंग्स", subtitle: "अपने अनुभव को कस्टमाइज़ करें", edit: "प्रोफाइल एडिट करें", orders: "ऑर्डर्स", wallet: "वॉलेट", support: "सपोर्ट", help: "हेल्प सेंटर", privacy: "प्राइवेसी पॉलिसी", terms: "नियम और शर्तें", contact: "संपर्क करें", lang: "भाषा", logout: "लॉगआउट करें", delete: "अकाउंट डिलीट करें", selectLang: "भाषा चुनें", account: "अकाउंट सेटिंग्स", legal: "कानूनी जानकारी", quick: "क्विक एक्शन", subscribe: "सब्सक्राइब करें", policy: "पॉलिसीज" },
+      hinglish: { title: "Settings", subtitle: "Customize your experience", edit: "Edit Profile", orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", subscribe: "Subscribe Now", policy: "Policies" },
+      en: { title: "Settings", subtitle: "Customize your experience", edit: "Edit Profile", orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", subscribe: "Subscribe Now", policy: "Policies" },
+      te: { title: "సెట్టింగ్స్", subtitle: "మీ అనుభవాన్ని అనుకూలీకరించండి", edit: "ప్రొఫైల్ సవరించండి", orders: "ఆర్డర్లు", wallet: "వాలెట్", support: "మద్దతు", help: "సహాయ కేంద్రం", privacy: "గోప్యతా విధానం", terms: "సేవా నిబంధనలు", contact: "మమ్మల్ని సంప్రదించండి", lang: "భాష", logout: "లాగ్ అవుట్", delete: "ఖాతా తొలగించండి", selectLang: "భాషను ఎంచుకోండి", account: "ఖాతా సెట్టింగ్లు", legal: "చట్టపరమైన", quick: "త్వరిత చర్యలు", subscribe: "సబ్స్క్రైబ్ చేయండి", policy: "విధానాలు" },
+      ta: { title: "அமைப்புகள்", subtitle: "உங்கள் அனுபவத்தைத் தனிப்பயனாக்குங்கள்", edit: "சுயவிவரத்தைத் திருத்து", orders: "ஆர்டர்கள்", wallet: "பணப்பை", support: "ஆதரவு", help: "உதவி மையம்", privacy: "தனியுரிமைக் கொள்கை", terms: "சேவை விதிமுறைகள்", contact: "எங்களைத் தொடர்பு கொள்ள", lang: "மொழி", logout: "வெளியேறு", delete: "கணக்கை நீக்கு", selectLang: "மொழியைத் தேர்ந்தெடுக்கவும்", account: "கணக்கு அமைப்புகள்", legal: "சட்டப்பூர்வ", quick: "விரைவு செயல்கள்", subscribe: "குழுசேர்", policy: "கொள்கைகள்" },
+      kn: { title: "ಸೆಟ್ಟಿಂಗ್ಸ್", subtitle: "ನಿಮ್ಮ ಅನುಭವವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ", edit: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", orders: "ಆರ್ಡರ್ಗಳು", wallet: "ವಾಲೆಟ್", support: "ಬೆಂಬಲ", help: "ಸಹಾಯ ಕೇಂದ್ರ", privacy: "ಗೋಪ್ಯತಾ ನೀತಿ", terms: "ಸೇವಾ ನಿಯಮಗಳು", contact: "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ", lang: "ಭಾಷೆ", logout: "ಲಾಗ್ ಔಟ್", delete: "ಖಾತೆ ಅಳಿಸಿ", selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ", account: "ಖಾತೆ ಸೆಟ್ಟಿಂಗ್ಗಳು", legal: "ಕಾನೂನು", quick: "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು", subscribe: "ಚಂದಾದಾರರಾಗಿ", policy: "ನೀತಿಗಳು" },
+      bn: { title: "সেটিংস", subtitle: "আপনার অভিজ্ঞতা কাস্টমাইজ করুন", edit: "প্রোফাইল সম্পাদনা করুন", orders: "অর্ডার", wallet: "ওয়ালেট", support: "সমর্থন", help: "সহায়তা কেন্দ্র", privacy: "গোপনীয়তা নীতি", terms: "পরিষেবার শর্তাবলী", contact: "আমাদের সাথে যোগাযোগ করুন", lang: "ভাষা", logout: "লগ আউট", delete: "অ্যাকাউন্ট মুছুন", selectLang: "ভাষা নির্বাচন করুন", account: "অ্যাকাউন্ট সেটিংস", legal: "আইনি", quick: "দ্রুত পদক্ষেপ", subscribe: "সাবস্ক্রাইব করুন", policy: "নীতিমালা" },
+      mr: { title: "सेटिंग्ज", subtitle: "तुमचा अनुभव सानुकूलित करा", edit: "प्रोफाइल संपादित करा", orders: "ऑर्डर्स", wallet: "वॉलेट", support: "समर्थन", help: "मदत केंद्र", privacy: "गोपनीयता धोरण", terms: "सेवा अटी", contact: "आमच्याशी संपर्क साधा", lang: "भाषा", logout: "लॉग आउट", delete: "खाते हटवा", selectLang: "भाषा निवडा", account: "खाते सेटिंग्ज", legal: "कायदेशीर", quick: "द्रुत क्रिया", subscribe: "सदस्यता घ्या", policy: "धोरणे" },
+      gu: { title: "સેટિંગ્સ", subtitle: "તમારા અનુભવને કસ્ટમાઇઝ કરો", edit: "પ્રોફાઇલ સંપાદિત કરો", orders: "ઓર્ડર્સ", wallet: "વોલેટ", support: "સપોર્ટ", help: "મદદ કેન્દ્ર", privacy: "ગોપનીયતા નીતિ", terms: "સેવાની શરતો", contact: "અમારો સંપર્ક કરો", lang: "ભાષા", logout: "લોગ આઉટ", delete: "એકાઉન્ટ કાઢી નાખો", selectLang: "ભાષા પસંદ કરો", account: "એકાઉન્ટ સેટિંગ્સ", legal: "કાનૂની", quick: "ઝડપી ક્રિયાઓ", subscribe: "સબ્સ્ક્રાઇબ કરો", policy: "નીતિઓ" },
+      ml: { title: "ക്രമീകരണങ്ങൾ", subtitle: "നിങ്ങളുടെ അനുഭവം ഇഷ്ടാനുസൃതമാക്കുക", edit: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", orders: "ഓർഡറുകൾ", wallet: "വാലറ്റ്", support: "പിന്തുണ", help: "സഹായ കേന്ദ്രം", privacy: "സ്വകാര്യതാ നയം", terms: "സേവന നിബന്ധനകൾ", contact: "ഞങ്ങളെ ബന്ധപ്പെടുക", lang: "ഭാഷ", logout: "ലോഗ് ഔട്ട്", delete: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക", account: "അക്കൗണ്ട് ക്രമീകരണങ്ങൾ", legal: "നിയമപരമായ", quick: "ദ്രുത പ്രവർത്തനങ്ങൾ", subscribe: "സബ്സ്ക്രൈബ് ചെയ്യുക", policy: "നയങ്ങൾ" },
     };
     return dict[lang]?.[key] || dict["en"][key];
   };
 
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const listItemClass = isDark ? "border-slate-800/50 hover:bg-white/5" : "border-gray-100 hover:bg-black/5";
+  const cardClass = isDark ? "border-white/5 bg-white/[0.03] backdrop-blur-xl shadow-2xl" : "border-orange-100 bg-white shadow-lg";
+  const listItemClass = isDark ? "border-white/5 hover:bg-white/5" : "border-gray-100 hover:bg-gray-50";
+  
+  // Premium Icon Wrapper
+  const iconClass = isDark 
+    ? "bg-gradient-to-br from-amber-500/20 to-orange-600/20 text-amber-500 border border-amber-500/20" 
+    : "bg-orange-50 text-orange-600 border border-orange-100";
 
-  // Current language label (e.g., Telugu, Hindi)
-  const currentLangLabel = LANGUAGES.find((l) => l.code === lang)?.label || "English";
+  const currentLangLabel = LANGUAGES.find((l) => l.code === lang)?.native || "English";
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
+    if (window.confirm(t("logout") + "?")) {
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = "/login";
@@ -52,149 +55,168 @@ export default function SettingsPage() {
 
   return (
     <main className={`min-h-screen w-full px-4 pb-24 pt-6 ${pageClass}`}>
-      <div className="mx-auto max-w-xl space-y-6">
+      
+      {/* Background Glow Effect (Premium Look) */}
+      <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none"></div>
+
+      <div className="mx-auto max-w-xl space-y-8 relative z-10">
         
         {/* HEADER */}
-        <header className="flex items-center gap-4 px-2">
-          <Link href="/" className={`rounded-full p-2 transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:bg-slate-700" : "bg-orange-100 text-orange-600 hover:bg-orange-200"}`}>
+        <header className="flex items-center gap-4 px-2 pt-2">
+          <Link href="/" className={`rounded-full p-2.5 transition-colors border ${isDark ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10" : "bg-white border-gray-200 text-slate-600 shadow-sm"}`}>
             <ArrowLeft size={20} />
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <div>
+            <h1 className="text-2xl font-black tracking-tight flex items-center gap-2">
+              {t("title")} <Sparkles size={18} className="text-amber-500" />
+            </h1>
+            <p className={`text-xs font-medium mt-0.5 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
+          </div>
         </header>
 
-        {/* MAIN MENU LIST */}
-        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
-          
-          {/* Edit Profile */}
-          <Link href="/profile" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
-                <User size={18} />
-              </div>
-              <span className="font-semibold text-[15px]">{t("edit")}</span>
-            </div>
-            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-          </Link>
+        {/* QUICK ACTIONS GRID (Orders, Wallet, Support) */}
+        <section>
+          <h3 className={`px-3 mb-3 text-[11px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("quick")}</h3>
+          <div className="grid grid-cols-3 gap-3">
+            <Link href="/orders" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+              <div className={`p-3 rounded-2xl ${iconClass}`}><Clock size={22} /></div>
+              <span className="text-[11px] font-bold">{t("orders")}</span>
+            </Link>
+            <Link href="/wallet" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+              <div className={`p-3 rounded-2xl ${iconClass}`}><Wallet size={22} /></div>
+              <span className="text-[11px] font-bold">{t("wallet")}</span>
+            </Link>
+            <Link href="/support" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+              <div className={`p-3 rounded-2xl ${iconClass}`}><Headphones size={22} /></div>
+              <span className="text-[11px] font-bold">{t("support")}</span>
+            </Link>
+          </div>
+        </section>
 
-          {/* Subscribe Now */}
-          <Link href="/wallet" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
-                <CreditCard size={18} />
+        {/* MAIN SETTINGS LIST */}
+        <section>
+          <h3 className={`px-3 mb-3 text-[11px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("account")}</h3>
+          <div className={`overflow-hidden rounded-[2rem] border ${cardClass}`}>
+            
+            <Link href="/profile" className={`flex items-center justify-between p-5 border-b ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${iconClass}`}><User size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("edit")}</span>
               </div>
-              <span className="font-semibold text-[15px]">{t("sub")}</span>
-            </div>
-            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-          </Link>
-
-          {/* Policies */}
-          <Link href="/privacy" className={`flex items-center justify-between p-4 border-b ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
-                <Shield size={18} />
-              </div>
-              <span className="font-semibold text-[15px]">{t("policy")}</span>
-            </div>
-            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-          </Link>
-
-          {/* Help & Support */}
-          <Link href="/support" className={`flex items-center justify-between p-4 ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
-                <HelpCircle size={18} />
-              </div>
-              <span className="font-semibold text-[15px]">{t("help")}</span>
-            </div>
-            <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-          </Link>
-        </div>
-
-        {/* LANGUAGE SECTION (Single Row) */}
-        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
-          <button 
-            onClick={() => setShowLangModal(true)}
-            className={`w-full flex items-center justify-between p-4 ${listItemClass}`}
-          >
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-orange-400" : "bg-orange-50 text-orange-600"}`}>
-                <MessageCircle size={18} />
-              </div>
-              <span className="font-semibold text-[15px]">{t("lang")}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={`text-sm font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>{currentLangLabel}</span>
               <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-            </div>
-          </button>
-        </div>
+            </Link>
+
+            <Link href="/wallet" className={`flex items-center justify-between p-5 border-b ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${iconClass}`}><CreditCard size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("subscribe")}</span>
+              </div>
+              <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+            </Link>
+
+            <Link href="/privacy" className={`flex items-center justify-between p-5 border-b ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${iconClass}`}><Shield size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("policy")}</span>
+              </div>
+              <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+            </Link>
+
+            <Link href="/help" className={`flex items-center justify-between p-5 ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${iconClass}`}><HelpCircle size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("help")}</span>
+              </div>
+              <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+            </Link>
+          </div>
+        </section>
+
+        {/* 🔥 LANGUAGE SECTION (EXACTLY AS YOU WANTED) 🔥 */}
+        <section>
+          <div className={`overflow-hidden rounded-[2rem] border ${cardClass}`}>
+            <button onClick={() => setShowLangModal(true)} className={`w-full flex items-center justify-between p-5 ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${iconClass}`}><Globe size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("lang")}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-bold ${isDark ? "text-amber-500" : "text-orange-600"}`}>{currentLangLabel}</span>
+                <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
+              </div>
+            </button>
+          </div>
+        </section>
 
         {/* LOGOUT & DELETE */}
-        <div className={`overflow-hidden rounded-2xl border ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white shadow-sm"}`}>
-          <button onClick={handleLogout} className={`w-full flex items-center justify-between p-4 border-b ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"}`}>
-                <LogOut size={18} />
+        <section>
+          <div className={`overflow-hidden rounded-[2rem] border ${cardClass}`}>
+            <button onClick={handleLogout} className={`w-full flex items-center justify-between p-5 border-b ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"}`}><LogOut size={18} /></div>
+                <span className="font-semibold text-[15px]">{t("logout")}</span>
               </div>
-              <span className="font-semibold text-[15px]">{t("logout")}</span>
-            </div>
-          </button>
-
-          <button className={`w-full flex items-center justify-between p-4 ${listItemClass}`}>
-            <div className="flex items-center gap-4">
-              <div className={`p-2 rounded-full ${isDark ? "bg-rose-950/50 text-rose-500" : "bg-rose-50 text-rose-600"}`}>
-                <Trash2 size={18} />
+            </button>
+            <button className={`w-full flex items-center justify-between p-5 ${listItemClass}`}>
+              <div className="flex items-center gap-4">
+                <div className={`p-2.5 rounded-xl ${isDark ? "bg-rose-950/50 text-rose-500 border border-rose-900/50" : "bg-rose-50 text-rose-600"}`}><Trash2 size={18} /></div>
+                <span className="font-semibold text-[15px] text-rose-500">{t("delete")}</span>
               </div>
-              <span className="font-semibold text-[15px] text-rose-500">{t("delete")}</span>
-            </div>
-          </button>
-        </div>
+            </button>
+          </div>
+        </section>
 
         {/* FOOTER INFO */}
-        <div className="text-center pt-8 space-y-1">
-          <p className={`text-xs ${isDark ? "text-slate-600" : "text-gray-400"}`}>User ID: {me?.user?.id?.slice(0, 10) || "Guest"}</p>
-          <p className={`text-xs ${isDark ? "text-slate-600" : "text-gray-400"}`}>Version 2026.22.2</p>
+        <div className="text-center pt-4 space-y-1">
+          <p className={`text-[11px] font-medium tracking-wider uppercase ${isDark ? "text-slate-600" : "text-gray-400"}`}>User ID: {me?.user?.id?.slice(0, 8) || "Guest"}</p>
+          <p className={`text-[11px] font-medium tracking-wider uppercase ${isDark ? "text-slate-600" : "text-gray-400"}`}>Version 2026.22.2</p>
         </div>
 
       </div>
 
-      {/* LANGUAGE MODAL (Popup) */}
+      {/* PREMIUM LANGUAGE BOTTOM SHEET */}
       {showLangModal && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
-          <div className={`w-full max-w-md rounded-t-3xl sm:rounded-3xl overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151E2E] border border-slate-800" : "bg-white"}`}>
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md p-0 sm:p-4">
+          <div className={`w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151E2E] border border-white/10 shadow-2xl" : "bg-white"}`}>
             
-            {/* Modal Header */}
+            {/* Modal Handle */}
+            <div className="w-full flex justify-center pt-3 pb-1">
+              <div className={`w-12 h-1.5 rounded-full ${isDark ? "bg-slate-700" : "bg-gray-200"}`}></div>
+            </div>
+
             <div className={`flex items-center justify-between p-5 border-b ${isDark ? "border-slate-800" : "border-gray-200"}`}>
-              <h2 className={`text-xl font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("selectLang")}</h2>
-              <button onClick={() => setShowLangModal(false)} className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+              <div>
+                <h2 className={`text-xl font-black tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>{t("selectLang")}</h2>
+                <p className={`text-xs mt-0.5 ${isDark ? "text-slate-400" : "text-gray-500"}`}>Choose your preferred app language</p>
+              </div>
+              <button onClick={() => setShowLangModal(false)} className={`p-2.5 rounded-full transition-colors ${isDark ? "bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
                 <X size={18} />
               </button>
             </div>
             
-            {/* Modal Body (Scrollable) */}
             <div className="p-3 overflow-y-auto">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => { setLanguage(l.code); setShowLangModal(false); }}
-                  className={`w-full flex items-center justify-between p-4 mb-1 rounded-xl transition-all ${
+                  className={`w-full flex items-center justify-between p-4 mb-1.5 rounded-2xl transition-all ${
                     lang === l.code 
-                      ? (isDark ? "bg-orange-500/10 border border-orange-500/30" : "bg-orange-50 border border-orange-200") 
+                      ? (isDark ? "bg-amber-500/10 border border-amber-500/30" : "bg-orange-50 border border-orange-200") 
                       : "border border-transparent hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   <div className="flex flex-col text-left">
-                    <span className={`text-[15px] font-bold ${lang === l.code ? "text-orange-500" : isDark ? "text-slate-200" : "text-gray-800"}`}>
+                    <span className={`text-[15px] font-bold ${lang === l.code ? "text-amber-500" : isDark ? "text-slate-200" : "text-gray-800"}`}>
                       {l.native}
                     </span>
-                    <span className="text-xs text-gray-500">{l.label}</span>
+                    <span className={`text-xs ${isDark ? "text-slate-500" : "text-gray-500"}`}>{l.label}</span>
                   </div>
                   
-                  {/* Radio Button Indicator */}
-                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${
-                    lang === l.code ? "border-orange-500 bg-orange-500" : (isDark ? "border-slate-600" : "border-gray-300")
+                  {/* Premium Radio Button */}
+                  <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    lang === l.code ? "border-amber-500 bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]" : (isDark ? "border-slate-600" : "border-gray-300")
                   }`}>
-                    {lang === l.code && <Check size={12} className="text-white" />}
+                    {lang === l.code && <Check size={14} className="text-black font-bold" strokeWidth={3} />}
                   </div>
                 </button>
               ))}
