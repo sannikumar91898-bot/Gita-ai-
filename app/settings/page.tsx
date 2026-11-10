@@ -132,7 +132,7 @@ export default function SettingsPage() {
   return (
     <main className={`min-h-[100dvh] w-full font-sans pb-32 transition-colors duration-300 ${pageClass}`}>
       
-      <div className="w-full px-4 pt-4 space-y-5">
+      <div className="w-full max-w-2xl mx-auto px-4 pt-4 space-y-5">
         
         {/* HEADER */}
         <header className={`rounded-2xl flex items-center p-3 border ${cardClass}`}>
