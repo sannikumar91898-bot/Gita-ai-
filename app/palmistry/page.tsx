@@ -61,7 +61,7 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
 };
 
 export default function PalmistryPage() {
-  const { lang, theme } = useApp();
+  const { lang, theme } = useApp(); // 🔥 lang yahan se aa rahi hai
   const isDark = theme === "dark";
   const isHindi = lang === "hi";
   const isHinglish = lang === "hinglish";
@@ -140,6 +140,7 @@ export default function PalmistryPage() {
 
         const formData = new FormData();
         formData.append("image", compressedFile);
+        formData.append("language", lang); // 🔥 NAYA: Language bhej rahe hain
 
         const res = await fetch("/api/palm", {
           method: "POST",
