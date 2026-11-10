@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { useApp } from "./Providers";
 import {
   Home, MessageCircle, Sun, CalendarDays, User, Star, Settings,
-  Sparkles, Hand, ScanFace, Heart, Scroll, Gem, X, Crown, ChevronRight
+  Sparkles, Hand, ScanFace, Heart, Scroll, Gem, Crown, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
-// 🔥 10 Languages Translation Helper
+// 🔥 10 Languages Translation Helper (Restored)
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
@@ -16,7 +16,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "फ्री टूल्स", kundli: "कुंडली", matching: "मिलान", horoscope: "राशिफल", panchang: "पंचांग", palmistry: "हस्तरेखा", gemstone: "रत्न", calSetting: "कैल सटिंग", 
       talkTo: "ज्योतिषियों से बात करें", online: "ऑनलाइन", chatNow: "चैट करें", 
       home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", 
-      readMore: "और पढ़ें...", reviews: "रिव्यूज", min: "मिनट",
+      readMore: "और पढ़ें...", readLess: "कम पढ़ें...", min: "मिनट",
       stickyTitle: "ज्योतिषी - 24x7 उपलब्ध", stickySub: "अपने नाम करें – पहली चैट FREE"
     },
     hinglish: {
@@ -24,7 +24,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Rashifal", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", calSetting: "Cal Setting", 
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
-      readMore: "read more...", reviews: "Reviews", min: "min",
+      readMore: "read more...", readLess: "read less...", min: "min",
       stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE"
     },
     en: {
@@ -32,7 +32,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", calSetting: "Cal Setting", 
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
-      readMore: "read more...", reviews: "Reviews", min: "min",
+      readMore: "read more...", readLess: "read less...", min: "min",
       stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE"
     },
     te: {
@@ -40,7 +40,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "ఉచిత సాధనాలు", kundli: "కుండలి", matching: "మ్యాచింగ్", horoscope: "రాశిఫలం", panchang: "పంచాంగం", palmistry: "పామిస్ట్రీ", gemstone: "రత్నం", calSetting: "కాల్ సెట్టింగ్", 
       talkTo: "జ్యోతిష్యులతో మాట్లాడండి", online: "ఆన్‌లైన్", chatNow: "చాట్ చేయండి", 
       home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", 
-      readMore: "మరిన్ని చదవండి...", reviews: "సమీక్షలు", min: "నిమిషం",
+      readMore: "మరిన్ని చదవండి...", readLess: "తక్కువ చదవండి...", min: "నిమిషం",
       stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం"
     },
     ta: {
@@ -48,7 +48,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "இலவச கருவிகள்", kundli: "ஜாதகம்", matching: "பொருத்தம்", horoscope: "ராசிபலன்", panchang: "பஞ்சாங்கம்", palmistry: "கைரேகை", gemstone: "ரத்தினம்", calSetting: "கால் அமைப்பு", 
       talkTo: "ஜோதிடர்களிடம் பேசுங்கள்", online: "ஆன்லைன்", chatNow: "அரட்டை", 
       home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", 
-      readMore: "மேலும் படிக்க...", reviews: "மதிப்புரைகள்", min: "நிமிடம்",
+      readMore: "மேலும் படிக்க...", readLess: "குறைவாக படிக்க...", min: "நிமிடம்",
       stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்"
     },
     kn: {
@@ -56,7 +56,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "ಉಚಿತ ಪರಿಕರಗಳು", kundli: "ಕುಂಡಲಿ", matching: "ಹೊಂದಾಣಿಕೆ", horoscope: "ರಾಶಿಫಲ", panchang: "ಪಂಚಾಂಗ", palmistry: "ಹಸ್ತರೇಖೆ", gemstone: "ರತ್ನ", calSetting: "ಕಾಲ್ ಸೆಟ್ಟಿಂಗ್", 
       talkTo: "ಜ್ಯೋತಿಷಿಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ", online: "ಆನ್‌ಲೈನ್", chatNow: "ಚಾಟ್ ಮಾಡಿ", 
       home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", 
-      readMore: "ಮತ್ತಷ್ಟು ಓದಿ...", reviews: "ವಿಮರ್ಶೆಗಳು", min: "ನಿಮಿಷ",
+      readMore: "ಮತ್ತಷ್ಟು ಓದಿ...", readLess: "ಕಡಿಮೆ ಓದಿ...", min: "ನಿಮಿಷ",
       stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ"
     },
     bn: {
@@ -64,7 +64,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "ফ্রি টুলস", kundli: "কুণ্ডলী", matching: "ম্যাচিং", horoscope: "রাশিফল", panchang: "পঞ্জিকা", palmistry: "হস্তরেখা", gemstone: "রত্ন", calSetting: "ক্যাল সেটিং", 
       talkTo: "জ্যোতিষীদের সাথে কথা বলুন", online: "অনলাইন", chatNow: "চ্যাট করুন", 
       home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", 
-      readMore: "আরও পড়ুন...", reviews: "পর্যালোচনা", min: "মিনিট",
+      readMore: "আরও পড়ুন...", readLess: "কম পড়ুন...", min: "মিনিট",
       stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি"
     },
     mr: {
@@ -72,7 +72,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "मोफत साधने", kundli: "कुंडली", matching: "जुळणी", horoscope: "राशीभविष्य", panchang: "पंचांग", palmistry: "हस्तरेषा", gemstone: "रत्न", calSetting: "कॅल सेटिंग", 
       talkTo: "ज्योतिषांशी बोला", online: "ऑनलाइन", chatNow: "चॅट करा", 
       home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", 
-      readMore: "अधिक वाचा...", reviews: "पुनरावलोकने", min: "मिनिट",
+      readMore: "अधिक वाचा...", readLess: "कमी वाचा...", min: "मिनिट",
       stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत"
     },
     gu: {
@@ -80,7 +80,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "મફત સાધનો", kundli: "કુંડળી", matching: "મેચિંગ", horoscope: "રાશિફળ", panchang: "પંચાંગ", palmistry: "હસ્તરેખા", gemstone: "રત્ન", calSetting: "કેલ સેટિંગ", 
       talkTo: "જ્યોતિષીઓ સાથે વાત કરો", online: "ઓનલાઇન", chatNow: "ચેટ કરો", 
       home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", 
-      readMore: "વધુ વાંચો...", reviews: "સમીક્ષાઓ", min: "મિનિટ",
+      readMore: "વધુ વાંચો...", readLess: "ઓછું વાંચો...", min: "મિનિટ",
       stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત"
     },
     ml: {
@@ -88,7 +88,7 @@ const getUIText = (lang: string, key: string) => {
       freeTools: "സൗജന്യ ടൂളുകൾ", kundli: "കുണ്ഡലി", matching: "മാച്ചിംഗ്", horoscope: "രാശിഫലം", panchang: "പഞ്ചാംഗം", palmistry: "കൈരേഖ", gemstone: "രത്നം", calSetting: "കാൽ സെറ്റിംഗ്", 
       talkTo: "ജ്യോതിഷികളുമായി സംസാരിക്കുക", online: "ഓൺലൈൻ", chatNow: "ചാറ്റ് ചെയ്യുക", 
       home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", 
-      readMore: "കൂടുതൽ വായിക്കുക...", reviews: "അവലോകനങ്ങൾ", min: "മിനിറ്റ്",
+      readMore: "കൂടുതൽ വായിക്കുക...", readLess: "കുറച്ച് വായിക്കുക...", min: "മിനിറ്റ്",
       stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം"
     },
   };
@@ -104,47 +104,60 @@ type Astrologer = {
 
 const ASTROLOGERS: Astrologer[] = [
   { 
-    id: "gita", name: "Gita", specialty: "Tarot • Love & Relationship", rating: 4.9, 
-    experience: "5 Years", price: 19, image: "/astrologers/gita.jpg", 
+    id: "gita", 
+    name: "Gita", 
+    specialty: "Tarot • Love & Relationship", 
+    rating: 4.9, 
+    experience: "5 Years", 
+    price: 19, 
+    // ध्यान दें: यहाँ अपनी असली फाइल का नाम डालें (जैसे /astrologers/riya.jpg या gita.jpg)
+    image: "/astrologers/gita.jpg", 
     reviews: [
-      { text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 },
-      { text: "Mera career stuck tha, unhone exact reason bataya aur remedy bhi. Very accurate.", author: "Rahul K.", rating: 5 },
-      { text: "She is very polite and explains everything in detail. Highly recommended.", author: "Sneha M.", rating: 5 },
-      { text: "Prediction was good, but I felt it was a bit costly.", author: "Amit T.", rating: 4 }
+      { text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 }
     ]
   },
   { 
-    id: "kriti", name: "Acharya Kriti", specialty: "Vedic • Kundli", rating: 4.8, 
-    experience: "7 Years", price: 22, image: "/astrologers/kriti.jpg", 
+    id: "kriti", 
+    name: "Acharya Kriti", 
+    specialty: "Vedic • Kundli", 
+    rating: 4.8, 
+    experience: "7 Years", 
+    price: 22, 
+    image: "/astrologers/kriti.jpg", 
     reviews: [
-      { text: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟", author: "Rahul Verma", rating: 5 },
-      { text: "Kriti ji is very knowledgeable. Her predictions about my marriage came true.", author: "Anjali T.", rating: 5 },
-      { text: "Good consultation, but network issue tha thoda.", author: "Amit S.", rating: 4 }
+      { text: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟", author: "Rahul Verma", rating: 5 }
     ]
   },
   { 
-    id: "devaki", name: "Dr. Devaki Shastri", specialty: "Vedic • KP System", rating: 4.9, 
-    experience: "15 Years", price: 25, image: "/astrologers/devaki.jpg", isCelebrity: true, 
+    id: "devaki", 
+    name: "Dr. Devaki Shastri", 
+    specialty: "Vedic • KP System", 
+    rating: 4.9, 
+    experience: "15 Years", 
+    price: 25, 
+    image: "/astrologers/devaki.jpg", 
+    isCelebrity: true, 
     reviews: [
-      { text: "Devaki ma'am is really an expert. Rishta toothe wale tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 },
-      { text: "Best astrologer on this app. Very detailed explanation and genuine remedies.", author: "Vikas P.", rating: 5 },
-      { text: "She gave me a simple remedy for my health issues. Feeling much better now.", author: "Sunita R.", rating: 5 }
+      { text: "Devaki ma'am is really an expert. Rishta toothe wale tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 }
     ]
   },
   { 
-    id: "gargi", name: "Gargi Maa", specialty: "Spiritual Healing • Vastu", rating: 4.9, 
-    experience: "25+ Years", price: 18, image: "/astrologers/gargi.jpg", 
+    id: "gargi", 
+    name: "Gargi Maa", 
+    specialty: "Spiritual Healing • Vastu", 
+    rating: 4.9, 
+    experience: "25+ Years", 
+    price: 18, 
+    image: "/astrologers/gargi.jpg", 
     reviews: [
-      { text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 },
-      { text: "Maa is very kind. She listens patiently and gives very practical solutions.", author: "Pooja K.", rating: 5 },
-      { text: "Vastu tips were very helpful for my new office.", author: "Sanjay D.", rating: 4 }
+      { text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 }
     ]
   },
 ];
 
 export default function HomePage() {
-  const { lang, theme, me, refresh } = useApp();
-  const [selectedAstro, setSelectedAstro] = useState<Astrologer | null>(null);
+  const { lang, me, refresh } = useApp();
+  const [expandedReview, setExpandedReview] = useState<string | null>(null);
   
   const t = (key: string) => getUIText(lang || "hi", key);
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
@@ -154,9 +167,10 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
-    <main className="min-h-[100dvh] w-full pb-40 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
+    // pb-36 (144px) जो नीचे के बैनर के लिए पर्याप्त है
+    <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
       
-      {/* HEADER (Full Width) */}
+      {/* HEADER */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
         <div className="flex items-center gap-2.5">
           <div className="relative flex items-center justify-center">
@@ -167,23 +181,21 @@ export default function HomePage() {
         </div>
         
         <div className="flex items-center gap-2.5">
-          <button className="rounded-full p-2 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937] transition-colors">
+          <Link href="/settings" className="rounded-full p-2 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937] transition-colors">
             <Settings size={18} />
-          </button>
+          </Link>
           <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700 hover:bg-[#1f2937] transition-colors">
-            ₹{me?.user ? walletBalanceRupees : "3"}
+            ₹{me?.user ? walletBalanceRupees : "0"} 
             <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff6b00] text-[11px] text-white ml-0.5">+</span>
           </Link>
         </div>
       </header>
 
-      {/* Main Container (Full Width with minimal side padding) */}
+      {/* Main Container */}
       <div className="w-full space-y-5 px-3 py-4">
         
         {/* HERO BANNER */}
         <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-[0_10px_40px_-10px_rgba(255,61,0,0.4)] min-h-[145px] flex flex-col justify-center w-full">
-          
-          {/* Glowing Mandala/Zodiac Wheel Effect */}
           <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[180px] h-[180px] opacity-60 pointer-events-none mix-blend-screen">
             <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.5">
               <circle cx="50" cy="50" r="45" strokeWidth="1" />
@@ -212,7 +224,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* FREE TOOLS */}
+        {/* FREE TOOLS (Removed overflow-x-auto and adjusted icon sizes to fit all 7) */}
         <section className="space-y-3 pt-1 w-full">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -224,7 +236,7 @@ export default function HomePage() {
             </span>
           </div>
           
-          <div className="flex justify-between items-center overflow-x-auto gap-2 pb-1 scrollbar-hide w-full">
+          <div className="flex justify-between items-start w-full gap-1">
             {[
               { name: t("kundli"), icon: Scroll, href: "/kundli" },
               { name: t("matching"), icon: Heart, href: "/matching" },
@@ -234,11 +246,11 @@ export default function HomePage() {
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
               { name: t("calSetting"), icon: ScanFace, href: "/settings" },
             ].map((tool, idx) => (
-              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-1.5 min-w-[62px]">
-                <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-all hover:border-[#ff6b00] hover:scale-105">
-                  <tool.icon size={22} strokeWidth={1.5} />
+              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-1.5 flex-1">
+                <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full border border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-all hover:border-[#ff6b00] hover:scale-105">
+                  <tool.icon size={20} strokeWidth={1.5} />
                 </div>
-                <span className="text-[10.5px] font-semibold text-slate-300 whitespace-nowrap">{tool.name}</span>
+                <span className="text-[9.5px] text-center font-semibold text-slate-300 w-full truncate">{tool.name}</span>
               </Link>
             ))}
           </div>
@@ -256,12 +268,13 @@ export default function HomePage() {
           <div className="space-y-3.5 w-full">
             {ASTROLOGERS.map((astro) => {
               const firstReview = astro.reviews[0];
+              const isExpanded = expandedReview === astro.id;
+
               return (
                 <article key={astro.id} className="rounded-[1.2rem] bg-[#151d2c] p-3.5 shadow-md border border-slate-800/80 relative w-full">
                   
                   {/* Top Section */}
                   <div className="flex gap-3.5">
-                    {/* Image */}
                     <div className="relative h-[72px] w-[72px] shrink-0">
                       <img 
                         src={astro.image} 
@@ -298,9 +311,9 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Bottom Section: Reviews */}
+                  {/* Bottom Section: Reviews (Now Clickable to Expand) */}
                   {firstReview && (
-                    <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11px] leading-relaxed text-slate-300 border border-slate-800/50">
+                    <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11.5px] leading-relaxed text-slate-300 border border-slate-800/50">
                       <div className="flex items-center gap-1 mb-1">
                         {[...Array(5)].map((_, i) => (
                           <Star 
@@ -312,8 +325,14 @@ export default function HomePage() {
                         ))}
                         <span className="ml-1 font-semibold text-slate-400">- {firstReview.author}</span>
                       </div>
-                      <p className="line-clamp-2">
-                        "{firstReview.text}" <span className="text-[#ff6b00] font-semibold ml-0.5 cursor-pointer">{t("readMore")}</span>
+                      <p className={isExpanded ? "" : "line-clamp-2"}>
+                        "{firstReview.text}" 
+                        <button 
+                          onClick={() => setExpandedReview(isExpanded ? null : astro.id)}
+                          className="text-[#ff6b00] font-semibold ml-1 cursor-pointer hover:underline"
+                        >
+                          {isExpanded ? t("readLess") : t("readMore")}
+                        </button>
                       </p>
                     </div>
                   )}
