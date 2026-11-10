@@ -5,15 +5,7 @@ import OpenAI from "openai";
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
-import {
-  birthDetails,
-  charts,
-  conversations,
-  messages,
-  remedies,
-  users,
-} from "@/schema";
-
+import { birthDetails, charts, conversations, messages, remedies, users } from "@/schema";
 import { getExtendedKnowledgeEntries } from "@/lib/knowledge/knowledge-adapter";
 
 export const runtime = "nodejs";
@@ -33,28 +25,16 @@ type PersonaConfig = { name: string; specializations: string; tone: string; rule
 
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: {
-    name: "Gita",
-    specializations: "Love, relationships, modern dating, breakups",
-    tone: "A warm, loving, and deeply empathetic young female astrologer. Use words like 'Suno', 'Tum tension mat lo', 'Main hoon na'.",
-    rules: "Validate the user's pain first. Then use astrology (7th house, Venus) to explain why.",
+    name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first.",
   },
   kriti: {
-    name: "Acharya Kriti",
-    specializations: "Career, government jobs, business growth",
-    tone: "A sharp, highly intelligent, and professional female mentor. She is direct and motivating.",
-    rules: "Focus on 10th house and Saturn/Jupiter transits. Deliver precise timelines.",
+    name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house.",
   },
   devaki: {
-    name: "Dr. Devaki Shastri",
-    specializations: "Advanced KP Astrology, dasha calculations",
-    tone: "A highly intellectual, serious, and authoritative older female guru.",
-    rules: "Use exact planetary degrees and dasha cycles.",
+    name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees.",
   },
   gargi: {
-    name: "Gargi Maa",
-    specializations: "Vedic spirituality, Vastu balancing, remedies",
-    tone: "A maternal, soothing, and profoundly wise spiritual figure. Calls user 'Beta'.",
-    rules: "Spot negative Vastu dashas and prescribe remedies like Pooja, Daan.",
+    name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies with affection.",
   },
 };
 
@@ -81,11 +61,9 @@ export async function GET(request: Request) {
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
-    
     const { searchParams } = new URL(request.url);
     const rawPersona = searchParams.get("persona");
     const persona = isPersona(rawPersona) ? rawPersona : "gita";
-    
     const reqConvId = searchParams.get("conversationId"); 
 
     let conv;
@@ -119,17 +97,13 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const userMessage = cleanText(formData.get("message"));
-    
-    // 🔥 FIX: Proper Type inference
     const rawPersona = formData.get("persona");
     const persona = isPersona(rawPersona) ? rawPersona : "gita";
-    
     const requestedConversationId = cleanText(formData.get("conversationId"));
     const imageFile = formData.get("image") as File | null;
 
     if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
 
-    // Billing Logic
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
     const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
     
@@ -147,7 +121,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Conversation Logic
     let convId = requestedConversationId;
     if (!convId) {
       const [newConv] = await db.insert(conversations).values({ userId, title: "New Chat", persona }).returning();
@@ -157,24 +130,19 @@ export async function POST(request: Request) {
     const [uMsg] = await db.insert(messages).values({ conversationId: convId, userId, role: "user", content: userMessage || "Photo" }).returning();
     savedUserMsgId = uMsg.id;
 
-    // 🔥 AI CALL
     const personaConfig = PERSONAS[persona];
+    
+    // 🔥 ULTRA STRICT PROMPT (Dates & English Fix)
     const systemPrompt = `
 You are ${personaConfig.name}. ${personaConfig.tone}.
-Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. You MUST calculate all timelines based on the current year (2026). NEVER mention 2024 or 2025.
-
-STRICT LANGUAGE RULES: 
-1. Reply ONLY in Hinglish (Roman-script Hindi mixed naturally with English).
-2. NEVER reply in pure English or pure Hindi.
-3. Address the user affectionately (e.g., 'Suno', 'Beta').
-
-FORMATTING RULES:
-1. NEVER use markdown stars like ** or *. 
-2. Output plain text only. Just use normal line breaks (Enter) for paragraphs.
-3. If you give a list, use dashes (-) or numbers (1, 2, 3). Do NOT use asterisks.
+Today's Date is: ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. 
+CRITICAL: The current year is 2026. You are FORBIDDEN from mentioning 2024 or 2025. All predictions must be for 2026 onwards.
+STRICT LANGUAGE RULES: Reply ONLY in Hinglish (Roman Hindi + English). NEVER reply in pure English.
+FORMATTING RULES: NEVER use markdown stars (**). Output plain text only. Use dashes (-) for lists.
 `;
 
-    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile";
+    // 🔥 Faster model to prevent timeout
+    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.1-8b-instant"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
@@ -195,7 +163,7 @@ FORMATTING RULES:
       model: modelName,
       messages: messagesPayload,
       temperature: 0.6,
-      max_tokens: 1200,
+      max_tokens: 1000,
     });
 
     const raw = completion.choices[0]?.message?.content?.trim() || "";
@@ -216,6 +184,6 @@ FORMATTING RULES:
     if (savedUserMsgId) await db.delete(messages).where(eq(messages.id, savedUserMsgId)); 
 
     console.error("=== GROQ AI ERROR ===", error.message || error);
-    return NextResponse.json({ code: "AI_ERROR", error: "AI se connect nahi ho paya." }, { status: 500 });
+    return NextResponse.json({ code: "AI_ERROR", error: "Server thoda busy hai. Kripya 1 minute baad try karein." }, { status: 500 });
   }
 }
