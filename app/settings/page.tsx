@@ -98,7 +98,6 @@ export default function SettingsPage() {
   const cardClass = isDark ? "border-white/5 bg-white/[0.03] backdrop-blur-xl shadow-2xl" : "border-orange-100 bg-white shadow-lg";
   const listItemClass = isDark ? "border-white/5 hover:bg-white/5" : "border-gray-100 hover:bg-gray-50";
   
-  // Premium Icon Wrapper
   const iconClass = isDark 
     ? "bg-gradient-to-br from-amber-500/20 to-orange-600/20 text-amber-500 border border-amber-500/20" 
     : "bg-orange-50 text-orange-600 border border-orange-100";
@@ -114,10 +113,8 @@ export default function SettingsPage() {
   };
 
   return (
-    // 🔥 Full Screen Layout (Removed max-w-xl and mx-auto)
     <main className={`min-h-screen w-full px-4 pb-24 pt-6 ${pageClass}`}>
       
-      {/* Background Glow Effect */}
       <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none"></div>
 
       <div className="w-full space-y-6 relative z-10">
@@ -139,9 +136,10 @@ export default function SettingsPage() {
         <section>
           <div className={`flex items-center justify-between p-4 rounded-[2rem] border ${cardClass}`}>
             <div className="flex items-center gap-4">
-              <div className={`h-14 w-14 rounded-full flex items-center justify-center border-2 border-amber-500/30 ${isDark ? "bg-slate-800" : "bg-orange-100"}`}>
-                {me?.user?.avatar ? (
-                  <img src={me.user.avatar} alt="Profile" className="h-full w-full rounded-full object-cover" />
+              {/* FIX: Added overflow-hidden and used (me?.user as any) to prevent TS error */}
+              <div className={`h-14 w-14 rounded-full flex items-center justify-center border-2 border-amber-500/30 overflow-hidden ${isDark ? "bg-slate-800" : "bg-orange-100"}`}>
+                {(me?.user as any)?.avatar ? (
+                  <img src={(me?.user as any).avatar} alt="Profile" className="h-full w-full object-cover" />
                 ) : (
                   <User size={26} className={isDark ? "text-slate-400" : "text-orange-500"} />
                 )}
@@ -262,7 +260,6 @@ export default function SettingsPage() {
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-md p-0 sm:p-4">
           <div className={`w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden flex flex-col max-h-[85vh] animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151E2E] border border-white/10 shadow-2xl" : "bg-white"}`}>
             
-            {/* Modal Handle */}
             <div className="w-full flex justify-center pt-3 pb-1">
               <div className={`w-12 h-1.5 rounded-full ${isDark ? "bg-slate-700" : "bg-gray-200"}`}></div>
             </div>
@@ -295,7 +292,6 @@ export default function SettingsPage() {
                     <span className={`text-xs ${isDark ? "text-slate-500" : "text-gray-500"}`}>{l.label}</span>
                   </div>
                   
-                  {/* Premium Radio Button */}
                   <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
                     lang === l.code ? "border-amber-500 bg-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.4)]" : (isDark ? "border-slate-600" : "border-gray-300")
                   }`}>
