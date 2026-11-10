@@ -22,10 +22,10 @@ const FREE_MESSAGE_LIMIT = 3;
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister.", rules: "Validate pain first." },
+  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first." },
   kriti: { name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house." },
   devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees." },
-  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing.", rules: "Prescribe remedies." },
+  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies." },
 };
 
 function cleanText(value: unknown, maxLength = 6000): string {
@@ -68,6 +68,7 @@ export async function GET(request: Request) {
   try {
     const user = await getUser();
     if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    
     const { searchParams } = new URL(request.url);
     const rawPersona = searchParams.get("persona");
     const persona = isPersona(rawPersona) ? rawPersona : "gita";
@@ -84,6 +85,7 @@ export async function GET(request: Request) {
     
     if (!conv) return NextResponse.json({ success: true, conversationId: null, messages: [] });
     const history = await db.select().from(messages).where(eq(messages.conversationId, conv.id)).orderBy(messages.createdAt);
+    
     return NextResponse.json({ success: true, conversationId: conv.id, messages: history });
   } catch (error) {
     return NextResponse.json({ error: "Chat history load failed" }, { status: 500 });
@@ -105,7 +107,7 @@ export async function POST(request: Request) {
     const userMessage = cleanText(formData.get("message"));
     const rawPersona = formData.get("persona");
     const persona = isPersona(rawPersona) ? rawPersona : "gita";
-    const language = cleanText(formData.get("language")) || "hinglish"; // 🔥 Language input
+    const language = cleanText(formData.get("language")) || "hinglish"; 
     const requestedConversationId = cleanText(formData.get("conversationId"));
     const imageFile = formData.get("image") as File | null;
 
@@ -146,16 +148,36 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
+    // 🔥 NEW CONTEXT: Gender, Unknown Time, aur Kundli Data
+    const birth = birthRows[0];
+    let kundliContext = "Birth details not provided yet.";
+    
+    if (birth) {
+      kundliContext = `User Name: ${birth.name}. User Gender: ${birth.gender}. `;
+      if (birth.isBirthTimeUnknown) {
+        kundliContext += `Note: User's exact birth time is unknown, 12:00 PM has been assumed for calculation. `;
+      }
+      kundliContext += `DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}. `;
+    }
+
     const systemPrompt = `
-You are ${personaConfig.name}, a female astrologer.
-The current year is STRICTLY 2026. Do not use 2024 or 2025.
+You are ${personaConfig.name}, a female astrologer. ${personaConfig.tone}
+Your Rules: ${personaConfig.rules}
+Today's Date is ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. The current year is STRICTLY 2026. Do NOT use 2024 or 2025.
+
+USER CONTEXT:
+${kundliContext}
+
 ${getLanguageInstruction(language)}
+
 CRITICAL RULES:
 1. NEVER use markdown, stars (**), hashtags (#), or bullet points. 
 2. Output plain text paragraphs with single line breaks.
+3. Address the user according to their Gender. Do not call a Male user 'Beta' or 'Behen' if they are male.
 `;
 
-    const modelName = imageFile ? "qwen/qwen3.6-27b" : "openai/gpt-oss-120b"; 
+    // 🔥 STABLE GROQ MODELS
+    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
@@ -183,6 +205,7 @@ CRITICAL RULES:
     let raw = completion.choices[0]?.message?.content?.trim() || "";
     if (!raw) throw new Error("Empty response from AI");
 
+    // 🔥 Strict Markdown Remover
     raw = raw.replace(/[\*\#]/g, ""); 
 
     const { message, remedy } = extractRemedy(raw);
@@ -193,6 +216,7 @@ CRITICAL RULES:
     return NextResponse.json({ success: true, conversationId: convId, message: { role: "assistant", content: message }, remedy });
 
   } catch (error: any) {
+    // Refund & Cleanup Logic
     if (isDeducted && userId) {
       if (deductedType === "wallet") await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
       if (deductedType === "free") await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
