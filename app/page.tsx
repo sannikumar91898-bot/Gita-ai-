@@ -95,7 +95,6 @@ const getUIText = (lang: string, key: string) => {
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
 };
 
-// 🔥 Types & Data
 type Review = { text: string; author: string; rating: number; };
 type Astrologer = { 
   id: string; name: string; specialty: string; rating: number; 
@@ -103,56 +102,10 @@ type Astrologer = {
 };
 
 const ASTROLOGERS: Astrologer[] = [
-  { 
-    id: "gita", 
-    name: "Gita", 
-    specialty: "Tarot • Love & Relationship", 
-    rating: 4.9, 
-    experience: "5 Years", 
-    price: 19, 
-    // 🔥 FIXED: Path changed to riya.jpg based on your GitHub screenshot
-    image: "/astrologers/riya.jpg", 
-    reviews: [
-      { text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 }
-    ]
-  },
-  { 
-    id: "kriti", 
-    name: "Acharya Kriti", 
-    specialty: "Vedic • Kundli", 
-    rating: 4.8, 
-    experience: "7 Years", 
-    price: 22, 
-    image: "/astrologers/kriti.jpg", 
-    reviews: [
-      { text: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟", author: "Rahul Verma", rating: 5 }
-    ]
-  },
-  { 
-    id: "devaki", 
-    name: "Dr. Devaki Shastri", 
-    specialty: "Vedic • KP System", 
-    rating: 4.9, 
-    experience: "15 Years", 
-    price: 25, 
-    image: "/astrologers/devaki.jpg", 
-    isCelebrity: true, 
-    reviews: [
-      { text: "Devaki ma'am is really an expert. Rishta toothe wale tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 }
-    ]
-  },
-  { 
-    id: "gargi", 
-    name: "Gargi Maa", 
-    specialty: "Spiritual Healing • Vastu", 
-    rating: 4.9, 
-    experience: "25+ Years", 
-    price: 18, 
-    image: "/astrologers/gargi.jpg", 
-    reviews: [
-      { text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 }
-    ]
-  },
+  { id: "gita", name: "Gita", specialty: "Tarot • Love & Relationship", rating: 4.9, experience: "5 Years", price: 19, image: "/astrologers/riya.jpg", reviews: [{ text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 }] },
+  { id: "kriti", name: "Acharya Kriti", specialty: "Vedic • Kundli", rating: 4.8, experience: "7 Years", price: 22, image: "/astrologers/kriti.jpg", reviews: [{ text: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟", author: "Rahul Verma", rating: 5 }] },
+  { id: "devaki", name: "Dr. Devaki Shastri", specialty: "Vedic • KP System", rating: 4.9, experience: "15 Years", price: 25, image: "/astrologers/devaki.jpg", isCelebrity: true, reviews: [{ text: "Devaki ma'am is really an expert. Rishta toothe wale tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 }] },
+  { id: "gargi", name: "Gargi Maa", specialty: "Spiritual Healing • Vastu", rating: 4.9, experience: "25+ Years", price: 18, image: "/astrologers/gargi.jpg", reviews: [{ text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 }] },
 ];
 
 export default function HomePage() {
@@ -162,62 +115,41 @@ export default function HomePage() {
   const t = (key: string) => getUIText(lang || "hi", key);
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    // 🔥 pb-32 ensures content doesn't hide behind the bottom banner
-    <main className="min-h-[100dvh] w-full pb-32 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
+    // 🔥 Full Screen (w-full)
+    <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
       
-      {/* HEADER */}
-      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
+      <header className="sticky top-0 z-40 flex items-center justify-between px-3 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
         <div className="flex items-center gap-2.5">
-          <div className="relative flex items-center justify-center">
-            <div className="absolute inset-0 bg-orange-600 blur-md opacity-40 rounded-full"></div>
-            <img src="/icon-192.png" alt="Logo" className="relative z-10 h-[34px] w-[34px] rounded-full object-cover border border-orange-500/50" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=G&background=ff6b00&color=fff'; }} />
-          </div>
+          <img src="/icon-192.png" alt="Logo" className="h-[34px] w-[34px] rounded-full object-cover border border-orange-500/50" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=G&background=ff6b00&color=fff'; }} />
           <span className="text-[18px] font-bold tracking-tight text-white">{t("appName")}</span>
         </div>
-        
         <div className="flex items-center gap-2.5">
-          <Link href="/settings" className="rounded-full p-2 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937] transition-colors">
+          <Link href="/settings" className="rounded-full p-2 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937]">
             <Settings size={18} />
           </Link>
-          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700 hover:bg-[#1f2937] transition-colors">
+          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700">
             ₹{me?.user ? walletBalanceRupees : "0"} 
             <span className="flex h-[18px] w-[18px] items-center justify-center rounded-full bg-[#ff6b00] text-[11px] text-white ml-0.5">+</span>
           </Link>
         </div>
       </header>
 
-      {/* Main Container */}
-      <div className="w-full space-y-5 px-3 py-4">
+      {/* 🔥 Main Container: padding ko kam karke px-2 kiya gaya hai taaki cards full width lein */}
+      <div className="w-full space-y-5 px-2 py-4">
         
         {/* HERO BANNER */}
-        <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-[0_10px_40px_-10px_rgba(255,61,0,0.4)] min-h-[145px] flex flex-col justify-center w-full">
-          <div className="absolute right-[-10%] top-1/2 -translate-y-1/2 w-[180px] h-[180px] opacity-80 pointer-events-none mix-blend-screen">
-            <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.8" className="drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]">
-              <circle cx="50" cy="50" r="45" strokeWidth="1" />
-              <circle cx="50" cy="50" r="35" />
-              <circle cx="50" cy="50" r="20" />
-              <circle cx="50" cy="50" r="5" fill="#FFD700" />
-              {[...Array(12)].map((_, i) => (
-                <line key={i} x1="50" y1="5" x2="50" y2="95" transform={`rotate(${i * 30} 50 50)`} />
-              ))}
-            </svg>
-          </div>
-          <div className="absolute right-0 top-0 w-[60%] h-full bg-gradient-to-l from-orange-400/30 to-transparent blur-xl pointer-events-none"></div>
-          
-          <div className="relative z-10 space-y-1.5 w-[75%]">
-            <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wider text-orange-100">
+        <section className="relative overflow-hidden rounded-[1.3rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-5 shadow-lg min-h-[145px] flex flex-col justify-center w-full">
+          <div className="relative z-10 space-y-1.5 w-[80%]">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold text-orange-100">
               <Sparkles size={12} className="text-amber-200" /> {t("specialOffer")}
             </p>
             <h2 className="text-[28px] font-black leading-tight text-white tracking-tight">{t("freeChat")}</h2>
             <p className="text-[11.5px] font-medium text-orange-100/90 leading-snug">{t("heroSub")}</p>
-            
             <div className="pt-2">
-              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-extrabold text-[#FF3D00] shadow-[0_4px_15px_rgba(0,0,0,0.2)] transition-transform active:scale-95">
+              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12.5px] font-extrabold text-[#FF3D00] shadow-sm">
                 {t("startFreeChat")} <ChevronRight size={15} strokeWidth={3} />
               </Link>
             </div>
@@ -226,17 +158,13 @@ export default function HomePage() {
 
         {/* FREE TOOLS */}
         <section className="space-y-3 pt-1 w-full">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
               <h2 className="text-[15px] font-bold text-white tracking-wide">{t("freeTools")}</h2>
             </div>
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-[#121927] px-2.5 py-1 rounded-full border border-emerald-500/30">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span> {t("online")}
-            </span>
           </div>
-          
-          <div className="flex justify-between items-start w-full gap-1">
+          <div className="flex justify-between items-start w-full gap-1 px-1">
             {[
               { name: t("kundli"), icon: Scroll, href: "/kundli" },
               { name: t("matching"), icon: Heart, href: "/matching" },
@@ -247,7 +175,7 @@ export default function HomePage() {
               { name: t("calSetting"), icon: ScanFace, href: "/settings" },
             ].map((tool, idx) => (
               <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-1.5 flex-1">
-                <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full border border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-all hover:border-[#ff6b00] hover:scale-105">
+                <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full border border-slate-700/80 bg-[#121927] text-[#ff6b00]">
                   <tool.icon size={20} strokeWidth={1.5} />
                 </div>
                 <span className="text-[9.5px] text-center font-semibold text-slate-300 w-full truncate">{tool.name}</span>
@@ -258,13 +186,12 @@ export default function HomePage() {
 
         {/* ASTROLOGER LIST */}
         <section className="space-y-4 w-full">
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex items-center gap-2">
               <div className="w-1.5 h-4 bg-[#ff6b00] rounded-full"></div>
               <h2 className="text-[15px] font-bold text-white tracking-wide">{t("talkTo")}</h2>
             </div>
           </div>
-
           <div className="space-y-3.5 w-full">
             {ASTROLOGERS.map((astro) => {
               const firstReview = astro.reviews[0];
@@ -272,19 +199,11 @@ export default function HomePage() {
 
               return (
                 <article key={astro.id} className="rounded-[1.2rem] bg-[#151d2c] p-3.5 shadow-md border border-slate-800/80 relative w-full">
-                  
-                  {/* Top Section */}
                   <div className="flex gap-3.5">
                     <div className="relative h-[72px] w-[72px] shrink-0">
-                      <img 
-                        src={astro.image} 
-                        alt={astro.name} 
-                        className="h-full w-full object-cover object-top rounded-full border border-slate-600 shadow-sm" 
-                        onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=ff6b00&color=fff`; }} 
-                      />
+                      <img src={astro.image} alt={astro.name} className="h-full w-full object-cover object-top rounded-full border border-slate-600 shadow-sm" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=ff6b00&color=fff`; }} />
                       <span className="absolute bottom-0 right-0 h-3.5 w-3.5 rounded-full border-[2.5px] border-[#151d2c] bg-emerald-500"></span>
                     </div>
-
                     <div className="flex flex-1 flex-col justify-between py-0.5">
                       <div>
                         <div className="flex items-center gap-2">
@@ -292,51 +211,38 @@ export default function HomePage() {
                           {astro.isCelebrity && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Celebrity</span>}
                         </div>
                         <p className="text-[11.5px] font-medium text-slate-400 mt-0.5">{astro.specialty}</p>
-                        
                         <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-300 mt-1">
                           <Star size={11} fill="#ff6b00" className="text-[#ff6b00]" /> {astro.rating}
                           <span className="text-slate-500">•</span>
                           <span>{astro.experience}</span>
                         </div>
                       </div>
-
                       <div className="flex items-center justify-between mt-2">
                         <p className="text-[16px] font-black text-[#ff6b00]">
                           ₹{astro.price} <span className="text-[11px] font-medium text-slate-400">/ {t("min")}</span>
                         </p>
-                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-5 py-1.5 text-[12.5px] font-bold text-white shadow-sm active:scale-95 transition-transform">
+                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-5 py-1.5 text-[12.5px] font-bold text-white shadow-sm">
                           {t("chatNow")}
                         </Link>
                       </div>
                     </div>
                   </div>
-
-                  {/* Bottom Section: Reviews */}
                   {firstReview && (
                     <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11.5px] leading-relaxed text-slate-300 border border-slate-800/50">
                       <div className="flex items-center gap-1 mb-1">
                         {[...Array(5)].map((_, i) => (
-                          <Star 
-                            key={i} 
-                            size={10} 
-                            fill={i < firstReview.rating ? "#ff6b00" : "transparent"} 
-                            className={i < firstReview.rating ? "text-[#ff6b00]" : "text-slate-600"} 
-                          />
+                          <Star key={i} size={10} fill={i < firstReview.rating ? "#ff6b00" : "transparent"} className={i < firstReview.rating ? "text-[#ff6b00]" : "text-slate-600"} />
                         ))}
                         <span className="ml-1 font-semibold text-slate-400">- {firstReview.author}</span>
                       </div>
                       <p className={isExpanded ? "" : "line-clamp-2"}>
                         "{firstReview.text}" 
-                        <button 
-                          onClick={() => setExpandedReview(isExpanded ? null : astro.id)}
-                          className="text-[#ff6b00] font-semibold ml-1 cursor-pointer hover:underline"
-                        >
+                        <button onClick={() => setExpandedReview(isExpanded ? null : astro.id)} className="text-[#ff6b00] font-semibold ml-1 hover:underline">
                           {isExpanded ? t("readLess") : t("readMore")}
                         </button>
                       </p>
                     </div>
                   )}
-
                 </article>
               );
             })}
@@ -344,46 +250,24 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Sticky Bottom Banner (Pink) + Navigation Menu */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col">
-        
-        {/* Pink Banner */}
+      {/* Sticky Bottom Banner */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
-               <Crown size={16} className="text-white" />
-             </div>
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10"><Crown size={16} className="text-white" /></div>
              <div>
                <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
                <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
              </div>
           </div>
-          <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
-               <Crown size={16} className="text-[#d81b60]" fill="#d81b60" />
-          </div>
         </div>
-
-        {/* Bottom Navigation Bar */}
-        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2 pb-5 px-2">
-          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-            <Home size={20} strokeWidth={2.5} />
-            <span className="text-[10px] font-bold">{t("home")}</span>
-          </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <MessageCircle size={20} />
-            <span className="text-[10px] font-medium">{t("chat")}</span>
-          </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <Sun size={20} />
-            <span className="text-[10px] font-medium">{t("daily")}</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <User size={20} />
-            <span className="text-[10px] font-medium">{t("profile")}</span>
-          </Link>
+        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2 pb-5 px-2 w-full">
+          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]"><Home size={20} strokeWidth={2.5} /><span className="text-[10px] font-bold">{t("home")}</span></Link>
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400"><MessageCircle size={20} /><span className="text-[10px] font-medium">{t("chat")}</span></Link>
+          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400"><Sun size={20} /><span className="text-[10px] font-medium">{t("daily")}</span></Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400"><User size={20} /><span className="text-[10px] font-medium">{t("profile")}</span></Link>
         </nav>
       </div>
-
     </main>
   );
 }
