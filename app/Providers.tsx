@@ -50,8 +50,8 @@ export type MeBirth = {
   dob: string;
   birthTime: string;
   birthPlace: string;
-  gender?: string | null;           // 🔥 FIXED
-  isBirthTimeUnknown?: boolean;     // 🔥 FIXED
+  gender?: string | null;           
+  isBirthTimeUnknown?: boolean;     
 } | null;
 
 export type Me = {
@@ -172,7 +172,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMe({
         user,
         entitlement: data.entitlement ?? null,
-        birth: data.birth ?? null, // Ye ab naye fields ke saath aayega
+        birth: data.birth ?? null,
         hasChart: data.hasChart === true,
         googleAuthConfigured: data.googleAuthConfigured === true,
         sessionError: false,
@@ -191,6 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { void refresh(); }, [refresh]);
 
+  // 🔥 FIX: Proper HTTP Error Handling for Language Sync
   const setLanguage = useCallback(async (language: Lang) => {
     if (!isLang(language)) return;
     hasLocalLanguageRef.current = true;
@@ -200,8 +201,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setMe((current) => current?.user ? { ...current, user: { ...current.user, language } } : current);
 
     try {
-      await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ language }), cache: "no-store" });
-    } catch (error) { console.warn("Could not sync language preference:", error); }
+      const response = await fetch("/api/profile", { 
+        method: "PATCH", 
+        headers: { "Content-Type": "application/json", Accept: "application/json" }, 
+        body: JSON.stringify({ language }), 
+        cache: "no-store" 
+      });
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        console.warn(`Language save failed (${response.status}):`, errData.error || "Unknown error");
+      }
+    } catch (error) { 
+      console.warn("Could not sync language preference:", error); 
+    }
   }, []);
 
   const setEntitlement = useCallback((entitlement: Entitlement) => {
