@@ -6,16 +6,20 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Modal Config
+// Modal Config (PRIMARY)
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
 const modalClient = modalUrl ? new OpenAI({ baseURL: modalUrl, apiKey: modalApiKey || "dummy" }) : null;
 
-// Groq Config
+// Groq Config (FALLBACK)
 const groqClient = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
   apiKey: process.env.GROQ_API_KEY || "dummy",
 });
+
+// 🔥 Model names environment variables se aayenge (taaki kabhi fail na ho)
+const MODAL_VISION_MODEL = process.env.MODAL_VISION_MODEL || "Qwen/Qwen3.6-27B";
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -39,7 +43,7 @@ export async function POST(request: Request) {
     const imageFile = formData.get("image") as File | null;
     const language = (formData.get("language") as string) || "hinglish";
 
-    // 🔥 BACKEND VALIDATION (Security)
+    // Backend Validation
     if (!imageFile || imageFile.size === 0) {
       return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
     }
@@ -56,50 +60,64 @@ export async function POST(request: Request) {
     const prompt = `You are an expert Vedic Palmist. Analyze this palm image.
     If the image is not a hand, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear palm photo."}
     Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
-    
     LANGUAGE RULES: ${getLanguageInstruction(language)}`;
 
     let result: any = null;
+    let errors: string[] = [];
 
-    // 1. Try Modal Vision
+    // 1. Try Modal (PRIMARY)
     if (modalClient) {
       try {
         const completion = await modalClient.chat.completions.create({
-          model: "Qwen/Qwen3.6-27B", 
+          model: MODAL_VISION_MODEL,
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
-          response_format: { type: "json_object" }, // 🔥 Force JSON
+          response_format: { type: "json_object" },
         });
         const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err) {
-        console.warn("Modal failed, trying Groq...", err);
+      } catch (err: any) {
+        errors.push(`Modal: ${err.message}`);
+        console.warn("Modal failed:", err.message);
       }
     }
 
-    // 2. Fallback to Groq Vision (Using stable Llama 3.2 Vision)
+    // 2. Fallback to Groq
     if (!result) {
       try {
         const completion = await groqClient.chat.completions.create({
-          model: "llama-3.2-11b-vision-preview", // 🔥 Updated Model
+          model: GROQ_VISION_MODEL,
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
-          response_format: { type: "json_object" }, // 🔥 Force JSON
+          response_format: { type: "json_object" },
         });
         const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err) {
-        console.error("Groq also failed:", err);
-        return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy." }, { status: 500 });
+      } catch (err: any) {
+        errors.push(`Groq: ${err.message}`);
+        console.error("Groq failed:", err.message);
       }
     }
 
-    if (result.error === "INVALID_IMAGE") return NextResponse.json(result, { status: 422 });
+    // Agar dono fail ho gaye
+    if (!result) {
+      console.error("=== BOTH AI PROVIDERS FAILED ===");
+      console.error("Errors:", errors);
+      return NextResponse.json({ 
+        error: "AI_ERROR", 
+        message: "AI server is busy. Please try again.",
+        debug: process.env.NODE_ENV === "development" ? errors : undefined
+      }, { status: 500 });
+    }
+
+    if (result.error === "INVALID_IMAGE") {
+      return NextResponse.json(result, { status: 422 });
+    }
 
     return NextResponse.json({
       success: true,
       result: {
-        title: result.title || "Reading",
+        title: result.title || "Palm Reading",
         insight: result.insight || "Analysis complete.",
         hook: result.hook || "A new change is coming."
       }
