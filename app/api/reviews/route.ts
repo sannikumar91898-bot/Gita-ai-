@@ -1,5 +1,6 @@
+// app/api/reviews/route.ts
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/index"; // FIXED: आपके मुख्य प्रोजेक्ट के एक्सपोर्ट पाथ (@/index) के साथ सिंक किया
+import { db } from "@/index"; 
 import { astrologerReviews } from "@/schema";
 import { eq, and, desc } from "drizzle-orm";
 
@@ -65,7 +66,14 @@ function seededRandom(seed: string) {
   };
 }
 
-function generateDeterministicReviews(persona: string, count: number = 1250) {
+// 🔥 ENGINEER FIX: Global Cache to prevent CPU exhaustion
+const reviewCache: Record<string, { reviews: any[], totalOrders: number }> = {};
+
+function getCachedReviews(persona: string, count: number = 1250) {
+  if (reviewCache[persona]) {
+    return reviewCache[persona];
+  }
+
   const reviews = [];
   const rand = seededRandom(persona + "_review_seed_v4");
   const totalOrders = Math.floor(25000 + rand() * 35000);
@@ -104,10 +112,13 @@ function generateDeterministicReviews(persona: string, count: number = 1250) {
     });
   }
 
-  return {
+  const result = {
     reviews: reviews.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()),
     totalOrders,
   };
+  
+  reviewCache[persona] = result; // Save to cache
+  return result;
 }
 
 /* =========================================================
@@ -134,13 +145,13 @@ export async function GET(request: NextRequest) {
       .where(
         and(
           eq(astrologerReviews.persona, persona),
-          eq(astrologerReviews.isApproved, true) // Approved review check logic enforced
+          eq(astrologerReviews.isApproved, true) 
         )
       )
       .orderBy(desc(astrologerReviews.createdAt));
 
-    // 2. Generate high volume baseline array to completely resolve cold start conversion barriers
-    const { reviews: virtualPool, totalOrders } = generateDeterministicReviews(persona, 1250);
+    // 2. Get Cached generated reviews (Much faster than regenerating every time)
+    const { reviews: virtualPool, totalOrders } = getCachedReviews(persona, 1250);
 
     // 3. Merge real verified user content behind baseline pool seamlessly
     const combinedPool = [...realReviews, ...virtualPool];
@@ -198,8 +209,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // FIXED: यूजर द्वारा सबमिट किए गए रिव्यू को सीधे पब्लिश होने से रोका (isApproved: false)
-    // अब जब तक आप मैन्युअली डेटाबेस में जाकर इसे 'true' नहीं करेंगे, यह आपके ऐप पर लाइव नहीं दिखेगा।
     const [insertedReview] = await db
       .insert(astrologerReviews)
       .values({
@@ -208,7 +217,7 @@ export async function POST(request: NextRequest) {
         stars: Math.max(1, Math.min(5, Math.floor(Number(stars)))),
         comment: comment.trim().slice(0, 500),
         helpfulCount: 0,
-        isApproved: false, // SAFE PIPELINE: Sent for administrative approval status check
+        isApproved: false, // SAFE PIPELINE
       })
       .returning();
 
