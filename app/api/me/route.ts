@@ -1,85 +1,50 @@
 // app/api/me/route.ts
 import { NextResponse } from "next/server";
 import { eq, desc } from "drizzle-orm";
-
 import { getUser } from "@/auth";
 import { db } from "@/index";
-import { birthDetails, charts } from "@/schema";
+import { users, birthDetails, charts } from "@/schema";
 
 export const dynamic = "force-dynamic";
-export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const user = await getUser();
+    const sessionUser = await getUser();
+    if (!sessionUser) return NextResponse.json({ user: null });
 
-    if (!user) {
-      return NextResponse.json({
-        user: null,
-        entitlement: null,
-        birth: null,
-        hasChart: false,
-        googleAuthConfigured: Boolean(
-          process.env.GOOGLE_CLIENT_ID &&
-          process.env.GOOGLE_CLIENT_SECRET
-        ),
-      });
-    }
+    const [userRow] = await db.select().from(users).where(eq(users.id, sessionUser.id)).limit(1);
+    if (!userRow) return NextResponse.json({ user: null });
 
-    const [birthRows, chartRows] = await Promise.all([
-      db
-        .select()
-        .from(birthDetails)
-        .where(eq(birthDetails.userId, user.id))
-        .limit(1),
+    const [birthRow] = await db.select().from(birthDetails).where(eq(birthDetails.userId, sessionUser.id)).limit(1);
+    const [chartRow] = await db.select().from(charts).where(eq(charts.userId, sessionUser.id)).orderBy(desc(charts.createdAt)).limit(1);
 
-      db
-        .select()
-        .from(charts)
-        .where(eq(charts.userId, user.id))
-        .orderBy(desc(charts.createdAt))
-        .limit(1),
-    ]);
-
-    const birthRecord = birthRows[0] ?? null;
-
-    const birth = birthRecord
-      ? {
-          name: birthRecord.name,
-          dob: birthRecord.dob,
-          birthTime: birthRecord.birthTime,
-          birthPlace: birthRecord.birthPlace,
-        }
-      : null;
+    const birth = birthRow ? {
+      name: birthRow.name,
+      dob: birthRow.dob,
+      birthTime: birthRow.birthTime,
+      birthPlace: birthRow.birthPlace,
+      gender: birthRow.gender, // 🔥 NEW
+      isBirthTimeUnknown: birthRow.isBirthTimeUnknown, // 🔥 NEW
+    } : null;
 
     return NextResponse.json({
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        language: user.language,
-        isGuest: user.isGuest,
-        // 🔥 YAHAN ADD KAREIN 🔥
-        walletBalancePaise: user.walletBalancePaise, 
-        freeMessagesUsed: user.freeMessagesUsed,
-      },
-      entitlement: {
-        trialStartedAt: user.trialStartedAt,
-        premiumUntil: user.premiumUntil,
+        id: userRow.id,
+        name: userRow.name,
+        email: userRow.email,
+        language: userRow.language,
+        isGuest: userRow.isGuest,
+        walletBalancePaise: userRow.walletBalancePaise,
+        freeMessagesUsed: userRow.freeMessagesUsed,
+        premiumUntil: userRow.premiumUntil,
       },
       birth,
-      hasChart: chartRows.length > 0,
-      googleAuthConfigured: Boolean(
-        process.env.GOOGLE_CLIENT_ID &&
-        process.env.GOOGLE_CLIENT_SECRET
-      ),
-    });
-  } catch (error) {
-    console.error("GET /api/me failed:", error);
+      hasChart: !!chartRow,
+      googleAuthConfigured: true,
+    }, { headers: { "Cache-Control": "no-store" } });
 
-    return NextResponse.json(
-      { error: "Unable to load session" },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error("API /me error:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
