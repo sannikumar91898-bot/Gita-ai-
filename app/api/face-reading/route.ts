@@ -6,20 +6,19 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// Modal Config (PRIMARY)
+// 🔥 SIRF MODAL (No limits, No Gemini, No Groq)
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
-const modalClient = modalUrl ? new OpenAI({ baseURL: modalUrl, apiKey: modalApiKey || "dummy" }) : null;
 
-// Groq Config (FALLBACK)
-const groqClient = new OpenAI({
-  baseURL: "https://api.groq.com/openai/v1",
-  apiKey: process.env.GROQ_API_KEY || "dummy",
+if (!modalUrl || !modalApiKey) {
+  console.error("[FATAL] MODAL_API_URL or MODAL_API_KEY is missing in Render!");
+}
+
+const modalClient = new OpenAI({
+  baseURL: modalUrl || "http://localhost:8000/v1",
+  apiKey: modalApiKey || "dummy-key",
+  timeout: 60000, // 60 seconds timeout for image analysis
 });
-
-// 🔥 Model names environment variables se aayenge
-const MODAL_VISION_MODEL = process.env.MODAL_VISION_MODEL || "Qwen/Qwen3.6-27B";
-const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "meta-llama/llama-4-scout-17b-16e-instruct";
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -57,56 +56,49 @@ export async function POST(request: Request) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
-    const prompt = `You are an expert Vedic Face Reader. Analyze this face.
-    If no clear human face is visible, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
-    Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
+    // Face Reading Prompt
+    const prompt = `You are an expert Vedic Face Reader. Analyze this face image.
+    If the image does not clearly contain a human face, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
+    Otherwise, return JSON with keys: title (short title), insight (2 detailed paragraphs about nature, career, and relationships), hook (1 line engaging summary).
     LANGUAGE RULES: ${getLanguageInstruction(language)}`;
 
     let result: any = null;
-    let errors: string[] = [];
 
-    // 1. Try Modal (PRIMARY)
-    if (modalClient) {
-      try {
-        const completion = await modalClient.chat.completions.create({
-          model: MODAL_VISION_MODEL,
-          messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
-          temperature: 0.4,
-          response_format: { type: "json_object" },
-        });
-        const text = completion.choices[0]?.message?.content || "{}";
-        result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err: any) {
-        errors.push(`Modal: ${err.message}`);
-        console.warn("Modal failed:", err.message);
+    // 🔥 CALL MODAL DIRECTLY
+    try {
+      const completion = await modalClient.chat.completions.create({
+        model: "Qwen/Qwen3.6-27B", // Aapke Modal ka exact model name
+        messages: [
+          { 
+            role: "user", 
+            content: [
+              { type: "text", text: prompt },
+              { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }
+            ] 
+          }
+        ],
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
+
+      const text = completion.choices[0]?.message?.content || "{}";
+      result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
+      
+    } catch (err: any) {
+      console.error("=== MODAL API FAILED (FACE READING) ===");
+      console.error("Error Name:", err.name);
+      console.error("Error Message:", err.message);
+      
+      if (err.message?.includes("404")) {
+        return NextResponse.json({ 
+          error: "AI_ERROR", 
+          message: "Modal Endpoint nahi mila. Kripya check karein ki endpoint 'Running' state me hai ya nahi." 
+        }, { status: 500 });
       }
-    }
-
-    // 2. Fallback to Groq
-    if (!result) {
-      try {
-        const completion = await groqClient.chat.completions.create({
-          model: GROQ_VISION_MODEL,
-          messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
-          temperature: 0.4,
-          response_format: { type: "json_object" },
-        });
-        const text = completion.choices[0]?.message?.content || "{}";
-        result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      } catch (err: any) {
-        errors.push(`Groq: ${err.message}`);
-        console.error("Groq failed:", err.message);
-      }
-    }
-
-    // Agar dono fail ho gaye
-    if (!result) {
-      console.error("=== BOTH AI PROVIDERS FAILED (FACE READING) ===");
-      console.error("Errors:", errors);
+      
       return NextResponse.json({ 
         error: "AI_ERROR", 
-        message: "AI server is busy. Please try again.",
-        debug: process.env.NODE_ENV === "development" ? errors : undefined
+        message: "AI server is busy. Please try again." 
       }, { status: 500 });
     }
 
