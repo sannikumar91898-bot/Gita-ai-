@@ -60,7 +60,7 @@ export default function KundliPage() {
   const [chart, setChart] = useState<any>(null);
   const [error, setError] = useState("");
   const [isDownloading, setIsDownloading] = useState(false);
-  const [consent, setConsent] = useState(false); // 🔥 NAYA: Consent State
+  const [consent, setConsent] = useState(false);
 
   const pdfRef = useRef<HTMLDivElement>(null);
 
@@ -82,7 +82,7 @@ export default function KundliPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!consent) {
-      setError(t("consentText")); // Agar consent nahi hai to warning
+      setError(t("consentText")); 
       return;
     }
     
@@ -94,14 +94,13 @@ export default function KundliPage() {
       const res = await fetch("/api/kundli", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // 🔥 FIX: Consent aur Language bhej rahe hain
         body: JSON.stringify({ 
           name, 
           dateOfBirth: dob, 
           timeOfBirth: time, 
           placeOfBirth: place,
           language: lang,
-          consent: true // Backend ko bataya ki user ne tick kiya hai
+          consent: true
         }),
       });
       const data = await res.json();
@@ -158,10 +157,10 @@ export default function KundliPage() {
             <div><label className="text-sm font-bold opacity-80">{t("time")}</label><input required type="time" value={time} onChange={e => setTime(e.target.value)} className={inputClass} /></div>
             <div><label className="text-sm font-bold opacity-80">{t("place")}</label><input required value={place} onChange={e => setPlace(e.target.value)} className={inputClass} placeholder="e.g. Patna, Bihar" /></div>
             
-            {/* 🔥 NAYA: Consent Checkbox */}
             <div className={`flex items-start gap-3 p-4 rounded-xl border ${isDark ? "border-slate-700 bg-slate-800/50" : "border-orange-200 bg-orange-50"}`}>
               <input 
                 type="checkbox" 
+                id="consent"
                 checked={consent} 
                 onChange={e => setConsent(e.target.checked)} 
                 className="mt-1 w-5 h-5 accent-orange-500 cursor-pointer"
@@ -246,4 +245,25 @@ export default function KundliPage() {
               </p>
             </div>
 
-            <Link href="/chat" className="w-full
+            <Link href="/chat" className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-red-500/20 transition-transform hover:scale-[1.02]">
+              <span className="text-xl">🔮</span> {t("chatCTA")}
+            </Link>
+
+            <div className="flex gap-3">
+              <button onClick={handleDownload} disabled={isDownloading} className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                {isDownloading ? <><Sparkles className="animate-spin" size={16} /> {t("wait")}</> : <><Download size={16} /> {t("download")}</>}
+              </button>
+              
+              <button 
+                onClick={() => setChart(null)} 
+                className={`flex-1 rounded-xl border py-3 text-sm font-bold flex items-center justify-center gap-2 transition-all ${isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-orange-300 text-orange-600 hover:bg-orange-50"}`}
+              >
+                <RefreshCcw size={16} /> {t("again")}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
