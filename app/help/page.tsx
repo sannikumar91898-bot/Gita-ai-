@@ -6,11 +6,12 @@ import { ArrowLeft, Search, ChevronDown, ChevronUp, MessageCircle } from "lucide
 import Link from "next/link";
 import { useApp } from "../Providers";
 
+// 🔥 FIX: Index signature add kiya taaki naye languages error na dein
 type FAQ = {
   id: number;
   category: string;
-  question: { en: string; hi: string; hinglish: string };
-  answer: { en: string; hi: string; hinglish: string };
+  question: { en: string; hi: string; hinglish: string; [key: string]: string };
+  answer: { en: string; hi: string; hinglish: string; [key: string]: string };
 };
 
 const faqs: FAQ[] = [
@@ -106,8 +107,11 @@ export default function HelpCenterPage() {
 
   // Search filter logic
   const filteredFaqs = faqs.filter((faq) => {
-    const qText = faq.question[lang] || faq.question.en;
-    const aText = faq.answer[lang] || faq.answer.en;
+    // 🔥 FIX: Safe casting taaki agar nayi language select ho toh fallback English pe aaye
+    const qObj = faq.question as Record<string, string>;
+    const aObj = faq.answer as Record<string, string>;
+    const qText = qObj[lang] || faq.question.en;
+    const aText = aObj[lang] || faq.answer.en;
     const search = searchQuery.toLowerCase();
     return qText.toLowerCase().includes(search) || aText.toLowerCase().includes(search);
   });
@@ -152,34 +156,40 @@ export default function HelpCenterPage() {
               <p className="text-sm font-semibold">{t("कोई परिणाम नहीं मिला।", "Koi result nahi mila.", "No results found.")}</p>
             </div>
           ) : (
-            filteredFaqs.map((faq) => (
-              <div key={faq.id} className={`overflow-hidden rounded-2xl border transition-all ${cardClass}`}>
-                <button
-                  onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
-                  className="flex w-full items-center justify-between p-4 text-left"
-                >
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 mb-1 block">
-                      {faq.category}
-                    </span>
-                    <span className="text-sm font-semibold">
-                      {faq.question[lang] || faq.question.en}
-                    </span>
-                  </div>
-                  {openId === faq.id ? (
-                    <ChevronUp size={18} className="shrink-0 text-orange-500" />
-                  ) : (
-                    <ChevronDown size={18} className={`shrink-0 ${isDark ? "text-slate-400" : "text-gray-400"}`} />
+            filteredFaqs.map((faq) => {
+              // 🔥 FIX: Safe casting for rendering
+              const qObj = faq.question as Record<string, string>;
+              const aObj = faq.answer as Record<string, string>;
+
+              return (
+                <div key={faq.id} className={`overflow-hidden rounded-2xl border transition-all ${cardClass}`}>
+                  <button
+                    onClick={() => setOpenId(openId === faq.id ? null : faq.id)}
+                    className="flex w-full items-center justify-between p-4 text-left"
+                  >
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 mb-1 block">
+                        {faq.category}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {qObj[lang] || faq.question.en}
+                      </span>
+                    </div>
+                    {openId === faq.id ? (
+                      <ChevronUp size={18} className="shrink-0 text-orange-500" />
+                    ) : (
+                      <ChevronDown size={18} className={`shrink-0 ${isDark ? "text-slate-400" : "text-gray-400"}`} />
+                    )}
+                  </button>
+                  
+                  {openId === faq.id && (
+                    <div className={`border-t px-4 pb-4 pt-3 text-sm leading-relaxed ${isDark ? "border-slate-700 text-slate-300" : "border-gray-100 text-gray-600"}`}>
+                      {aObj[lang] || faq.answer.en}
+                    </div>
                   )}
-                </button>
-                
-                {openId === faq.id && (
-                  <div className={`border-t px-4 pb-4 pt-3 text-sm leading-relaxed ${isDark ? "border-slate-700 text-slate-300" : "border-gray-100 text-gray-600"}`}>
-                    {faq.answer[lang] || faq.answer.en}
-                  </div>
-                )}
-              </div>
-            ))
+                </div>
+              );
+            })
           )}
         </div>
 
