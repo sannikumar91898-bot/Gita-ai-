@@ -18,7 +18,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "कुंडली", matching: "मिलान", horoscope: "राशिफल", panchang: "पंचांग", palmistry: "हस्तरेखा", faceReading: "फेस रीडिंग", 
       talkTo: "ज्योतिषियों से बात करें", online: "ऑनलाइन", poweredBy: "AI + वैदिक ज्ञान द्वारा संचालित", chatNow: "चैट करें", 
       home: "होम", chat: "चैट", daily: "दैनिक", profile: "प्रोफाइल", 
-      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "अभी बात करें — पहली चैट FREE"
+      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "अभी बात करें — पहली चैट FREE", chatBtn: "चैट"
     },
     hinglish: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
@@ -26,7 +26,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", faceReading: "Face Reading", 
       talkTo: "Talk to Astrologers", online: "Online", poweredBy: "Powered by Advanced AI + Vedic Knowledge", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
-      stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE"
+      stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chatBtn: "Chat"
     },
     en: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
@@ -34,7 +34,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", faceReading: "Face Reading", 
       talkTo: "Talk to Astrologers", online: "Online", poweredBy: "Powered by Advanced AI + Vedic Knowledge", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
-      stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE"
+      stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chatBtn: "Chat"
     },
     te: {
       appName: "గీతా టాక్", specialOffer: "ప్రత్యేక ఆఫర్", freeChat: "మొదటి చాట్ ఉచితం 🎉", heroSub: "4 నిపుణుల జ్యోతిష్యులు • తక్షణ సమాధానాలు • 100% గోప్యత", startFreeChat: "ఉచిత చాట్ ప్రారంభించండి", 
@@ -42,7 +42,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "కుండలి", matching: "మ్యాచింగ్", horoscope: "జాతకం", panchang: "పంచాంగం", palmistry: "పామిస్ట్రీ", faceReading: "ఫేస్ రీడింగ్", 
       talkTo: "జ్యోతిష్యులతో మాట్లాడండి", online: "ఆన్‌లైన్", poweredBy: "అడ్వాన్స్‌డ్ AI + వేద జ్ఞానం ద్వారా", chatNow: "చాట్ చేయండి", 
       home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", 
-      stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం"
+      stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం", chatBtn: "చాట్"
     },
     ta: {
       appName: "கீதா டாக்", specialOffer: "சிறப்பு சலுகை", freeChat: "முதல் அரட்டை இலவசம் 🎉", heroSub: "4 நிபுணர் ஜோதிடர்கள் • உடனடி பதில்கள் • 100% தனியுரிமை", startFreeChat: "இலவச அரட்டையைத் தொடங்கு", 
@@ -50,7 +50,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "ஜாதகம்", matching: "பொருத்தம்", horoscope: "ராசிபலன்", panchang: "பஞ்சாங்கம்", palmistry: "கைரேகை", faceReading: "முக வாசிப்பு", 
       talkTo: "ஜோதிடர்களிடம் பேசுங்கள்", online: "ஆன்லைன்", poweredBy: "மேம்பட்ட AI + வேத அறிவு", chatNow: "அரட்டை", 
       home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", 
-      stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்"
+      stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்", chatBtn: "அரட்டை"
     },
     kn: {
       appName: "ಗೀತಾ ಟಾಕ್", specialOffer: "ವಿಶೇಷ ಕೊಡುಗೆ", freeChat: "ಮೊದಲ ಚಾಟ್ ಉಚಿತ 🎉", heroSub: "4 ತಜ್ಞ ಜ್ಯೋತಿಷಿಗಳು • ತ್ವರಿತ ಉತ್ತರಗಳು • 100% ಗೋಪ್ಯತೆ", startFreeChat: "ಉಚಿತ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ", 
@@ -58,7 +58,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "ಕುಂಡಲಿ", matching: "ಹೊಂದಾಣಿಕೆ", horoscope: "ರಾಶಿಫಲ", panchang: "ಪಂಚಾಂಗ", palmistry: "ಹಸ್ತರೇಖೆ", faceReading: "ಮುಖ ಸ್ಪಷ್ಟನೆ", 
       talkTo: "ಜ್ಯೋತಿಷಿಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ", online: "ಆನ್‌ಲೈನ್", poweredBy: "ಸುಧಾರಿತ AI + ವೈದಿಕ ಜ್ಞಾನ", chatNow: "ಚಾಟ್ ಮಾಡಿ", 
       home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", 
-      stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ"
+      stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chatBtn: "ಚಾಟ್"
     },
     bn: {
       appName: "গীতা টক", specialOffer: "বিশেষ অফার", freeChat: "প্রথম চ্যাট ফ্রি 🎉", heroSub: "4 জন বিশেষজ্ঞ জ্যোতিষী • তাত্ক্ষণিক উত্তর • 100% গোপনীয়তা", startFreeChat: "ফ্রি চ্যাট শুরু করুন", 
@@ -66,7 +66,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "কুণ্ডলী", matching: "ম্যাচিং", horoscope: "রাশিফল", panchang: "পঞ্জিকা", palmistry: "হস্তরেখা", faceReading: "মুখ পাঠ", 
       talkTo: "জ্যোতিষীদের সাথে কথা বলুন", online: "অনলাইন", poweredBy: "অ্যাডভান্সড AI + বৈদিক জ্ঞান", chatNow: "চ্যাট করুন", 
       home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", 
-      stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি"
+      stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি", chatBtn: "চ্যাট"
     },
     mr: {
       appName: "गीता टॉक", specialOffer: "विशेष ऑफर", freeChat: "पहिली चॅट मोफत 🎉", heroSub: "4 तज्ञ ज्योतिषी • त्वरित उत्तरे • 100% गोपनीयता", startFreeChat: "मोफत चॅट सुरू करा", 
@@ -74,7 +74,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "कुंडली", matching: "जुळणी", horoscope: "राशीभविष्य", panchang: "पंचांग", palmistry: "हस्तरेषा", faceReading: "चेहरा वाचन", 
       talkTo: "ज्योतिषांशी बोला", online: "ऑनलाइन", poweredBy: "प्रगत AI + वैदिक ज्ञान", chatNow: "चॅट करा", 
       home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", 
-      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत"
+      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत", chatBtn: "चॅट"
     },
     gu: {
       appName: "ગીતા ટોક", specialOffer: "ખાસ ઑફર", freeChat: "પ્રથમ ચેટ મફત 🎉", heroSub: "4 નિષ્ણાત જ્યોતિષીઓ • તાત્કાલિક જવાબો • 100% ગોપનીયતા", startFreeChat: "મફત ચેટ શરૂ કરો", 
@@ -82,7 +82,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "કુંડળી", matching: "મેચિંગ", horoscope: "રાશિફળ", panchang: "પંચાંગ", palmistry: "હસ્તરેખા", faceReading: "ચહેરો વાંચન", 
       talkTo: "જ્યોતિષીઓ સાથે વાત કરો", online: "ઓનલાઇન", poweredBy: "અદ્યતન AI + વૈદિક જ્ઞાન", chatNow: "ચેટ કરો", 
       home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", 
-      stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત"
+      stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત", chatBtn: "ચેટ"
     },
     ml: {
       appName: "ഗീത ടോക്ക്", specialOffer: "പ്രത്യേക ഓഫർ", freeChat: "ആദ്യ ചാറ്റ് സൗജന്യം 🎉", heroSub: "4 വിദഗ്ദ്ധ ജ്യോതിഷികൾ • തൽക്ഷണ മറുപടികൾ • 100% സ്വകാര്യത", startFreeChat: "സൗജന്യ ചാറ്റ് ആരംഭിക്കുക", 
@@ -90,7 +90,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "കുണ്ഡലി", matching: "മാച്ചിംഗ്", horoscope: "രാശിഫലം", panchang: "പഞ്ചാംഗം", palmistry: "കൈരേഖ", faceReading: "മുഖ വായന", 
       talkTo: "ജ്യോതിഷികളുമായി സംസാരിക്കുക", online: "ഓൺലൈൻ", poweredBy: "വിപുലമായ AI + വേദ ജ്ഞാനം", chatNow: "ചാറ്റ് ചെയ്യുക", 
       home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", 
-      stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം"
+      stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", chatBtn: "ചാറ്റ്"
     },
   };
   return ui[lang]?.[key] || ui["en"][key];
@@ -134,9 +134,9 @@ export default function HomePage() {
             <Settings size={18} />
           </Link>
           
-          {/* 🔥 FIXED WALLET BALANCE */}
+          {/* 🔥 FIXED WALLET BALANCE (Loading state) */}
           <Link href="/wallet" aria-label="Wallet Balance" className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold cursor-pointer transition-transform hover:scale-105 active:scale-95 border ${isDark ? "bg-slate-800 border-slate-700 text-amber-400" : "bg-orange-50 border-orange-200 text-orange-600"}`}>
-            ₹{walletBalanceRupees}
+            ₹{me?.user ? walletBalanceRupees : "..."}
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white">
               +
             </span>
@@ -271,10 +271,12 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* SEO Text */}
+        {/* 🔥 SEO: Rich Text content for Google Crawler (Hidden from UI) 🔥 */}
         <section className="sr-only">
           <h2>About GitaTalk AI Astrology</h2>
-          <p>GitaTalk is India's premium AI astrology platform...</p>
+          <p>
+            GitaTalk is India's premium AI astrology platform. We offer 100% accurate online Kundli matching, free daily horoscope predictions, palmistry, and face reading. Our AI astrologers, including experts in Vedic astrology, Tarot, and KP System, provide instant remedies for career, marriage, and health issues. Start your first chat for free today.
+          </p>
         </section>
 
       </div>
@@ -305,7 +307,7 @@ export default function HomePage() {
               <p className="text-xs font-black">{t("stickySub")}</p>
             </div>
           </div>
-          <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-rose-700">Chat</span>
+          <span className="rounded-full bg-white px-3 py-1.5 text-[10px] font-black text-rose-700">{t("chatBtn")}</span>
         </Link>
       </div>
     </main>
