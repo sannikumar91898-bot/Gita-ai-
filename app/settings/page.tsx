@@ -5,7 +5,7 @@ import { useState } from "react";
 import { 
   ArrowLeft, User, Globe, ChevronRight, Clock, 
   Wallet, Headphones, List, Scroll, HelpCircle, 
-  X, LogOut, Shield, FileText, Mail, Check, CreditCard, Trash2, Sparkles, Star
+  X, LogOut, Shield, FileText, Mail, Check, CreditCard, Trash2, Sparkles, Star, Pencil
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -17,21 +17,81 @@ export default function SettingsPage() {
   
   const [showLangModal, setShowLangModal] = useState(false);
 
-  // 10 Language Translation Helper
+  // 🔥 10 Language Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
-      hi: { title: "सेटिंग्स", subtitle: "अपने अनुभव को कस्टमाइज़ करें", edit: "प्रोफाइल एडिट करें", orders: "ऑर्डर्स", wallet: "वॉलेट", support: "सपोर्ट", help: "हेल्प सेंटर", privacy: "प्राइवेसी पॉलिसी", terms: "नियम और शर्तें", contact: "संपर्क करें", lang: "भाषा", logout: "लॉगआउट करें", delete: "अकाउंट डिलीट करें", selectLang: "भाषा चुनें", account: "अकाउंट सेटिंग्स", legal: "कानूनी जानकारी", quick: "क्विक एक्शन", subscribe: "सब्सक्राइब करें", policy: "पॉलिसीज" },
-      hinglish: { title: "Settings", subtitle: "Customize your experience", edit: "Edit Profile", orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", subscribe: "Subscribe Now", policy: "Policies" },
-      en: { title: "Settings", subtitle: "Customize your experience", edit: "Edit Profile", orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", subscribe: "Subscribe Now", policy: "Policies" },
-      te: { title: "సెట్టింగ్స్", subtitle: "మీ అనుభవాన్ని అనుకూలీకరించండి", edit: "ప్రొఫైల్ సవరించండి", orders: "ఆర్డర్లు", wallet: "వాలెట్", support: "మద్దతు", help: "సహాయ కేంద్రం", privacy: "గోప్యతా విధానం", terms: "సేవా నిబంధనలు", contact: "మమ్మల్ని సంప్రదించండి", lang: "భాష", logout: "లాగ్ అవుట్", delete: "ఖాతా తొలగించండి", selectLang: "భాషను ఎంచుకోండి", account: "ఖాతా సెట్టింగ్లు", legal: "చట్టపరమైన", quick: "త్వరిత చర్యలు", subscribe: "సబ్స్క్రైబ్ చేయండి", policy: "విధానాలు" },
-      ta: { title: "அமைப்புகள்", subtitle: "உங்கள் அனுபவத்தைத் தனிப்பயனாக்குங்கள்", edit: "சுயவிவரத்தைத் திருத்து", orders: "ஆர்டர்கள்", wallet: "பணப்பை", support: "ஆதரவு", help: "உதவி மையம்", privacy: "தனியுரிமைக் கொள்கை", terms: "சேவை விதிமுறைகள்", contact: "எங்களைத் தொடர்பு கொள்ள", lang: "மொழி", logout: "வெளியேறு", delete: "கணக்கை நீக்கு", selectLang: "மொழியைத் தேர்ந்தெடுக்கவும்", account: "கணக்கு அமைப்புகள்", legal: "சட்டப்பூர்வ", quick: "விரைவு செயல்கள்", subscribe: "குழுசேர்", policy: "கொள்கைகள்" },
-      kn: { title: "ಸೆಟ್ಟಿಂಗ್ಸ್", subtitle: "ನಿಮ್ಮ ಅನುಭವವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ", edit: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", orders: "ಆರ್ಡರ್ಗಳು", wallet: "ವಾಲೆಟ್", support: "ಬೆಂಬಲ", help: "ಸಹಾಯ ಕೇಂದ್ರ", privacy: "ಗೋಪ್ಯತಾ ನೀತಿ", terms: "ಸೇವಾ ನಿಯಮಗಳು", contact: "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ", lang: "ಭಾಷೆ", logout: "ಲಾಗ್ ಔಟ್", delete: "ಖಾತೆ ಅಳಿಸಿ", selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ", account: "ಖಾತೆ ಸೆಟ್ಟಿಂಗ್ಗಳು", legal: "ಕಾನೂನು", quick: "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು", subscribe: "ಚಂದಾದಾರರಾಗಿ", policy: "ನೀತಿಗಳು" },
-      bn: { title: "সেটিংস", subtitle: "আপনার অভিজ্ঞতা কাস্টমাইজ করুন", edit: "প্রোফাইল সম্পাদনা করুন", orders: "অর্ডার", wallet: "ওয়ালেট", support: "সমর্থন", help: "সহায়তা কেন্দ্র", privacy: "গোপনীয়তা নীতি", terms: "পরিষেবার শর্তাবলী", contact: "আমাদের সাথে যোগাযোগ করুন", lang: "ভাষা", logout: "লগ আউট", delete: "অ্যাকাউন্ট মুছুন", selectLang: "ভাষা নির্বাচন করুন", account: "অ্যাকাউন্ট সেটিংস", legal: "আইনি", quick: "দ্রুত পদক্ষেপ", subscribe: "সাবস্ক্রাইব করুন", policy: "নীতিমালা" },
-      mr: { title: "सेटिंग्ज", subtitle: "तुमचा अनुभव सानुकूलित करा", edit: "प्रोफाइल संपादित करा", orders: "ऑर्डर्स", wallet: "वॉलेट", support: "समर्थन", help: "मदत केंद्र", privacy: "गोपनीयता धोरण", terms: "सेवा अटी", contact: "आमच्याशी संपर्क साधा", lang: "भाषा", logout: "लॉग आउट", delete: "खाते हटवा", selectLang: "भाषा निवडा", account: "खाते सेटिंग्ज", legal: "कायदेशीर", quick: "द्रुत क्रिया", subscribe: "सदस्यता घ्या", policy: "धोरणे" },
-      gu: { title: "સેટિંગ્સ", subtitle: "તમારા અનુભવને કસ્ટમાઇઝ કરો", edit: "પ્રોફાઇલ સંપાદિત કરો", orders: "ઓર્ડર્સ", wallet: "વોલેટ", support: "સપોર્ટ", help: "મદદ કેન્દ્ર", privacy: "ગોપનીયતા નીતિ", terms: "સેવાની શરતો", contact: "અમારો સંપર્ક કરો", lang: "ભાષા", logout: "લોગ આઉટ", delete: "એકાઉન્ટ કાઢી નાખો", selectLang: "ભાષા પસંદ કરો", account: "એકાઉન્ટ સેટિંગ્સ", legal: "કાનૂની", quick: "ઝડપી ક્રિયાઓ", subscribe: "સબ્સ્ક્રાઇબ કરો", policy: "નીતિઓ" },
-      ml: { title: "ക്രമീകരണങ്ങൾ", subtitle: "നിങ്ങളുടെ അനുഭവം ഇഷ്ടാനുസൃതമാക്കുക", edit: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", orders: "ഓർഡറുകൾ", wallet: "വാലറ്റ്", support: "പിന്തുണ", help: "സഹായ കേന്ദ്രം", privacy: "സ്വകാര്യതാ നയം", terms: "സേവന നിബന്ധനകൾ", contact: "ഞങ്ങളെ ബന്ധപ്പെടുക", lang: "ഭാഷ", logout: "ലോഗ് ഔട്ട്", delete: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക", account: "അക്കൗണ്ട് ക്രമീകരണങ്ങൾ", legal: "നിയമപരമായ", quick: "ദ്രുത പ്രവർത്തനങ്ങൾ", subscribe: "സബ്സ്ക്രൈബ് ചെയ്യുക", policy: "നയങ്ങൾ" },
+      hi: { 
+        title: "सेटिंग्स", subtitle: "अपने अनुभव को कस्टमाइज़ करें", welcome: "नमस्ते,", guest: "गेस्ट यूज़र", editBtn: "एडिट करें", 
+        orders: "ऑर्डर्स", wallet: "वॉलेट", support: "सपोर्ट", help: "हेल्प सेंटर", privacy: "प्राइवेसी पॉलिसी", 
+        terms: "नियम और शर्तें", contact: "संपर्क करें", lang: "भाषा", logout: "लॉगआउट करें", delete: "अकाउंट डिलीट करें", 
+        selectLang: "भाषा चुनें", account: "अकाउंट सेटिंग्स", legal: "कानूनी जानकारी", quick: "क्विक एक्शन", 
+        subscribe: "सब्सक्राइब करें", policy: "पॉलिसीज" 
+      },
+      hinglish: { 
+        title: "Settings", subtitle: "Customize your experience", welcome: "Welcome,", guest: "Guest User", editBtn: "Edit", 
+        orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", 
+        terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", 
+        selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", 
+        subscribe: "Subscribe Now", policy: "Policies" 
+      },
+      en: { 
+        title: "Settings", subtitle: "Customize your experience", welcome: "Welcome,", guest: "Guest User", editBtn: "Edit", 
+        orders: "Orders", wallet: "Wallet", support: "Support", help: "Help Center", privacy: "Privacy Policy", 
+        terms: "Terms of Service", contact: "Contact Us", lang: "Language", logout: "Log out", delete: "Delete Account", 
+        selectLang: "Select Language", account: "Account Settings", legal: "Legal & Support", quick: "Quick Actions", 
+        subscribe: "Subscribe Now", policy: "Policies" 
+      },
+      te: { 
+        title: "సెట్టింగ్స్", subtitle: "మీ అనుభవాన్ని అనుకూలీకరించండి", welcome: "స్వాగతం,", guest: "గెస్ట్ యూజర్", editBtn: "సవరించండి", 
+        orders: "ఆర్డర్లు", wallet: "వాలెట్", support: "మద్దతు", help: "సహాయ కేంద్రం", privacy: "గోప్యతా విధానం", 
+        terms: "సేవా నిబంధనలు", contact: "మమ్మల్ని సంప్రదించండి", lang: "భాష", logout: "లాగ్ అవుట్", delete: "ఖాతా తొలగించండి", 
+        selectLang: "భాషను ఎంచుకోండి", account: "ఖాతా సెట్టింగ్లు", legal: "చట్టపరమైన", quick: "త్వరిత చర్యలు", 
+        subscribe: "సబ్స్క్రైబ్ చేయండి", policy: "విధానాలు" 
+      },
+      ta: { 
+        title: "அமைப்புகள்", subtitle: "உங்கள் அனுபவத்தைத் தனிப்பயனாக்குங்கள்", welcome: "வரவேற்கிறோம்,", guest: "விருந்தினர்", editBtn: "திருத்து", 
+        orders: "ஆர்டர்கள்", wallet: "பணப்பை", support: "ஆதரவு", help: "உதவி மையம்", privacy: "தனியுரிமைக் கொள்கை", 
+        terms: "சேவை விதிமுறைகள்", contact: "எங்களைத் தொடர்பு கொள்ள", lang: "மொழி", logout: "வெளியேறு", delete: "கணக்கை நீக்கு", 
+        selectLang: "மொழியைத் தேர்ந்தெடுக்கவும்", account: "கணக்கு அமைப்புகள்", legal: "சட்டப்பூர்வ", quick: "விரைவு செயல்கள்", 
+        subscribe: "குழுசேர்", policy: "கொள்கைகள்" 
+      },
+      kn: { 
+        title: "ಸೆಟ್ಟಿಂಗ್ಸ್", subtitle: "ನಿಮ್ಮ ಅನುಭವವನ್ನು ಕಸ್ಟಮೈಸ್ ಮಾಡಿ", welcome: "ಸ್ವಾಗತ,", guest: "ಅತಿಥಿ", editBtn: "ಸಂಪಾದಿಸಿ", 
+        orders: "ಆರ್ಡರ್ಗಳು", wallet: "ವಾಲೆಟ್", support: "ಬೆಂಬಲ", help: "ಸಹಾಯ ಕೇಂದ್ರ", privacy: "ಗೋಪ್ಯತಾ ನೀತಿ", 
+        terms: "ಸೇವಾ ನಿಯಮಗಳು", contact: "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ", lang: "ಭಾಷೆ", logout: "ಲಾಗ್ ಔಟ್", delete: "ಖಾತೆ ಅಳಿಸಿ", 
+        selectLang: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ", account: "ಖಾತೆ ಸೆಟ್ಟಿಂಗ್ಗಳು", legal: "ಕಾನೂನು", quick: "ತ್ವರಿತ ಕ್ರಿಯೆಗಳು", 
+        subscribe: "ಚಂದಾದಾರರಾಗಿ", policy: "ನೀತಿಗಳು" 
+      },
+      bn: { 
+        title: "সেটিংস", subtitle: "আপনার অভিজ্ঞতা কাস্টমাইজ করুন", welcome: "স্বাগতম,", guest: "গেস্ট ইউজার", editBtn: "সম্পাদনা", 
+        orders: "অর্ডার", wallet: "ওয়ালেট", support: "সমর্থন", help: "সহায়তা কেন্দ্র", privacy: "গোপনীয়তা নীতি", 
+        terms: "পরিষেবার শর্তাবলী", contact: "যোগাযোগ করুন", lang: "ভাষা", logout: "লগ আউট", delete: "অ্যাকাউন্ট মুছুন", 
+        selectLang: "ভাষা নির্বাচন করুন", account: "অ্যাকাউন্ট সেটিংস", legal: "আইনি", quick: "দ্রুত পদক্ষেপ", 
+        subscribe: "সাবস্ক্রাইব করুন", policy: "নীতিমালা" 
+      },
+      mr: { 
+        title: "सेटिंग्ज", subtitle: "तुमचा अनुभव सानुकूलित करा", welcome: "स्वागत आहे,", guest: "गेस्ट यूजर", editBtn: "संपादित करा", 
+        orders: "ऑर्डर्स", wallet: "वॉलेट", support: "समर्थन", help: "मदत केंद्र", privacy: "गोपनीयता धोरण", 
+        terms: "सेवा अटी", contact: "संपर्क साधा", lang: "भाषा", logout: "लॉग आउट", delete: "खाते हटवा", 
+        selectLang: "भाषा निवडा", account: "खाते सेटिंग्ज", legal: "कायदेशीर", quick: "द्रुत क्रिया", 
+        subscribe: "सदस्यता घ्या", policy: "धोरणे" 
+      },
+      gu: { 
+        title: "સેટિંગ્સ", subtitle: "તમારા અનુભવને કસ્ટમાઇઝ કરો", welcome: "સ્વાગત છે,", guest: "ગેસ્ટ યુઝર", editBtn: "સંપાદિત કરો", 
+        orders: "ઓર્ડર્સ", wallet: "વોલેટ", support: "સપોર્ટ", help: "મદદ કેન્દ્ર", privacy: "ગોપનીયતા નીતિ", 
+        terms: "સેવાની શરતો", contact: "સંપર્ક કરો", lang: "ભાષા", logout: "લોગ આઉટ", delete: "એકાઉન્ટ કાઢી નાખો", 
+        selectLang: "ભાષા પસંદ કરો", account: "એકાઉન્ટ સેટિંગ્સ", legal: "કાનૂની", quick: "ઝડપી ક્રિયાઓ", 
+        subscribe: "સબ્સ્ક્રાઇબ કરો", policy: "નીતિઓ" 
+      },
+      ml: { 
+        title: "ക്രമീകരണങ്ങൾ", subtitle: "നിങ്ങളുടെ അനുഭവം ഇഷ്ടാനുസൃതമാക്കുക", welcome: "സ്വാഗതം,", guest: "ഗസ്റ്റ് യൂസർ", editBtn: "എഡിറ്റ് ചെയ്യുക", 
+        orders: "ഓർഡറുകൾ", wallet: "വാലറ്റ്", support: "പിന്തുണ", help: "സഹായ കേന്ദ്രം", privacy: "സ്വകാര്യതാ നയം", 
+        terms: "സേവന നിബന്ധനകൾ", contact: "ബന്ധപ്പെടുക", lang: "ഭാഷ", logout: "ലോഗ് ഔട്ട്", delete: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", 
+        selectLang: "ഭാഷ തിരഞ്ഞെടുക്കുക", account: "അക്കൗണ്ട് ക്രമീകരണങ്ങൾ", legal: "നിയമപരമായ", quick: "ദ്രുത പ്രവർത്തനങ്ങൾ", 
+        subscribe: "സബ്സ്ക്രൈബ് ചെയ്യുക", policy: "നയങ്ങൾ" 
+      },
     };
-    return dict[lang]?.[key] || dict["en"][key];
+    return dict[lang]?.[key] || dict["en"][key] || dict["hi"][key];
   };
 
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
@@ -54,12 +114,13 @@ export default function SettingsPage() {
   };
 
   return (
+    // 🔥 Full Screen Layout (Removed max-w-xl and mx-auto)
     <main className={`min-h-screen w-full px-4 pb-24 pt-6 ${pageClass}`}>
       
-      {/* Background Glow Effect (Premium Look) */}
+      {/* Background Glow Effect */}
       <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-amber-500/10 to-transparent pointer-events-none"></div>
 
-      <div className="mx-auto max-w-xl space-y-8 relative z-10">
+      <div className="w-full space-y-6 relative z-10">
         
         {/* HEADER */}
         <header className="flex items-center gap-4 px-2 pt-2">
@@ -74,19 +135,49 @@ export default function SettingsPage() {
           </div>
         </header>
 
+        {/* 🔥 TOP EDIT PROFILE CARD 🔥 */}
+        <section>
+          <div className={`flex items-center justify-between p-4 rounded-[2rem] border ${cardClass}`}>
+            <div className="flex items-center gap-4">
+              <div className={`h-14 w-14 rounded-full flex items-center justify-center border-2 border-amber-500/30 ${isDark ? "bg-slate-800" : "bg-orange-100"}`}>
+                {me?.user?.avatar ? (
+                  <img src={me.user.avatar} alt="Profile" className="h-full w-full rounded-full object-cover" />
+                ) : (
+                  <User size={26} className={isDark ? "text-slate-400" : "text-orange-500"} />
+                )}
+              </div>
+              <div>
+                <p className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("welcome")}</p>
+                <h2 className="text-lg font-black">{me?.user?.name || t("guest")}</h2>
+              </div>
+            </div>
+            
+            <Link 
+              href="/profile" 
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[12.5px] font-bold transition-all active:scale-95 ${
+                isDark 
+                  ? "bg-amber-500 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+                  : "bg-orange-500 text-white shadow-[0_4px_15px_rgba(249,115,22,0.3)]"
+              }`}
+            >
+              <Pencil size={14} /> {t("editBtn")}
+            </Link>
+          </div>
+        </section>
+
         {/* QUICK ACTIONS GRID (Orders, Wallet, Support) */}
         <section>
           <h3 className={`px-3 mb-3 text-[11px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("quick")}</h3>
           <div className="grid grid-cols-3 gap-3">
-            <Link href="/orders" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+            <Link href="/orders" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-4 sm:p-5 text-center transition-all active:scale-95 ${cardClass}`}>
               <div className={`p-3 rounded-2xl ${iconClass}`}><Clock size={22} /></div>
               <span className="text-[11px] font-bold">{t("orders")}</span>
             </Link>
-            <Link href="/wallet" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+            <Link href="/wallet" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-4 sm:p-5 text-center transition-all active:scale-95 ${cardClass}`}>
               <div className={`p-3 rounded-2xl ${iconClass}`}><Wallet size={22} /></div>
               <span className="text-[11px] font-bold">{t("wallet")}</span>
             </Link>
-            <Link href="/support" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-5 text-center transition-all active:scale-95 ${cardClass}`}>
+            <Link href="/support" className={`flex flex-col items-center justify-center gap-3 rounded-3xl border p-4 sm:p-5 text-center transition-all active:scale-95 ${cardClass}`}>
               <div className={`p-3 rounded-2xl ${iconClass}`}><Headphones size={22} /></div>
               <span className="text-[11px] font-bold">{t("support")}</span>
             </Link>
@@ -98,14 +189,6 @@ export default function SettingsPage() {
           <h3 className={`px-3 mb-3 text-[11px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("account")}</h3>
           <div className={`overflow-hidden rounded-[2rem] border ${cardClass}`}>
             
-            <Link href="/profile" className={`flex items-center justify-between p-5 border-b ${listItemClass}`}>
-              <div className="flex items-center gap-4">
-                <div className={`p-2.5 rounded-xl ${iconClass}`}><User size={18} /></div>
-                <span className="font-semibold text-[15px]">{t("edit")}</span>
-              </div>
-              <ChevronRight size={18} className={isDark ? "text-slate-500" : "text-gray-400"} />
-            </Link>
-
             <Link href="/wallet" className={`flex items-center justify-between p-5 border-b ${listItemClass}`}>
               <div className="flex items-center gap-4">
                 <div className={`p-2.5 rounded-xl ${iconClass}`}><CreditCard size={18} /></div>
@@ -132,7 +215,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* 🔥 LANGUAGE SECTION (EXACTLY AS YOU WANTED) 🔥 */}
+        {/* 🔥 LANGUAGE SECTION 🔥 */}
         <section>
           <div className={`overflow-hidden rounded-[2rem] border ${cardClass}`}>
             <button onClick={() => setShowLangModal(true)} className={`w-full flex items-center justify-between p-5 ${listItemClass}`}>
