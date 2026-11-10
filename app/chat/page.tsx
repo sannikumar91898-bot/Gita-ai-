@@ -9,6 +9,7 @@ import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, L
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
+import { LANGUAGES, type Lang } from "../../i18n"; // 🔥 10 Languages Import
 
 type Message = { id: string; role: "user" | "assistant"; content: string; image?: string };
 type Step = "language" | "name" | "dob" | "time" | "place" | "done";
@@ -22,7 +23,7 @@ const getPersonaDetails = (p: string) => {
     case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
     case "devaki": return { name: "Dr. Devaki Shastri", img: "/astrologers/devaki.jpg" };
     case "gargi": return { name: "Gargi Maa", img: "/astrologers/gargi.jpg" };
-    default: return { name: "Gita", img: "/astrologers/gita.jpg" };
+    default: return { name: "Gita", img: "/gita-portrait.jpg" }; // Fallback image
   }
 };
 
@@ -54,11 +55,15 @@ function parseTime(value: string): string | null {
   return String(hour).padStart(2, "0") + ":" + String(minute).padStart(2, "0");
 }
 
-function questionFor(step: Step, lang: "en" | "hi" | "hinglish", name: string): string {
+// 🔥 TYPE FIX: Lang type use kiya gaya hai
+function questionFor(step: Step, lang: Lang, name: string): string {
   const hi: Record<Step, string> = { language: `नमस्ते, मैं ${name} हूँ। आप हिंदी, Hinglish या English में बात करना चाहेंगे?`, name: "आपका नाम क्या है?", dob: "जन्म तिथि लिखें, जैसे 15/08/1990।", time: "जन्म का समय लिखें, जैसे 08:30 AM।", place: "जन्म स्थान लिखें: शहर और राज्य, जैसे Patna, Bihar।", done: "मैं यहीं हूँ। करियर, पढ़ाई, संबंध या कुंडली पर आगे पूछ सकते हैं।" };
-  const en: Record<Step, string> = { language: `Hello, I am ${name}. Would you like Hindi, Hinglish, or English?`, name: "What is your name?", dob: "Please share your date of birth, for example 15/08/1990.", time: "What was your birth time? For example 08:30 AM.", place: "Where were you born? City and state, for example Patna, Bihar.", done: "I am here. You can ask about career, study, relationships, or your chart." };
-  const hg: Record<Step, string> = { language: `Namaste, main ${name} hoon. Aap Hindi, Hinglish ya English mein baat karna chahenge?`, name: "Aapka naam kya hai?", dob: "Janm tithi likhiye, jaise 15/08/1990.", time: "Janm ka samay likhiye, jaise 08:30 AM.", place: "Janm sthan likhiye: sheher aur rajya, jaise Patna, Bihar.", done: "Main yahin hoon. Career, padhai, relationships ya kundli par aage poochhiye." };
-  if (lang === "hi") return hi[step]; if (lang === "hinglish") return hg[step]; return en[step];
+  const en: Record<Step, string> = { language: `Hello, I am ${name}. Please select your language.`, name: "What is your name?", dob: "Please share your date of birth, for example 15/08/1990.", time: "What was your birth time? For example 08:30 AM.", place: "Where were you born? City and state, for example Patna, Bihar.", done: "I am here. You can ask about career, study, relationships, or your chart." };
+  const hg: Record<Step, string> = { language: `Namaste, main ${name} hoon. Aap apni language select karein.`, name: "Aapka naam kya hai?", dob: "Janm tithi likhiye, jaise 15/08/1990.", time: "Janm ka samay likhiye, jaise 08:30 AM.", place: "Janm sthan likhiye: sheher aur rajya, jaise Patna, Bihar.", done: "Main yahin hoon. Career, padhai, relationships ya kundli par aage poochhiye." };
+  
+  if (lang === "hi") return hi[step]; 
+  if (lang === "hinglish") return hg[step]; 
+  return en[step]; // Baaki 7 bhashaon ke liye abhi English fallback
 }
 
 function ChatPageContent() {
@@ -193,6 +198,7 @@ function ChatPageContent() {
 
     if (step === "done" || (looksLikeQuestion(text) && step !== "language")) return await sendToAi(text, selectedImage);
     if (step === "language") {
+      // Language detect from text
       const value = /hindi|हिंदी/i.test(text) ? "hi" : /hinglish|हिंग्लिश/i.test(text) ? "hinglish" : /english|angrezi/i.test(text) ? "en" : null;
       if (!value) return setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor("language", lang, personaDetails.name) }]);
       await setLanguage(value); sessionStorage.setItem("gita_lang_confirmed", "1"); setStep(me?.birth?.name ? "done" : "name");
@@ -260,13 +266,20 @@ function ChatPageContent() {
       <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20" aria-live="polite">
         {step === "language" && messages.length === 0 && (
           <div className="flex flex-wrap gap-2">
-            {([["hi", "हिन्दी"], ["hinglish", "Hinglish"], ["en", "English"]] as const).map(([code, label]) => (
-              <button key={code} type="button" className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
+            {/* 🔥 Yahan humne 10 languages ke buttons laga diye hain */}
+            {LANGUAGES.map((langObj) => (
+              <button 
+                key={langObj.code} 
+                type="button" 
+                className={`rounded-xl border px-4 py-2.5 text-xs font-bold transition-all active:scale-95 shadow-sm ${isDark ? "border-slate-700 text-orange-400 bg-slate-800 hover:bg-slate-700" : "border-orange-200 text-orange-600 bg-white hover:bg-orange-50"}`}
                 onClick={() => {
-                  void setLanguage(code); sessionStorage.setItem("gita_lang_confirmed", "1"); setStep(me?.birth?.name ? "done" : "name");
-                  setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", code, personaDetails.name) }]);
-                }}>
-                {label}
+                  void setLanguage(langObj.code); 
+                  sessionStorage.setItem("gita_lang_confirmed", "1"); 
+                  setStep(me?.birth?.name ? "done" : "name");
+                  setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: questionFor(me?.birth?.name ? "done" : "name", langObj.code, personaDetails.name) }]);
+                }}
+              >
+                {langObj.native}
               </button>
             ))}
           </div>
@@ -329,7 +342,7 @@ function ChatPageContent() {
             isDark ? "bg-[#1A1D27] border-slate-700 focus-within:border-orange-500/50" : "bg-white border-gray-300 shadow-sm focus-within:border-orange-400 focus-within:shadow-md"
           }`}>
             
-            {/* Photo Upload Button (Replaced Plus Icon) */}
+            {/* Photo Upload Button */}
             <button 
               type="button" 
               onClick={() => fileInputRef.current?.click()} 
