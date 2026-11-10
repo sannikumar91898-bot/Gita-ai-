@@ -204,10 +204,7 @@ async function writeInterpretation(params: {
       return { text: cached[0].aiAnswer, status: "ready" };
     }
   } catch (error) {
-    console.error(
-      "Kundli cache lookup failed:",
-      error instanceof Error ? error.message : "unknown"
-    );
+    console.error("Kundli cache lookup failed:", error);
   }
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
@@ -288,17 +285,11 @@ async function writeInterpretation(params: {
         })
         .onConflictDoNothing();
     } catch (error) {
-      console.error(
-        "Kundli cache save failed:",
-        error instanceof Error ? error.message : "unknown"
-      );
+      console.error("Kundli cache save failed:", error);
     }
     return { text, status: "ready" };
   } catch (error) {
-    console.error(
-      "Kundli Gemini request failed:",
-      error instanceof Error ? error.name : "unknown"
-    );
+    console.error("Kundli Gemini request failed:", error);
     return { text: null, status: "unavailable" };
   } finally {
     clearTimeout(timeout);
@@ -308,20 +299,12 @@ async function writeInterpretation(params: {
 export async function GET() {
   const user = await getUser();
   if (!user) {
-    return NextResponse.json(
-      { birth: null, chart: null },
-      { headers: { "Cache-Control": "no-store" } }
-    );
+    return NextResponse.json({ birth: null, chart: null }, { headers: { "Cache-Control": "no-store" } });
   }
 
   const [birthRows, chartRows] = await Promise.all([
     db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
-    db
-      .select()
-      .from(charts)
-      .where(eq(charts.userId, user.id))
-      .orderBy(desc(charts.createdAt))
-      .limit(1),
+    db.select().from(charts).where(eq(charts.userId, user.id)).orderBy(desc(charts.createdAt)).limit(1),
   ]);
 
   const birth = birthRows[0]
@@ -330,6 +313,8 @@ export async function GET() {
         dob: birthRows[0].dob,
         birthTime: birthRows[0].birthTime,
         birthPlace: birthRows[0].birthPlace,
+        gender: birthRows[0].gender, // 🔥 NEW
+        isBirthTimeUnknown: birthRows[0].isBirthTimeUnknown, // 🔥 NEW
       }
     : null;
 
@@ -354,19 +339,24 @@ export async function POST(req: Request) {
   if (!isRecord(body)) return jsonError("Please provide valid birth details.", 400);
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
+  const gender = typeof body.gender === "string" ? body.gender.trim() : "Not specified"; // 🔥 NEW
   const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
-  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
+  const rawTimeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
   const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+  
+  // 🔥 NEW: Handle Unknown Time & Consent
+  const isTimeUnknown = body.isTimeUnknown === true;
+  const consent = body.consent === true;
+  const timeOfBirth = isTimeUnknown ? "12:00" : rawTimeOfBirth;
+
+  if (!consent) {
+    return jsonError("Consent is required to generate kundli.", 400);
+  }
 
   if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) {
     return jsonError("Please fill in all birth details.", 400);
   }
-  if (
-    name.length > 100 ||
-    placeOfBirth.length > 200 ||
-    !validDate(dateOfBirth) ||
-    !validTime(timeOfBirth)
-  ) {
+  if (name.length > 100 || placeOfBirth.length > 200 || !validDate(dateOfBirth) || !validTime(timeOfBirth)) {
     return jsonError("Please check your birth details.", 400);
   }
   if (dateOfBirth > new Date().toISOString().slice(0, 10)) {
@@ -391,10 +381,7 @@ export async function POST(req: Request) {
       timeZone: place.timeZone,
     });
   } catch (error) {
-    console.error(
-      "Chart calculation failed:",
-      error instanceof Error ? error.message : "unknown"
-    );
+    console.error("Chart calculation failed:", error);
     return jsonError("इन जन्म विवरणों से कुंडली गणना नहीं हो सकी।", 422);
   }
 
@@ -407,8 +394,10 @@ export async function POST(req: Request) {
         .values({
           userId: user.id,
           name,
+          gender, // 🔥 NEW
           dob: dateOfBirth,
           birthTime: timeOfBirth,
+          isBirthTimeUnknown: isTimeUnknown, // 🔥 NEW
           birthPlace: placeOfBirth,
           lat: place.lat,
           lng: place.lng,
@@ -419,8 +408,10 @@ export async function POST(req: Request) {
           target: birthDetails.userId,
           set: {
             name,
+            gender, // 🔥 NEW
             dob: dateOfBirth,
             birthTime: timeOfBirth,
+            isBirthTimeUnknown: isTimeUnknown, // 🔥 NEW
             birthPlace: placeOfBirth,
             lat: place.lat,
             lng: place.lng,
@@ -436,10 +427,7 @@ export async function POST(req: Request) {
       await db.update(users).set({ name }).where(and(eq(users.id, user.id)));
       saved = true;
     } catch (error) {
-      console.error(
-        "Birth details save failed:",
-        error instanceof Error ? error.message : "unknown"
-      );
+      console.error("Birth details save failed:", error);
     }
   }
 
