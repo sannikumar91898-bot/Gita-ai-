@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import { useApp } from "./Providers";
 import {
   Home, MessageCircle, Sun, CalendarDays, User, Star, Settings,
-  Sparkles, Hand, ScanFace, Heart, Scroll, ShieldCheck, Lock, Gem, X, Crown, History
+  Sparkles, Hand, ScanFace, Heart, Scroll, Gem, X, Crown, History, ChevronRight
 } from "lucide-react";
 import Link from "next/link";
 
-// 🔥 Multi-Language Translation (Hindi prioritized for screenshot match)
+// 🔥 Translation Setup (Hindi Focused for Premium Look)
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
@@ -18,7 +18,7 @@ const getUIText = (lang: string, key: string) => {
       kundli: "कुंडली", matching: "मिलान", horoscope: "राशिफल", panchang: "पंचांग", palmistry: "हस्तरेखा", gemstone: "रत्न", calSetting: "कैल सटिंग", 
       talkTo: "ज्योतिषियों से बात करें", online: "ऑनलाइन", chatNow: "चैट करें", 
       home: "होम", chat: "चैट", daily: "राशिफल", history: "इतिहास", profile: "प्रोफाइल", 
-      readMore: "और पढ़ें...", reviews: "रिव्यूज",
+      readMore: "और पढ़ें...", reviews: "रिव्यूज", min: "मिनट",
       stickyTitle: "ज्योतिषी - 24x7 उपलब्ध", stickySub: "अपने नाम करें – पहली चैट FREE"
     },
     en: {
@@ -28,35 +28,34 @@ const getUIText = (lang: string, key: string) => {
       kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", calSetting: "Cal Setting", 
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", history: "History", profile: "Profile", 
-      readMore: "read more...", reviews: "Reviews",
+      readMore: "read more...", reviews: "Reviews", min: "min",
       stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE"
     }
   };
   return ui[lang]?.[key] || ui["hi"][key];
 };
 
-// 🔥 UPDATED TYPES: Added multiple reviews
+// 🔥 DATA TYPES & MULTI-REVIEWS
 type Review = { text: string; author: string; rating: number; };
 type Astrologer = { 
   id: string; name: string; specialty: string; rating: number; 
-  chats: string; experience: string; price: number; oldPrice: number; 
-  image: string; isCelebrity?: boolean; reviews: Review[]; 
+  experience: string; price: number; image: string; isCelebrity?: boolean; reviews: Review[]; 
 };
 
-// 🔥 DATA MATCHING SCREENSHOT
 const ASTROLOGERS: Astrologer[] = [
   { 
     id: "gita", name: "Gita", specialty: "Tarot • Love & Relationship", rating: 4.9, 
-    chats: "12.4k+", experience: "5 Years", price: 19, oldPrice: 29, image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80", 
+    experience: "5 Years", price: 19, image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80", 
     reviews: [
       { text: "Bahot tension mein thi breakup ke baad. Gita ji ne bilkul calm karke sab samjhaya. Paisa vasool consultation. Thank you so much di ❤️", author: "Priya S.", rating: 5 },
       { text: "Mera career stuck tha, unhone exact reason bataya aur remedy bhi. Very accurate.", author: "Rahul K.", rating: 5 },
-      { text: "She is very polite and explains everything in detail. Highly recommended.", author: "Sneha M.", rating: 5 }
+      { text: "She is very polite and explains everything in detail. Highly recommended.", author: "Sneha M.", rating: 5 },
+      { text: "Prediction was good, but I felt it was a bit costly.", author: "Amit T.", rating: 4 }
     ]
   },
   { 
     id: "kriti", name: "Acharya Kriti", specialty: "Vedic • Kundli", rating: 4.8, 
-    chats: "18.7k+", experience: "7 Years", price: 22, oldPrice: 35, image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80", 
+    experience: "7 Years", price: 22, image: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=150&q=80", 
     reviews: [
       { text: "Sach mein bahut relief mila. Job switch karna tha par dar lag raha tha. Kriti ji ne kundli dekh kar exact date batayi. Ab confidence hai. 🌟", author: "Rahul Verma", rating: 5 },
       { text: "Kriti ji is very knowledgeable. Her predictions about my marriage came true.", author: "Anjali T.", rating: 5 },
@@ -65,16 +64,16 @@ const ASTROLOGERS: Astrologer[] = [
   },
   { 
     id: "devaki", name: "Dr. Devaki Shastri", specialty: "Vedic • KP System", rating: 4.9, 
-    chats: "31k+", experience: "15 Years", price: 25, oldPrice: 45, image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", isCelebrity: true, 
+    experience: "15 Years", price: 25, image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", isCelebrity: true, 
     reviews: [
-      { text: "Devaki ma'am is really an expert. Rishta tootne wala tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 },
+      { text: "Devaki ma'am is really an expert. Rishta toothe wale tha, unhone remedies bataye aur sab thik ho gaya. Highly recommended.", author: "Neha M.", rating: 5 },
       { text: "Best astrologer on this app. Very detailed explanation and genuine remedies.", author: "Vikas P.", rating: 5 },
       { text: "She gave me a simple remedy for my health issues. Feeling much better now.", author: "Sunita R.", rating: 5 }
     ]
   },
   { 
     id: "gargi", name: "Gargi Maa", specialty: "Spiritual Healing • Vastu", rating: 4.9, 
-    chats: "42k+", experience: "25+ Years", price: 18, oldPrice: 30, image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80", 
+    experience: "25+ Years", price: 18, image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80", 
     reviews: [
       { text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 },
       { text: "Maa is very kind. She listens patiently and gives very practical solutions.", author: "Pooja K.", rating: 5 },
@@ -86,10 +85,9 @@ const ASTROLOGERS: Astrologer[] = [
 export default function HomePage() {
   const { lang, theme, me, refresh } = useApp();
   
-  // 🔥 STATE FOR REVIEWS MODAL
+  // 🔥 Modal State
   const [selectedAstro, setSelectedAstro] = useState<Astrologer | null>(null);
 
-  const isDark = theme === "dark" || true; // Forcing dark theme to match screenshot exactly
   const t = (key: string) => getUIText(lang || "hi", key);
 
   const walletBalanceRupees = (me?.user?.walletBalancePaise ?? 0) / 100;
@@ -99,53 +97,56 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
-    <main className={`min-h-[100dvh] w-full pb-40 transition-colors duration-300 bg-[#0B0F19] text-slate-100`}>
+    // Main Background - Deep Dark Navy (Premium Look)
+    <main className="min-h-[100dvh] w-full pb-40 bg-[#070b14] text-slate-100 font-sans">
       
-      {/* PREMIUM HEADER */}
-      <header className={`sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#0B0F19]/95 backdrop-blur-xl border-b border-white/5`}>
-        <div className="flex items-center gap-2">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-tr from-orange-600 to-red-600 p-[1px]">
-            <div className="h-full w-full rounded-full bg-[#0B0F19] flex items-center justify-center text-orange-500">
-              <img src="/icon-192.png" alt="Gita Logo" className="h-7 w-7 rounded-full object-cover" />
-            </div>
-          </div>
-          <span className="text-[17px] font-black tracking-tight text-white">{t("appName")}</span>
-        </div>
+      {/* HEADER */}
+      <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/90 backdrop-blur-md border-b border-white/5">
         <div className="flex items-center gap-2.5">
-          <button className="rounded-full p-2 bg-[#1A2235] text-slate-300 hover:bg-[#1A2235]/80">
-            <Settings size={18} />
+          {/* Glowing Logo Effect */}
+          <div className="relative flex items-center justify-center">
+            <div className="absolute inset-0 bg-orange-500 blur-md opacity-30 rounded-full"></div>
+            <img src="/icon-192.png" alt="Gita Logo" className="relative z-10 h-9 w-9 rounded-full object-cover border border-orange-500/30" onError={(e) => { (e.target as HTMLImageElement).src = 'https://ui-avatars.com/api/?name=G&background=ff6b00&color=fff'; }}/>
+          </div>
+          <span className="text-[17px] font-bold tracking-tight text-white">{t("appName")}</span>
+        </div>
+        
+        <div className="flex items-center gap-2.5">
+          <button className="rounded-full p-2 bg-[#151d2c] text-slate-300 hover:bg-[#1f2937] transition-colors">
+            <Settings size={18} strokeWidth={2} />
           </button>
-          <button className="flex items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold bg-[#1A2235] text-orange-400 border border-slate-700">
+          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-bold bg-[#151d2c] text-slate-200 border border-[#2a3547] hover:bg-[#1f2937] transition-colors">
             ₹{me?.user ? walletBalanceRupees : "3"}
-            <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[10px] text-white ml-0.5">+</span>
-          </button>
+            <span className="flex h-4.5 w-4.5 items-center justify-center rounded-full bg-[#ff6b00] text-[10px] text-white ml-0.5">+</span>
+          </Link>
         </div>
       </header>
 
-      <div className="mx-auto max-w-xl space-y-6 px-4 py-4">
+      <div className="mx-auto max-w-xl space-y-5 px-4 py-4">
         
         {/* HERO BANNER */}
-        <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-r from-[#FF6B00] via-[#FF4500] to-[#D90000] p-5 text-white shadow-lg">
-          {/* Background Graphic (Stars) */}
-          <div className="absolute inset-0 opacity-30 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
+        <section className="relative overflow-hidden rounded-[1.2rem] bg-gradient-to-r from-[#FF5A00] via-[#FF3D00] to-[#D30000] p-5 text-white shadow-[0_8px_30px_rgba(255,61,0,0.2)]">
+          {/* Subtle Star Graphic Overlay */}
+          <div className="absolute inset-0 opacity-40 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] mix-blend-overlay"></div>
           
           <div className="relative z-10 space-y-1.5">
-            <p className="flex items-center gap-1.5 text-[10px] font-bold tracking-wide text-orange-100">
-              <Sparkles size={12} className="text-amber-200" /> {t("specialOffer")}
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-orange-100">
+              <Sparkles size={13} className="text-amber-200" /> {t("specialOffer")}
             </p>
-            <h2 className="text-[26px] font-black leading-tight text-white">{t("freeChat")}</h2>
-            <p className="text-[11px] font-medium text-orange-50 max-w-[85%]">{t("heroSub")}</p>
-            <Link href="/chat" className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-[13px] font-black text-[#FF4500] shadow-md transition-transform active:scale-95">
-              {t("startFreeChat")} <span className="text-lg leading-none">→</span>
+            <h2 className="text-[28px] font-extrabold leading-tight text-white tracking-tight">{t("freeChat")}</h2>
+            <p className="text-[12px] font-medium text-orange-50 max-w-[85%]">{t("heroSub")}</p>
+            
+            <Link href="/chat" className="mt-3.5 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2 text-[13px] font-bold text-[#FF3D00] shadow-sm transition-transform active:scale-95">
+              {t("startFreeChat")} <ChevronRight size={16} strokeWidth={3} />
             </Link>
           </div>
         </section>
 
-        {/* 🔥 PRO TIPS (Free Tools) - Exact Screenshot Match */}
-        <section className="space-y-3 pt-1">
+        {/* PRO TIPS (Free Tools) */}
+        <section className="space-y-3 pt-2">
           <div className="flex items-center gap-2">
-            <div className="w-1.5 h-4 bg-[#FF6B00] rounded-full"></div>
-            <h2 className="text-[15px] font-bold text-white tracking-wide">
+            <div className="w-1.5 h-4.5 bg-[#ff6b00] rounded-full"></div>
+            <h2 className="text-[16px] font-bold text-white tracking-wide">
               {t("proTips")}
             </h2>
           </div>
@@ -160,8 +161,8 @@ export default function HomePage() {
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
               { name: t("calSetting"), icon: ScanFace, href: "/settings" },
             ].map((tool, idx) => (
-              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 min-w-[64px]">
-                <div className="flex h-[52px] w-[52px] items-center justify-center rounded-full border border-slate-700 bg-[#151E2E] text-[#FF6B00] transition-colors hover:border-[#FF6B00]">
+              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 min-w-[65px]">
+                <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border border-[#2a3547] bg-[#121927] text-[#ff6b00] transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/10">
                   <tool.icon size={22} strokeWidth={1.5} />
                 </div>
                 <span className="text-[11px] font-semibold text-slate-300 whitespace-nowrap">{tool.name}</span>
@@ -174,13 +175,13 @@ export default function HomePage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-1.5 h-4 bg-[#FF6B00] rounded-full"></div>
-              <h2 className="text-[15px] font-bold text-white tracking-wide">
+              <div className="w-1.5 h-4.5 bg-[#ff6b00] rounded-full"></div>
+              <h2 className="text-[16px] font-bold text-white tracking-wide">
                 {t("talkTo")}
               </h2>
             </div>
-            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400"></span> {t("online")}
+            <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full border border-emerald-400/20">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span> {t("online")}
             </span>
           </div>
 
@@ -189,51 +190,53 @@ export default function HomePage() {
               const firstReview = astro.reviews[0];
               
               return (
-                <article key={astro.id} className="rounded-2xl bg-[#1A2235] p-4 shadow-sm border border-slate-800">
+                <article key={astro.id} className="rounded-[1.2rem] bg-[#121927] p-4 shadow-sm border border-[#1f2937]">
                   <div className="flex gap-3.5">
-                    <div className="relative h-[70px] w-[70px] shrink-0">
-                      <img src={astro.image} alt={astro.name} className="h-full w-full object-cover rounded-full" />
-                      <span className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-2 border-[#1A2235] bg-emerald-500"></span>
+                    {/* Avatar */}
+                    <div className="relative h-[68px] w-[68px] shrink-0">
+                      <img src={astro.image} alt={astro.name} className="h-full w-full object-cover rounded-full border border-slate-700" onError={(e) => { (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${astro.name}&background=ff6b00&color=fff`; }} />
+                      <span className="absolute bottom-0.5 right-0.5 h-3.5 w-3.5 rounded-full border-[2.5px] border-[#121927] bg-emerald-500"></span>
                     </div>
 
                     <div className="flex flex-1 flex-col justify-between py-0.5">
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-[16px] font-bold text-white">{astro.name}</h3>
-                          {astro.isCelebrity && <span className="rounded bg-[#FEF3C7] px-1.5 py-0.5 text-[9px] font-bold text-amber-800">Celebrity</span>}
+                          {astro.isCelebrity && <span className="rounded-md bg-[#FEF3C7] px-1.5 py-0.5 text-[9px] font-extrabold text-amber-800 tracking-wide">Celebrity</span>}
                         </div>
                         <p className="text-[12px] font-medium text-slate-400 mt-0.5">{astro.specialty}</p>
                         
-                        <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-400 mt-1">
-                          <Star size={11} fill="#FF6B00" className="text-[#FF6B00]" /> {astro.rating}
-                          <span>• {astro.experience}</span>
+                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300 mt-1.5">
+                          <Star size={11} fill="#ff6b00" className="text-[#ff6b00]" /> {astro.rating}
+                          <span className="text-slate-500">•</span>
+                          <span>{astro.experience}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mt-2">
-                        <p className="text-[16px] font-black text-[#FF6B00]">
-                          ₹{astro.price} <span className="text-[11px] font-medium text-slate-400">/मिनट</span>
+                      <div className="flex items-center justify-between mt-2.5">
+                        <p className="text-[17px] font-black text-[#ff6b00]">
+                          ₹{astro.price} <span className="text-[11px] font-medium text-slate-400 ml-0.5">/ {t("min")}</span>
                         </p>
-                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-[#FF6B00] px-6 py-1.5 text-[12px] font-bold text-white shadow-md active:scale-95 transition-transform">
+                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-5 py-1.5 text-[12px] font-bold text-white shadow-md shadow-orange-500/20 active:scale-95 transition-transform">
                           {t("chatNow")}
                         </Link>
                       </div>
                     </div>
                   </div>
 
-                  {/* 🔥 REVIEW PREVIEW & READ MORE BUTTON */}
-                  <div className="mt-3.5 rounded-xl bg-[#111827] p-3 text-[12px] leading-relaxed border border-slate-800/50">
-                    <div className="flex items-center gap-1 mb-1.5">
+                  {/* REVIEW PREVIEW & READ MORE */}
+                  <div className="mt-3.5 rounded-xl bg-[#090d15] p-3 text-[12.5px] leading-relaxed border border-[#1f2937]/70">
+                    <div className="flex items-center gap-0.5 mb-1.5">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={12} fill={i < firstReview.rating ? "#FF6B00" : "none"} className="text-[#FF6B00]" />
+                        <Star key={i} size={11} fill={i < firstReview.rating ? "#ff6b00" : "none"} className="text-[#ff6b00]" />
                       ))}
-                      <span className="ml-1 font-semibold text-slate-300">- {firstReview.author}</span>
+                      <span className="ml-1.5 font-bold text-slate-300">- {firstReview.author}</span>
                     </div>
                     <p className="text-slate-300 font-medium">
                       "{firstReview.text}"{" "}
                       <button 
                         onClick={() => setSelectedAstro(astro)} 
-                        className="text-[#FF6B00] font-bold hover:underline ml-0.5 cursor-pointer"
+                        className="text-[#ff6b00] font-bold hover:underline ml-0.5 cursor-pointer"
                       >
                         - {t("readMore")}
                       </button>
@@ -246,59 +249,59 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* 🔥 BOTTOM STICKY BANNER (Pink/Red) */}
-      <div className="fixed bottom-[60px] left-0 right-0 z-40 px-4 pb-2 bg-gradient-to-t from-[#0B0F19] via-[#0B0F19]/90 to-transparent pt-6">
-        <div className="mx-auto max-w-xl rounded-full bg-gradient-to-r from-pink-600 via-rose-500 to-red-500 p-1 shadow-lg flex items-center justify-between pl-4 pr-1">
+      {/* BOTTOM STICKY BANNER (Pink/Red) */}
+      <div className="fixed bottom-[64px] left-0 right-0 z-40 px-4 pb-2 bg-gradient-to-t from-[#070b14] via-[#070b14]/90 to-transparent pt-6">
+        <div className="mx-auto max-w-xl rounded-full bg-gradient-to-r from-[#F5156B] to-[#D30038] p-1 shadow-[0_4px_20px_rgba(245,21,107,0.3)] flex items-center justify-between pl-3 pr-1 border border-pink-500/30">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-1.5 rounded-full">
-              <Crown size={16} className="text-white" />
+            <div className="bg-white/20 p-2 rounded-full">
+              <Crown size={18} className="text-white" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-pink-100">{t("stickyTitle")}</p>
-              <p className="text-[13px] font-black text-white">{t("stickySub")}</p>
+              <p className="text-[10px] font-bold text-pink-100 tracking-wide">{t("stickyTitle")}</p>
+              <p className="text-[14px] font-black text-white">{t("stickySub")}</p>
             </div>
           </div>
-          <button className="bg-white rounded-full h-9 w-9 flex items-center justify-center shadow-sm">
-            <Crown size={18} className="text-rose-500" />
+          <button className="bg-white rounded-full h-10 w-10 flex items-center justify-center shadow-sm active:scale-95 transition-transform">
+            <Crown size={20} className="text-[#D30038]" />
           </button>
         </div>
       </div>
 
-      {/* 🔥 BOTTOM NAVIGATION */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#0B0F19] border-t border-slate-800 pb-safe">
-        <div className="flex justify-between items-center px-6 py-2.5 max-w-xl mx-auto">
-          <Link href="/" className="flex flex-col items-center gap-1 text-[#FF6B00]">
-            <Home size={20} />
+      {/* BOTTOM NAVIGATION */}
+      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070b14] border-t border-[#1f2937] pb-safe">
+        <div className="flex justify-between items-center px-6 py-2 max-w-xl mx-auto">
+          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
+            <Home size={22} strokeWidth={2.5} />
             <span className="text-[10px] font-bold">{t("home")}</span>
           </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <MessageCircle size={20} />
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <MessageCircle size={22} strokeWidth={2} />
             <span className="text-[10px] font-medium">{t("chat")}</span>
           </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <Sun size={20} />
+          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <Sun size={22} strokeWidth={2} />
             <span className="text-[10px] font-medium">{t("daily")}</span>
           </Link>
-          <Link href="/history" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <History size={20} />
+          <Link href="/history" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <History size={22} strokeWidth={2} />
             <span className="text-[10px] font-medium">{t("history")}</span>
           </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <User size={20} />
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+            <User size={22} strokeWidth={2} />
             <span className="text-[10px] font-medium">{t("profile")}</span>
           </Link>
         </div>
       </nav>
 
-      {/* 🔥 MODAL / POPUP FOR ALL REVIEWS (Jab "Aur Padhe" pe click hoga) */}
+      {/* 🔥 MODAL / POPUP FOR ALL REVIEWS (Click on "Aur Padhe") */}
       {selectedAstro && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl bg-[#1A2235] border border-slate-700 max-h-[80vh] flex flex-col animate-in slide-in-from-bottom-5">
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
+          <div className="w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl bg-[#121927] border-t sm:border border-[#1f2937] max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95">
             
             {/* Modal Header */}
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/50">
+            <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#1f2937]">
               <div className="flex items-center gap-3">
-                <img src={selectedAstro.image} alt={selectedAstro.name} className="h-10 w-10 rounded-full object-cover" />
+                <img src={selectedAstro.image} alt={selectedAstro.name} className="h-10 w-10 rounded-full object-cover border border-slate-600" />
                 <div>
                   <h3 className="font-bold text-[16px] text-white">{selectedAstro.name}</h3>
                   <p className="text-xs text-slate-400">{t("reviews")} ({selectedAstro.reviews.length})</p>
@@ -306,19 +309,19 @@ export default function HomePage() {
               </div>
               <button 
                 onClick={() => setSelectedAstro(null)}
-                className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                className="p-2 rounded-full bg-[#1f2937] text-slate-400 hover:text-white transition-colors"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Modal Body - All Reviews List */}
-            <div className="overflow-y-auto space-y-3.5 pr-1 scrollbar-hide">
+            {/* Modal Body - Scrollable List of Reviews */}
+            <div className="overflow-y-auto space-y-3 pr-1 scrollbar-hide">
               {selectedAstro.reviews.map((rev, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl bg-[#111827] border border-slate-800">
+                <div key={idx} className="p-3.5 rounded-xl bg-[#090d15] border border-[#1f2937]">
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-semibold text-[13px] text-slate-200">{rev.author}</span>
-                    <div className="flex gap-0.5 text-[#FF6B00]">
+                    <span className="font-bold text-[13px] text-slate-200">{rev.author}</span>
+                    <div className="flex gap-0.5 text-[#ff6b00]">
                       {[...Array(5)].map((_, i) => (
                         <Star key={i} size={12} fill={i < rev.rating ? "currentColor" : "none"} />
                       ))}
@@ -335,7 +338,7 @@ export default function HomePage() {
             <div className="pt-4 mt-2">
               <button 
                 onClick={() => setSelectedAstro(null)}
-                className="w-full py-3 rounded-xl font-bold bg-[#FF6B00] text-white active:scale-95 transition-transform"
+                className="w-full py-3 rounded-xl font-bold bg-[#ff6b00] text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
               >
                 Close
               </button>
