@@ -22,7 +22,6 @@ const LOADING_STEPS = [
   "Generating Vedic report..."
 ];
 
-// 🔥 Image Compress Karne Ka Function 🔥
 const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -62,7 +61,7 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
 };
 
 export default function FaceReadingPage() {
-  const { lang, theme } = useApp();
+  const { lang, theme } = useApp(); // 🔥 lang yahan se aa rahi hai
   const isDark = theme === "dark";
   const isHindi = lang === "hi";
   const isHinglish = lang === "hinglish";
@@ -78,11 +77,9 @@ export default function FaceReadingPage() {
 
   const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
 
-  // Premium Theme Colors
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-xl" : "border-orange-100 bg-white shadow-xl";
 
-  // Rotating Loading Text Effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (loading) {
@@ -143,6 +140,7 @@ export default function FaceReadingPage() {
 
         const formData = new FormData();
         formData.append("image", compressedFile);
+        formData.append("language", lang); // 🔥 NAYA: Language bhej rahe hain
 
         const res = await fetch("/api/face-reading", {
           method: "POST",
@@ -197,7 +195,6 @@ export default function FaceReadingPage() {
     <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         
-        {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
             <ArrowLeft size={18} />
@@ -209,7 +206,6 @@ export default function FaceReadingPage() {
           <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black text-emerald-500 border border-emerald-500/20">FREE</span>
         </header>
 
-        {/* ERROR MESSAGE */}
         {errorMsg && (
           <div className={`rounded-xl border p-4 flex items-start gap-3 animate-in fade-in ${isDark ? "border-red-900/50 bg-red-950/30" : "border-red-200 bg-red-50"}`}>
             <AlertCircle className={`shrink-0 mt-0.5 ${isDark ? "text-red-400" : "text-red-600"}`} size={20} />
@@ -220,7 +216,6 @@ export default function FaceReadingPage() {
           </div>
         )}
 
-        {/* UPLOAD SECTION */}
         {!photo && (
           <section className={`space-y-5 rounded-3xl border p-6 text-center ${cardClass}`}>
             <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-500/30`}>
@@ -243,7 +238,6 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* PREVIEW & LOADING SECTION */}
         {photo && (
           <section className={`space-y-4 rounded-3xl border p-6 ${cardClass}`}>
             <div className="flex flex-col items-center gap-4">
@@ -264,7 +258,6 @@ export default function FaceReadingPage() {
           </section>
         )}
 
-        {/* RESULT SECTION */}
         {result && !loading && (
           <section className={`space-y-5 rounded-3xl border-2 p-5 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${isDark ? "border-orange-900/30 bg-[#151E2E]" : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
             
