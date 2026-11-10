@@ -154,8 +154,7 @@ export default function HomePage() {
   }, [refresh]);
 
   return (
-    // 🔥 Full Screen Layout (No max-width restriction)
-    <main className="min-h-[100dvh] w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
+    <main className="min-h-[100dvh] w-full pb-40 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30">
       
       {/* HEADER (Full Width) */}
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
@@ -299,24 +298,26 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Bottom Section: Review Box */}
-                  <div className="mt-3 rounded-xl bg-[#0d131f] p-3 text-[12px] leading-relaxed border border-slate-800/60 w-full">
-                    <div className="flex items-center gap-0.5 mb-1.5">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={11} fill={i < firstReview.rating ? "#ff6b00" : "none"} className="text-[#ff6b00]" />
-                      ))}
-                      <span className="ml-1.5 font-bold text-slate-300">- {firstReview.author}</span>
+                  {/* Bottom Section: Reviews */}
+                  {firstReview && (
+                    <div className="mt-3 bg-[#0c111b] rounded-xl p-3 text-[11px] leading-relaxed text-slate-300 border border-slate-800/50">
+                      <div className="flex items-center gap-1 mb-1">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={10} 
+                            fill={i < firstReview.rating ? "#ff6b00" : "transparent"} 
+                            className={i < firstReview.rating ? "text-[#ff6b00]" : "text-slate-600"} 
+                          />
+                        ))}
+                        <span className="ml-1 font-semibold text-slate-400">- {firstReview.author}</span>
+                      </div>
+                      <p className="line-clamp-2">
+                        "{firstReview.text}" <span className="text-[#ff6b00] font-semibold ml-0.5 cursor-pointer">{t("readMore")}</span>
+                      </p>
                     </div>
-                    <p className="text-slate-300 font-medium">
-                      "{firstReview.text}"{" "}
-                      <button 
-                        onClick={() => setSelectedAstro(astro)} 
-                        className="text-[#ff6b00] font-bold hover:underline ml-1 cursor-pointer"
-                      >
-                        - {t("readMore")}
-                      </button>
-                    </p>
-                  </div>
+                  )}
+
                 </article>
               );
             })}
@@ -324,96 +325,46 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* BOTTOM STICKY BANNER (Full Width) */}
-      <div className="fixed bottom-[60px] left-0 right-0 z-40 px-3 pb-2 bg-gradient-to-t from-[#070b14] via-[#070b14]/90 to-transparent pt-6 pointer-events-none w-full">
-        <div className="w-full rounded-full bg-gradient-to-r from-[#F5156B] to-[#D30038] p-1.5 shadow-[0_4px_20px_rgba(245,21,107,0.3)] flex items-center justify-between pl-4 pr-1.5 border border-pink-500/30 pointer-events-auto">
+      {/* Sticky Bottom Banner (Pink) + Navigation Menu */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col">
+        
+        {/* Pink Banner */}
+        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-1.5 rounded-full">
-              <Crown size={16} className="text-white" />
-            </div>
-            <div>
-              <p className="text-[10px] font-bold text-pink-100">{t("stickyTitle")}</p>
-              <p className="text-[13px] font-black text-white">{t("stickySub")}</p>
-            </div>
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={16} className="text-white" />
+             </div>
+             <div>
+               <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
+               <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
+             </div>
           </div>
-          <button className="bg-white rounded-full h-9 w-9 flex items-center justify-center shadow-sm active:scale-95 transition-transform">
-            <Crown size={18} className="text-[#D30038]" />
-          </button>
+          <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
+               <Crown size={16} className="text-[#d81b60]" fill="#d81b60" />
+          </div>
         </div>
-      </div>
 
-      {/* BOTTOM NAVIGATION (Full Width) */}
-      <nav className="fixed bottom-0 left-0 right-0 z-40 bg-[#070b14] border-t border-slate-800 pb-safe w-full">
-        <div className="flex justify-between items-center px-6 py-2.5 w-full">
+        {/* Bottom Navigation Bar */}
+        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2 pb-5 px-2">
           <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-            <Home size={22} strokeWidth={2.5} />
+            <Home size={20} strokeWidth={2.5} />
             <span className="text-[10px] font-bold">{t("home")}</span>
           </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-            <MessageCircle size={22} strokeWidth={2} />
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <MessageCircle size={20} />
             <span className="text-[10px] font-medium">{t("chat")}</span>
           </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-            <Sun size={22} strokeWidth={2} />
+          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <Sun size={20} />
             <span className="text-[10px] font-medium">{t("daily")}</span>
           </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200">
-            <User size={22} strokeWidth={2} />
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <User size={20} />
             <span className="text-[10px] font-medium">{t("profile")}</span>
           </Link>
-        </div>
-      </nav>
+        </nav>
+      </div>
 
-      {/* 🔥 MODAL / POPUP FOR ALL REVIEWS */}
-      {selectedAstro && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
-          <div className="w-full rounded-t-3xl sm:rounded-3xl p-5 shadow-2xl bg-[#151d2c] border-t sm:border border-slate-700 max-h-[85vh] flex flex-col animate-in slide-in-from-bottom-5">
-            
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-700/60">
-              <div className="flex items-center gap-3">
-                <img src={selectedAstro.image} alt={selectedAstro.name} className="h-11 w-11 rounded-full object-cover border border-slate-600" />
-                <div>
-                  <h3 className="font-bold text-[16px] text-white">{selectedAstro.name}</h3>
-                  <p className="text-xs text-slate-400">{t("reviews")} ({selectedAstro.reviews.length})</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setSelectedAstro(null)}
-                className="p-2 rounded-full bg-slate-800 text-slate-400 hover:text-white"
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div className="overflow-y-auto space-y-3 pr-1 scrollbar-hide">
-              {selectedAstro.reviews.map((rev, idx) => (
-                <div key={idx} className="p-3.5 rounded-xl bg-[#0d131f] border border-slate-800">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="font-bold text-[13px] text-slate-200">{rev.author}</span>
-                    <div className="flex gap-0.5 text-[#ff6b00]">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={12} fill={i < rev.rating ? "currentColor" : "none"} />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-[13px] leading-relaxed text-slate-300 font-medium">
-                    "{rev.text}"
-                  </p>
-                </div>
-              ))}
-            </div>
-            
-            <div className="pt-4 mt-2">
-              <button 
-                onClick={() => setSelectedAstro(null)}
-                className="w-full py-3 rounded-xl font-bold bg-[#ff6b00] text-white shadow-lg active:scale-95 transition-transform"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
