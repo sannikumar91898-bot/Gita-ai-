@@ -2,25 +2,28 @@
 "use client";
 
 import { useRef, useState, useEffect, ChangeEvent } from "react";
-import { 
-  ArrowLeft, ScanFace, Loader2, MessageCircle, Upload, 
-  Star, AlertCircle, RefreshCw, CheckCircle2, ShieldAlert 
-} from "lucide-react";
+import { ArrowLeft, ScanFace, MessageCircle, Upload, Star, AlertCircle, RefreshCw, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
-type FaceResult = {
-  title: string;
-  insight: string;
-  hook: string;
-};
+type FaceResult = { title: string; insight: string; hook: string; };
 
-const LOADING_STEPS = [
-  "Scanning facial symmetry...",
-  "Analyzing planetary alignments...",
-  "Decoding destiny markers...",
-  "Generating Vedic report..."
-];
+// 🔥 Loading Text in 10 Languages
+const getLoadingSteps = (lang: string) => {
+  const steps: Record<string, string[]> = {
+    hi: ["चेहरे की बनावट स्कैन हो रही है...", "ग्रहों की स्थिति देखी जा रही है...", "भाग्य का विश्लेषण हो रहा है...", "रिपोर्ट तैयार हो रही है..."],
+    hinglish: ["Chehre ko scan kiya ja raha hai...", "Planets check kiye ja rahe hain...", "Bhagya decode ho raha hai...", "Report taiyaar ho rahi hai..."],
+    en: ["Scanning facial symmetry...", "Analyzing planetary alignments...", "Decoding destiny markers...", "Generating Vedic report..."],
+    te: ["ముఖం స్కాన్ అవుతోంది...", "గ్రహాల స్థితి విశ్లేషిస్తోంది...", "విధి విశ్లేషిస్తోంది...", "నివేదిక సిద్ధమవుతోంది..."],
+    ta: ["முகம் ஸ்கேன் செய்யப்படுகிறது...", "கிரக நிலைகள் ஆராயப்படுகிறது...", "விதி பகுப்பாய்வு செய்யப்படுகிறது...", "அறிக்கை தயாராகிறது..."],
+    kn: ["ಮುಖ ಸ್ಕ್ಯಾನ್ ಆಗುತ್ತಿದೆ...", "ಗ್ರಹಗಳ ಸ್ಥಿತಿ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ಭವಿಷ್ಯ ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ವರದಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..."],
+    bn: ["মুখ স্ক্যান হচ্ছে...", "গ্রহের অবস্থান বিশ্লেষণ হচ্ছে...", "ভাগ্য বিশ্লেষণ হচ্ছে...", "রিপোর্ট তৈরি হচ্ছে..."],
+    mr: ["चेहरा स्कॅन होत आहे...", "ग्रहांची स्थिती तपासत आहे...", "नशीब विश्लेषण करत आहे...", "अहवाल तयार होत आहे..."],
+    gu: ["ચહેરો સ્કેન થઈ રહ્યો છે...", "ગ્રહોની સ્થિતિ તપાસાઈ રહી છે...", "ભાગ્ય વિશ્લેષણ થઈ રહ્યું છે...", "રિપોર્ટ તૈયાર થઈ રહ્યો છે..."],
+    ml: ["മുഖം സ്കാൻ ചെയ്യുന്നു...", "ഗ്രഹങ്ങളുടെ സ്ഥിതി പരിശോധിക്കുന്നു...", "വിധി വിശകലനം ചെയ്യുന്നു...", "റിപ്പോർട്ട് തയ്യാറാക്കുന്നു..."],
+  };
+  return steps[lang] || steps["hinglish"];
+};
 
 const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
   return new Promise((resolve, reject) => {
@@ -31,8 +34,8 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
       img.src = event.target?.result as string;
       img.onload = () => {
         const canvas = document.createElement("canvas");
-        const scaleSize = maxWidth / img.width;
-        canvas.width = maxWidth;
+        const scaleSize = img.width > maxWidth ? maxWidth / img.width : 1;
+        canvas.width = img.width * scaleSize;
         canvas.height = img.height * scaleSize;
         const ctx = canvas.getContext("2d");
         if (!ctx) return reject("Canvas error");
@@ -40,15 +43,8 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
         canvas.toBlob(
           (blob) => {
-            if (blob) {
-              const compressedFile = new File([blob], file.name, {
-                type: "image/jpeg",
-                lastModified: Date.now(),
-              });
-              resolve(compressedFile);
-            } else {
-              reject("Compression failed");
-            }
+            if (blob) resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
+            else reject("Compression failed");
           },
           "image/jpeg",
           quality
@@ -61,36 +57,36 @@ const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise
 };
 
 export default function FaceReadingPage() {
-  const { lang, theme } = useApp(); // 🔥 lang yahan se aa rahi hai
+  const { lang, theme } = useApp();
   const isDark = theme === "dark";
-  const isHindi = lang === "hi";
-  const isHinglish = lang === "hinglish";
 
   const [photo, setPhoto] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState(LOADING_STEPS[0]);
+  const [loadingText, setLoadingText] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [result, setResult] = useState<FaceResult | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const t = (hi: string, hing: string, en: string) => isHindi ? hi : isHinglish ? hing : en;
+  const t = (hi: string, hing: string, en: string) => lang === "hi" ? hi : lang === "hinglish" ? hing : en;
 
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-xl" : "border-orange-100 bg-white shadow-xl";
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
+    const steps = getLoadingSteps(lang);
     if (loading) {
+      setLoadingText(steps[0]);
       let i = 0;
       interval = setInterval(() => {
-        i = (i + 1) % LOADING_STEPS.length;
-        setLoadingText(LOADING_STEPS[i]);
+        i = (i + 1) % steps.length;
+        setLoadingText(steps[i]);
       }, 2000);
     }
     return () => clearInterval(interval);
-  }, [loading]);
+  }, [loading, lang]);
 
   useEffect(() => {
     return () => { abortRef.current?.abort(); };
@@ -123,12 +119,6 @@ export default function FaceReadingPage() {
 
     const reader = new FileReader();
 
-    reader.onerror = () => {
-      setLoading(false);
-      setPhoto(null);
-      setErrorMsg(t("फोटो पढ़ने में समस्या हुई।", "Photo read karne mein problem hui.", "Unable to read image."));
-    };
-
     reader.onload = async () => {
       if (typeof reader.result !== "string") return;
 
@@ -140,7 +130,7 @@ export default function FaceReadingPage() {
 
         const formData = new FormData();
         formData.append("image", compressedFile);
-        formData.append("language", lang); // 🔥 NAYA: Language bhej rahe hain
+        formData.append("language", lang); 
 
         const res = await fetch("/api/face-reading", {
           method: "POST",
@@ -161,7 +151,6 @@ export default function FaceReadingPage() {
         }
 
         const r = data?.result;
-
         if (!data?.success || typeof r?.title !== "string" || typeof r?.insight !== "string" || typeof r?.hook !== "string") {
           throw new Error("Invalid response from AI service");
         }
@@ -170,12 +159,9 @@ export default function FaceReadingPage() {
 
       } catch (error: any) {
         if (error.name === "AbortError") return;
-        console.error("Face reading error:", error);
-        
-        setErrorMsg(error.message !== "Analysis failed" 
-          ? error.message 
-          : t("विश्लेषण विफल रहा। सर्वर से संपर्क नहीं हो पाया।", "Analysis failed. Server issue.", "Analysis failed. Server issue.")
-        );
+        setErrorMsg(error.message || "Analysis failed.");
+        setPhoto(null); // 🔥 Error par photo hata do
+        if (fileInputRef.current) fileInputRef.current.value = ""; // 🔥 Input reset kardo
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
@@ -216,7 +202,7 @@ export default function FaceReadingPage() {
           </div>
         )}
 
-        {!photo && (
+        {!photo && !loading && (
           <section className={`space-y-5 rounded-3xl border p-6 text-center ${cardClass}`}>
             <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-400 to-amber-600 text-white shadow-lg shadow-orange-500/30`}>
               <ScanFace size={48} className="opacity-90" />
@@ -243,16 +229,12 @@ export default function FaceReadingPage() {
             <div className="flex flex-col items-center gap-4">
               <div className="relative">
                 <img src={photo} alt="preview" className={`h-28 w-28 rounded-full border-4 object-cover shadow-lg ${loading ? "border-orange-500 animate-pulse" : "border-emerald-500"}`} />
-                {loading && (
-                  <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-orange-500 animate-spin"></div>
-                )}
+                {loading && <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-orange-500 animate-spin"></div>}
               </div>
-              
               <div className="text-center">
                 <p className={`text-base font-bold ${loading ? "text-orange-500 animate-pulse" : "text-emerald-500"}`}>
                   {loading ? loadingText : t("विश्लेषण पूरा हुआ", "Analysis Complete", "Analysis Complete")}
                 </p>
-                {loading && <p className={`text-xs mt-1 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("कृपया प्रतीक्षा करें...", "Please wait...", "Please wait...")}</p>}
               </div>
             </div>
           </section>
@@ -260,14 +242,11 @@ export default function FaceReadingPage() {
 
         {result && !loading && (
           <section className={`space-y-5 rounded-3xl border-2 p-5 sm:p-6 animate-in fade-in slide-in-from-bottom-4 duration-500 ${isDark ? "border-orange-900/30 bg-[#151E2E]" : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
-            
             <div className="flex items-center gap-2 border-b border-gray-200 dark:border-slate-700/50 pb-3">
               <Star className="text-amber-500" size={20} fill="currentColor" />
               <h2 className="text-lg font-black text-orange-500 uppercase tracking-wide">{result.title}</h2>
             </div>
-            
             <p className={`text-sm font-medium leading-7 ${isDark ? "text-slate-300" : "text-gray-800"}`}>{result.insight}</p>
-            
             <div className={`rounded-xl border p-4 relative overflow-hidden ${isDark ? "border-rose-900/50 bg-rose-950/30" : "border-red-200 bg-red-50 shadow-inner"}`}>
               <div className="absolute top-0 left-0 w-1 h-full bg-red-500"></div>
               <div className="flex items-start gap-2">
@@ -275,7 +254,6 @@ export default function FaceReadingPage() {
                 <p className={`text-xs font-bold leading-5 ${isDark ? "text-rose-200" : "text-red-800"}`}>{result.hook}</p>
               </div>
             </div>
-            
             <div className="space-y-3 pt-2">
               <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-red-500/30 transition-transform active:scale-[0.98] animate-pulse">
                 <MessageCircle size={18} /> {t("ज्योतिषी से बात करें — FREE", "Talk to Astrologer — FREE", "Talk to Astrologer — FREE")}
