@@ -26,7 +26,7 @@ const getPersonaDetails = (p: string) => {
 };
 
 function ChatPageContent() {
-  const { lang, setLanguage, me, refresh, loading, sessionError, theme } = useApp();
+  const { lang, setLanguage, me, refresh, loading, sessionError, theme, t } = useApp();
   const searchParams = useSearchParams();
 
   const [persona, setPersona] = useState("gita");
@@ -37,11 +37,11 @@ function ChatPageContent() {
   
   // Onboarding State
   const [showOnboarding, setShowOnboarding] = useState(true);
-  const [onboardStep, setOnboardStep] = useState(0); // 0: Lang, 1: Name, 2: Gender, 3: DOB, 4: Time, 5: Place
+  const [onboardStep, setOnboardStep] = useState(0); 
   const [draft, setDraft] = useState<Draft>(EMPTY_DRAFT);
   const [notSureTime, setNotSureTime] = useState(false);
-  const [hasConsent, setHasConsent] = useState(false); // 🔥 NAYA
-  const [sidebarOpen, setSidebarOpen] = useState(false); // 🔥 NAYA
+  const [hasConsent, setHasConsent] = useState(false); 
+  const [sidebarOpen, setSidebarOpen] = useState(false); 
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -52,7 +52,6 @@ function ChatPageContent() {
   const isDark = theme === "dark";
   const personaDetails = getPersonaDetails(persona);
 
-  // Check if user already has birth details
   useEffect(() => {
     if (me?.birth?.name) {
       setShowOnboarding(false);
@@ -71,18 +70,12 @@ function ChatPageContent() {
   }, [me]);
 
   const handleNextStep = () => {
-    if (onboardStep === 0) { setOnboardStep(1); } // Language to Name
+    if (onboardStep === 0) { setOnboardStep(1); } 
     else if (onboardStep === 1) { if(draft.name.length < 2) return; setOnboardStep(2); }
     else if (onboardStep === 2) { if(!draft.gender) return; setOnboardStep(3); }
     else if (onboardStep === 3) { if(!draft.dob) return; setOnboardStep(4); }
-    else if (onboardStep === 4) { 
-      if(!draft.time && !notSureTime) return; 
-      setOnboardStep(5); 
-    }
-    else if (onboardStep === 5) {
-      if(draft.place.length < 2 || !hasConsent) return;
-      finishOnboarding();
-    }
+    else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
+    else if (onboardStep === 5) { if(draft.place.length < 2 || !hasConsent) return; finishOnboarding(); }
   };
 
   const finishOnboarding = async () => {
@@ -93,17 +86,16 @@ function ChatPageContent() {
         headers: { "Content-Type": "application/json" }, 
         body: JSON.stringify({ 
           name: draft.name, 
-          gender: draft.gender, // 🔥 Send Gender
+          gender: draft.gender,
           dateOfBirth: draft.dob, 
           timeOfBirth: notSureTime ? "12:00" : draft.time, 
-          isTimeUnknown: notSureTime, // 🔥 Send Unknown Time
+          isTimeUnknown: notSureTime, 
           placeOfBirth: draft.place,
-          consent: hasConsent // 🔥 Send Consent
+          consent: hasConsent 
         }) 
       });
       
       if (!response.ok) throw new Error("Kundli failed");
-      
       await refresh(); 
       setShowOnboarding(false);
     } catch (error) {
@@ -113,7 +105,6 @@ function ChatPageContent() {
     }
   };
 
-  // --- Chat Logic ---
   useEffect(() => {
     if (showOnboarding || loading || !me?.user) return;
     setHistoryLoading(true); setMessages([]); conversationId.current = "";
@@ -126,8 +117,6 @@ function ChatPageContent() {
   }, [persona, loading, me?.user, showOnboarding]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, isLoading, imagePreview]);
-
-  const handleCopy = (id: string, text: string) => { navigator.clipboard.writeText(text); };
 
   const handleImageSelect = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -159,30 +148,28 @@ function ChatPageContent() {
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.message.content }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error. Please try again." }]);
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error." }]);
     } finally { setIsLoading(false); }
   }
 
   if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-yellow-500" size={32} /></div>;
 
   // ==========================================
-  // 🔥 PREMIUM ONBOARDING UI
+  // 🔥 PREMIUM ONBOARDING UI (With Translation)
   // ==========================================
   if (showOnboarding) {
     return (
       <div className={`min-h-[100dvh] flex flex-col px-6 py-8 ${isDark ? "bg-slate-900 text-white" : "bg-[#FEF8EF] text-gray-800"}`}>
         
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
           {onboardStep > 0 && (
             <button onClick={() => setOnboardStep(onboardStep - 1)} className="p-2 bg-gray-200/50 rounded-full">
               <ChevronLeft size={20} />
             </button>
           )}
-          <h1 className="text-xl font-bold">Enter Your Details</h1>
+          <h1 className="text-xl font-bold">{t("enterDetails") || "Enter Your Details"}</h1>
         </div>
 
-        {/* Progress Dots */}
         <div className="flex gap-2 mb-8">
           {[0, 1, 2, 3, 4, 5].map((s) => (
             <div key={s} className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${onboardStep >= s ? "bg-yellow-400 text-black" : "bg-gray-200 text-gray-400"}`}>
@@ -196,10 +183,9 @@ function ChatPageContent() {
           ))}
         </div>
 
-        {/* STEP 0: Language */}
         {onboardStep === 0 && (
           <div className="animate-in fade-in slide-in-from-bottom-4">
-            <h2 className="text-2xl font-bold mb-6">Choose your language</h2>
+            <h2 className="text-2xl font-bold mb-6">{t("chooseLanguage") || "Choose your language"}</h2>
             <div className="grid grid-cols-2 gap-3">
               {LANGUAGES.map(l => (
                 <button key={l.code} onClick={() => { setLanguage(l.code); setOnboardStep(1); }} 
@@ -212,21 +198,19 @@ function ChatPageContent() {
           </div>
         )}
 
-        {/* STEP 1: Name */}
         {onboardStep === 1 && (
           <div className="animate-in fade-in slide-in-from-right-4">
-            <h2 className="text-2xl font-bold mb-2">Hey there!</h2>
-            <p className="text-gray-500 mb-6">What is your name?</p>
+            <h2 className="text-2xl font-bold mb-2">{t("heyThere") || "Hey there!"}</h2>
+            <p className="text-gray-500 mb-6">{t("yourName") || "What is your name?"}</p>
             <input autoFocus value={draft.name} onChange={e => setDraft({...draft, name: e.target.value})} placeholder="Enter name" 
               className="w-full p-4 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg mb-6 text-black" />
-            <button onClick={handleNextStep} disabled={draft.name.length < 2} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+            <button onClick={handleNextStep} disabled={draft.name.length < 2} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">{t("next") || "Next"}</button>
           </div>
         )}
 
-        {/* STEP 2: Gender */}
         {onboardStep === 2 && (
           <div className="animate-in fade-in slide-in-from-right-4">
-            <h2 className="text-2xl font-bold mb-6">What is your gender?</h2>
+            <h2 className="text-2xl font-bold mb-6">{t("yourGender") || "What is your gender?"}</h2>
             <div className="flex justify-between gap-3 mb-8">
               {["Male", "Female", "Transgender"].map((g) => (
                 <button key={g} onClick={() => setDraft({...draft, gender: g})} 
@@ -238,41 +222,38 @@ function ChatPageContent() {
                 </button>
               ))}
             </div>
-            <button onClick={handleNextStep} disabled={!draft.gender} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+            <button onClick={handleNextStep} disabled={!draft.gender} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">{t("next") || "Next"}</button>
           </div>
         )}
 
-        {/* STEP 3: DOB */}
         {onboardStep === 3 && (
           <div className="animate-in fade-in slide-in-from-right-4 text-center">
-            <h2 className="text-2xl font-bold mb-8">Enter your birth date</h2>
+            <h2 className="text-2xl font-bold mb-8">{t("birthDate") || "Enter your birth date"}</h2>
             <input type="date" value={draft.dob} onChange={e => setDraft({...draft, dob: e.target.value})} 
               className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-8 text-black" />
-            <button onClick={handleNextStep} disabled={!draft.dob} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+            <button onClick={handleNextStep} disabled={!draft.dob} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">{t("next") || "Next"}</button>
           </div>
         )}
 
-        {/* STEP 4: Time */}
         {onboardStep === 4 && (
           <div className="animate-in fade-in slide-in-from-right-4 text-center">
-            <h2 className="text-2xl font-bold mb-8">Enter your birth time</h2>
+            <h2 className="text-2xl font-bold mb-8">{t("birthTime") || "Enter your birth time"}</h2>
             <input type="time" value={draft.time} onChange={e => setDraft({...draft, time: e.target.value})} disabled={notSureTime}
               className="w-full text-center text-3xl font-bold bg-transparent outline-none mb-4 disabled:opacity-30 text-black" />
             
             <label className="flex items-center justify-center gap-2 mb-8 cursor-pointer">
               <input type="checkbox" checked={notSureTime} onChange={e => setNotSureTime(e.target.checked)} className="w-5 h-5 accent-yellow-400" />
-              <span className="text-sm text-gray-600">Don't know my exact time of birth</span>
+              <span className="text-sm text-gray-600">{t("unknownTime") || "Don't know my exact time of birth"}</span>
             </label>
-            <button onClick={handleNextStep} disabled={!draft.time && !notSureTime} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">Next</button>
+            <button onClick={handleNextStep} disabled={!draft.time && !notSureTime} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50">{t("next") || "Next"}</button>
           </div>
         )}
 
-        {/* STEP 5: Place & Consent */}
         {onboardStep === 5 && (
           <div className="animate-in fade-in slide-in-from-right-4">
-            <h2 className="text-2xl font-bold mb-6">Where were you born?</h2>
+            <h2 className="text-2xl font-bold mb-6">{t("birthPlace") || "Where were you born?"}</h2>
             <div className="relative mb-6">
-              <input autoFocus value={draft.place} onChange={e => setDraft({...draft, place: e.target.value})} placeholder="Search city (e.g. Patna, Bihar)" 
+              <input autoFocus value={draft.place} onChange={e => setDraft({...draft, place: e.target.value})} placeholder={t("searchPlace") || "Search city (e.g. Patna, Bihar)"} 
                 className="w-full p-4 pl-12 rounded-xl border-2 border-gray-200 bg-white focus:border-yellow-400 outline-none text-lg text-black" />
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
             </div>
@@ -280,12 +261,12 @@ function ChatPageContent() {
             <label className="flex items-start gap-3 mb-8 cursor-pointer bg-white p-4 rounded-xl border border-gray-200">
               <input type="checkbox" checked={hasConsent} onChange={e => setHasConsent(e.target.checked)} className="mt-1 w-5 h-5 accent-yellow-400" />
               <span className="text-sm text-gray-600 text-left">
-                I consent to storing my birth details securely to generate my personal kundli and readings.
+                {t("consent") || "I consent to storing my birth details securely to generate my personal kundli and readings."}
               </span>
             </label>
 
             <button onClick={handleNextStep} disabled={draft.place.length < 2 || !hasConsent || isLoading} className="w-full py-4 rounded-xl bg-yellow-400 text-black font-bold text-lg disabled:opacity-50 flex justify-center items-center">
-              {isLoading ? <Sparkles className="animate-spin" /> : "Start chat with Astrologer"}
+              {isLoading ? <Sparkles className="animate-spin" /> : t("startChat") || "Start chat with Astrologer"}
             </button>
           </div>
         )}
@@ -300,7 +281,6 @@ function ChatPageContent() {
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
       
-      {/* 🔥 ADDED: History Sidebar */}
       <HistorySidebar 
         isOpen={sidebarOpen} 
         onClose={() => setSidebarOpen(false)} 
@@ -332,7 +312,6 @@ function ChatPageContent() {
               <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-[15px] shadow-sm ${
                 message.role === "user" ? "bg-yellow-400 text-black rounded-br-sm" : isDark ? "bg-slate-800 text-white border border-slate-700" : "bg-white text-gray-800 border border-gray-100"
               }`}>
-                {/* 🔥 ADDED: Image in Chat */}
                 {message.image && (
                   <div className="mb-2 overflow-hidden rounded-xl border border-black/10">
                     <img src={message.image} alt="User upload" className="max-w-[250px] max-h-[300px] object-cover w-full" />
@@ -350,7 +329,6 @@ function ChatPageContent() {
       <div className={`shrink-0 p-4 border-t ${isDark ? "bg-slate-900 border-slate-800" : "bg-white border-gray-100"}`}>
         <form onSubmit={sendToAi} className="flex flex-col gap-2 max-w-xl mx-auto">
           
-          {/* 🔥 ADDED: Image Preview Thumbnail */}
           {imagePreview && (
             <div className="px-2">
               <div className="relative inline-block">
@@ -362,11 +340,10 @@ function ChatPageContent() {
             </div>
           )}
 
-          {/* Input Bar */}
           <div className={`flex items-center gap-2 rounded-full border p-1.5 ${isDark ? "bg-slate-800 border-slate-700" : "bg-gray-50 border-gray-200"}`}>
             <button type="button" onClick={() => fileInputRef.current?.click()} className="p-3 text-gray-500 hover:text-yellow-500 transition"><ImageIcon size={20} /></button>
             <input type="file" hidden ref={fileInputRef} onChange={handleImageSelect} />
-            <input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask your question..." 
+            <input value={input} onChange={e => setInput(e.target.value)} placeholder={t("chatPlaceholder") || "Ask your question..."} 
               className={`flex-1 bg-transparent outline-none text-[15px] ${isDark ? "text-white placeholder-gray-500" : "text-black placeholder-gray-400"}`} />
             <button type="submit" disabled={(!input.trim() && !selectedImage) || isLoading} className="p-3 bg-yellow-400 text-black rounded-full disabled:opacity-50 hover:bg-yellow-500 transition"><Send size={18} /></button>
           </div>
