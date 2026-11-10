@@ -1,9 +1,19 @@
-export type Lang = "en" | "hi" | "hinglish";
+// i18n.ts
+
+// 🔥 10 भाषाओं का सपोर्ट
+export type Lang = "en" | "hi" | "hinglish" | "te" | "ta" | "kn" | "bn" | "mr" | "gu" | "ml";
 
 export const LANGUAGES: { code: Lang; label: string; native: string }[] = [
   { code: "hi", label: "Hindi", native: "हिन्दी" },
   { code: "hinglish", label: "Hinglish", native: "Hinglish" },
   { code: "en", label: "English", native: "English" },
+  { code: "te", label: "Telugu", native: "తెలుగు" },
+  { code: "ta", label: "Tamil", native: "தமிழ்" },
+  { code: "kn", label: "Kannada", native: "ಕನ್ನಡ" },
+  { code: "bn", label: "Bengali", native: "বাংলা" },
+  { code: "mr", label: "Marathi", native: "मराठी" },
+  { code: "gu", label: "Gujarati", native: "ગુજરાતી" },
+  { code: "ml", label: "Malayalam", native: "മലയാളം" },
 ];
 
 type Dict = Record<string, string>;
@@ -281,8 +291,59 @@ const hinglish: Dict = {
   fairUse: "Fair use: 120 messages/hour tak, taaki Gita sabke liye fast rahein.",
 };
 
-export const DICTS: Record<Lang, Dict> = { en, hi, hinglish };
+// 🔥 New Languages Dictionaries
+const te: Dict = {
+  appName: "గీత AI", tagline: "మీ వ్యక్తిగత AI జ్యోతిష్యుడు",
+  navHome: "హోమ్", navChat: "చాట్", navKundli: "కుండలి", navDaily: "డైలీ", navPalm: "పామ్", navRemedies: "పరిహారాలు", navSettings: "సెట్టింగ్స్",
+  chatCta: "మీ జ్యోతిష్యుడితో చాట్ చేయండి", chatPlaceholder: "గీతను ఏదైనా అడగండి…", send: "పంపండి", thinking: "గీత ఆలోచిస్తోంది…",
+  welcomeBack: "తిరిగి స్వాగతం", namaste: "నమస్తే", language: "ప్రాధాన్యత భాష"
+};
+
+const ta: Dict = {
+  appName: "கீதா AI", tagline: "உங்கள் தனிப்பட்ட AI ஜோதிடர்",
+  navHome: "முகப்பு", navChat: "அரட்டை", navKundli: "ஜாதகம்", navDaily: "தினசரி", navPalm: "கைரேகை", navRemedies: "பரிகாரங்கள்", navSettings: "அமைப்புகள்",
+  chatCta: "உங்கள் ஜோதிடரிடம் பேசுங்கள்", chatPlaceholder: "கீதாவிடம் எதையும் கேளுங்கள்…", send: "அனுப்பு", thinking: "கீதா யோசிக்கிறார்…",
+  welcomeBack: "மீண்டும் வருக", namaste: "வணக்கம்", language: "விருப்பமான மொழி"
+};
+
+const kn: Dict = {
+  appName: "ಗೀತಾ AI", tagline: "ನಿಮ್ಮ ವೈಯಕ್ತಿಕ AI ಜ್ಯೋತಿಷಿ",
+  navHome: "ಮುಖಪುಟ", navChat: "ಚಾಟ್", navKundli: "ಕುಂಡಲಿ", navDaily: "ದೈನಂದಿನ", navPalm: "ಹಸ್ತರೇಖೆ", navRemedies: "ಪರಿಹಾರಗಳು", navSettings: "ಸೆಟ್ಟಿಂಗ್ಸ್",
+  chatCta: "ನಿಮ್ಮ ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ", chatPlaceholder: "ಗೀತಾ ಅವರನ್ನು ಏನಾದರೂ ಕೇಳಿ…", send: "ಕಳುಹಿಸು", thinking: "ಗೀತಾ ಯೋಚಿಸುತ್ತಿದ್ದಾಳೆ…",
+  welcomeBack: "ಮತ್ತೆ ಸ್ವಾಗತ", namaste: "ನಮಸ್ತೆ", language: "ಆದ್ಯತೆಯ ಭಾಷೆ"
+};
+
+const bn: Dict = {
+  appName: "গীতা AI", tagline: "আপনার ব্যক্তিগত AI জ্যোতিষী",
+  navHome: "হোম", navChat: "চ্যাট", navKundli: "কুণ্ডলী", navDaily: "দৈনিক", navPalm: "হস্তরেখা", navRemedies: "প্রতিকার", navSettings: "সেটিংস",
+  chatCta: "আপনার জ্যোতিষীর সাথে চ্যাট করুন", chatPlaceholder: "গীতাকে যেকোনো কিছু জিজ্ঞাসা করুন…", send: "পাঠান", thinking: "গীতা ভাবছেন…",
+  welcomeBack: "স্বাগতম", namaste: "নমস্কার", language: "পছন্দের ভাষা"
+};
+
+const mr: Dict = {
+  appName: "गीता AI", tagline: "तुमचा वैयक्तिक AI ज्योतिषी",
+  navHome: "होम", navChat: "चॅट", navKundli: "कुंडली", navDaily: "दैनिक", navPalm: "हस्तरेषा", navRemedies: "उपाय", navSettings: "सेटिंग्ज",
+  chatCta: "तुमच्या ज्योतिषाशी चॅट करा", chatPlaceholder: "गीताला काहीही विचारा…", send: "पाठवा", thinking: "गीता विचार करत आहे…",
+  welcomeBack: "पुन्हा स्वागत आहे", namaste: "नमस्कार", language: "पसंतीची भाषा"
+};
+
+const gu: Dict = {
+  appName: "ગીતા AI", tagline: "તમારા અંગત AI જ્યોતિષી",
+  navHome: "હોમ", navChat: "ચેટ", navKundli: "કુંડળી", navDaily: "દૈનિક", navPalm: "હસ્તરેખા", navRemedies: "ઉપાય", navSettings: "સેટિંગ્સ",
+  chatCta: "તમારા જ્યોતિષી સાથે ચેટ કરો", chatPlaceholder: "ગીતાને કંઈપણ પૂછો…", send: "મોકલો", thinking: "ગીતા વિચારી રહી છે…",
+  welcomeBack: "પાછા સ્વાગત છે", namaste: "નમસ્તે", language: "પસંદગીની ભાષા"
+};
+
+const ml: Dict = {
+  appName: "ഗീത AI", tagline: "നിങ്ങളുടെ വ്യക്തിഗത AI ജ്യോതിഷി",
+  navHome: "ഹോം", navChat: "ചാറ്റ്", navKundli: "ജാതകം", navDaily: "പ്രതിദിനം", navPalm: "കൈരേഖ", navRemedies: "പരിഹാരങ്ങൾ", navSettings: "ക്രമീകരണങ്ങൾ",
+  chatCta: "നിങ്ങളുടെ ജ്യോതിഷിയുമായി ചാറ്റ് ചെയ്യുക", chatPlaceholder: "ഗീതയോട് എന്തും ചോദിക്കാം…", send: "അയക്കുക", thinking: "ഗീത ചിന്തിക്കുന്നു…",
+  welcomeBack: "വീണ്ടും സ്വാഗതം", namaste: "നമസ്കാരം", language: "ഇഷ്ടപ്പെട്ട ഭാഷ"
+};
+
+export const DICTS: Record<Lang, Dict> = { en, hi, hinglish, te, ta, kn, bn, mr, gu, ml };
 
 export function translate(lang: Lang, key: string): string {
+  // 🔥 Agar nayi bhasha me koi word nahi hai, toh English fallback use hoga
   return DICTS[lang]?.[key] ?? DICTS.en[key] ?? key;
 }
