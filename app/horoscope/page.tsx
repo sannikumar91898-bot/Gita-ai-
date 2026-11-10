@@ -1,93 +1,50 @@
 // app/horoscope/page.tsx
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft,
-  Sun,
-  Phone,
-  TriangleAlert,
-  Sparkles,
-  MessageCircle,
-  Star,
+  ArrowLeft, Sun, Phone, TriangleAlert, Sparkles, MessageCircle, Star, RefreshCw, Palette, Hash, Heart
 } from "lucide-react";
 import { useApp } from "../Providers";
 
-// 🔥 10 Language Translation Helper
+// 🔥 10 Language Translation Helper (UI Text)
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
-    hi: {
-      title: "राशिफल",
-      subtitle: "दैनिक ज्योतिषीय मार्गदर्शन",
-      warning: "🌸 राशिफल सामान्य मार्गदर्शन है। आपकी व्यक्तिगत कुंडली में छिपे दोष शारीरिक व आर्थिक संकट ला सकते हैं। सही समय पर उपाय जानने के लिए हमारे ज्योतिषी से बात करें।",
-      msgTitle: "आज का विशेष संदेश",
-      message: "आज का दिन आपके लिए भावनात्मक रूप से महत्वपूर्ण है। परिवार या रिश्तों में किसी बात को लेकर मन में उलझन हो सकती है। इसे अनदेखा न करें। अपनी कुंडली की सही जाँच के लिए ज्योतिषी से बात करें।",
-      cta: "ज्योतिषी से बात करें — पहली बात FREE",
-      trust1: "संतुष्ट यूज़र",
-      trust2: "रेटिंग",
-      trust3: "ज्योतिषी",
-      disclaimer: "© 2026 Astrologer App. यह प्लेटफ़ॉर्म प्राचीन वैदिक ज्योतिष के सिद्धांतों पर आधारित गणनाएँ प्रदर्शित करता है।",
-      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध",
-      stickySub: "अभी बात करें — पहली बातचीत FREE",
-      chat: "चैट"
-    },
-    hinglish: {
-      title: "Horoscope",
-      subtitle: "Daily Astrological Guidance",
-      warning: "🌸 Rashifal samanya margdarshan hai. Aapki vyaktigat kundli mein chhipe dosh sharirik va aarthik sankat la sakte hain. Sahi samay par upay jaanne ke liye hamare jyotishi se baat karein.",
-      msgTitle: "Aaj Ka Vishesh Sandesh",
-      message: "Aaj ka din aapke liye bhawnatmak roop se mahatvapurn hai. Parivaar ya rishton mein kisi baat ko lekar mann mein uljhan ho sakti hai. Ise andekha na karein. Apni kundli ki sahi jaanch ke liye jyotishi se baat karein.",
-      cta: "Jyotishi se baat karein — Pehli baat FREE",
-      trust1: "Happy Users",
-      trust2: "Rating",
-      trust3: "Astrologers",
-      disclaimer: "© 2026 Astrologer App. Yeh platform pracheen Vedic Jyotish ke siddhanton par aadharit gananayein pradarshit karta hai.",
-      stickyTitle: "Jyotishi • 24x7 Available",
-      stickySub: "Abhi baat karein — Pehli baatcheet FREE",
-      chat: "Chat"
-    },
-    en: {
-      title: "Horoscope",
-      subtitle: "Daily Astrological Guidance",
-      warning: "🌸 Horoscope is general guidance. Hidden doshas in your personal chart can bring physical and financial crisis. Talk to our astrologer to know the right remedy at the right time.",
-      msgTitle: "Today's Special Message",
-      message: "Today is emotionally significant for you. Some confusion might trouble your mind regarding family or relationships. Do not ignore this. Talk to our astrologer for an accurate Kundli reading.",
-      cta: "Talk to Astrologer — First chat FREE",
-      trust1: "Happy Users",
-      trust2: "Rating",
-      trust3: "Astrologers",
-      disclaimer: "© 2026 Astrologer App. This platform displays calculations based on ancient Vedic Astrology principles.",
-      stickyTitle: "Astrologers • 24x7 Available",
-      stickySub: "Talk now — First chat FREE",
-      chat: "Chat"
-    },
-    te: { title: "జాతకం", subtitle: "రోజువారీ జ్యోతిష్య మార్గదర్శకత్వం", warning: "🌸 జాతకం సాధారణ మార్గదర్శకత్వం. మీ వ్యక్తిగత కుండలిలో దాగి ఉన్న దోషాలు శారీరక మరియు ఆర్థిక సంక్షోభాన్ని తెస్తాయి. సరైన సమయంలో పరిహారం తెలుసుకోవడానికి మా జ్యోతిష్యుడిని సంప్రదించండి.", msgTitle: "నేటి ప్రత్యేక సందేశం", message: "ఈరోజు మీకు భావోద్వేగపరంగా ముఖ్యమైనది. కుటుంబం లేదా సంబంధాలలో ఏదో గందరగోళం మీ మనసును వేధించవచ్చు. దీన్ని విస్మరించవద్దు. ఖచ్చితమైన కుండలి పఠనం కోసం మా జ్యోతిష్యుడిని సంప్రదించండి.", cta: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ ఉచితం", trust1: "సంతృప్తి చెందిన యూజర్లు", trust2: "రేటింగ్", trust3: "జ్యోతిష్యులు", disclaimer: "© 2026 Astrologer App. ఈ ప్లాట్‌ఫారమ్ ప్రాచీన వేద జ్యోతిష్య సూత్రాల ఆధారంగా లెక్కలను ప్రదర్శిస్తుంది.", stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం", chat: "చాట్" },
-    ta: { title: "ராசிபலன்", subtitle: "தினசரி ஜோதிட வழிகாட்டுதல்", warning: "🌸 ராசிபலன் பொதுவான வழிகாட்டுதல். உங்கள் தனிப்பட்ட ஜாதகத்தில் மறைந்திருக்கும் தோஷங்கள் உடல் மற்றும் நிதி நெருக்கடியை ஏற்படுத்தும். சரியான நேரத்தில் பரிகாரம் அறிய எங்கள் ஜோதிடரை அணுகவும்.", msgTitle: "இன்றைய சிறப்பு செய்தி", message: "இன்று உங்களுக்கு உணர்வுபூர்வமாக முக்கியமானது. குடும்பம் அல்லது உறவுகளில் ஏதோ குழப்பம் உங்கள் மனதை பாதிக்கலாம். இதை புறக்கணிக்காதீர்கள். துல்லியமான ஜாதக வாசிப்புக்கு எங்கள் ஜோதிடரை அணுகவும்.", cta: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை இலவசம்", trust1: "மகிழ்ச்சியான பயனர்கள்", trust2: "மதிப்பீடு", trust3: "ஜோதிடர்கள்", disclaimer: "© 2026 Astrologer App. இந்த தளம் பண்டைய வேத ஜோதிட கொள்கைகளின் அடிப்படையில் கணக்கீடுகளைக் காட்டுகிறது.", stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்", chat: "அரட்டை" },
-    kn: { title: "ರಾಶಿಫಲ", subtitle: "ದೈನಂದಿನ ಜ್ಯೋತಿಷ್ಯ ಮಾರ್ಗದರ್ಶನ", warning: "🌸 ರಾಶಿಫಲ ಸಾಮಾನ್ಯ ಮಾರ್ಗದರ್ಶನ. ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕುಂಡಲಿಯಲ್ಲಿ ಅಡಗಿರುವ ದೋಷಗಳು ದೈಹಿಕ ಮತ್ತು ಆರ್ಥಿಕ ಬಿಕ್ಕಟ್ಟನ್ನು ತರಬಹುದು. ಸರಿಯಾದ ಸಮಯದಲ್ಲಿ ಪರಿಹಾರ ತಿಳಿಯಲು ನಮ್ಮ ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ.", msgTitle: "ಇಂದಿನ ವಿಶೇಷ ಸಂದೇಶ", message: "ಇಂದು ನಿಮಗೆ ಭಾವನಾತ್ಮಕವಾಗಿ ಮುಖ್ಯವಾಗಿದೆ. ಕುಟುಂಬ ಅಥವಾ ಸಂಬಂಧಗಳಲ್ಲಿ ಏನೋ ಗೊಂದಲ ನಿಮ್ಮ ಮನಸ್ಸನ್ನು ಕಾಡಬಹುದು. ಇದನ್ನು ನಿರ್ಲಕ್ಷಿಸಬೇಡಿ. ನಿಖರವಾದ ಕುಂಡಲಿ ಓದುವಿಕೆಗಾಗಿ ನಮ್ಮ ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ.", cta: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", trust1: "ಸಂತೃಪ್ತ ಬಳಕೆದಾರರು", trust2: "ರೇಟಿಂಗ್", trust3: "ಜ್ಯೋತಿಷಿಗಳು", disclaimer: "© 2026 Astrologer App. ಈ ವೇದಿಕೆಯು ಪ್ರಾಚೀನ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ತತ್ವಗಳ ಆಧಾರದ ಮೇಲೆ ಲೆಕ್ಕಾಚಾರಗಳನ್ನು ಪ್ರದರ್ಶಿಸುತ್ತದೆ.", stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chat: "ಚಾಟ್" },
-    bn: { title: "রাশিফল", subtitle: "দৈনিক জ্যোতিষ নির্দেশিকা", warning: "🌸 রাশিফল সাধারণ নির্দেশিকা। আপনার ব্যক্তিগত কুণ্ডলীতে লুকানো দোষ শারীরিক ও আর্থিক সংকট আনতে পারে। সঠিক সময়ে প্রতিকার জানতে আমাদের জ্যোতিষীর সাথে কথা বলুন।", msgTitle: "আজকের বিশেষ বার্তা", message: "আজ আপনার জন্য আবেগগতভাবে গুরুত্বপূর্ণ। পরিবার বা সম্পর্কে কিছু বিভ্রান্তি আপনার মনকে উদ্বিগ্ন করতে পারে। এটি উপেক্ষা করবেন না। সঠিক কুণ্ডলী পাঠের জন্য আমাদের জ্যোতিষীর সাথে কথা বলুন।", cta: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট ফ্রি", trust1: "সন্তুষ্ট ব্যবহারকারী", trust2: "রেটিং", trust3: "জ্যোতিষী", disclaimer: "© 2026 Astrologer App. এই প্ল্যাটফর্মটি প্রাচীন বৈদিক জ্যোতিষ নীতির উপর ভিত্তি করে গণনা প্রদর্শন করে।", stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি", chat: "চ্যাট" },
-    mr: { title: "राशीभविष्य", subtitle: "दैनिक ज्योतिष मार्गदर्शन", warning: "🌸 राशीभविष्य सामान्य मार्गदर्शन आहे. तुमच्या वैयक्तिक कुंडलीतील लपलेले दोष शारीरिक आणि आर्थिक संकट आणू शकतात. योग्य वेळी उपाय जाणून घेण्यासाठी आमच्या ज्योतिषाशी बोला.", msgTitle: "आजचा विशेष संदेश", message: "आजचा दिवस तुमच्यासाठी भावनिकदृष्ट्या महत्त्वाचा आहे. कुटुंब किंवा नात्यांमध्ये काही गोंधळ तुमच्या मनाला त्रास देऊ शकतो. याकडे दुर्लक्ष करू नका. अचूक कुंडली वाचनासाठी आमच्या ज्योतिषाशी बोला.", cta: "ज्योतिषाशी बोला — पहिली चॅट मोफत", trust1: "समाधानी वापरकर्ते", trust2: "रेटिंग", trust3: "ज्योतिषी", disclaimer: "© 2026 Astrologer App. हे व्यासपीठ प्राचीन वैदिक ज्योतिष तत्त्वांवर आधारित गणना दर्शवते.", stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत", chat: "चॅट" },
-    gu: { title: "રાશિફળ", subtitle: "દૈનિક જ્યોતિષ માર્ગદર્શન", warning: "🌸 રાશિફળ સામાન્ય માર્ગદર્શન છે. તમારી વ્યક્તિગત કુંડળીમાં છુપાયેલા દોષ શારીરિક અને આર્થિક કટોકટી લાવી શકે છે. યોગ્ય સમયે ઉપાય જાણવા માટે અમારા જ્યોતિષી સાથે વાત કરો.", msgTitle: "આજનો ખાસ સંદેશ", message: "આજનો દિવસ તમારા માટે ભાવનાત્મક રીતે મહત્વપૂર્ણ છે. પરિવાર અથવા સંબંધોમાં કંઈક ગૂંચવણ તમારા મનને પરેશાન કરી શકે છે. આને અવગણો નહીં. સચોટ કુંડળી વાંચન માટે અમારા જ્યોતિષી સાથે વાત કરો.", cta: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ મફત", trust1: "સંતુષ્ટ વપરાશકર્તાઓ", trust2: "રેટિંગ", trust3: "જ્યોતિષીઓ", disclaimer: "© 2026 Astrologer App. આ પ્લેટફોર્મ પ્રાચીન વૈદિક જ્યોતિષ સિદ્ધાંતોના આધારે ગણતરીઓ દર્શાવે છે.", stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત", chat: "ચેટ" },
-    ml: { title: "രാശിഫലം", subtitle: "ദൈനംദിന ജ്യോതിഷ മാർഗ്ഗനിർദ്ദേശം", warning: "🌸 രാശിഫലം പൊതുവായ മാർഗ്ഗനിർദ്ദേശമാണ്. നിങ്ങളുടെ വ്യക്തിഗത ജാതകത്തിലെ ഗുപ്തദോഷങ്ങൾ ശാരീരികവും സാമ്പത്തികവുമായ പ്രതിസന്ധികൾ ഉണ്ടാക്കാം. ശരിയായ സമയത്ത് പരിഹാരം അറിയാൻ ഞങ്ങളുടെ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", msgTitle: "ഇന്നത്തെ പ്രത്യേക സന്ദേശം", message: "ഇന്ന് നിങ്ങൾക്ക് വൈകാരികമായി പ്രധാനമാണ്. കുടുംബത്തിലോ ബന്ധങ്ങളിലോ എന്തെങ്കിലും ആശയക്കുഴപ്പം നിങ്ങളുടെ മനസ്സിനെ അലട്ടിയേക്കാം. ഇത് അവഗണിക്കരുത്. കൃത്യമായ ജാതക വായനയ്ക്കായി ഞങ്ങളുടെ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", cta: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", trust1: "സംതൃപ്തരായ ഉപയോക്താക്കൾ", trust2: "റേറ്റിംഗ്", trust3: "ജ്യോതിഷികൾ", disclaimer: "© 2026 Astrologer App. ഈ പ്ലാറ്റ്ഫോം പുരാതന വൈദിക ജ്യോതിഷ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ള കണക്കുകൂട്ടലുകൾ പ്രദർശിപ്പിക്കുന്നു.", stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", chat: "ചാറ്റ്" },
+    hi: { title: "दैनिक राशिफल", subtitle: "दैनिक ज्योतिषीय मार्गदर्शन", heroTitle: "दैनिक राशिफल", heroSub: "अपनी राशि चुनें और आज का मार्गदर्शन पाएं।", warning: "🌸 यह सामान्य रीडिंग है। आपकी असली कहानी आपकी व्यक्तिगत कुंडली में छिपी है — हमारी महिला ज्योतिषी से बात करें।", chooseSign: "अपनी राशि चुनें", viewBtn: "राशिफल देखें", yourZodiac: "आपकी राशि", guidance: "आज का मार्गदर्शन", luckyColor: "शुभ रंग", luckyNumber: "शुभ अंक", affirmation: "दैनिक संकल्प", gentleNote: "एक कोमल संदेश", noteDesc: "यह सामान्य रीडिंग है। आपकी असली कहानी आपकी व्यक्तिगत कुंडली में है — हमारी महिला ज्योतिषी से बात करें।", cta: "ज्योतिषी से बात करें — पहली बात FREE", stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "अभी बात करें — पहली बातचीत FREE", chat: "चैट" },
+    hinglish: { title: "Daily Horoscope", subtitle: "Daily Astrological Guidance", heroTitle: "Daily Horoscope", heroSub: "Select your zodiac sign and explore today's guidance.", warning: "🌸 This is a general reading. The real story is hidden in your personal chart — chat with our Female Astrologer.", chooseSign: "Choose Your Zodiac Sign", viewBtn: "View Horoscope", yourZodiac: "Your Zodiac", guidance: "Today's Guidance", luckyColor: "Lucky Colour", luckyNumber: "Lucky Number", affirmation: "Daily Affirmation", gentleNote: "A Gentle Note", noteDesc: "This is a general reading. Your real story lives in your personal chart — chat with our Female Astrologer.", cta: "Talk to Astrologer — First chat FREE", stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk now — First chat FREE", chat: "Chat" },
+    en: { title: "Daily Horoscope", subtitle: "Daily Astrological Guidance", heroTitle: "Daily Horoscope", heroSub: "Select your zodiac sign and explore today's guidance.", warning: "🌸 This is a general reading. The real story is hidden in your personal chart — chat with our Female Astrologer.", chooseSign: "Choose Your Zodiac Sign", viewBtn: "View Horoscope", yourZodiac: "Your Zodiac", guidance: "Today's Guidance", luckyColor: "Lucky Colour", luckyNumber: "Lucky Number", affirmation: "Daily Affirmation", gentleNote: "A Gentle Note", noteDesc: "This is a general reading. Your real story lives in your personal chart — chat with our Female Astrologer.", cta: "Talk to Astrologer — First chat FREE", stickyTitle: "Astrologer • 24x7 Available", stickySub: "Talk now — First chat FREE", chat: "Chat" },
+    te: { title: "దైనందిన జాతకం", subtitle: "రోజువారీ జ్యోతిష్య మార్గదర్శకత్వం", heroTitle: "దైనందిన జాతకం", heroSub: "మీ రాశి చిహ్నాన్ని ఎంచుకోండి మరియు నేటి మార్గదర్శకత్వాన్ని అన్వేషించండి.", warning: "🌸 ఇది సాధారణ పఠనం. నిజమైన కథ మీ వ్యక్తిగత జాతకంలో దాగి ఉంది — మా మహిళా జ్యోతిష్యురాలితో చాట్ చేయండి.", chooseSign: "మీ రాశి చిహ్నాన్ని ఎంచుకోండి", viewBtn: "జాతకం చూడండి", yourZodiac: "మీ రాశి", guidance: "నేటి మార్గదర్శకత్వం", luckyColor: "అదృష్ట రంగు", luckyNumber: "అదృష్ట సంఖ్య", affirmation: "దైనందిన సంకల్పం", gentleNote: "ఒక సున్నితమైన గమనిక", noteDesc: "ఇది సాధారణ పఠనం. నిజమైన కథ మీ వ్యక్తిగత జాతకంలో ఉంది — మా మహిళా జ్యోతిష్యురాలితో చాట్ చేయండి.", cta: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ ఉచితం", stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం", chat: "చాట్" },
+    ta: { title: "தினசரி ராசிபலன்", subtitle: "தினசரி ஜோதிட வழிகாட்டுதல்", heroTitle: "தினசரி ராசிபலன்", heroSub: "உங்கள் ராசி அடையாளத்தைத் தேர்ந்தெடுத்து இன்றைய வழிகாட்டுதலை அறியுங்கள்.", warning: "🌸 இது பொதுவான வாசிப்பு. உண்மையான கதை உங்கள் தனிப்பட்ட ஜாதகத்தில் மறைந்துள்ளது — எங்கள் பெண் ஜோதிடருடன் அரட்டையடிக்கவும்.", chooseSign: "உங்கள் ராசி அடையாளத்தைத் தேர்ந்தெடுக்கவும்", viewBtn: "ராசிபலனைப் பார்க்க", yourZodiac: "உங்கள் ராசி", guidance: "இன்றைய வழிகாட்டுதல்", luckyColor: "அதிர்ஷ்ட நிறம்", luckyNumber: "அதிர்ஷ்ட எண்", affirmation: "தினசரி உறுதிமொழி", gentleNote: "ஒரு மென்மையான குறிப்பு", noteDesc: "இது பொதுவான வாசிப்பு. உண்மையான கதை உங்கள் தனிப்பட்ட ஜாதகத்தில் உள்ளது — எங்கள் பெண் ஜோதிடருடன் அரட்டையடிக்கவும்.", cta: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை இலவசம்", stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்", chat: "அரட்டை" },
+    kn: { title: "ದೈನಂದಿನ ರಾಶಿಫಲ", subtitle: "ದೈನಂದಿನ ಜ್ಯೋತಿಷ್ಯ ಮಾರ್ಗದರ್ಶನ", heroTitle: "ದೈನಂದಿನ ರಾಶಿಫಲ", heroSub: "ನಿಮ್ಮ ರಾಶಿ ಚಿಹ್ನೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ ಮತ್ತು ಇಂದಿನ ಮಾರ್ಗದರ್ಶನವನ್ನು ಅನ್ವೇಷಿಸಿ.", warning: "🌸 ಇದು ಸಾಮಾನ್ಯ ಓದುವಿಕೆ. ನಿಜವಾದ ಕಥೆ ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕುಂಡಲಿಯಲ್ಲಿ ಅಡಗಿದೆ — ನಮ್ಮ ಮಹಿಳಾ ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ.", chooseSign: "ನಿಮ್ಮ ರಾಶಿ ಚಿಹ್ನೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ", viewBtn: "ರಾಶಿಫಲ ನೋಡಿ", yourZodiac: "ನಿಮ್ಮ ರಾಶಿ", guidance: "ಇಂದಿನ ಮಾರ್ಗದರ್ಶನ", luckyColor: "ಅದೃಷ್ಟದ ಬಣ್ಣ", luckyNumber: "ಅದೃಷ್ಟದ ಸಂಖ್ಯೆ", affirmation: "ದೈನಂದಿನ ಸಂಕಲ್ಪ", gentleNote: "ಒಂದು ಸೌಮ್ಯ ಟಿಪ್ಪಣಿ", noteDesc: "ಇದು ಸಾಮಾನ್ಯ ಓದುವಿಕೆ. ನಿಜವಾದ ಕಥೆ ನಿಮ್ಮ ವೈಯಕ್ತಿಕ ಕುಂಡಲಿಯಲ್ಲಿದೆ — ನಮ್ಮ ಮಹಿಳಾ ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ.", cta: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chat: "ಚಾಟ್" },
+    bn: { title: "দৈনিক রাশিফল", subtitle: "দৈনিক জ্যোতিষ নির্দেশিকা", heroTitle: "দৈনিক রাশিফল", heroSub: "আপনার রাশি চিহ্ন চয়ন করুন এবং আজকের নির্দেশিকা অন্বেষণ করুন।", warning: "🌸 এটি একটি সাধারণ পাঠ। আসল গল্প আপনার ব্যক্তিগত কুণ্ডলীতে লুকিয়ে আছে — আমাদের মহিলা জ্যোতিষীর সাথে চ্যাট করুন।", chooseSign: "আপনার রাশি চিহ্ন চয়ন করুন", viewBtn: "রাশিফল দেখুন", yourZodiac: "আপনার রাশি", guidance: "আজকের নির্দেশিকা", luckyColor: "শুভ রঙ", luckyNumber: "শুভ সংখ্যা", affirmation: "দৈনিক প্রতিজ্ঞা", gentleNote: "একটি মৃদু নোট", noteDesc: "এটি একটি সাধারণ পাঠ। আসল গল্প আপনার ব্যক্তিগত কুণ্ডলীতে রয়েছে — আমাদের মহিলা জ্যোতিষীর সাথে চ্যাট করুন।", cta: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট ফ্রি", stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি", chat: "চ্যাট" },
+    mr: { title: "दैनिक राशीभविष्य", subtitle: "दैनिक ज्योतिष मार्गदर्शन", heroTitle: "दैनिक राशीभविष्य", heroSub: "तुमची राशी निवडा आणि आजचे मार्गदर्शन एक्सप्लोर करा.", warning: "🌸 हे सामान्य वाचन आहे. खरी गोष्ट तुमच्या वैयक्तिक कुंडलीत लपलेली आहे — आमच्या महिला ज्योतिषाशी बोला.", chooseSign: "तुमची राशी निवडा", viewBtn: "राशीभविष्य पहा", yourZodiac: "तुमची राशी", guidance: "आजचे मार्गदर्शन", luckyColor: "शुभ रंग", luckyNumber: "शुभ अंक", affirmation: "दैनिक संकल्प", gentleNote: "एक सौम्य सूचना", noteDesc: "हे सामान्य वाचन आहे. खरी गोष्ट तुमच्या वैयक्तिक कुंडलीत आहे — आमच्या महिला ज्योतिषाशी बोला.", cta: "ज्योतिषाशी बोला — पहिली चॅट मोफत", stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत", chat: "चॅट" },
+    gu: { title: "દૈનિક રાશિફળ", subtitle: "દૈનિક જ્યોતિષ માર્ગદર્શન", heroTitle: "દૈનિક રાશિફળ", heroSub: "તમારી રાશિ પસંદ કરો અને આજનું માર્ગદર્શન શોધો.", warning: "🌸 આ સામાન્ય વાંચન છે. સાચી વાર્તા તમારી વ્યક્તિગત કુંડળીમાં છુપાયેલી છે — અમારી મહિલા જ્યોતિષી સાથે ચેટ કરો.", chooseSign: "તમારી રાશિ પસંદ કરો", viewBtn: "રાશિફળ જુઓ", yourZodiac: "તમારી રાશિ", guidance: "આજનું માર્ગદર્શન", luckyColor: "શુભ રંગ", luckyNumber: "શુભ અંક", affirmation: "દૈનિક સંકલ્પ", gentleNote: "એક નમ્ર નોંધ", noteDesc: "આ સામાન્ય વાંચન છે. સાચી વાર્તા તમારી વ્યક્તિગત કુંડળીમાં છે — અમારી મહિલા જ્યોતિષી સાથે ચેટ કરો.", cta: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ મફત", stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત", chat: "ચેટ" },
+    ml: { title: "ദൈനംദിന രാശിഫലം", subtitle: "ദൈനംദിന ജ്യോതിഷ മാർഗ്ഗനിർദ്ദേശം", heroTitle: "ദൈനംദിന രാശിഫലം", heroSub: "നിങ്ങളുടെ രാശി അടയാളം തിരഞ്ഞെടുത്ത് ഇന്നത്തെ മാർഗ്ഗനിർദ്ദേശം കണ്ടെത്തുക.", warning: "🌸 ഇതൊരു പൊതുവായ വായനയാണ്. യഥാർത്ഥ കഥ നിങ്ങളുടെ വ്യക്തിഗത ജാതകത്തിൽ ഒളിഞ്ഞിരിക്കുന്നു — ഞങ്ങളുടെ വനിതാ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", chooseSign: "നിങ്ങളുടെ രാശി അടയാളം തിരഞ്ഞെടുക്കുക", viewBtn: "രാശിഫലം കാണുക", yourZodiac: "നിങ്ങളുടെ രാശി", guidance: "ഇന്നത്തെ മാർഗ്ഗനിർദ്ദേശം", luckyColor: "ഭാഗ്യ നിറം", luckyNumber: "ഭാഗ്യ നമ്പർ", affirmation: "ദൈനംദിന സത്യവാങ്മൂലം", gentleNote: "ഒരു സൗമ്യമായ കുറിപ്പ്", noteDesc: "ഇതൊരു പൊതുവായ വായനയാണ്. യഥാർത്ഥ കഥ നിങ്ങളുടെ വ്യക്തിഗത ജാതകത്തിലുണ്ട് — ഞങ്ങളുടെ വനിതാ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", cta: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", chat: "ചാറ്റ്" },
   };
   return ui[lang]?.[key] || ui["en"][key];
 };
 
+// Zodiac Data (Generic for now to match screenshot)
+const ZODIAC_SIGNS = ["General", "Aries", "Taurus", "Gemini", "Cancer", "Leo", "Virgo", "Libra", "Scorpio", "Sagittarius", "Capricorn", "Aquarius", "Pisces"];
+
 export default function HoroscopePage() {
   const { lang, theme } = useApp();
   const isDark = theme === "dark";
+  const [selectedSign, setSelectedSign] = useState("General");
+  const [loading, setLoading] = useState(false);
 
   // Helper to get localized text
   const t = (key: string) => getUIText(lang, key);
 
   const pageClass = isDark ? "bg-[#0B0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151E2E] shadow-xl" : "border-orange-100 bg-white shadow-xl";
-  const mutedClass = isDark ? "text-slate-300" : "text-slate-600";
 
   return (
     <main className={`min-h-screen w-full px-4 pb-44 pt-5 ${pageClass}`}>
       <div className="mx-auto max-w-xl space-y-5">
         
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-orange-400 hover:bg-slate-700" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
             <ArrowLeft size={18} />
@@ -97,65 +54,119 @@ export default function HoroscopePage() {
               <Sun size={18} className="text-amber-500" />
               {t("title")}
             </h1>
-            <p className={`mt-0.5 text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
+            <p className={`mt-0.5 text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              {new Date().toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
           </div>
-          <span className="rounded-full bg-emerald-500/10 px-2.5 py-1 text-[10px] font-black text-emerald-500 border border-emerald-500/20">FREE</span>
+          <button onClick={() => { setLoading(true); setTimeout(() => setLoading(false), 500); }} className={`p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-gray-600"}`}>
+            <RefreshCw size={16} className={loading ? "animate-spin" : ""} />
+          </button>
         </header>
 
-        {/* ================= WARNING BOX ================= */}
-        <section className={`space-y-4 rounded-3xl border p-5 sm:p-6 ${cardClass}`}>
-          <div className={`rounded-2xl border p-4 relative overflow-hidden ${isDark ? "border-rose-900/50 bg-rose-950/20" : "border-red-200 bg-red-50"}`}>
-            <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
-            <p className={`flex items-start gap-2 text-sm font-bold leading-6 ${isDark ? "text-rose-300" : "text-red-800"}`}>
-              <TriangleAlert size={18} className="mt-0.5 shrink-0 text-rose-500" />
-              {t("warning")}
-            </p>
+        {/* HERO CARD */}
+        <section className="rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 p-6 text-white shadow-xl relative overflow-hidden">
+          <div className="absolute top-0 right-0 -mt-4 -mr-4 h-24 w-24 rounded-full bg-white/10 blur-2xl"></div>
+          <div className="absolute bottom-0 left-0 -mb-4 -ml-4 h-24 w-24 rounded-full bg-black/10 blur-2xl"></div>
+          <div className="relative z-10">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20 backdrop-blur-sm border border-white/30">
+              <Sparkles size={24} className="text-white" />
+            </div>
+            <h2 className="text-2xl font-black mb-1">{t("heroTitle")}</h2>
+            <p className="text-sm font-medium text-orange-50">{t("heroSub")}</p>
           </div>
-
-          {/* Today's message */}
-          <div className={`rounded-2xl border p-5 ${isDark ? "border-slate-700 bg-slate-800/30" : "border-orange-200 bg-white shadow-sm"}`}>
-            <h3 className="mb-3 flex items-center gap-1.5 text-sm font-black text-orange-500 uppercase tracking-wide">
-              <Sparkles size={16} />
-              {t("msgTitle")}
-            </h3>
-            <p className={`text-sm leading-7 font-medium ${mutedClass}`}>
-              {t("message")}
-            </p>
-          </div>
-
-          {/* CTA inside card */}
-          <Link
-            href="/chat"
-            className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-rose-600 via-red-500 to-rose-600 px-4 py-4 text-sm font-black text-white shadow-lg shadow-rose-500/30 transition-transform active:scale-[0.98] animate-pulse"
-          >
-            <MessageCircle size={18} />
-            {t("cta")}
-          </Link>
         </section>
 
-        {/* ================= TRUST STRIP ================= */}
-        <div className={`grid grid-cols-3 gap-2 rounded-2xl border p-4 text-center ${cardClass}`}>
-          <div>
-            <p className="text-base font-black text-orange-500">50K+</p>
-            <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("trust1")}</p>
+        {/* WARNING BOX */}
+        <div className={`rounded-2xl border p-4 relative overflow-hidden ${isDark ? "border-rose-900/50 bg-rose-950/20" : "border-red-200 bg-red-50"}`}>
+          <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
+          <p className={`flex items-start gap-2 text-xs font-bold leading-5 ${isDark ? "text-rose-300" : "text-red-800"}`}>
+            <TriangleAlert size={16} className="mt-0.5 shrink-0 text-rose-500" />
+            {t("warning")}
+          </p>
+        </div>
+
+        {/* ZODIAC SELECTOR */}
+        <div className={`rounded-3xl border p-5 ${cardClass}`}>
+          <label className={`text-sm font-bold mb-2 block ${isDark ? "text-slate-300" : "text-gray-700"}`}>{t("chooseSign")}</label>
+          <select 
+            value={selectedSign} 
+            onChange={(e) => setSelectedSign(e.target.value)}
+            className={`w-full rounded-xl border px-4 py-3.5 text-sm font-semibold outline-none transition-all appearance-none cursor-pointer ${isDark ? "border-slate-700 bg-slate-800/50 text-white focus:border-orange-500" : "border-gray-200 bg-gray-50 text-slate-900 focus:border-orange-400"}`}
+          >
+            {ZODIAC_SIGNS.map(sign => <option key={sign} value={sign}>{sign}</option>)}
+          </select>
+          
+          <button className="w-full mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 px-4 py-3.5 text-sm font-black text-white shadow-lg shadow-orange-500/20 active:scale-[0.98] transition-transform">
+            <RefreshCw size={16} /> {t("viewBtn")}
+          </button>
+        </div>
+
+        {/* RESULT CARD */}
+        <div className={`rounded-3xl border p-5 sm:p-6 ${cardClass}`}>
+          <div className="flex items-center justify-between mb-4 border-b border-gray-200 dark:border-slate-700/50 pb-3">
+            <div>
+              <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("yourZodiac")}</p>
+              <h3 className={`text-xl font-black ${isDark ? "text-white" : "text-slate-900"}`}>{selectedSign}</h3>
+            </div>
+            <div className={`p-2.5 rounded-full ${isDark ? "bg-amber-500/10 text-amber-500" : "bg-orange-50 text-orange-600"}`}>
+              <Sun size={22} />
+            </div>
           </div>
-          <div className={`border-x ${isDark ? "border-slate-700/50" : "border-gray-200"}`}>
-            <p className="text-base font-black text-orange-500">4.8★</p>
-            <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("trust2")}</p>
+
+          <h4 className="flex items-center gap-2 text-sm font-bold text-orange-500 mb-2">
+            <Sparkles size={16} /> {t("guidance")}
+          </h4>
+          <p className={`text-sm leading-7 mb-6 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+            Aaj ka din mixed rahega. Life ke kisi bhi area mein chal rahi dikkat ya duvidha ko avoid na karein. Humari experienced Jyotishi se consult kar sahi guidance payein.
+          </p>
+
+          {/* LUCKY COLOR & NUMBER */}
+          <div className="space-y-3 mb-6">
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border ${isDark ? "border-slate-700/50 bg-slate-800/30" : "border-gray-100 bg-gray-50"}`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDark ? "bg-amber-500/20 text-amber-500" : "bg-orange-100 text-orange-600"}`}>
+                <Palette size={18} />
+              </div>
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("luckyColor")}</p>
+                <p className={`text-sm font-black ${isDark ? "text-amber-400" : "text-amber-600"}`}>Peela (Yellow)</p>
+              </div>
+            </div>
+            
+            <div className={`flex items-center gap-3 p-4 rounded-2xl border ${isDark ? "border-slate-700/50 bg-slate-800/30" : "border-gray-100 bg-gray-50"}`}>
+              <div className={`h-10 w-10 rounded-full flex items-center justify-center ${isDark ? "bg-amber-500/20 text-amber-500" : "bg-orange-100 text-orange-600"}`}>
+                <Hash size={18} />
+              </div>
+              <div>
+                <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("luckyNumber")}</p>
+                <p className={`text-sm font-black ${isDark ? "text-amber-400" : "text-amber-600"}`}>7</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p className="text-base font-black text-orange-500">24x7</p>
-            <p className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("trust3")}</p>
+
+          {/* AFFIRMATION */}
+          <div className={`rounded-2xl border p-4 ${isDark ? "border-amber-900/30 bg-amber-950/20" : "border-orange-200 bg-orange-50"}`}>
+            <h4 className={`flex items-center gap-2 text-xs font-bold mb-1.5 ${isDark ? "text-amber-500" : "text-orange-700"}`}>
+              <Heart size={14} /> {t("affirmation")}
+            </h4>
+            <p className={`text-sm font-medium italic ${isDark ? "text-amber-200/80" : "text-orange-900"}`}>
+              "Shanti mann mein hai, bahar nahi."
+            </p>
+          </div>
+
+          {/* GENTLE NOTE */}
+          <div className={`mt-6 rounded-2xl border p-4 ${isDark ? "border-rose-900/30 bg-rose-950/20" : "border-red-100 bg-red-50"}`}>
+            <h4 className={`flex items-center gap-2 text-xs font-bold mb-1 ${isDark ? "text-rose-400" : "text-red-700"}`}>
+              <Heart size={12} className="fill-current" /> {t("gentleNote")}
+            </h4>
+            <p className={`text-xs font-medium leading-5 ${isDark ? "text-rose-200/70" : "text-red-800/80"}`}>
+              {t("noteDesc")}
+            </p>
           </div>
         </div>
 
-        {/* ================= DISCLAIMER ================= */}
-        <p className={`px-6 text-center text-[9px] leading-3 select-none tracking-wide ${isDark ? "text-slate-600" : "text-gray-400"}`}>
-          {t("disclaimer")}
-        </p>
       </div>
 
-      {/* ================= STICKY CTA → /chat ================= */}
+      {/* STICKY CTA */}
       <Link
         href="/chat"
         className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between gap-3 bg-gradient-to-r from-rose-700 via-red-600 to-rose-700 px-4 py-3.5 text-white shadow-[0_-10px_30px_rgba(0,0,0,0.3)] animate-in slide-in-from-bottom-full"
