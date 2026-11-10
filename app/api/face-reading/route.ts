@@ -37,7 +37,16 @@ export async function POST(request: Request) {
     const imageFile = formData.get("image") as File | null;
     const language = (formData.get("language") as string) || "hinglish";
 
-    if (!imageFile) return NextResponse.json({ error: "Missing image" }, { status: 400 });
+    // 🔥 BACKEND VALIDATION (Security)
+    if (!imageFile || imageFile.size === 0) {
+      return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
+    }
+    if (imageFile.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: "INVALID_IMAGE", message: "Image must be under 10MB." }, { status: 400 });
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(imageFile.type)) {
+      return NextResponse.json({ error: "INVALID_IMAGE", message: "Only JPG, PNG or WEBP are supported." }, { status: 400 });
+    }
 
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
@@ -46,35 +55,39 @@ export async function POST(request: Request) {
     If no clear human face is visible, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
     Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
     
-    LANGUAGE RULES: ${getLanguageInstruction(language)}
-    Output ONLY raw JSON, no markdown formatting.`;
+    LANGUAGE RULES: ${getLanguageInstruction(language)}`;
 
     let result: any = null;
 
+    // 1. Try Modal Vision
     if (modalClient) {
       try {
         const completion = await modalClient.chat.completions.create({
           model: "Qwen/Qwen3.6-27B", 
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
+          response_format: { type: "json_object" }, // 🔥 Force JSON
         });
-        const text = completion.choices[0]?.message?.content || "";
+        const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
       } catch (err) {
         console.warn("Modal failed, trying Groq...", err);
       }
     }
 
+    // 2. Fallback to Groq Vision
     if (!result) {
       try {
         const completion = await groqClient.chat.completions.create({
-          model: "qwen/qwen3.6-27b",
+          model: "llama-3.2-11b-vision-preview",
           messages: [{ role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }] }],
           temperature: 0.4,
+          response_format: { type: "json_object" },
         });
-        const text = completion.choices[0]?.message?.content || "";
+        const text = completion.choices[0]?.message?.content || "{}";
         result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
       } catch (err) {
+        console.error("Groq also failed:", err);
         return NextResponse.json({ error: "AI_ERROR", message: "AI server is busy." }, { status: 500 });
       }
     }
@@ -91,6 +104,7 @@ export async function POST(request: Request) {
     });
 
   } catch (error: any) {
+    console.error("Face Reading API Error:", error);
     return NextResponse.json({ error: "AI_ERROR", message: "Server error." }, { status: 500 });
   }
 }
