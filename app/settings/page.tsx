@@ -15,7 +15,7 @@ export default function ProfilePage() {
   const [time, setTime] = useState("14:25");
   const [place, setPlace] = useState("");
 
-  // 🔥 10 Language Translation Helper (Bottom Nav ke saath)
+  // 🔥 10 Language Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: { title: "प्रोफाइल एडिट करें", selectAvatar: "अपना अवतार चुनें", name: "नाम", gender: "लिंग", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", cityPlaceholder: "शहर का नाम", save: "प्रोफाइल सेव करें", male: "पुरुष", female: "महिला", other: "अन्य", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल" },
@@ -37,91 +37,119 @@ export default function ProfilePage() {
   };
 
   return (
-    // 🔥 pb-32 lagaya hai taaki form bottom nav ke piche na chhupe
-    <main className="min-h-screen w-full bg-[#070b14] text-slate-100 font-sans pb-32 px-2">
+    // 🔥 Premium Dark Theme Background
+    <main className="min-h-[100dvh] w-full bg-[#0A0F19] text-slate-100 font-sans pb-28">
       
-      {/* HEADER */}
-      <header className="flex items-center gap-4 px-2 py-4 w-full">
-        <Link href="/settings" className="p-2 rounded-full bg-[#151d2c] text-slate-300 hover:bg-[#1f2937] transition-colors">
-          <ArrowLeft size={20} />
-        </Link>
-        <h1 className="text-[17px] font-bold">{t("title")}</h1>
-      </header>
-
-      <div className="w-full space-y-6">
+      <div className="max-w-lg mx-auto w-full px-4 pt-6 space-y-6">
         
+        {/* HEADER (Matching Settings Page Premium Look) */}
+        <header className="bg-[#151d2c] rounded-2xl flex items-center p-3 border border-slate-800 shadow-md">
+          <Link href="/settings" className="p-2 rounded-full bg-[#0A0F19] text-slate-400 hover:text-white transition-colors">
+            <ArrowLeft size={20} />
+          </Link>
+          <h1 className="text-[15px] font-bold text-[#ff6b00] ml-4 tracking-wider uppercase">{t("title")}</h1>
+        </header>
+
         {/* AVATAR SECTION */}
         <div className="flex flex-col items-center justify-center pt-2">
           <div className="relative">
-            <div className="h-28 w-28 rounded-full bg-[#FBBF24] flex items-center justify-center overflow-hidden border-4 border-[#070b14] shadow-lg">
+            <div className="h-32 w-32 rounded-full bg-[#FBBF24] flex items-center justify-center overflow-hidden border-4 border-[#151d2c] shadow-xl">
                <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Sanni&backgroundColor=FBBF24" alt="Avatar" className="h-full w-full object-cover" />
             </div>
-            <div className="absolute bottom-0 right-0 h-9 w-9 rounded-full bg-[#151d2c] border-2 border-[#070b14] flex items-center justify-center cursor-pointer">
-              <Camera size={16} className="text-slate-300" />
+            <div className="absolute bottom-0 right-0 h-10 w-10 rounded-full bg-[#151d2c] border-2 border-[#0A0F19] flex items-center justify-center cursor-pointer shadow-lg">
+              <Camera size={18} className="text-slate-300" />
             </div>
           </div>
-          <p className="text-[12px] text-slate-400 mt-3 font-medium">{t("selectAvatar")}</p>
+          <p className="text-[12px] font-bold text-slate-400 mt-4 tracking-wide">{t("selectAvatar")}</p>
         </div>
 
-        {/* FORM SECTION */}
-        <div className="bg-[#0c111b] rounded-2xl p-4 sm:p-5 border border-slate-800 space-y-4 w-full">
+        {/* FORM SECTION (Premium Cards & Inputs) */}
+        <div className="bg-[#151d2c] rounded-2xl p-5 border border-slate-800 space-y-5 w-full shadow-lg">
           
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-400">{t("name")}</label>
-            <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full bg-[#151d2c] border border-slate-700 rounded-xl px-4 py-3 text-[14px] text-white focus:outline-none focus:border-[#ff6b00]" />
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("name")}</label>
+            <input 
+              type="text" 
+              value={name} 
+              onChange={(e) => setName(e.target.value)} 
+              className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-3.5 text-[15px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+            />
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-400">{t("gender")}</label>
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("gender")}</label>
             <div className="relative">
-              <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full bg-[#151d2c] border border-slate-700 rounded-xl px-4 py-3 text-[14px] text-white appearance-none focus:outline-none focus:border-[#ff6b00]">
+              <select 
+                value={gender} 
+                onChange={(e) => setGender(e.target.value)} 
+                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-3.5 text-[15px] font-medium text-white appearance-none focus:outline-none focus:border-[#ff6b00] transition-colors"
+              >
                 <option value="Male">{t("male")}</option>
                 <option value="Female">{t("female")}</option>
                 <option value="Other">{t("other")}</option>
               </select>
-              <ChevronDown size={16} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-400">{t("dob")}</label>
-              <input type="date" value={dob} onChange={(e) => setDob(e.target.value)} className="w-full bg-[#151d2c] border border-slate-700 rounded-xl px-3 py-3 text-[13px] text-white focus:outline-none focus:border-[#ff6b00]" />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("dob")}</label>
+              <input 
+                type="date" 
+                value={dob} 
+                onChange={(e) => setDob(e.target.value)} 
+                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-3.5 text-[14px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+              />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-semibold text-slate-400">{t("time")}</label>
-              <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className="w-full bg-[#151d2c] border border-slate-700 rounded-xl px-3 py-3 text-[13px] text-white focus:outline-none focus:border-[#ff6b00]" />
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("time")}</label>
+              <input 
+                type="time" 
+                value={time} 
+                onChange={(e) => setTime(e.target.value)} 
+                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-3.5 text-[14px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+              />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[11px] font-semibold text-slate-400">{t("place")}</label>
-            <input type="text" placeholder={t("cityPlaceholder")} value={place} onChange={(e) => setPlace(e.target.value)} className="w-full bg-[#151d2c] border border-slate-700 rounded-xl px-4 py-3 text-[14px] text-white focus:outline-none focus:border-[#ff6b00]" />
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("place")}</label>
+            <input 
+              type="text" 
+              placeholder={t("cityPlaceholder")} 
+              value={place} 
+              onChange={(e) => setPlace(e.target.value)} 
+              className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-3.5 text-[15px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+            />
           </div>
 
-          <button onClick={handleSave} className="w-full mt-2 bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold py-3.5 rounded-xl text-[14px] shadow-lg active:scale-95 transition-transform">
+          <button 
+            onClick={handleSave} 
+            className="w-full mt-2 bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold py-4 rounded-xl text-[15px] shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+          >
             {t("save")}
           </button>
         </div>
       </div>
 
-      {/* 🔥 BOTTOM NAVIGATION BAR (WAPAS JODA GAYA HAI) 🔥 */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2 pb-5 px-2 w-full">
+      {/* 🔥 BOTTOM NAVIGATION BAR (Fixed & Premium) */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
         <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <Home size={20} />
-          <span className="text-[10px] font-medium">{t("home")}</span>
+          <Home size={22} />
+          <span className="text-[11px] font-medium">{t("home")}</span>
         </Link>
         <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <MessageCircle size={20} />
-          <span className="text-[10px] font-medium">{t("chat")}</span>
+          <MessageCircle size={22} />
+          <span className="text-[11px] font-medium">{t("chat")}</span>
         </Link>
         <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <Sun size={20} />
-          <span className="text-[10px] font-medium">{t("daily")}</span>
+          <Sun size={22} />
+          <span className="text-[11px] font-medium">{t("daily")}</span>
         </Link>
         <Link href="/profile" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-          <User size={20} strokeWidth={2.5} />
-          <span className="text-[10px] font-bold">{t("profile")}</span>
+          <User size={22} strokeWidth={2.5} />
+          <span className="text-[11px] font-bold">{t("profile")}</span>
         </Link>
       </nav>
 
