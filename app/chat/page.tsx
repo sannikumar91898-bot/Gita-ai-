@@ -124,6 +124,7 @@ function ChatPageContent() {
     setSelectedImage(file); setImagePreview(URL.createObjectURL(file));
   };
 
+  // 🔥 FIXED: Proper Error Handling added here
   async function sendToAi(e?: FormEvent, text?: string) {
     e?.preventDefault();
     const msg = text || input.trim();
@@ -143,19 +144,26 @@ function ChatPageContent() {
 
       const response = await fetch("/api/chat", { method: "POST", body: formData });
       const data = await response.json();
+
+      // 🔥 Agar backend se error aaya (500, 400, 404) toh yahan handle hoga
+      if (!response.ok) {
+        const errorMsg = data.error || data.message || "Server error. Please try again.";
+        throw new Error(errorMsg);
+      }
       
       if (data.message) {
         setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: data.message.content }]);
       }
     } catch (error) {
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: "Server error." }]);
+      const errMsg = error instanceof Error ? error.message : "Network error. Please try again.";
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: "assistant", content: errMsg }]);
     } finally { setIsLoading(false); }
   }
 
   if (loading) return <div className="h-[100dvh] flex items-center justify-center bg-[#FEF8EF]"><Sparkles className="animate-spin text-yellow-500" size={32} /></div>;
 
   // ==========================================
-  // 🔥 PREMIUM ONBOARDING UI (With Translation)
+  // 🔥 PREMIUM ONBOARDING UI
   // ==========================================
   if (showOnboarding) {
     return (
@@ -276,7 +284,7 @@ function ChatPageContent() {
   }
 
   // ==========================================
-  // 💬 CHAT UI (After Onboarding)
+  // 💬 CHAT UI
   // ==========================================
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
