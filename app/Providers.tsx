@@ -2,14 +2,7 @@
 "use client";
 
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
+  createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode,
 } from "react";
 
 import { translate, type Lang } from "../i18n"; 
@@ -57,6 +50,8 @@ export type MeBirth = {
   dob: string;
   birthTime: string;
   birthPlace: string;
+  gender?: string | null;           // 🔥 FIXED
+  isBirthTimeUnknown?: boolean;     // 🔥 FIXED
 } | null;
 
 export type Me = {
@@ -97,7 +92,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // 1. Initial Load
   useEffect(() => {
     mountedRef.current = true;
-
     const savedLanguage = readSavedLanguage();
     const savedTheme = readSavedTheme();
 
@@ -105,35 +99,28 @@ export function AppProvider({ children }: { children: ReactNode }) {
       hasLocalLanguageRef.current = true;
       setLocalLang(savedLanguage);
     }
-
     setThemeState(savedTheme);
     languageLoadedRef.current = true;
 
-    return () => {
-      mountedRef.current = false;
-    };
+    return () => { mountedRef.current = false; };
   }, []);
 
   // 2. Update HTML Theme
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    try {
-      localStorage.setItem("gita_theme", theme);
-    } catch {}
+    try { localStorage.setItem("gita_theme", theme); } catch {}
   }, [theme]);
 
   const lang: Lang = isLang(localLang) ? localLang : "en";
 
-  // 🔥 3. Update HTML Lang Attribute (SEO Fix for all 10 languages)
+  // 🔥 3. Update HTML Lang Attribute
   useEffect(() => {
     document.documentElement.lang = lang;
   }, [lang]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
-    if (nextTheme === "dark" || nextTheme === "light") {
-      setThemeState(nextTheme);
-    }
+    if (nextTheme === "dark" || nextTheme === "light") setThemeState(nextTheme);
   }, []);
 
   const refresh = useCallback(async () => {
@@ -141,32 +128,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     refreshInProgressRef.current = true;
 
     try {
-      const response = await fetch("/api/me", {
-        method: "GET",
-        cache: "no-store",
-        headers: { Accept: "application/json" },
-      });
-
+      const response = await fetch("/api/me", { method: "GET", cache: "no-store", headers: { Accept: "application/json" } });
       if (!response.ok) throw new Error(`/api/me failed: ${response.status}`);
 
       let data = await response.json();
 
       if (!data?.user) {
-        const guestRes = await fetch("/api/auth/guest", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json" },
-        });
-
+        const guestRes = await fetch("/api/auth/guest", { method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" } });
         if (!guestRes.ok) throw new Error("Failed to create guest session");
 
-        const meRes = await fetch("/api/me", {
-          method: "GET",
-          cache: "no-store",
-          headers: { Accept: "application/json" },
-        });
-
+        const meRes = await fetch("/api/me", { method: "GET", cache: "no-store", headers: { Accept: "application/json" } });
         if (!meRes.ok) throw new Error("Failed to fetch user after guest creation");
-        
         data = await meRes.json(); 
       }
 
@@ -185,10 +157,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       if (!languageLoadedRef.current) {
         await new Promise<void>((resolve) => {
-          const check = () => {
-            if (languageLoadedRef.current) resolve();
-            else queueMicrotask(check);
-          };
+          const check = () => { if (languageLoadedRef.current) resolve(); else queueMicrotask(check); };
           check();
         });
       }
@@ -203,23 +172,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setMe({
         user,
         entitlement: data.entitlement ?? null,
-        birth: data.birth ?? null,
+        birth: data.birth ?? null, // Ye ab naye fields ke saath aayega
         hasChart: data.hasChart === true,
         googleAuthConfigured: data.googleAuthConfigured === true,
         sessionError: false,
       });
       
     } catch (error) {
-      console.error("App session refresh failed:", error instanceof Error ? error.message : "Unknown error");
+      console.error("App session refresh failed:", error);
       if (mountedRef.current) {
-        setMe({
-          user: null,
-          entitlement: null,
-          birth: null,
-          hasChart: false,
-          googleAuthConfigured: false,
-          sessionError: true,
-        });
+        setMe({ user: null, entitlement: null, birth: null, hasChart: false, googleAuthConfigured: false, sessionError: true });
       }
     } finally {
       refreshInProgressRef.current = false;
@@ -227,32 +189,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  useEffect(() => { void refresh(); }, [refresh]);
 
   const setLanguage = useCallback(async (language: Lang) => {
     if (!isLang(language)) return;
-
     hasLocalLanguageRef.current = true;
     setLocalLang(language);
     try { localStorage.setItem("gita_lang", language); } catch {}
 
-    setMe((current) =>
-      current?.user ? { ...current, user: { ...current.user, language } } : current
-    );
+    setMe((current) => current?.user ? { ...current, user: { ...current.user, language } } : current);
 
     try {
-      const response = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({ language }),
-        cache: "no-store",
-      });
-      if (!response.ok) console.warn(`Language preference was not saved (${response.status}).`);
-    } catch (error) {
-      console.warn("Could not sync language preference:", error instanceof Error ? error.message : "Unknown error");
-    }
+      await fetch("/api/profile", { method: "PATCH", headers: { "Content-Type": "application/json", Accept: "application/json" }, body: JSON.stringify({ language }), cache: "no-store" });
+    } catch (error) { console.warn("Could not sync language preference:", error); }
   }, []);
 
   const setEntitlement = useCallback((entitlement: Entitlement) => {
@@ -262,18 +211,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const t = useCallback((key: string) => translate(lang, key), [lang]);
 
   const value = useMemo<Ctx>(
-    () => ({
-      me, 
-      loading, 
-      lang, 
-      t, 
-      setLanguage, 
-      refresh, 
-      setEntitlement, 
-      theme, 
-      setTheme,
-      sessionError: me?.sessionError ?? false,
-    }),
+    () => ({ me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme, sessionError: me?.sessionError ?? false }),
     [me, loading, lang, t, setLanguage, refresh, setEntitlement, theme, setTheme]
   );
 
