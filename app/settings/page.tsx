@@ -5,12 +5,12 @@ import { useState, useEffect } from "react";
 import { 
   ArrowLeft, User, Moon, Sun, Globe, ChevronRight, Home, Clock, 
   Wallet, Headphones, List, Scroll, Phone, HelpCircle, MessageCircle, 
-  X, LogOut, Shield, FileText, Mail 
+  X, LogOut, Shield, FileText, Mail, Check
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
-// 🔥 10 Languages import
-import { LANGUAGES } from "../i18n"; 
+// 🔥 FIX: Path ko ../../i18n kiya gaya hai
+import { LANGUAGES } from "../../i18n"; 
 
 const ZODIAC_AVATARS = [
   { id: "aries", name: "Aries", url: "https://cdn-icons-png.flaticon.com/512/1565/1565470.png" },
