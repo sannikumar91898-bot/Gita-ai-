@@ -1,3 +1,4 @@
+// app/page.tsx
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,7 +14,7 @@ const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
       appName: "गीता टॉक", specialOffer: "सर्वज्ञान असीम", freeChat: "पहली चैट फ्री 🎉", heroSub: "4 एक्सपर्ट ज्योतिषी • तुरंत जवाब • 100% गोपनीयता", startFreeChat: "फ्री चैट शुरू करें", 
-      freeTools: "फ्री टूल्स", kundli: "कुंडली", matching: "मिलान", horoscope: "राशिफल", panchang: "पंचांग", palmistry: "हस्तरेखा", gemstone: "रत्न", calSetting: "कैल सटिंग", 
+      freeTools: "फ्री टूल्स", kundli: "कुंडली", matching: "मिलान", horoscope: "राशिफल", panchang: "पंचांग", palmistry: "हस्तरेखा", gemstone: "रत्न", faceReading: "चेहरा वाचन", 
       talkTo: "ज्योतिषियों से बात करें", online: "ऑनलाइन", chatNow: "चैट करें", 
       home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", 
       readMore: "और पढ़ें...", readLess: "कम पढ़ें...", min: "मिनट",
@@ -21,7 +22,7 @@ const getUIText = (lang: string, key: string) => {
     },
     hinglish: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
-      freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Rashifal", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", calSetting: "Cal Setting", 
+      freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Rashifal", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", faceReading: "Face Reading", 
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
       readMore: "read more...", readLess: "read less...", min: "min",
@@ -29,7 +30,7 @@ const getUIText = (lang: string, key: string) => {
     },
     en: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
-      freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", calSetting: "Cal Setting", 
+      freeTools: "Free Tools", kundli: "Kundli", matching: "Matching", horoscope: "Horoscope", panchang: "Panchang", palmistry: "Palmistry", gemstone: "Gemstone", faceReading: "Face Reading", 
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
       readMore: "read more...", readLess: "read less...", min: "min",
@@ -37,7 +38,7 @@ const getUIText = (lang: string, key: string) => {
     },
     te: {
       appName: "గీతా టాక్", specialOffer: "ప్రత్యేక ఆఫర్", freeChat: "మొదటి చాట్ ఉచితం 🎉", heroSub: "4 నిపుణుల జ్యోతిష్యులు • తక్షణ సమాధానాలు • 100% గోప్యత", startFreeChat: "ఉచిత చాట్ ప్రారంభించండి", 
-      freeTools: "ఉచిత సాధనాలు", kundli: "కుండలి", matching: "మ్యాచింగ్", horoscope: "రాశిఫలం", panchang: "పంచాంగం", palmistry: "పామిస్ట్రీ", gemstone: "రత్నం", calSetting: "కాల్ సెట్టింగ్", 
+      freeTools: "ఉచిత సాధనాలు", kundli: "కుండలి", matching: "మ్యాచింగ్", horoscope: "రాశిఫలం", panchang: "పంచాంగం", palmistry: "పామిస్ట్రీ", gemstone: "రత్నం", faceReading: "ఫేస్ రీడింగ్", 
       talkTo: "జ్యోతిష్యులతో మాట్లాడండి", online: "ఆన్‌లైన్", chatNow: "చాట్ చేయండి", 
       home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", 
       readMore: "మరిన్ని చదవండి...", readLess: "తక్కువ చదవండి...", min: "నిమిషం",
@@ -45,7 +46,7 @@ const getUIText = (lang: string, key: string) => {
     },
     ta: {
       appName: "கீதா டாக்", specialOffer: "சிறப்பு சலுகை", freeChat: "முதல் அரட்டை இலவசம் 🎉", heroSub: "4 நிபுணர் ஜோதிடர்கள் • உடனடி பதில்கள் • 100% தனியுரிமை", startFreeChat: "இலவச அரட்டையைத் தொடங்கு", 
-      freeTools: "இலவச கருவிகள்", kundli: "ஜாதகம்", matching: "பொருத்தம்", horoscope: "ராசிபலன்", panchang: "பஞ்சாங்கம்", palmistry: "கைரேகை", gemstone: "ரத்தினம்", calSetting: "கால் அமைப்பு", 
+      freeTools: "இலவச கருவிகள்", kundli: "ஜாதகம்", matching: "பொருத்தம்", horoscope: "ராசிபலன்", panchang: "பஞ்சாங்கம்", palmistry: "கைரேகை", gemstone: "ரத்தினம்", faceReading: "முக படிப்பு", 
       talkTo: "ஜோதிடர்களிடம் பேசுங்கள்", online: "ஆன்லைன்", chatNow: "அரட்டை", 
       home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", 
       readMore: "மேலும் படிக்க...", readLess: "குறைவாக படிக்க...", min: "நிமிடம்",
@@ -53,7 +54,7 @@ const getUIText = (lang: string, key: string) => {
     },
     kn: {
       appName: "ಗೀತಾ ಟಾಕ್", specialOffer: "ವಿಶೇಷ ಕೊಡುಗೆ", freeChat: "ಮೊದಲ ಚಾಟ್ ಉಚಿತ 🎉", heroSub: "4 ತಜ್ಞ ಜ್ಯೋತಿಷಿಗಳು • ತ್ವರಿತ ಉತ್ತರಗಳು • 100% ಗೋಪ್ಯತೆ", startFreeChat: "ಉಚಿತ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ", 
-      freeTools: "ಉಚಿತ ಪರಿಕರಗಳು", kundli: "ಕುಂಡಲಿ", matching: "ಹೊಂದಾಣಿಕೆ", horoscope: "ರಾಶಿಫಲ", panchang: "ಪಂಚಾಂಗ", palmistry: "ಹಸ್ತರೇಖೆ", gemstone: "ರತ್ನ", calSetting: "ಕಾಲ್ ಸೆಟ್ಟಿಂಗ್", 
+      freeTools: "ಉಚಿತ ಪರಿಕರಗಳು", kundli: "ಕುಂಡಲಿ", matching: "ಹೊಂದಾಣಿಕೆ", horoscope: "ರಾಶಿಫಲ", panchang: "ಪಂಚಾಂಗ", palmistry: "ಹಸ್ತರೇಖೆ", gemstone: "ರತ್ನ", faceReading: "ಮುಖ ಓದುವಿಕೆ", 
       talkTo: "ಜ್ಯೋತಿಷಿಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ", online: "ಆನ್‌ಲೈನ್", chatNow: "ಚಾಟ್ ಮಾಡಿ", 
       home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", 
       readMore: "ಮತ್ತಷ್ಟು ಓದಿ...", readLess: "ಕಡಿಮೆ ಓದಿ...", min: "ನಿಮಿಷ",
@@ -61,7 +62,7 @@ const getUIText = (lang: string, key: string) => {
     },
     bn: {
       appName: "গীতা টক", specialOffer: "বিশেষ অফার", freeChat: "প্রথম চ্যাট ফ্রি 🎉", heroSub: "4 জন বিশেষজ্ঞ জ্যোতিষী • তাত্ক্ষণিক উত্তর • 100% গোপনীয়তা", startFreeChat: "ফ্রি চ্যাট শুরু করুন", 
-      freeTools: "ফ্রি টুলস", kundli: "কুণ্ডলী", matching: "ম্যাচিং", horoscope: "রাশিফল", panchang: "পঞ্জিকা", palmistry: "হস্তরেখা", gemstone: "রত্ন", calSetting: "ক্যাল সেটিং", 
+      freeTools: "ফ্রি টুলস", kundli: "কুণ্ডলী", matching: "ম্যাচিং", horoscope: "রাশিফল", panchang: "পঞ্জিকা", palmistry: "হস্তরেখা", gemstone: "রত্ন", faceReading: "মুখ পাঠ", 
       talkTo: "জ্যোতিষীদের সাথে কথা বলুন", online: "অনলাইন", chatNow: "চ্যাট করুন", 
       home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", 
       readMore: "আরও পড়ুন...", readLess: "কম পড়ুন...", min: "মিনিট",
@@ -69,7 +70,7 @@ const getUIText = (lang: string, key: string) => {
     },
     mr: {
       appName: "गीता टॉक", specialOffer: "विशेष ऑफर", freeChat: "पहिली चॅट मोफत 🎉", heroSub: "4 तज्ञ ज्योतिषी • त्वरित उत्तरे • 100% गोपनीयता", startFreeChat: "मोफत चॅट सुरू करा", 
-      freeTools: "मोफत साधने", kundli: "कुंडली", matching: "जुळणी", horoscope: "राशीभविष्य", panchang: "पंचांग", palmistry: "हस्तरेषा", gemstone: "रत्न", calSetting: "कॅल सेटिंग", 
+      freeTools: "मोफत साधने", kundli: "कुंडली", matching: "जुळणी", horoscope: "राशीभविष्य", panchang: "पंचांग", palmistry: "हस्तरेषा", gemstone: "रत्न", faceReading: "चेहरा वाचन", 
       talkTo: "ज्योतिषांशी बोला", online: "ऑनलाइन", chatNow: "चॅट करा", 
       home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", 
       readMore: "अधिक वाचा...", readLess: "कमी वाचा...", min: "मिनिट",
@@ -77,7 +78,7 @@ const getUIText = (lang: string, key: string) => {
     },
     gu: {
       appName: "ગીતા ટોક", specialOffer: "ખાસ ઑફર", freeChat: "પ્રથમ ચેટ મફત 🎉", heroSub: "4 નિષ્ણાત જ્યોતિષીઓ • તાત્કાલિક જવાબો • 100% ગોપનીયતા", startFreeChat: "મફત ચેટ શરૂ કરો", 
-      freeTools: "મફત સાધનો", kundli: "કુંડળી", matching: "મેચિંગ", horoscope: "રાશિફળ", panchang: "પંચાંગ", palmistry: "હસ્તરેખા", gemstone: "રત્ન", calSetting: "કેલ સેટિંગ", 
+      freeTools: "મફત સાધનો", kundli: "કુંડળી", matching: "મેચિંગ", horoscope: "રાશિફળ", panchang: "પંચાંગ", palmistry: "હસ્તરેખા", gemstone: "રત્ન", faceReading: "ચહેરો વાંચન", 
       talkTo: "જ્યોતિષીઓ સાથે વાત કરો", online: "ઓનલાઇન", chatNow: "ચેટ કરો", 
       home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", 
       readMore: "વધુ વાંચો...", readLess: "ઓછું વાંચો...", min: "મિનિટ",
@@ -85,7 +86,7 @@ const getUIText = (lang: string, key: string) => {
     },
     ml: {
       appName: "ഗീത ടോക്ക്", specialOffer: "പ്രത്യേക ഓഫർ", freeChat: "ആദ്യ ചാറ്റ് സൗജന്യം 🎉", heroSub: "4 വിദഗ്ദ്ധ ജ്യോതിഷികൾ • തൽക്ഷണ മറുപടികൾ • 100% സ്വകാര്യത", startFreeChat: "സൗജന്യ ചാറ്റ് ആരംഭിക്കുക", 
-      freeTools: "സൗജന്യ ടൂളുകൾ", kundli: "കുണ്ഡലി", matching: "മാച്ചിംഗ്", horoscope: "രാശിഫലം", panchang: "പഞ്ചാംഗം", palmistry: "കൈരേഖ", gemstone: "രത്നം", calSetting: "കാൽ സെറ്റിംഗ്", 
+      freeTools: "സൗജന്യ ടൂളുകൾ", kundli: "കുണ്ഡലി", matching: "മാച്ചിംഗ്", horoscope: "രാശിഫലം", panchang: "പഞ്ചാംഗം", palmistry: "കൈരേഖ", gemstone: "രത്നം", faceReading: "മുഖ വായന", 
       talkTo: "ജ്യോതിഷികളുമായി സംസാരിക്കുക", online: "ഓൺലൈൻ", chatNow: "ചാറ്റ് ചെയ്യുക", 
       home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", 
       readMore: "കൂടുതൽ വായിക്കുക...", readLess: "കുറച്ച് വായിക്കുക...", min: "മിനിറ്റ്",
@@ -118,7 +119,6 @@ export default function HomePage() {
   useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    // 🔥 min-h-screen lagaya hai taaki pure page ko cover kare
     <main className="min-h-screen w-full pb-36 bg-[#070b14] text-slate-100 font-sans selection:bg-orange-500/30 flex flex-col">
       
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 py-3.5 bg-[#070b14]/95 backdrop-blur-md border-b border-white/5 w-full">
@@ -137,13 +137,11 @@ export default function HomePage() {
         </div>
       </header>
 
-      {/* 🔥 Main Container: space-y-6 aur px-3 kiya gaya hai taaki sab bada aur faila hua dikhe */}
       <div className="w-full flex-1 space-y-6 px-3 py-5">
         
-        {/* HERO BANNER (Wapas Mandala ke saath) */}
+        {/* HERO BANNER */}
         <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-6 shadow-xl min-h-[170px] flex flex-col justify-center w-full">
           
-          {/* Background Mandala (Kundli Chakra) */}
           <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 w-[220px] h-[220px] opacity-70 pointer-events-none mix-blend-screen">
             <svg viewBox="0 0 100 100" fill="none" stroke="#FFD700" strokeWidth="0.8" className="drop-shadow-[0_0_10px_rgba(255,215,0,0.8)]">
               <circle cx="50" cy="50" r="45" strokeWidth="1" />
@@ -171,7 +169,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* FREE TOOLS (Icons Bade Kiye Gaye Hain) */}
+        {/* FREE TOOLS */}
         <section className="space-y-3.5 pt-1 w-full">
           <div className="flex items-center justify-between px-1">
             <div className="flex items-center gap-2">
@@ -191,7 +189,8 @@ export default function HomePage() {
               { name: t("panchang"), icon: CalendarDays, href: "/panchang" },
               { name: t("palmistry"), icon: Hand, href: "/palmistry" },
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
-              { name: t("calSetting"), icon: ScanFace, href: "/settings" },
+              // 🔥 FIXED: Cal Setting ki jagah Face Reading kar diya hai aur link /face-reading kar diya hai
+              { name: t("faceReading"), icon: ScanFace, href: "/face-reading" },
             ].map((tool, idx) => (
               <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 flex-1">
                 <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-transform hover:scale-105">
@@ -203,7 +202,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* ASTROLOGER LIST (Cards Bade Kiye Gaye Hain) */}
+        {/* ASTROLOGER LIST */}
         <section className="space-y-4 w-full">
           <div className="flex items-center justify-between mt-2 px-1">
             <div className="flex items-center gap-2">
@@ -271,13 +270,15 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Sticky Bottom Banner */}
+      {/* Sticky Bottom Banner & Nav (Completed) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-5 py-3 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-9 w-9 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10"><Crown size={18} className="text-white" /></div>
+             <div className="h-9 w-9 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={18} className="text-white" />
+             </div>
              <div>
-               <p className="text-[12px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
+               <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
                <p className="text-[14px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
              </div>
           </div>
@@ -286,10 +287,22 @@ export default function HomePage() {
           </div>
         </div>
         <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-6 px-2 w-full">
-          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]"><Home size={22} strokeWidth={2.5} /><span className="text-[11px] font-bold">{t("home")}</span></Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400"><MessageCircle size={22} /><span className="text-[11px] font-medium">{t("chat")}</span></Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400"><Sun size={22} /><span className="text-[11px] font-medium">{t("daily")}</span></Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400"><User size={22} /><span className="text-[11px] font-medium">{t("profile")}</span></Link>
+          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
+            <Home size={22} strokeWidth={2.5} />
+            <span className="text-[11px] font-bold">{t("home")}</span>
+          </Link>
+          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <MessageCircle size={22} />
+            <span className="text-[11px] font-medium">{t("chat")}</span>
+          </Link>
+          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <Sun size={22} />
+            <span className="text-[11px] font-medium">{t("daily")}</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+            <User size={22} />
+            <span className="text-[11px] font-medium">{t("profile")}</span>
+          </Link>
         </nav>
       </div>
     </main>
