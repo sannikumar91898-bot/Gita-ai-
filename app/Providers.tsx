@@ -17,10 +17,11 @@ import type { Entitlement } from "../entitlement";
 
 export type Theme = "dark" | "light";
 
-const SUPPORTED_LANGUAGES: readonly Lang[] = ["en", "hi", "hinglish"];
+// 🔥 10 भाषाओं का सपोर्ट
+export const SUPPORTED_LANGUAGES = ["en", "hi", "hinglish", "te", "ta", "kn", "bn", "mr", "gu", "ml"] as const;
 
 function isLang(value: unknown): value is Lang {
-  return value === "en" || value === "hi" || value === "hinglish";
+  return typeof value === "string" && (SUPPORTED_LANGUAGES as readonly string[]).includes(value);
 }
 
 function readSavedLanguage(): Lang | null {
@@ -124,10 +125,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const lang: Lang = isLang(localLang) ? localLang : "en";
 
-  // 🔥 3. Update HTML Lang Attribute (SEO Fix)
+  // 🔥 3. Update HTML Lang Attribute (SEO Fix for all 10 languages)
   useEffect(() => {
-    // Agar Hindi hai to 'hi', warna 'en' (Hinglish ke liye bhi en tag use hota hai SEO me)
-    document.documentElement.lang = lang === "hi" ? "hi" : "en";
+    document.documentElement.lang = lang;
   }, [lang]);
 
   const setTheme = useCallback((nextTheme: Theme) => {
