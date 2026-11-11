@@ -6,19 +6,47 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 SIRF MODAL (Koi Gemini, koi Groq nahi)
+/* -------------------------------------------------------------------------- */
+/*                     🔥 MODAL (PRIMARY) + GROQ (FALLBACK)                   */
+/* -------------------------------------------------------------------------- */
+
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
+const modalModel = process.env.MODAL_VISION_MODEL || "Qwen/Qwen3.6-27B";
 
-if (!modalUrl || !modalApiKey) {
-  console.error("[FATAL] MODAL_API_URL or MODAL_API_KEY is missing in Render!");
+const modalClient =
+  modalUrl && modalApiKey
+    ? new OpenAI({
+        baseURL: modalUrl,
+        apiKey: modalApiKey,
+        timeout: 60_000,
+        maxRetries: 1,
+      })
+    : null;
+
+// 🔥 GROQ FALLBACK — qwen/qwen3.8-27b (vision)
+const groqApiKey = process.env.GROQ_API_KEY;
+const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
+
+const groqClient = groqApiKey
+  ? new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: groqApiKey,
+      timeout: 60_000,
+      maxRetries: 1,
+    })
+  : null;
+
+if (!modalClient) {
+  console.warn("[palm] Modal not configured — will use Groq only.");
+}
+if (!groqClient) {
+  console.warn("[palm] Groq not configured — will use Modal only.");
 }
 
-const modalClient = new OpenAI({
-  baseURL: modalUrl || "http://localhost:8000/v1",
-  apiKey: modalApiKey || "dummy-key",
-  timeout: 60000, // 60 seconds timeout for image analysis
-});
+/* -------------------------------------------------------------------------- */
+/*                              HELPERS                                       */
+/* -------------------------------------------------------------------------- */
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -33,7 +61,6 @@ function getLanguageInstruction(lang: string): string {
   return map[lang] || map["hinglish"];
 }
 
-// 🔥 10 Language Psychological Marketing Message (FOMO)
 function getPsychologicalUnauthorizedMessage(lang: string): string {
   const map: Record<string, string> = {
     hi: "आपकी हथेली के राज अभी अनकहे हैं। सटीक हस्तरेखा विश्लेषण और अपने भविष्य की सच्चाई जानने के लिए कृपया लॉगिन या रजिस्टर करें।",
@@ -50,32 +77,154 @@ function getPsychologicalUnauthorizedMessage(lang: string): string {
   return map[lang] || map["en"];
 }
 
+function getAIFailureMessage(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "एआई सर्वर अभी व्यस्त है। कृपया 1 मिनट बाद पुनः प्रयास करें।",
+    hinglish: "AI server thoda busy hai. Kripya 1 minute baad try karein.",
+    en: "AI server is busy. Please try again in 1 minute.",
+    te: "AI సర్వర్ బిజీగా ఉంది. దయచేసి 1 నిమిషం తర్వాత మళ్లీ ప్రయత్నించండి.",
+    ta: "AI சர்வர் பிஸியாக உள்ளது. தயவுசெய்து 1 நிமிடம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+    kn: "AI ಸರ್ವರ್ ಬ್ಯುಸಿಯಾಗಿದೆ. ದಯವಿಟ್ಟು 1 ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    bn: "AI সার্ভার ব্যস্ত আছে। অনুগ্রহ করে 1 মিনিট পরে আবার চেষ্টা করুন।",
+    mr: "AI सर्व्हर व्यस्त आहे. कृपया 1 मिनिटानंतर पुन्हा प्रयत्न करा.",
+    gu: "AI સર્વર વ્યસ્ત છે. કૃપા કરીને 1 મિનિટ પછી ફરી પ્રયાસ કરો.",
+    ml: "AI സർവർ തിരക്കിലാണ്. ദയവായി 1 മിനിറ്റ് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
+  };
+  return map[lang] || map["en"];
+}
+
+function isModelNotFoundError(err: any): boolean {
+  if (!err) return false;
+  if (err.status === 404) return true;
+  const msg = String(err?.message || "").toLowerCase();
+  return (
+    msg.includes("404") ||
+    msg.includes("not found") ||
+    msg.includes("does not exist") ||
+    msg.includes("no such model") ||
+    msg.includes("invalid function call")
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         AI CALL (Modal → Groq)                             */
+/* -------------------------------------------------------------------------- */
+
+async function callVisionModel(
+  prompt: string,
+  imageBase64: string,
+  imageMime: string
+): Promise<{ text: string; used: "modal" | "groq" }> {
+  const messagesPayload: any[] = [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:${imageMime};base64,${imageBase64}` } },
+      ],
+    },
+  ];
+
+  // 1. Try Modal
+  if (modalClient) {
+    try {
+      console.log(`[palm] Trying Modal model: ${modalModel}`);
+      const completion = await modalClient.chat.completions.create({
+        model: modalModel,
+        messages: messagesPayload,
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
+      const text = completion.choices[0]?.message?.content || "";
+      if (text) return { text, used: "modal" };
+    } catch (err: any) {
+      console.error(
+        `[palm] Modal failed (${err?.status || "no-status"}):`,
+        err?.message
+      );
+    }
+  }
+
+  // 2. Fallback Groq qwen/qwen3.8-27b
+  if (groqClient) {
+    try {
+      console.log(`[palm] Falling back to Groq model: ${groqVisionModel}`);
+      const completion = await groqClient.chat.completions.create({
+        model: groqVisionModel,
+        messages: messagesPayload,
+        temperature: 0.4,
+        // Note: Groq supports json_object on some models; if it fails we retry without
+        response_format: { type: "json_object" },
+      });
+      const text = completion.choices[0]?.message?.content || "";
+      if (text) return { text, used: "groq" };
+    } catch (err: any) {
+      console.error(
+        `[palm] Groq failed (${err?.status || "no-status"}):`,
+        err?.message
+      );
+      // Retry Groq without response_format (some vision endpoints don't support it)
+      try {
+        const completion = await groqClient.chat.completions.create({
+          model: groqVisionModel,
+          messages: messagesPayload,
+          temperature: 0.4,
+        });
+        const text = completion.choices[0]?.message?.content || "";
+        if (text) return { text, used: "groq" };
+      } catch (retryErr: any) {
+        console.error("[palm] Groq retry failed:", retryErr?.message);
+      }
+    }
+  }
+
+  throw new Error("ALL_AI_PROVIDERS_FAILED");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              POST                                          */
+/* -------------------------------------------------------------------------- */
+
 export async function POST(request: Request) {
+  let language = "hinglish";
+
   try {
     const user = await getUser();
-    
-    // 🔥 Guest Protection (Psychological Marketing Hook)
+
+    // 🔥 Guest Protection
     if (!user || user.isGuest) {
-      return NextResponse.json({ 
-        code: "LOGIN_REQUIRED",
-        error: "Unauthorized",
-        message: getPsychologicalUnauthorizedMessage("hinglish") // Default hinglish, frontend can use 'language' if needed
-      }, { status: 401 });
+      return NextResponse.json(
+        {
+          code: "LOGIN_REQUIRED",
+          error: "Unauthorized",
+          message: getPsychologicalUnauthorizedMessage("hinglish"),
+        },
+        { status: 401 }
+      );
     }
 
     const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
-    const language = (formData.get("language") as string) || "hinglish";
+    language = (formData.get("language") as string) || "hinglish";
 
-    // Backend Validation
+    // Validation
     if (!imageFile || imageFile.size === 0) {
-      return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMAGE", message: "Missing image." },
+        { status: 400 }
+      );
     }
     if (imageFile.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "INVALID_IMAGE", message: "Image must be under 10MB." }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMAGE", message: "Image must be under 10MB." },
+        { status: 400 }
+      );
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(imageFile.type)) {
-      return NextResponse.json({ error: "INVALID_IMAGE", message: "Only JPG, PNG or WEBP are supported." }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMAGE", message: "Only JPG, PNG or WEBP are supported." },
+        { status: 400 }
+      );
     }
 
     const bytes = await imageFile.arrayBuffer();
@@ -86,62 +235,54 @@ export async function POST(request: Request) {
     Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
     LANGUAGE RULES: ${getLanguageInstruction(language)}`;
 
-    let result: any = null;
+    /* ----------------------------- AI Call ------------------------------- */
+    let aiText: string;
+    let usedProvider: "modal" | "groq";
 
-    // 🔥 CALL MODAL DIRECTLY
     try {
-      const completion = await modalClient.chat.completions.create({
-        model: "Qwen/Qwen3.6-27B", // Aapke Modal ka exact model name
-        messages: [
-          { 
-            role: "user", 
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }
-            ] 
-          }
-        ],
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-      });
-
-      const text = completion.choices[0]?.message?.content || "{}";
-      result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
-      
+      const out = await callVisionModel(prompt, base64Image, imageFile.type);
+      aiText = out.text;
+      usedProvider = out.used;
     } catch (err: any) {
-      console.error("=== MODAL API FAILED ===");
-      console.error("Error Name:", err.name);
-      console.error("Error Message:", err.message);
-      
-      // Agar URL galat hai ya endpoint dead hai
-      if (err.message?.includes("404")) {
-        return NextResponse.json({ 
-          error: "AI_ERROR", 
-          message: "Modal Endpoint nahi mila. Kripya check karein ki endpoint 'Running' state me hai ya nahi." 
-        }, { status: 500 });
-      }
-      
-      return NextResponse.json({ 
-        error: "AI_ERROR", 
-        message: "AI server is busy. Please try again." 
-      }, { status: 500 });
+      console.error("[palm] All AI providers failed:", err?.message);
+      return NextResponse.json(
+        { error: "AI_ERROR", message: getAIFailureMessage(language) },
+        { status: 500 }
+      );
     }
 
-    if (result.error === "INVALID_IMAGE") {
+    console.log(`[palm] Success via ${usedProvider}`);
+
+    /* ----------------------------- Parse JSON ---------------------------- */
+    let result: any = null;
+    try {
+      result = JSON.parse(aiText.replace(/```json/g, "").replace(/```/g, "").trim());
+    } catch (parseErr) {
+      console.error("[palm] JSON parse failed:", aiText.slice(0, 200));
+      return NextResponse.json(
+        { error: "AI_ERROR", message: getAIFailureMessage(language) },
+        { status: 500 }
+      );
+    }
+
+    if (result?.error === "INVALID_IMAGE") {
       return NextResponse.json(result, { status: 422 });
     }
 
     return NextResponse.json({
       success: true,
+      provider: usedProvider,
       result: {
-        title: result.title || "Palm Reading",
-        insight: result.insight || "Analysis complete.",
-        hook: result.hook || "A new change is coming."
-      }
+        title: result?.title || "Palm Reading",
+        insight: result?.insight || "Analysis complete.",
+        hook: result?.hook || "A new change is coming.",
+      },
     });
-
   } catch (error: any) {
-    console.error("Palm API Error:", error);
-    return NextResponse.json({ error: "AI_ERROR", message: "Server error." }, { status: 500 });
+    console.error("[palm] Unhandled error:", error?.message);
+    return NextResponse.json(
+      { error: "AI_ERROR", message: getAIFailureMessage(language) },
+      { status: 500 }
+    );
   }
 }
