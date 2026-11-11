@@ -162,7 +162,7 @@ export default function HomePage() {
             <h2 className="text-[32px] font-black leading-tight text-white tracking-tight">{t("freeChat")}</h2>
             <p className="text-[13px] font-medium text-orange-100/90 leading-snug">{t("heroSub")}</p>
             <div className="pt-3">
-              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-extrabold text-[#FF3D00] shadow-md">
+              <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-extrabold text-[#FF3D00] shadow-md transition-transform active:scale-95">
                 {t("startFreeChat")} <ChevronRight size={16} strokeWidth={3} />
               </Link>
             </div>
@@ -189,11 +189,10 @@ export default function HomePage() {
               { name: t("panchang"), icon: CalendarDays, href: "/panchang" },
               { name: t("palmistry"), icon: Hand, href: "/palmistry" },
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
-              // 🔥 FIXED: Cal Setting ki jagah Face Reading kar diya hai aur link /face-reading kar diya hai
               { name: t("faceReading"), icon: ScanFace, href: "/face-reading" },
             ].map((tool, idx) => (
               <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 flex-1">
-                <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-transform hover:scale-105">
+                <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-transform hover:scale-105 active:scale-95">
                   <tool.icon size={24} strokeWidth={1.5} />
                 </div>
                 <span className="text-[10.5px] text-center font-bold text-slate-300 w-full truncate">{tool.name}</span>
@@ -240,7 +239,8 @@ export default function HomePage() {
                         <p className="text-[18px] font-black text-[#ff6b00]">
                           ₹{astro.price} <span className="text-[12px] font-medium text-slate-400">/ {t("min")}</span>
                         </p>
-                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
+                        {/* 🔥 FIXED ROUTING: /chat/${astro.id} se badal kar /chat?persona=${astro.id} kiya gaya hai */}
+                        <Link href={`/chat?persona=${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
                           {t("chatNow")}
                         </Link>
                       </div>
@@ -270,23 +270,27 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Sticky Bottom Banner & Nav (Completed) */}
+      {/* Sticky Bottom Banner & Nav (Completed & Premium) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
-        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-5 py-3 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
+        
+        {/* Pink Banner - High Conversion Trigger */}
+        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-9 w-9 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
-               <Crown size={18} className="text-white" />
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={16} className="text-white" />
              </div>
              <div>
                <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
-               <p className="text-[14px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
+               <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
              </div>
           </div>
-          <div className="h-9 w-9 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
-               <Crown size={18} className="text-[#d81b60]" fill="#d81b60" />
-          </div>
+          <Link href="/chat" className="bg-white text-[#d81b60] font-bold text-[12.5px] px-4 py-1.5 rounded-full shadow-sm active:scale-95 transition-transform">
+            {t("startFreeChat")}
+          </Link>
         </div>
-        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-6 px-2 w-full">
+
+        {/* Bottom Navigation Bar */}
+        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
           <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
             <Home size={22} strokeWidth={2.5} />
             <span className="text-[11px] font-bold">{t("home")}</span>
@@ -305,6 +309,7 @@ export default function HomePage() {
           </Link>
         </nav>
       </div>
+
     </main>
   );
 }
