@@ -152,7 +152,7 @@ function extractText(data: unknown): string {
     .trim();
 }
 
-// 🔥 NAYA: Language Instruction Helper
+// 🔥 10 Language Instruction Helper
 function getLangInstruction(lang: string): string {
   const map: Record<string, string> = {
     hi: "Write strictly in Hindi (Devanagari script).",
@@ -172,14 +172,14 @@ async function writeInterpretation(params: {
   timeOfBirth: string;
   placeOfBirth: string;
   chart: KundliChart;
-  language: string; // 🔥 Language param add kiya
+  language: string;
 }): Promise<{ text: string | null; status: InterpretationStatus }> {
   const cacheKey = [
     "kundli",
     params.dateOfBirth,
     params.timeOfBirth,
     params.placeOfBirth.toLowerCase().replace(/\s+/g, ""),
-    params.language // 🔥 Cache key me bhi language daali taaki alag alag bhasha me cache save ho
+    params.language
   ].join("_");
 
   try {
@@ -209,7 +209,6 @@ async function writeInterpretation(params: {
           systemInstruction: {
             parts: [
               {
-                // 🔥 Yahan hardcoded Hindi hata kar dynamic instruction lagaya
                 text: `You are Gita AI. ${getLangInstruction(params.language)} Use only the calculated chart facts supplied. Do not invent planets, lagna, nakshatra or dasha. Do not guarantee marriage, money, job or health.`,
               },
             ],
@@ -219,7 +218,6 @@ async function writeInterpretation(params: {
               role: "user",
               parts: [
                 {
-                  // 🔥 Prompt bhi translate kiya (ya English me rakha taaki AI samajh le)
                   text: `Write a short personal reflection with headings for Nature (स्वभाव), Career (करियर), Relationships (संबंध), and Practical Advice (व्यावहारिक सलाह).\n\n${chartSummary(params.chart, params.name)}\nPlace: ${params.placeOfBirth}`,
                 },
               ],
@@ -256,7 +254,11 @@ async function writeInterpretation(params: {
 
 export async function GET() {
   const user = await getUser();
-  if (!user) return NextResponse.json({ birth: null, chart: null }, { headers: { "Cache-Control": "no-store" } });
+  
+  // 🔥 FIX 1: Guest ko load hone se roka
+  if (!user || user.isGuest) {
+    return NextResponse.json({ birth: null, chart: null }, { headers: { "Cache-Control": "no-store" } });
+  }
 
   const [birthRows, chartRows] = await Promise.all([
     db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
@@ -285,6 +287,12 @@ export async function POST(req: Request) {
   try { body = await req.json(); } catch { return jsonError("Invalid request.", 400); }
   if (!isRecord(body)) return jsonError("Invalid details.", 400);
 
+  // 🔥 FIX 2: Guest ko POST (Kundli Generate) karne se roka
+  const user = await getUser();
+  if (!user || user.isGuest) {
+    return jsonError("Registration required to generate Kundli. Please login or register.", 401);
+  }
+
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const gender = typeof body.gender === "string" ? body.gender.trim() : "Not specified";
   const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
@@ -292,7 +300,7 @@ export async function POST(req: Request) {
   const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
   const isTimeUnknown = body.isTimeUnknown === true;
   const consent = body.consent === true;
-  const language = typeof body.language === "string" ? body.language : "hinglish"; // 🔥 Language uthaya
+  const language = typeof body.language === "string" ? body.language : "hinglish";
   const timeOfBirth = isTimeUnknown ? "12:00" : rawTimeOfBirth;
 
   if (!consent) return jsonError("Consent is required to generate kundli.", 400);
@@ -310,9 +318,8 @@ export async function POST(req: Request) {
     return jsonError("इन जन्म विवरणों से कुंडली गणना नहीं हो सकी।", 422);
   }
 
-  const user = await getUser();
   let saved = false;
-  if (user) {
+  if (user) { // Yahan user pakka registered hai kyunki upar check lag chuka hai
     try {
       await db.insert(birthDetails).values({
         userId: user.id, name, gender, dob: dateOfBirth, birthTime: timeOfBirth, isBirthTimeUnknown: isTimeUnknown, birthPlace: placeOfBirth, lat: place.lat, lng: place.lng, timeZone: place.timeZone, consent: true,
@@ -326,7 +333,6 @@ export async function POST(req: Request) {
     } catch (error) { console.error("Birth details save failed:", error); }
   }
 
-  // 🔥 Pass language here
   const written = await writeInterpretation({
     name, dateOfBirth, timeOfBirth, placeOfBirth, chart, language
   });
