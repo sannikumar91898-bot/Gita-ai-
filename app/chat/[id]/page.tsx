@@ -176,7 +176,7 @@ export default function AstrologerChatPage() {
   };
 
   async function sendMessage(text: string, imageFile?: File | null) {
-    // 🔥 GUEST VALIDATION
+    // 🔥 GUEST VALIDATION: Yahan alert ki jagah modal show hoga
     if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
       setShowRegisterModal(true);
       return; 
