@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation"; // 🔥 useRouter import kiya
 import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock, ChevronLeft, Search, User, Calendar, Clock, MapPin, UserPlus } from "lucide-react";
 
 import { useApp } from "../Providers";
@@ -28,6 +28,7 @@ const getPersonaDetails = (p: string) => {
 function ChatPageContent() {
   const { lang, setLanguage, me, refresh, loading, sessionError, theme, t } = useApp();
   const searchParams = useSearchParams();
+  const router = useRouter(); // 🔥 Router initialize kiya
 
   const [persona, setPersona] = useState("gita");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -45,7 +46,7 @@ function ChatPageContent() {
 
   // 🔥 MODAL STATES
   const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showPaywall, setShowPaywall] = useState(false); // Agar wallet logic yahan hai
+  const [showPaywall, setShowPaywall] = useState(false); 
 
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,7 @@ function ChatPageContent() {
     else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
   };
 
+  // 🔥 UPDATED FINISH ONBOARDING LOGIC
   const finishOnboarding = async (isRegistering: boolean) => {
     if (draft.place.length < 2 || !hasConsent) return;
     
@@ -121,13 +123,21 @@ function ChatPageContent() {
       if (!response.ok) throw new Error("Failed");
       await refresh(); 
       
-      if (!isRegistering) {
-        localStorage.setItem("is_guest_user", "true");
-      } else {
+      const isUserLoggedIn = !!me?.user;
+
+      if (isRegistering) {
         localStorage.removeItem("is_guest_user");
+        // 🔥 AGAR REGISTER KARNA HAI YA LOGIN NAHI HAI TOH LOGIN PAGE PAR BHEJ DO
+        if (!isUserLoggedIn || isRegistering) {
+            router.push("/login"); 
+        } else {
+            setShowOnboarding(false);
+        }
+      } else {
+        localStorage.setItem("is_guest_user", "true");
+        setShowOnboarding(false); 
       }
 
-      setShowOnboarding(false);
     } catch (error) {
       alert("Details save nahi ho payi. Kripya check karein.");
     } finally {
@@ -357,7 +367,7 @@ function ChatPageContent() {
   }
 
   // ==========================================
-  // 💬 CHAT UI 
+  // 💬 CHAT UI
   // ==========================================
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
@@ -370,7 +380,7 @@ function ChatPageContent() {
         onNewChat={() => { conversationId.current = ""; setMessages([]); setSidebarOpen(false); }} 
       />
 
-      {/* HEADER (Cut off part fixed here) */}
+      {/* HEADER */}
       <header className={`flex shrink-0 items-center justify-between border-b px-4 py-3 shadow-sm z-10 ${isDark ? "bg-[#151E2E]/95 backdrop-blur-md border-slate-800" : "bg-white/95 backdrop-blur-md border-orange-100"}`}>
         <div className="flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className={`p-2 rounded-full transition-colors ${isDark ? "hover:bg-slate-800" : "hover:bg-gray-100"}`}>
