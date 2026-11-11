@@ -61,7 +61,7 @@ export default function AstrologerChatPage() {
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
 
-  // 🔥 TRANSLATIONS FOR REGISTER MODAL
+  // 🔥 TRANSLATIONS FOR REGISTER MODAL (10 Languages)
   const getModalText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: { title: "रजिस्टर करना ज़रूरी है", desc: "चैट शुरू करने के लिए कृपया अपना अकाउंट रजिस्टर या लॉगिन करें। आपकी बेसिक जानकारी पहले से सुरक्षित है।", btn: "रजिस्टर / लॉगिन करें", cancel: "रद्द करें" },
@@ -176,7 +176,7 @@ export default function AstrologerChatPage() {
   };
 
   async function sendMessage(text: string, imageFile?: File | null) {
-    // 🔥 GUEST VALIDATION: Yahan alert ki jagah modal show hoga
+    // 🔥 GUEST VALIDATION
     if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
       setShowRegisterModal(true);
       return; 
@@ -429,21 +429,21 @@ export default function AstrologerChatPage() {
         </form>
       </div>
 
-      {/* 🔥 REGISTRATION REQUIRED MODAL */}
+      {/* 🔥 REGISTRATION REQUIRED MODAL (10 Languages) */}
       {showRegisterModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-md rounded-[2rem] bg-[#151E2E] border border-orange-500/30 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
               <UserPlus size={40} />
             </div>
-            <h2 className="text-2xl font-black text-white mb-2">{getModalText("title")}</h2>
-            <p className="text-[14px] text-slate-300 mb-6 leading-relaxed">
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{getModalText("title")}</h2>
+            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
               {getModalText("desc")}
             </p>
             <Link href="/login" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
               {getModalText("btn")}
             </Link>
-            <button onClick={() => setShowRegisterModal(false)} className="text-[13px] font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1.5 w-full">
+            <button onClick={() => setShowRegisterModal(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
               <X size={16} /> {getModalText("cancel")}
             </button>
           </div>
@@ -453,22 +453,22 @@ export default function AstrologerChatPage() {
       {/* PAYWALL MODAL (Wallet Recharge) */}
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-md rounded-[2rem] bg-[#151E2E] border border-orange-500/30 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
               <Lock size={40} />
             </div>
-            <h2 className="text-2xl font-black text-white mb-2">Balance Exhausted</h2>
-            <p className="text-[14px] text-slate-300 mb-6 leading-relaxed">
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Balance Exhausted</h2>
+            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
               Aapka free message limit ya wallet balance khatam ho gaya hai. {astrologer.name} se aur baatein karne ke liye recharge karein.
             </p>
-            <div className="bg-[#0B0F19] rounded-xl p-4 mb-6 flex justify-between items-center border border-slate-700">
-              <span className="text-[13px] font-semibold text-slate-400">Current Balance</span>
+            <div className={`rounded-xl p-4 mb-6 flex justify-between items-center border ${isDark ? "bg-[#0B0F19] border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+              <span className={`text-[13px] font-semibold ${isDark ? "text-slate-400" : "text-gray-500"}`}>Current Balance</span>
               <span className="text-xl font-black text-rose-400">₹{walletBalance / 100}</span>
             </div>
             <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
               Add Cash Now
             </Link>
-            <button onClick={() => setShowPaywall(false)} className="text-[13px] font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1.5 w-full">
+            <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
               <X size={16} /> Maybe Later
             </button>
           </div>
