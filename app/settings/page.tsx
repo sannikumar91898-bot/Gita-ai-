@@ -257,18 +257,22 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            {/* Language Row */}
+            {/* 🔥 LANGUAGE SECTION (Single Row like 2nd screenshot) */}
             <button 
               onClick={() => setShowLangModal(true)}
-              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-colors ${isDark ? "bg-[#0A0F19] border-slate-800 hover:border-slate-600" : "bg-gray-50 border-gray-200 hover:border-gray-400"}`}
+              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
+                isDark 
+                  ? "bg-[#0A0F19] border-slate-800 hover:border-[#ff6b00]/50 hover:bg-slate-800/50" 
+                  : "bg-gray-50 border-gray-200 hover:border-[#ff6b00] hover:bg-orange-50/50"
+              }`}
             >
-              <div className="flex items-center gap-2">
-                <Globe size={16} className="text-[#ff6b00]" />
-                <span className={`text-[13px] font-semibold ${textColorClass}`}>{t("language")}</span>
+              <div className="flex items-center gap-2.5">
+                <Globe size={18} className="text-[#ff6b00] group-hover:scale-110 transition-transform" />
+                <span className={`text-[14px] font-bold ${textColorClass}`}>{t("language")}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-[13px] font-bold text-[#ff6b00]">{currentLangLabel}</span>
-                <ChevronRight size={16} className={subTextClass} />
+                <span className="text-[14px] font-black text-[#ff6b00]">{currentLangLabel}</span>
+                <ChevronRight size={18} className={`${subTextClass} group-hover:text-[#ff6b00] transition-colors`} />
               </div>
             </button>
 
@@ -310,7 +314,7 @@ export default function SettingsPage() {
 
       </div>
 
-      {/* 🔥 LANGUAGE SELECTION MODAL */}
+      {/* 🔥 LANGUAGE SELECTION MODAL (Premium Bottom Sheet) */}
       {showLangModal && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
           <div className={`w-full max-w-md rounded-t-[2.5rem] sm:rounded-3xl overflow-hidden flex flex-col max-h-[85vh] border shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151d2c] border-slate-800" : "bg-white border-gray-200"}`}>
@@ -319,32 +323,41 @@ export default function SettingsPage() {
               <div className={`w-12 h-1.5 rounded-full ${isDark ? "bg-slate-700" : "bg-gray-300"}`}></div>
             </div>
 
-            <div className={`flex items-center justify-between px-5 py-4 border-b ${isDark ? "border-slate-800" : "border-gray-200"}`}>
-              <h2 className={`text-[17px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{t("language")}</h2>
-              <button onClick={() => setShowLangModal(false)} className={`p-2 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400" : "bg-gray-100 text-gray-500"}`}>
-                <X size={18} />
+            <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? "border-slate-800" : "border-gray-200"}`}>
+              <div>
+                <h2 className={`text-[20px] font-black tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>{t("language")}</h2>
+                <p className={`text-[12px] mt-0.5 ${subTextClass}`}>Select your preferred app language</p>
+              </div>
+              <button onClick={() => setShowLangModal(false)} className={`p-2.5 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
+                <X size={20} />
               </button>
             </div>
 
-            <div className="p-3 overflow-y-auto">
+            <div className="p-4 overflow-y-auto">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
                   onClick={() => { setLanguage(l.code); setShowLangModal(false); }}
-                  className={`w-full flex items-center justify-between p-4 mb-1.5 rounded-2xl transition-all ${
+                  className={`w-full flex items-center justify-between p-4 mb-2 rounded-2xl transition-all duration-200 ${
                     lang === l.code 
-                      ? (isDark ? "bg-[#ff6b00]/10 border border-[#ff6b00]/30" : "bg-orange-50 border border-orange-200") 
-                      : `border border-transparent ${isDark ? "hover:bg-white/5" : "hover:bg-gray-50"}`
+                      ? (isDark ? "bg-[#ff6b00]/10 border-2 border-[#ff6b00]/50 shadow-sm" : "bg-orange-50 border-2 border-[#ff6b00] shadow-sm") 
+                      : `border-2 border-transparent ${isDark ? "hover:bg-white/5" : "hover:bg-gray-50"}`
                   }`}
                 >
                   <div className="flex flex-col text-left">
-                    <span className={`text-[15px] font-bold ${lang === l.code ? "text-[#ff6b00]" : (isDark ? "text-slate-200" : "text-gray-800")}`}>
+                    <span className={`text-[16px] font-bold ${lang === l.code ? "text-[#ff6b00]" : (isDark ? "text-slate-200" : "text-gray-800")}`}>
                       {l.native}
                     </span>
-                    <span className={`text-[11px] ${subTextClass}`}>{l.label}</span>
+                    <span className={`text-[12px] font-medium mt-0.5 ${subTextClass}`}>{l.label}</span>
                   </div>
-                  <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center ${lang === l.code ? "border-[#ff6b00] bg-[#ff6b00]" : (isDark ? "border-slate-600" : "border-gray-300")}`}>
-                    {lang === l.code && <Check size={12} className="text-white font-bold" strokeWidth={3} />}
+                  
+                  {/* Premium Radio Button / Check */}
+                  <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
+                    lang === l.code 
+                      ? "border-[#ff6b00] bg-[#ff6b00] shadow-[0_0_10px_rgba(255,107,0,0.4)]" 
+                      : (isDark ? "border-slate-600" : "border-gray-300")
+                  }`}>
+                    {lang === l.code && <Check size={14} className="text-white font-bold" strokeWidth={3} />}
                   </div>
                 </button>
               ))}
@@ -364,7 +377,7 @@ export default function SettingsPage() {
             <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
           </div>
         </div>
-        <Link href="/chat" className="bg-white text-red-600 font-bold text-[13px] px-5 py-2 rounded-full shadow-sm active:scale-95">
+        <Link href="/chat" className="bg-white text-red-600 font-bold text-[13px] px-5 py-2 rounded-full shadow-sm active:scale-95 transition-transform">
           {t("chatBtn")}
         </Link>
       </div>
