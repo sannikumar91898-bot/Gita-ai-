@@ -168,8 +168,8 @@ CRITICAL RULES:
 3. Address the user according to their Gender.
 `;
 
-    // 🔥 NEW SUPPORTED GROQ MODELS
-    const modelName = imageFile ? "qwen/qwen3.8-27b" : "openai/gpt-oss-120b"; 
+    // 🔥 FIXED: CORRECT GROQ MODEL NAMES
+    const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
     
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
