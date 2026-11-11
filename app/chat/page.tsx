@@ -28,7 +28,7 @@ const getPersonaDetails = (p: string) => {
 function ChatPageContent() {
   const { lang, setLanguage, me, refresh, loading, sessionError, theme, t } = useApp();
   const searchParams = useSearchParams();
-  const router = useRouter();
+  const router = useRouter(); 
 
   const [persona, setPersona] = useState("gita");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -44,8 +44,6 @@ function ChatPageContent() {
   const [hasConsent, setHasConsent] = useState(false); 
   const [sidebarOpen, setSidebarOpen] = useState(false); 
 
-  // 🔥 MODAL STATES
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
   const [showPaywall, setShowPaywall] = useState(false); 
 
   const conversationId = useRef("");
@@ -56,23 +54,6 @@ function ChatPageContent() {
 
   const isDark = theme === "dark";
   const personaDetails = getPersonaDetails(persona);
-
-  // 🔥 10 LANGUAGES FOR REGISTER MODAL
-  const getModalText = (key: string) => {
-    const dict: Record<string, Record<string, string>> = {
-      hi: { title: "रजिस्टर करना ज़रूरी है", desc: "चैट शुरू करने के लिए कृपया अपना अकाउंट रजिस्टर या लॉगिन करें। आपकी बेसिक जानकारी पहले से सुरक्षित है।", btn: "रजिस्टर / लॉगिन करें", cancel: "रद्द करें" },
-      hinglish: { title: "Registration Required", desc: "Chat shuru karne ke liye kripya apna account register ya login karein. Aapki basic details pehle se safe hain.", btn: "Register / Login Now", cancel: "Cancel" },
-      en: { title: "Registration Required", desc: "Please register or login to start chatting. Your basic details are already saved.", btn: "Register / Login Now", cancel: "Cancel" },
-      te: { title: "నమోదు అవసరం", desc: "చాట్ ప్రారంభించడానికి దయచేసి మీ ఖాతాను నమోదు చేయండి లేదా లాగిన్ చేయండి.", btn: "నమోదు చేయండి / లాగిన్", cancel: "రద్దు చేయండి" },
-      ta: { title: "பதிவு தேவை", desc: "அரட்டையைத் தொடங்க உங்கள் கணக்கைப் பதிவு செய்யவும் அல்லது உள்நுழையவும்.", btn: "பதிவு / உள்நுழை", cancel: "ரத்து செய்" },
-      kn: { title: "ನೋಂದಣಿ ಅಗತ್ಯವಿದೆ", desc: "ಚಾಟ್ ಪ್ರಾರಂಭಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ನೋಂದಾಯಿಸಿ ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಿ.", btn: "ನೋಂದಾಯಿಸಿ / ಲಾಗಿನ್", cancel: "ರದ್ದುಮಾಡಿ" },
-      bn: { title: "নিবন্ধন প্রয়োজন", desc: "চ্যাট শুরু করতে অনুগ্রহ করে আপনার অ্যাকাউন্ট নিবন্ধন বা লগইন করুন।", btn: "নিবন্ধন / লগইন", cancel: "বাতিল করুন" },
-      mr: { title: "नोंदणी आवश्यक आहे", desc: "चॅट सुरू करण्यासाठी कृपया तुमचे खाते नोंदवा किंवा लॉग इन करा.", btn: "नोंदणी / लॉग इन", cancel: "रद्द करा" },
-      gu: { title: "નોંધણી જરૂરી છે", desc: "ચેટ શરૂ કરવા માટે કૃપા કરીને તમારું એકાઉન્ટ નોંધો અથવા લોગિન કરો.", btn: "નોંધણી / લોગિન", cancel: "રદ કરો" },
-      ml: { title: "രജിസ്ട്രേഷൻ ആവശ്യമാണ്", desc: "ചാറ്റ് ആരംഭിക്കാൻ ദയവായി നിങ്ങളുടെ അക്കൗണ്ട് രജിസ്റ്റർ ചെയ്യുക അല്ലെങ്കിൽ ലോഗിൻ ചെയ്യുക.", btn: "രജിസ്റ്റർ / ലോഗിൻ", cancel: "റദ്ദാക്കുക" },
-    };
-    return dict[lang || "hi"]?.[key] || dict["en"][key];
-  };
 
   useEffect(() => {
     if (me?.birth?.name) {
@@ -99,7 +80,6 @@ function ChatPageContent() {
     else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
   };
 
-  // 🔥 FIXED FINISH ONBOARDING LOGIC
   const finishOnboarding = async (isRegistering: boolean) => {
     if (draft.place.length < 2 || !hasConsent) return;
     
@@ -123,14 +103,13 @@ function ChatPageContent() {
       if (!response.ok) throw new Error("Failed");
       await refresh(); 
       
-      // 🔥 FIX: Check if user is actually a registered user (not guest)
       const isActuallyRegistered = me?.user && !me?.user?.isGuest;
 
       if (isRegistering) {
         localStorage.removeItem("is_guest_user");
-        // 🔥 Redirect to login ONLY IF they are not already registered
+        // 🔥 Direct Redirect to Login (No Modal)
         if (!isActuallyRegistered) {
-            router.push("/login"); 
+            router.push("/login?redirect=/chat"); 
         } else {
             setShowOnboarding(false);
         }
@@ -168,9 +147,9 @@ function ChatPageContent() {
   async function sendToAi(e?: FormEvent, text?: string) {
     e?.preventDefault();
     
-    // 🔥 GUEST CHECK: Yahan alert hata kar Modal open kar rahe hain
+    // 🔥 Direct Redirect to Login Page
     if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
-      setShowRegisterModal(true);
+      router.push("/login?redirect=/chat");
       return; 
     }
 
@@ -191,6 +170,11 @@ function ChatPageContent() {
 
       const response = await fetch("/api/chat", { method: "POST", body: formData });
       const data = await response.json();
+
+      if (response.status === 401) {
+        router.push("/login?redirect=/chat");
+        return;
+      }
 
       if (response.status === 402) {
         setShowPaywall(true);
@@ -491,27 +475,6 @@ function ChatPageContent() {
           </div>
         </form>
       </div>
-
-      {/* 🔥 REGISTRATION REQUIRED MODAL */}
-      {showRegisterModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
-              <UserPlus size={40} />
-            </div>
-            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{getModalText("title")}</h2>
-            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
-              {getModalText("desc")}
-            </p>
-            <Link href="/login" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
-              {getModalText("btn")}
-            </Link>
-            <button onClick={() => setShowRegisterModal(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
-              <X size={16} /> {getModalText("cancel")}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* PAYWALL MODAL (Wallet Recharge) */}
       {showPaywall && (
