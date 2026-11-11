@@ -68,7 +68,10 @@ function extractRemedy(response: string) {
 export async function GET(request: Request) {
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
+    // 🔥 FIX 1: Guest ko chat history load karne se roka
+    if (!user || user.isGuest) {
+      return NextResponse.json({ error: "Registration required to load chat." }, { status: 401 });
+    }
     
     const { searchParams } = new URL(request.url);
     const rawPersona = searchParams.get("persona");
@@ -101,7 +104,11 @@ export async function POST(request: Request) {
 
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // 🔥 FIX 2: Guest ko message bhejne se roka (API Protect)
+    if (!user || user.isGuest) {
+      return NextResponse.json({ error: "Registration required to send messages." }, { status: 401 });
+    }
+    
     userId = user.id;
 
     const formData = await request.formData();
@@ -168,7 +175,7 @@ CRITICAL RULES:
 3. Address the user according to their Gender.
 `;
 
-    // 🔥 FIXED: CORRECT GROQ MODEL NAMES
+    // 🔥 CORRECT GROQ MODEL NAMES
     const modelName = imageFile ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; 
     
     const messagesPayload: any[] = [
