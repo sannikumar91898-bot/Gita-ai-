@@ -54,6 +54,23 @@ function getLanguageInstruction(lang: string): string {
   return map[lang] || map["hinglish"];
 }
 
+// 🔥 10 Languages Helper for Unauthorized Chat Message
+function getUnauthorizedChatMessage(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "यह चैट आपकी नहीं है या डिलीट हो चुकी है। कृपया नई चैट शुरू करें।",
+    hinglish: "Yeh chat aapki nahi hai ya delete ho chuki hai. Kripya nayi chat shuru karein.",
+    en: "This chat does not belong to you or has been deleted. Please start a new chat.",
+    te: "ఈ చాట్ మీది కాదు లేదా తొలగించబడింది. దయచేసి కొత్త చాట్ ప్రారంభించండి.",
+    ta: "இந்த அரட்டை உங்களுடையது அல்ல அல்லது நீக்கப்பட்டுள்ளது. தயவுசெய்து புதிய அரட்டையைத் தொடங்கவும்.",
+    kn: "ಈ ಚಾಟ್ ನಿಮ್ಮದಲ್ಲ ಅಥವಾ ಅಳಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಹೊಸ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ.",
+    bn: "এই চ্যাটটি আপনার নয় বা মুছে ফেলা হয়েছে। অনুগ্রহ করে একটি নতুন চ্যাট শুরু করুন।",
+    mr: "ही चॅट तुमची नाही किंवा हटवली गेली आहे. कृपया नवीन चॅट सुरू करा.",
+    gu: "આ ચેટ તમારી નથી અથવા ડિલીટ થઈ ગઈ છે. કૃપા કરીને નવી ચેટ શરૂ કરો.",
+    ml: "ഈ ചാറ്റ് നിങ്ങളുടേതല്ല അല്ലെങ്കിൽ ഇല്ലാതാക്കപ്പെട്ടു. ദയവായി ഒരു പുതിയ ചാറ്റ് ആരംഭിക്കുക.",
+  };
+  return map[lang] || map["en"];
+}
+
 function extractRemedy(response: string) {
   const marker = "||REMEDY_EXTRACT||";
   const index = response.indexOf(marker);
@@ -135,8 +152,9 @@ export async function POST(request: Request) {
         .limit(1);
 
       if (!existingConv) {
+        // 🔥 "Error" शब्द हटाकर 10 भाषाओं में सीधा मैसेज दिया है
         return NextResponse.json(
-          { error: "Conversation not found or unauthorized." },
+          { error: getUnauthorizedChatMessage(language) },
           { status: 404 }
         );
       }
