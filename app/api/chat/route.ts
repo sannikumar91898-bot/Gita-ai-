@@ -68,7 +68,7 @@ function extractRemedy(response: string) {
 export async function GET(request: Request) {
   try {
     const user = await getUser();
-    // 🔥 FIX 1: Guest ko chat history load karne se roka
+    // 🔥 Guest ko chat history load karne se roka
     if (!user || user.isGuest) {
       return NextResponse.json({ error: "Registration required to load chat." }, { status: 401 });
     }
@@ -104,7 +104,7 @@ export async function POST(request: Request) {
 
   try {
     const user = await getUser();
-    // 🔥 FIX 2: Guest ko message bhejne se roka (API Protect)
+    // 🔥 Guest ko message bhejne se roka (API Protect)
     if (!user || user.isGuest) {
       return NextResponse.json({ error: "Registration required to send messages." }, { status: 401 });
     }
@@ -120,6 +120,27 @@ export async function POST(request: Request) {
     const imageFile = formData.get("image") as File | null;
 
     if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
+
+    // 🔥 FIX: Conversation Ownership Check (Billing se pehle)
+    if (requestedConversationId) {
+      const [existingConv] = await db
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(
+          and(
+            eq(conversations.id, requestedConversationId),
+            eq(conversations.userId, userId)
+          )
+        )
+        .limit(1);
+
+      if (!existingConv) {
+        return NextResponse.json(
+          { error: "Conversation not found or unauthorized." },
+          { status: 404 }
+        );
+      }
+    }
 
     // Billing Logic
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
