@@ -270,6 +270,7 @@ export default function FaceReadingPage() {
             
             <p className={`text-[14.5px] font-medium leading-relaxed ${isDark ? "text-slate-300" : "text-gray-800"}`}>{result.insight}</p>
             
+            {/* PSYCHOLOGICAL HOOK */}
             <div className={`rounded-xl border p-4 relative overflow-hidden ${isDark ? "border-rose-500/30 bg-[#2a151a]" : "border-red-200 bg-red-50 shadow-inner"}`}>
               <div className="absolute top-0 left-0 w-1.5 h-full bg-rose-500"></div>
               <div className="flex items-start gap-3">
@@ -278,6 +279,7 @@ export default function FaceReadingPage() {
               </div>
             </div>
             
+            {/* MARKETING / CONVERSION CTA */}
             <div className="space-y-3 pt-2">
               <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#d81b60] to-[#e91e63] px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-pink-500/20 transition-transform active:scale-[0.98] animate-pulse">
                 <MessageCircle size={20} /> {t("talkAstro")}
@@ -293,7 +295,7 @@ export default function FaceReadingPage() {
       {/* 🔥 STICKY BOTTOM BANNER & NAVIGATION (Wapas Joda Gaya Hai) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         
-        {/* Pink Banner */}
+        {/* Pink Banner (Marketing Hook) */}
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
              <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
