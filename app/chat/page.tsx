@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock, ChevronLeft, Search, User, Calendar, Clock, MapPin } from "lucide-react";
+import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock, ChevronLeft, Search, User, Calendar, Clock, MapPin, UserPlus } from "lucide-react";
 
 import { useApp } from "../Providers";
 import HistorySidebar from "../components/HistorySidebar";
@@ -43,6 +43,10 @@ function ChatPageContent() {
   const [hasConsent, setHasConsent] = useState(false); 
   const [sidebarOpen, setSidebarOpen] = useState(false); 
 
+  // 🔥 MODAL STATES
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
+  const [showPaywall, setShowPaywall] = useState(false); // Agar wallet logic yahan hai
+
   const conversationId = useRef("");
   const endRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -51,6 +55,23 @@ function ChatPageContent() {
 
   const isDark = theme === "dark";
   const personaDetails = getPersonaDetails(persona);
+
+  // 🔥 10 LANGUAGES FOR REGISTER MODAL
+  const getModalText = (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      hi: { title: "रजिस्टर करना ज़रूरी है", desc: "चैट शुरू करने के लिए कृपया अपना अकाउंट रजिस्टर या लॉगिन करें। आपकी बेसिक जानकारी पहले से सुरक्षित है।", btn: "रजिस्टर / लॉगिन करें", cancel: "रद्द करें" },
+      hinglish: { title: "Registration Required", desc: "Chat shuru karne ke liye kripya apna account register ya login karein. Aapki basic details pehle se safe hain.", btn: "Register / Login Now", cancel: "Cancel" },
+      en: { title: "Registration Required", desc: "Please register or login to start chatting. Your basic details are already saved.", btn: "Register / Login Now", cancel: "Cancel" },
+      te: { title: "నమోదు అవసరం", desc: "చాట్ ప్రారంభించడానికి దయచేసి మీ ఖాతాను నమోదు చేయండి లేదా లాగిన్ చేయండి.", btn: "నమోదు చేయండి / లాగిన్", cancel: "రద్దు చేయండి" },
+      ta: { title: "பதிவு தேவை", desc: "அரட்டையைத் தொடங்க உங்கள் கணக்கைப் பதிவு செய்யவும் அல்லது உள்நுழையவும்.", btn: "பதிவு / உள்நுழை", cancel: "ரத்து செய்" },
+      kn: { title: "ನೋಂದಣಿ ಅಗತ್ಯವಿದೆ", desc: "ಚಾಟ್ ಪ್ರಾರಂಭಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ನೋಂದಾಯಿಸಿ ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಿ.", btn: "ನೋಂದಾಯಿಸಿ / ಲಾಗಿನ್", cancel: "ರದ್ದುಮಾಡಿ" },
+      bn: { title: "নিবন্ধন প্রয়োজন", desc: "চ্যাট শুরু করতে অনুগ্রহ করে আপনার অ্যাকাউন্ট নিবন্ধন বা লগইন করুন।", btn: "নিবন্ধন / লগইন", cancel: "বাতিল করুন" },
+      mr: { title: "नोंदणी आवश्यक आहे", desc: "चॅट सुरू करण्यासाठी कृपया तुमचे खाते नोंदवा किंवा लॉग इन करा.", btn: "नोंदणी / लॉग इन", cancel: "रद्द करा" },
+      gu: { title: "નોંધણી જરૂરી છે", desc: "ચેટ શરૂ કરવા માટે કૃપા કરીને તમારું એકાઉન્ટ નોંધો અથવા લોગિન કરો.", btn: "નોંધણી / લોગિન", cancel: "રદ કરો" },
+      ml: { title: "രജിസ്ട്രേഷൻ ആവശ്യമാണ്", desc: "ചാറ്റ് ആരംഭിക്കാൻ ദയവായി നിങ്ങളുടെ അക്കൗണ്ട് രജിസ്റ്റർ ചെയ്യുക അല്ലെങ്കിൽ ലോഗിൻ ചെയ്യുക.", btn: "രജിസ്റ്റർ / ലോഗിൻ", cancel: "റദ്ദാക്കുക" },
+    };
+    return dict[lang || "hi"]?.[key] || dict["en"][key];
+  };
 
   useEffect(() => {
     if (me?.birth?.name) {
@@ -77,7 +98,6 @@ function ChatPageContent() {
     else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
   };
 
-  // 🔥 UPDATED: isRegistering parameter added
   const finishOnboarding = async (isRegistering: boolean) => {
     if (draft.place.length < 2 || !hasConsent) return;
     
@@ -94,14 +114,13 @@ function ChatPageContent() {
           isTimeUnknown: notSureTime, 
           placeOfBirth: draft.place,
           consent: hasConsent,
-          isRegistering: isRegistering // Backend ko batayenge ki register karna hai ya nahi
+          isRegistering: isRegistering 
         }) 
       });
       
       if (!response.ok) throw new Error("Failed");
       await refresh(); 
       
-      // Guest mode flag set karna
       if (!isRegistering) {
         localStorage.setItem("is_guest_user", "true");
       } else {
@@ -138,10 +157,10 @@ function ChatPageContent() {
   async function sendToAi(e?: FormEvent, text?: string) {
     e?.preventDefault();
     
-    // 🔥 GUEST CHECK: Agar user guest hai to chat mat karne do
+    // 🔥 GUEST CHECK: Yahan alert hata kar Modal open kar rahe hain
     if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
-      alert("Chat karne ke liye kripya Register karein. Aapki basic details save ho chuki hain.");
-      return; // Yahan aap Register modal bhi khol sakte hain
+      setShowRegisterModal(true);
+      return; 
     }
 
     const msg = text || input.trim();
@@ -161,6 +180,11 @@ function ChatPageContent() {
 
       const response = await fetch("/api/chat", { method: "POST", body: formData });
       const data = await response.json();
+
+      if (response.status === 402) {
+        setShowPaywall(true);
+        return;
+      }
 
       if (!response.ok) {
         const errorMsg = data.error || data.message || "Server error. Please try again.";
@@ -194,7 +218,6 @@ function ChatPageContent() {
           <h1 className="text-2xl font-black">{t("enterDetails") || "Enter Your Details"}</h1>
         </div>
 
-        {/* Progress Bar */}
         <div className="w-full max-w-md mx-auto flex gap-2 mb-10">
           {[0, 1, 2, 3, 4, 5].map((s) => (
             <div key={s} className={`h-10 w-10 rounded-2xl flex items-center justify-center transition-all duration-300 ${
@@ -214,7 +237,6 @@ function ChatPageContent() {
 
         <div className="w-full max-w-md mx-auto flex-1">
           
-          {/* 🔥 STEP 0: LANGUAGE SELECTION (NEXT BUTTON ADDED) */}
           {onboardStep === 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("chooseLanguage") || "Choose your language"}</h2>
@@ -249,7 +271,6 @@ function ChatPageContent() {
             </div>
           )}
 
-          {/* 🔥 STEP 2: GENDER (TRANSGENDER ADDED) */}
           {onboardStep === 2 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("yourGender") || "What is your gender?"}</h2>
@@ -299,7 +320,6 @@ function ChatPageContent() {
             </div>
           )}
 
-          {/* 🔥 STEP 5: TWO BUTTONS (REGISTER & ADMIN) */}
           {onboardStep === 5 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("birthPlace") || "Where were you born?"}</h2>
@@ -319,14 +339,12 @@ function ChatPageContent() {
               </label>
 
               <div className="flex flex-col gap-3">
-                {/* REGISTER BUTTON */}
                 <button onClick={() => finishOnboarding(true)} disabled={draft.place.length < 2 || !hasConsent || isLoading} className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[16px] disabled:opacity-50 shadow-lg shadow-yellow-500/20 active:scale-95 transition-transform flex justify-center items-center gap-2">
                   {isLoading ? <Sparkles className="animate-spin" size={22} /> : (
                     <><User size={20} /> Register & Start Chat</>
                   )}
                 </button>
                 
-                {/* ADMIN / GUEST BUTTON */}
                 <button onClick={() => finishOnboarding(false)} disabled={draft.place.length < 2 || !hasConsent || isLoading} className={`w-full py-3.5 rounded-xl font-bold text-[14px] border disabled:opacity-50 active:scale-95 transition-transform ${isDark ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"}`}>
                   Save Details (Continue as Admin/Guest)
                 </button>
@@ -339,7 +357,7 @@ function ChatPageContent() {
   }
 
   // ==========================================
-  // 💬 CHAT UI (Unchanged)
+  // 💬 CHAT UI 
   // ==========================================
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
@@ -352,7 +370,7 @@ function ChatPageContent() {
         onNewChat={() => { conversationId.current = ""; setMessages([]); setSidebarOpen(false); }} 
       />
 
-      {/* HEADER */}
+      {/* HEADER (Cut off part fixed here) */}
       <header className={`flex shrink-0 items-center justify-between border-b px-4 py-3 shadow-sm z-10 ${isDark ? "bg-[#151E2E]/95 backdrop-blur-md border-slate-800" : "bg-white/95 backdrop-blur-md border-orange-100"}`}>
         <div className="flex items-center gap-3">
           <button onClick={() => setSidebarOpen(true)} className={`p-2 rounded-full transition-colors ${isDark ? "hover:bg-slate-800" : "hover:bg-gray-100"}`}>
@@ -462,6 +480,53 @@ function ChatPageContent() {
           </div>
         </form>
       </div>
+
+      {/* 🔥 REGISTRATION REQUIRED MODAL */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
+              <UserPlus size={40} />
+            </div>
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>{getModalText("title")}</h2>
+            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+              {getModalText("desc")}
+            </p>
+            <Link href="/login" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
+              {getModalText("btn")}
+            </Link>
+            <button onClick={() => setShowRegisterModal(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+              <X size={16} /> {getModalText("cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PAYWALL MODAL (Wallet Recharge) */}
+      {showPaywall && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
+              <Lock size={40} />
+            </div>
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Balance Exhausted</h2>
+            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+              Aapka free message limit ya wallet balance khatam ho gaya hai. {personaDetails.name} se aur baatein karne ke liye recharge karein.
+            </p>
+            <div className={`rounded-xl p-4 mb-6 flex justify-between items-center border ${isDark ? "bg-[#0B0F19] border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+              <span className={`text-[13px] font-semibold ${isDark ? "text-slate-400" : "text-gray-500"}`}>Current Balance</span>
+              <span className="text-xl font-black text-rose-400">₹{(me?.user?.walletBalancePaise ?? 0) / 100}</span>
+            </div>
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
+              Add Cash Now
+            </Link>
+            <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+              <X size={16} /> Maybe Later
+            </button>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
