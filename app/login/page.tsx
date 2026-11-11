@@ -1,16 +1,20 @@
 // app/login/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"; // 🔥 useSearchParams import kiya
 import { ArrowLeft, Mail, Lock, User } from "lucide-react";
 import { useApp } from "../Providers";
 
-export default function LoginPage() {
+function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams(); // 🔥 URL parameters padhne ke liye
   const { theme, refresh } = useApp();
   const isDark = theme === "dark";
+
+  // 🔥 Agar URL me ?redirect=/chat hai to wahan bhejega, warna /settings par
+  const redirectUrl = searchParams.get("redirect") || "/settings";
 
   const [isLogin, setIsLogin] = useState(true);
   const [name, setName] = useState("");
@@ -41,15 +45,14 @@ export default function LoginPage() {
 
       const data = await res.json();
 
-      // 🔥 YAHAN FIX KIYA HAI: data.details ko pehle check karega 🔥
       if (!res.ok) throw new Error(data.details || data.error || "Something went wrong");
 
-      // 🔥 Login/Register success! Ab Providers ko refresh karo taaki naya user load ho
+      // 🔥 Providers ko refresh karo taaki naya user load ho
       await refresh();
       
-      // 🔥 STEP 4 FIX: Hard reload ki jagah smooth Next.js navigation 🔥
-      router.replace("/settings"); // URL change karega bina page refresh kiye
-      router.refresh(); // Server se naya user data (cookies) fetch karega
+      // 🔥 User ko wahan bhejo jahan se wo aaya tha (ya default settings par)
+      router.replace(redirectUrl); 
+      router.refresh(); 
       
     } catch (err: any) {
       setError(err.message);
@@ -63,7 +66,8 @@ export default function LoginPage() {
       <div className="mx-auto max-w-md space-y-6">
         
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
-          <Link href="/settings" className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
+          {/* Back button ab redirect URL par jayega, ya default settings par */}
+          <Link href={redirectUrl} className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
             <ArrowLeft size={18} />
           </Link>
           <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
@@ -149,5 +153,14 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+// 🔥 Next.js me useSearchParams ke liye Suspense wrap karna zaroori hai
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Loading...</div>}>
+      <LoginContent />
+    </Suspense>
   );
 }
