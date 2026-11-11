@@ -1,3 +1,4 @@
+// app/api/auth/register/route.ts
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { db } from "@/index";
@@ -13,9 +14,15 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { name, email, password } = body;
 
-    // 🔥 FIX 1: Type check lagaya hai taaki galat input se app crash na ho 🔥
+    // 🔥 FIX 1: Type check
     if (typeof email !== "string" || typeof password !== "string") {
       return NextResponse.json({ error: "Invalid input format." }, { status: 400 });
+    }
+
+    // 🔥 FIX 2: Basic Email Format Check (Regex)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      return NextResponse.json({ error: "Kripya ek sahi Email Address dalein." }, { status: 400 });
     }
 
     if (!email || !password || password.length < 6) {
@@ -23,6 +30,7 @@ export async function POST(request: Request) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+    const cleanName = typeof name === "string" ? name.trim() : "User";
     const currentSessionUser = await getUser();
 
     // Check if email exists
@@ -44,13 +52,13 @@ export async function POST(request: Request) {
     // Upgrade Guest or Create New
     if (currentSessionUser && currentSessionUser.isGuest) {
       const updatedUsers = await db.update(users)
-        .set({ name: name || "User", email: normalizedEmail, password: hashedPassword, isGuest: false })
+        .set({ name: cleanName, email: normalizedEmail, password: hashedPassword, isGuest: false })
         .where(eq(users.id, currentSessionUser.id))
         .returning();
       finalUser = updatedUsers[0];
     } else {
       const newUsers = await db.insert(users).values({
-        name: name || "User",
+        name: cleanName,
         email: normalizedEmail,
         password: hashedPassword,
         isGuest: false,
@@ -78,7 +86,7 @@ export async function POST(request: Request) {
   } catch (error: any) {
     console.error("Registration Error:", error);
     
-    // 🔥 FIX 2: Production (Live) app par database error chhupaya hai 🔥
+    // 🔥 Production (Live) app par database error chhupaya hai
     return NextResponse.json({ 
       error: "Registration fail ho gaya.",
       details: process.env.NODE_ENV === "development" ? (error.message || String(error)) : undefined
