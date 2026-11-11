@@ -34,7 +34,7 @@ function createMessageId(): string {
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang, theme, t } = useApp(); // Assuming t is available from useApp
+  const { lang, theme, t } = useApp(); 
 
   const isDark = theme === "dark";
   const id = typeof params?.id === "string" ? params.id : "";
@@ -59,7 +59,7 @@ export default function AstrologerChatPage() {
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
 
-  // 🔥 10 LANGUAGES HELPER FOR THIS PAGE
+  // 🔥 10 LANGUAGES HELPER
   const getChatText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: {
@@ -494,7 +494,6 @@ export default function AstrologerChatPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
           <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_60px_rgba(234,88,12,0.3)] animate-in zoom-in-95 border-2 ${isDark ? "bg-[#151E2E] border-orange-500/50" : "bg-white border-orange-400"}`}>
             
-            {/* Glowing Lock Icon */}
             <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-rose-500/20 text-orange-500 mb-6 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
               <Lock size={48} className="drop-shadow-lg" />
             </div>
@@ -507,18 +506,15 @@ export default function AstrologerChatPage() {
               <span className="text-orange-500 font-bold mt-1 inline-block">Your destiny awaits...</span>
             </p>
 
-            {/* Balance Card */}
             <div className={`rounded-xl p-4 mb-6 flex justify-between items-center border shadow-inner ${isDark ? "bg-[#0B0F19] border-slate-700" : "bg-gray-50 border-gray-200"}`}>
               <span className={`text-[13px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{getChatText("currentBalance")}</span>
               <span className="text-2xl font-black text-rose-500">₹{walletBalance / 100}</span>
             </div>
 
-            {/* Primary CTA - Add Cash */}
             <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-[position:right_center] py-4 text-[16px] font-black text-white shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all duration-500 active:scale-95 mb-4">
               {getChatText("addCash")}
             </Link>
 
-            {/* Secondary CTA - Maybe Later */}
             <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full py-2 ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
               <X size={16} /> {getChatText("maybeLater")}
             </button>
