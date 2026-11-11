@@ -110,7 +110,8 @@ const ASTROLOGERS: Astrologer[] = [
 ];
 
 export default function HomePage() {
-  const { lang, me, refresh } = useApp();
+  const { lang, me, refresh, theme } = useApp(); 
+  const isDark = theme === "dark"; 
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
   
   const t = (key: string) => getUIText(lang || "hi", key);
@@ -130,10 +131,20 @@ export default function HomePage() {
           <Link href="/settings" className="rounded-full p-2.5 bg-[#151d2c] text-slate-300 border border-slate-700 hover:bg-[#1f2937]">
             <Settings size={20} />
           </Link>
-          <Link href="/wallet" className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-bold bg-[#151d2c] text-slate-200 border border-slate-700">
+          
+          {/* 🔥 Fixed Wallet Button with Theme Support */}
+          <Link 
+            href="/wallet" 
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-bold border transition-colors ${
+              isDark 
+                ? "bg-[#151d2c] text-slate-200 border-slate-700 hover:bg-[#1f2937]" 
+                : "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100"
+            }`}
+          >
             ₹{me?.user ? walletBalanceRupees : "0"} 
             <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#ff6b00] text-[12px] text-white ml-0.5">+</span>
           </Link>
+
         </div>
       </header>
 
@@ -239,8 +250,8 @@ export default function HomePage() {
                         <p className="text-[18px] font-black text-[#ff6b00]">
                           ₹{astro.price} <span className="text-[12px] font-medium text-slate-400">/ {t("min")}</span>
                         </p>
-                        {/* 🔥 FIXED ROUTING: /chat/${astro.id} se badal kar /chat?persona=${astro.id} kiya gaya hai */}
-                        <Link href={`/chat?persona=${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
+                        {/* 🔥 FIXED ROUTING: Ab dynamic route /chat/[id] ke hisaab se link set hai */}
+                        <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
                           {t("chatNow")}
                         </Link>
                       </div>
@@ -270,46 +281,45 @@ export default function HomePage() {
         </section>
       </div>
 
-      {/* Sticky Bottom Banner & Nav (Completed & Premium) */}
+      {/* Sticky Bottom Banner & Nav */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         
-        {/* Pink Banner - High Conversion Trigger */}
+        {/* Pink Banner */}
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
-               <Crown size={16} className="text-white" />
+             <div className="h-8 w-8 rounded-full border border-white/30 bg-white/10 flex items-center justify-center">
+                <Crown size={16} className="text-white" />
              </div>
              <div>
-               <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
-               <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
+                <p className="text-[11px] font-black text-white leading-tight">{t("stickyTitle")}</p>
+                <p className="text-[9px] text-pink-100 font-medium">{t("stickySub")}</p>
              </div>
           </div>
-          <Link href="/chat" className="bg-white text-[#d81b60] font-bold text-[12.5px] px-4 py-1.5 rounded-full shadow-sm active:scale-95 transition-transform">
+          <Link href="/chat" className="rounded-full bg-white px-4 py-1.5 text-[11px] font-extrabold text-[#d81b60] shadow-sm active:scale-95 transition-transform">
             {t("startFreeChat")}
           </Link>
         </div>
 
-        {/* Bottom Navigation Bar */}
-        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
-          <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-            <Home size={22} strokeWidth={2.5} />
-            <span className="text-[11px] font-bold">{t("home")}</span>
-          </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <MessageCircle size={22} />
-            <span className="text-[11px] font-medium">{t("chat")}</span>
-          </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <Sun size={22} />
-            <span className="text-[11px] font-medium">{t("daily")}</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <User size={22} />
-            <span className="text-[11px] font-medium">{t("profile")}</span>
-          </Link>
+        {/* Bottom Navigation */}
+        <nav className="bg-[#0b101b] border-t border-slate-800 flex justify-around items-center pb-safe pt-2 pb-2">
+           <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
+              <Home size={22} strokeWidth={2.5} />
+              <span className="text-[10px] font-bold">{t("home")}</span>
+           </Link>
+           <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+              <MessageCircle size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("chat")}</span>
+           </Link>
+           <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+              <Sun size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("daily")}</span>
+           </Link>
+           <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
+              <User size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("profile")}</span>
+           </Link>
         </nav>
       </div>
-
     </main>
   );
 }
