@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState, Suspense } from "react";
 import type { FormEvent, ChangeEvent } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation"; // 🔥 useRouter import kiya
+import { useSearchParams, useRouter } from "next/navigation";
 import { Send, Sparkles, Plus, Wallet, X, Copy, Check, Menu, Heart, ImageIcon, Lock, ChevronLeft, Search, User, Calendar, Clock, MapPin, UserPlus } from "lucide-react";
 
 import { useApp } from "../Providers";
@@ -28,7 +28,7 @@ const getPersonaDetails = (p: string) => {
 function ChatPageContent() {
   const { lang, setLanguage, me, refresh, loading, sessionError, theme, t } = useApp();
   const searchParams = useSearchParams();
-  const router = useRouter(); // 🔥 Router initialize kiya
+  const router = useRouter();
 
   const [persona, setPersona] = useState("gita");
   const [messages, setMessages] = useState<Message[]>([]);
@@ -99,7 +99,7 @@ function ChatPageContent() {
     else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
   };
 
-  // 🔥 UPDATED FINISH ONBOARDING LOGIC
+  // 🔥 FIXED FINISH ONBOARDING LOGIC
   const finishOnboarding = async (isRegistering: boolean) => {
     if (draft.place.length < 2 || !hasConsent) return;
     
@@ -123,12 +123,13 @@ function ChatPageContent() {
       if (!response.ok) throw new Error("Failed");
       await refresh(); 
       
-      const isUserLoggedIn = !!me?.user;
+      // 🔥 FIX: Check if user is actually a registered user (not guest)
+      const isActuallyRegistered = me?.user && !me?.user?.isGuest;
 
       if (isRegistering) {
         localStorage.removeItem("is_guest_user");
-        // 🔥 AGAR REGISTER KARNA HAI YA LOGIN NAHI HAI TOH LOGIN PAGE PAR BHEJ DO
-        if (!isUserLoggedIn || isRegistering) {
+        // 🔥 Redirect to login ONLY IF they are not already registered
+        if (!isActuallyRegistered) {
             router.push("/login"); 
         } else {
             setShowOnboarding(false);
