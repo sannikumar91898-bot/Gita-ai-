@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
-    // 2. Database se order dhundo (🔥 Yahan se status: "created" hataya hai)
+    // 2. Database se order dhundo (🔥 FIX: Status 'created' ki condition yahan se hata di 🔥)
     const paymentRecord = await db.select().from(payments)
       .where(and(
         eq(payments.orderId, razorpay_order_id), 
@@ -53,16 +53,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Order not found." }, { status: 404 });
     }
 
-    // 🔥 MAIN FIX: Agar Webhook pehle hi isko 'paid' kar chuka hai, toh error mat do, Success bolo!
+    // 🔥 MAIN FIX: Agar Webhook ne pehle hi isko 'paid' kar diya hai, toh seedha Success bhejo
     if (payment.status === "paid") {
-      return NextResponse.json({ success: true, message: "Payment already processed by webhook." }, { status: 200 });
+      return NextResponse.json({
+        success: true,
+        message: "Payment already verified by webhook.",
+      });
     }
 
-    if (payment.status !== "created") {
-      return NextResponse.json({ error: "Invalid payment state." }, { status: 400 });
-    }
-
-    // 3. Razorpay API se actual status check karein
+    // 3. Razorpay API SE ACTUAL STATUS CHECK KAREIN
     const razorpay = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID!,
       key_secret: process.env.RAZORPAY_KEY_SECRET!,
@@ -74,20 +73,28 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Payment is not captured yet." }, { status: 400 });
     }
 
-    if (rzpPayment.currency !== "INR" || rzpPayment.order_id !== razorpay_order_id || rzpPayment.amount !== payment.amountPaise) {
-      return NextResponse.json({ error: "Payment details mismatch." }, { status: 400 });
+    if (rzpPayment.currency !== "INR") {
+      return NextResponse.json({ error: "Currency mismatch." }, { status: 400 });
     }
 
-    // 4. Bonus Logic
+    if (rzpPayment.order_id !== razorpay_order_id) {
+      return NextResponse.json({ error: "Order ID mismatch." }, { status: 400 });
+    }
+
+    if (rzpPayment.amount !== payment.amountPaise) {
+      return NextResponse.json({ error: "Amount mismatch." }, { status: 400 });
+    }
+
+    // 4. Bonus Logic (₹51 ya zyada par 10% extra)
     let finalAmountToAdd = payment.amountPaise;
     const amountInRupees = payment.amountPaise / 100;
     if (amountInRupees >= 51) {
       finalAmountToAdd += Math.floor(amountInRupees * 0.1) * 100;
     }
 
-    // 5. Atomic Transaction
+    // 5. ATOMIC TRANSACTION
     await db.transaction(async (tx) => {
-      // Update status to paid
+      // Status update
       const updatedPayment = await tx.update(payments)
         .set({ 
           paymentId: razorpay_payment_id, 
@@ -100,7 +107,6 @@ export async function POST(req: Request) {
         ))
         .returning();
 
-      // Agar koi aur parallel request isko pehle hi update kar chuki hai
       if (updatedPayment.length === 0) {
         throw new Error("PAYMENT_ALREADY_PROCESSED");
       }
@@ -119,10 +125,12 @@ export async function POST(req: Request) {
 
   } catch (error: any) {
     console.error("Verify Error:", error.message);
+    
     if (error.message === "PAYMENT_ALREADY_PROCESSED") {
-      // Agar transaction fail hua kyunki webhook bhi same time par chala, toh frontend ko 200 de do
-      return NextResponse.json({ success: true, message: "Already processed" }, { status: 200 }); 
+      // Agar yahan aaya matlab DB update hone ki koshish mein race lagi
+      return NextResponse.json({ success: true, message: "Already processed." }, { status: 200 }); 
     }
+    
     return NextResponse.json({ error: "Verification failed. Please contact support." }, { status: 500 });
   }
 }
