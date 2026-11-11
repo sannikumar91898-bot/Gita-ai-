@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { getAstrologerById } from "@/lib/astrologers";
 import { useApp } from "../../Providers";
-import { Wallet, Lock, ArrowLeft, Send, Sparkles, X, Plus, Heart, ImageIcon, Menu } from "lucide-react"; 
+import { Wallet, Lock, ArrowLeft, Send, Sparkles, X, Plus, Heart, ImageIcon, Menu, UserPlus } from "lucide-react"; 
 
 type Message = {
   id: string;
@@ -48,7 +48,10 @@ export default function AstrologerChatPage() {
   const [conversationId, setConversationId] = useState<string | null>(null);
   
   const [walletBalance, setWalletBalance] = useState(0);
+  
+  // 🔥 MODALS STATE
   const [showPaywall, setShowPaywall] = useState(false);
+  const [showRegisterModal, setShowRegisterModal] = useState(false);
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -57,6 +60,23 @@ export default function AstrologerChatPage() {
   const endRef = useRef<HTMLDivElement>(null);
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
+
+  // 🔥 TRANSLATIONS FOR REGISTER MODAL
+  const getModalText = (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      hi: { title: "रजिस्टर करना ज़रूरी है", desc: "चैट शुरू करने के लिए कृपया अपना अकाउंट रजिस्टर या लॉगिन करें। आपकी बेसिक जानकारी पहले से सुरक्षित है।", btn: "रजिस्टर / लॉगिन करें", cancel: "रद्द करें" },
+      hinglish: { title: "Registration Required", desc: "Chat shuru karne ke liye kripya apna account register ya login karein. Aapki basic details pehle se safe hain.", btn: "Register / Login Now", cancel: "Cancel" },
+      en: { title: "Registration Required", desc: "Please register or login to start chatting. Your basic details are already saved.", btn: "Register / Login Now", cancel: "Cancel" },
+      te: { title: "నమోదు అవసరం", desc: "చాట్ ప్రారంభించడానికి దయచేసి మీ ఖాతాను నమోదు చేయండి లేదా లాగిన్ చేయండి.", btn: "నమోదు చేయండి / లాగిన్", cancel: "రద్దు చేయండి" },
+      ta: { title: "பதிவு தேவை", desc: "அரட்டையைத் தொடங்க உங்கள் கணக்கைப் பதிவு செய்யவும் அல்லது உள்நுழையவும்.", btn: "பதிவு / உள்நுழை", cancel: "ரத்து செய்" },
+      kn: { title: "ನೋಂದಣಿ ಅಗತ್ಯವಿದೆ", desc: "ಚಾಟ್ ಪ್ರಾರಂಭಿಸಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಖಾತೆಯನ್ನು ನೋಂದಾಯಿಸಿ ಅಥವಾ ಲಾಗಿನ್ ಮಾಡಿ.", btn: "ನೋಂದಾಯಿಸಿ / ಲಾಗಿನ್", cancel: "ರದ್ದುಮಾಡಿ" },
+      bn: { title: "নিবন্ধন প্রয়োজন", desc: "চ্যাট শুরু করতে অনুগ্রহ করে আপনার অ্যাকাউন্ট নিবন্ধন বা লগইন করুন।", btn: "নিবন্ধন / লগইন", cancel: "বাতিল করুন" },
+      mr: { title: "नोंदणी आवश्यक आहे", desc: "चॅट सुरू करण्यासाठी कृपया तुमचे खाते नोंदवा किंवा लॉग इन करा.", btn: "नोंदणी / लॉग इन", cancel: "रद्द करा" },
+      gu: { title: "નોંધણી જરૂરી છે", desc: "ચેટ શરૂ કરવા માટે કૃપા કરીને તમારું એકાઉન્ટ નોંધો અથવા લોગિન કરો.", btn: "નોંધણી / લોગિન", cancel: "રદ કરો" },
+      ml: { title: "രജിസ്ട്രേഷൻ ആവശ്യമാണ്", desc: "ചാറ്റ് ആരംഭിക്കാൻ ദയവായി നിങ്ങളുടെ അക്കൗണ്ട് രജിസ്റ്റർ ചെയ്യുക അല്ലെങ്കിൽ ലോഗിൻ ചെയ്യുക.", btn: "രജിസ്റ്റർ / ലോഗിൻ", cancel: "റദ്ദാക്കുക" },
+    };
+    return dict[lang || "hi"]?.[key] || dict["en"][key];
+  };
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -156,6 +176,12 @@ export default function AstrologerChatPage() {
   };
 
   async function sendMessage(text: string, imageFile?: File | null) {
+    // 🔥 GUEST VALIDATION: Yahan alert ki jagah modal show hoga
+    if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
+      setShowRegisterModal(true);
+      return; 
+    }
+
     if ((!text.trim() && !imageFile) || loading || !astrologer || !validId || historyLoading || requestInProgress.current) return;
 
     const selectedPersona = id;
@@ -403,7 +429,28 @@ export default function AstrologerChatPage() {
         </form>
       </div>
 
-      {/* PAYWALL MODAL */}
+      {/* 🔥 REGISTRATION REQUIRED MODAL */}
+      {showRegisterModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-md rounded-[2rem] bg-[#151E2E] border border-orange-500/30 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
+              <UserPlus size={40} />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">{getModalText("title")}</h2>
+            <p className="text-[14px] text-slate-300 mb-6 leading-relaxed">
+              {getModalText("desc")}
+            </p>
+            <Link href="/login" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
+              {getModalText("btn")}
+            </Link>
+            <button onClick={() => setShowRegisterModal(false)} className="text-[13px] font-bold text-slate-500 hover:text-white transition-colors flex items-center justify-center gap-1.5 w-full">
+              <X size={16} /> {getModalText("cancel")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* PAYWALL MODAL (Wallet Recharge) */}
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
           <div className="w-full max-w-md rounded-[2rem] bg-[#151E2E] border border-orange-500/30 p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95">
