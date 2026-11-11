@@ -21,7 +21,7 @@ const getPersonaDetails = (p: string) => {
     case "kriti": return { name: "Acharya Kriti", img: "/astrologers/kriti.jpg" };
     case "devaki": return { name: "Dr. Devaki Shastri", img: "/astrologers/devaki.jpg" };
     case "gargi": return { name: "Gargi Maa", img: "/astrologers/gargi.jpg" };
-    default: return { name: "Gita", img: "/astrologers/riya.jpg" }; // Fallback
+    default: return { name: "Gita", img: "/astrologers/riya.jpg" }; 
   }
 };
 
@@ -75,10 +75,12 @@ function ChatPageContent() {
     else if (onboardStep === 2) { if(!draft.gender) return; setOnboardStep(3); }
     else if (onboardStep === 3) { if(!draft.dob) return; setOnboardStep(4); }
     else if (onboardStep === 4) { if(!draft.time && !notSureTime) return; setOnboardStep(5); }
-    else if (onboardStep === 5) { if(draft.place.length < 2 || !hasConsent) return; finishOnboarding(); }
   };
 
-  const finishOnboarding = async () => {
+  // 🔥 UPDATED: isRegistering parameter added
+  const finishOnboarding = async (isRegistering: boolean) => {
+    if (draft.place.length < 2 || !hasConsent) return;
+    
     setIsLoading(true);
     try {
       const response = await fetch("/api/kundli", { 
@@ -91,15 +93,24 @@ function ChatPageContent() {
           timeOfBirth: notSureTime ? "12:00" : draft.time, 
           isTimeUnknown: notSureTime, 
           placeOfBirth: draft.place,
-          consent: hasConsent 
+          consent: hasConsent,
+          isRegistering: isRegistering // Backend ko batayenge ki register karna hai ya nahi
         }) 
       });
       
-      if (!response.ok) throw new Error("Kundli failed");
+      if (!response.ok) throw new Error("Failed");
       await refresh(); 
+      
+      // Guest mode flag set karna
+      if (!isRegistering) {
+        localStorage.setItem("is_guest_user", "true");
+      } else {
+        localStorage.removeItem("is_guest_user");
+      }
+
       setShowOnboarding(false);
     } catch (error) {
-      alert("Kundli generate nahi ho payi. Kripya details check karein.");
+      alert("Details save nahi ho payi. Kripya check karein.");
     } finally {
       setIsLoading(false);
     }
@@ -126,6 +137,13 @@ function ChatPageContent() {
 
   async function sendToAi(e?: FormEvent, text?: string) {
     e?.preventDefault();
+    
+    // 🔥 GUEST CHECK: Agar user guest hai to chat mat karne do
+    if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
+      alert("Chat karne ke liye kripya Register karein. Aapki basic details save ho chuki hain.");
+      return; // Yahan aap Register modal bhi khol sakte hain
+    }
+
     const msg = text || input.trim();
     if ((!msg && !selectedImage) || isLoading) return;
     
@@ -195,12 +213,14 @@ function ChatPageContent() {
         </div>
 
         <div className="w-full max-w-md mx-auto flex-1">
+          
+          {/* 🔥 STEP 0: LANGUAGE SELECTION (NEXT BUTTON ADDED) */}
           {onboardStep === 0 && (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("chooseLanguage") || "Choose your language"}</h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-3 mb-8">
                 {LANGUAGES.map(l => (
-                  <button key={l.code} onClick={() => { setLanguage(l.code); setOnboardStep(1); }} 
+                  <button key={l.code} onClick={() => setLanguage(l.code)} 
                     className={`p-5 rounded-2xl border-2 text-left transition-all duration-200 ${
                       lang === l.code 
                         ? "border-yellow-400 bg-yellow-400/10 shadow-[0_0_15px_rgba(250,204,21,0.2)]" 
@@ -211,6 +231,9 @@ function ChatPageContent() {
                   </button>
                 ))}
               </div>
+              <button onClick={handleNextStep} disabled={!lang} className="w-full py-5 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[16px] disabled:opacity-50 shadow-lg shadow-yellow-500/20 active:scale-95 transition-transform">
+                {t("next") || "Next"}
+              </button>
             </div>
           )}
 
@@ -226,6 +249,7 @@ function ChatPageContent() {
             </div>
           )}
 
+          {/* 🔥 STEP 2: GENDER (TRANSGENDER ADDED) */}
           {onboardStep === 2 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("yourGender") || "What is your gender?"}</h2>
@@ -275,6 +299,7 @@ function ChatPageContent() {
             </div>
           )}
 
+          {/* 🔥 STEP 5: TWO BUTTONS (REGISTER & ADMIN) */}
           {onboardStep === 5 && (
             <div className="animate-in fade-in slide-in-from-right-4 duration-500">
               <h2 className="text-3xl font-black mb-6">{t("birthPlace") || "Where were you born?"}</h2>
@@ -293,9 +318,19 @@ function ChatPageContent() {
                 </span>
               </label>
 
-              <button onClick={handleNextStep} disabled={draft.place.length < 2 || !hasConsent || isLoading} className="w-full py-5 rounded-2xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[16px] disabled:opacity-50 shadow-lg shadow-yellow-500/20 active:scale-95 transition-transform flex justify-center items-center">
-                {isLoading ? <Sparkles className="animate-spin" size={22} /> : t("startChat") || "Start chat with Astrologer"}
-              </button>
+              <div className="flex flex-col gap-3">
+                {/* REGISTER BUTTON */}
+                <button onClick={() => finishOnboarding(true)} disabled={draft.place.length < 2 || !hasConsent || isLoading} className="w-full py-4 rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 text-black font-black text-[16px] disabled:opacity-50 shadow-lg shadow-yellow-500/20 active:scale-95 transition-transform flex justify-center items-center gap-2">
+                  {isLoading ? <Sparkles className="animate-spin" size={22} /> : (
+                    <><User size={20} /> Register & Start Chat</>
+                  )}
+                </button>
+                
+                {/* ADMIN / GUEST BUTTON */}
+                <button onClick={() => finishOnboarding(false)} disabled={draft.place.length < 2 || !hasConsent || isLoading} className={`w-full py-3.5 rounded-xl font-bold text-[14px] border disabled:opacity-50 active:scale-95 transition-transform ${isDark ? "bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700" : "bg-gray-100 border-gray-300 text-gray-700 hover:bg-gray-200"}`}>
+                  Save Details (Continue as Admin/Guest)
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -304,7 +339,7 @@ function ChatPageContent() {
   }
 
   // ==========================================
-  // 💬 CHAT UI
+  // 💬 CHAT UI (Unchanged)
   // ==========================================
   return (
     <div className={`flex h-[100dvh] w-full flex-col overflow-hidden transition-colors duration-300 ${isDark ? "bg-[#0B0F19]" : "bg-[#FEF8EF]"}`}>
@@ -354,7 +389,6 @@ function ChatPageContent() {
             {messages.map((message) => (
               <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                 
-                {/* Astrologer Avatar */}
                 {message.role === "assistant" && (
                   <div className="h-8 w-8 rounded-full overflow-hidden shrink-0 mt-1 shadow-sm border border-slate-700">
                     <img src={personaDetails.img} alt="Astro" className="h-full w-full object-cover" />
