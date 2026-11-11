@@ -55,6 +55,73 @@ function ChatPageContent() {
   const isDark = theme === "dark";
   const personaDetails = getPersonaDetails(persona);
 
+  // 🔥 10 LANGUAGES HELPER FOR THIS CHAT PAGE
+  const getChatText = (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      hi: {
+        connecting: "ज्योतिषी जुड़ रही हैं...", placeholder: "अपना सवाल लिखें...",
+        paywallTitle: "बैलेंस खत्म हो गया है", paywallDesc: "आपके फ्री मैसेज या वॉलेट बैलेंस खत्म हो गए हैं। भविष्य की सच्चाई जानने के लिए रिचार्ज करें।", 
+        currentBalance: "वर्तमान बैलेंस", addCash: "अभी रिचार्ज करें", maybeLater: "बाद में", 
+        chatEnded: "आपकी चैट अधूरी रह गई... सच्चाई जानने के लिए रिचार्ज करें।"
+      },
+      hinglish: {
+        connecting: "Jyotishi jud rahi hain...", placeholder: "Apna sawal likhein...",
+        paywallTitle: "Balance Exhausted", paywallDesc: "Aapke free messages ya wallet balance khatam ho gaye hain. Future ki sachai jaanne ke liye recharge karein.", 
+        currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
+        chatEnded: "Aapki chat adhuri reh gayi... sachai jaanne ke liye recharge karein."
+      },
+      en: {
+        connecting: "Astrologer is connecting...", placeholder: "Ask your question...",
+        paywallTitle: "Balance Exhausted", paywallDesc: "Your free messages or wallet balance is over. Recharge to uncover the truth about your future.", 
+        currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
+        chatEnded: "Your chat was left incomplete... Recharge to hear the truth."
+      },
+      te: {
+        connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...",
+        paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది. మీ భవిష్యత్తు నిజం తెలుసుకోవడానికి రీఛార్జ్ చేయండి.", 
+        currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత",
+        chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది... నిజం తెలుసుకోవడానికి రీఛార్జ్ చేయండి."
+      },
+      ta: {
+        connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...",
+        paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது. உங்கள் எதிர்கால உண்மையை அறிய ரீசார்ஜ் செய்யுங்கள்.", 
+        currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்",
+        chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை... உண்மையை அறிய ரீசார்ஜ் செய்யுங்கள்."
+      },
+      kn: {
+        connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...",
+        paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ. ನಿಮ್ಮ ಭವಿಷ್ಯದ ಸತ್ಯ ತಿಳಿಯಲು ರೀಚಾರ್ಜ್ ಮಾಡಿ.", 
+        currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ",
+        chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ... ಸತ್ಯ ತಿಳಿಯಲು ರೀಚಾರ್ಜ್ ಮಾಡಿ."
+      },
+      bn: {
+        connecting: "জ্যোতিষী সংযোগ করছেন...", placeholder: "আপনার প্রশ্ন জিজ্ঞাসা করুন...",
+        paywallTitle: "ব্যালেন্স শেষ", paywallDesc: "আপনার ফ্রি মেসেজ বা ওয়ালেট ব্যালেন্স শেষ। ভবিষ্যতের সত্য জানতে রিচার্জ করুন।", 
+        currentBalance: "বর্তমান ব্যালেন্স", addCash: "এখনই রিচার্জ করুন", maybeLater: "পরে",
+        chatEnded: "আপনার চ্যাট অসম্পূর্ণ ছিল... সত্য জানতে রিচার্জ করুন।"
+      },
+      mr: {
+        connecting: "ज्योतिषी जोडत आहेत...", placeholder: "तुमचा प्रश्न विचारा...",
+        paywallTitle: "बॅलन्स संपला आहे", paywallDesc: "तुमचे फ्री मेसेज किंवा वॉलेट बॅलन्स संपले आहे. भविष्यातील सत्य जाणून घेण्यासाठी रिचार्ज करा.", 
+        currentBalance: "सध्याचा बॅलन्स", addCash: "आता रिचार्ज करा", maybeLater: "नंतर",
+        chatEnded: "तुमची चॅट अपूर्ण राहिली... सत्य जाणून घेण्यासाठी रिचार्ज करा."
+      },
+      gu: {
+        connecting: "જ્યોતિષી જોડાઈ રહ્યા છે...", placeholder: "તમારો પ્રશ્ન પૂછો...",
+        paywallTitle: "બેલેન્સ ખતમ", paywallDesc: "તમારા ફ્રી મેસેજ અથવા વોલેટ બેલેન્સ ખતમ થઈ ગયા છે. ભવિષ્યનું સત્ય જાણવા રિચાર્જ કરો.", 
+        currentBalance: "વર્તમાન બેલેન્સ", addCash: "હમણાં જ રિચાર્જ કરો", maybeLater: "પછી",
+        chatEnded: "તમારી ચેટ અધૂરી રહી ગઈ... સત્ય જાણવા રિચાર્જ કરો."
+      },
+      ml: {
+        connecting: "ജ്യോതിഷി ബന്ധിപ്പിക്കുന്നു...", placeholder: "നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക...",
+        paywallTitle: "ബാലൻസ് തീർന്നു", paywallDesc: "നിങ്ങളുടെ സൗജന്യ സന്ദേശങ്ങളോ വാലറ്റ് ബാലൻസോ തീർന്നു. ഭാവിയുടെ സത്യം അറിയാൻ റീചാർജ് ചെയ്യുക.", 
+        currentBalance: "നിലവിലെ ബാലൻസ്", addCash: "ഇപ്പോൾ റീചാർജ് ചെയ്യുക", maybeLater: "പിന്നീട്",
+        chatEnded: "നിങ്ങളുടെ ചാറ്റ് അപൂർണ്ണമായി... സത്യം അറിയാൻ റീചാർജ് ചെയ്യുക."
+      }
+    };
+    return dict[lang || "en"]?.[key] || dict["en"][key];
+  };
+
   useEffect(() => {
     if (me?.birth?.name) {
       setShowOnboarding(false);
@@ -395,7 +462,7 @@ function ChatPageContent() {
         {historyLoading ? (
            <div className={`text-center py-10 flex flex-col items-center gap-2 ${isDark ? "text-slate-500" : "text-gray-400"}`}>
             <Sparkles className="animate-spin text-yellow-500" size={28} /> 
-            <span className="text-[14px] font-medium">Loading history...</span>
+            <span className="text-[14px] font-medium">{getChatText("connecting")}</span>
            </div>
         ) : (
           <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -465,7 +532,7 @@ function ChatPageContent() {
             <input 
               value={input} 
               onChange={e => setInput(e.target.value)} 
-              placeholder={t("chatPlaceholder") || "Ask your question..."} 
+              placeholder={getChatText("placeholder")}
               className={`flex-1 bg-transparent outline-none text-[15.5px] py-3 px-2 max-h-32 custom-scrollbar ${isDark ? "text-white placeholder-slate-500" : "text-black placeholder-gray-400"}`} 
             />
             
@@ -476,26 +543,34 @@ function ChatPageContent() {
         </form>
       </div>
 
-      {/* PAYWALL MODAL (Wallet Recharge) */}
+      {/* 🔥 PREMIUM PAYWALL MODAL (Psychological Business Trigger) */}
       {showPaywall && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
-          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_50px_rgba(234,88,12,0.2)] animate-in zoom-in-95 border ${isDark ? "bg-[#151E2E] border-orange-500/30" : "bg-white border-orange-200"}`}>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-orange-500/20 text-orange-500 mb-5">
-              <Lock size={40} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          <div className={`w-full max-w-md rounded-[2rem] p-6 sm:p-8 text-center shadow-[0_0_60px_rgba(234,88,12,0.3)] animate-in zoom-in-95 border-2 ${isDark ? "bg-[#151E2E] border-orange-500/50" : "bg-white border-orange-400"}`}>
+            
+            <div className="mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-orange-500/20 to-rose-500/20 text-orange-500 mb-6 shadow-[0_0_30px_rgba(234,88,12,0.2)]">
+              <Lock size={48} className="drop-shadow-lg" />
             </div>
-            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>Balance Exhausted</h2>
-            <p className={`text-[14px] mb-6 leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
-              Aapka free message limit ya wallet balance khatam ho gaya hai. {personaDetails.name} se aur baatein karne ke liye recharge karein.
+
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+              {getChatText("paywallTitle")}
+            </h2>
+            <p className={`text-[14px] mb-6 leading-relaxed font-medium ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+              {getChatText("paywallDesc")} <br/>
+              <span className="text-orange-500 font-bold mt-1 inline-block">Your destiny awaits...</span>
             </p>
-            <div className={`rounded-xl p-4 mb-6 flex justify-between items-center border ${isDark ? "bg-[#0B0F19] border-slate-700" : "bg-gray-50 border-gray-200"}`}>
-              <span className={`text-[13px] font-semibold ${isDark ? "text-slate-400" : "text-gray-500"}`}>Current Balance</span>
-              <span className="text-xl font-black text-rose-400">₹{(me?.user?.walletBalancePaise ?? 0) / 100}</span>
+
+            <div className={`rounded-xl p-4 mb-6 flex justify-between items-center border shadow-inner ${isDark ? "bg-[#0B0F19] border-slate-700" : "bg-gray-50 border-gray-200"}`}>
+              <span className={`text-[13px] font-semibold uppercase tracking-wider ${isDark ? "text-slate-400" : "text-gray-500"}`}>{getChatText("currentBalance")}</span>
+              <span className="text-2xl font-black text-rose-500">₹{(me?.user?.walletBalancePaise ?? 0) / 100}</span>
             </div>
-            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform mb-4">
-              Add Cash Now
+
+            <Link href="/wallet" className="block w-full rounded-xl bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 bg-[length:200%_auto] hover:bg-[position:right_center] py-4 text-[16px] font-black text-white shadow-[0_10px_20px_rgba(234,88,12,0.3)] transition-all duration-500 active:scale-95 mb-4">
+              {getChatText("addCash")}
             </Link>
-            <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
-              <X size={16} /> Maybe Later
+
+            <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold transition-colors flex items-center justify-center gap-1.5 w-full py-2 ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
+              <X size={16} /> {getChatText("maybeLater")}
             </button>
           </div>
         </div>
