@@ -30,7 +30,8 @@ function ChatPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter(); 
 
-  const [persona, setPersona] = useState("gita");
+  // 🔥 FIX 1: URL से persona पढ़ें, अगर नहीं है तो 'gita' डिफ़ॉल्ट रखें
+  const [persona, setPersona] = useState(searchParams.get("persona") || "gita");
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -54,6 +55,14 @@ function ChatPageContent() {
 
   const isDark = theme === "dark";
   const personaDetails = getPersonaDetails(persona);
+
+  // 🔥 FIX 2: अगर यूज़र चैट के अंदर रहते हुए दूसरे ज्योतिषी पर जाए, तो state अपडेट हो
+  useEffect(() => {
+    const urlPersona = searchParams.get("persona");
+    if (urlPersona && ["gita", "kriti", "devaki", "gargi"].includes(urlPersona)) {
+      setPersona(urlPersona);
+    }
+  }, [searchParams]);
 
   // 🔥 10 LANGUAGES HELPER FOR THIS CHAT PAGE
   const getChatText = (key: string) => {
@@ -174,7 +183,6 @@ function ChatPageContent() {
 
       if (isRegistering) {
         localStorage.removeItem("is_guest_user");
-        // 🔥 Direct Redirect to Login (No Modal)
         if (!isActuallyRegistered) {
             router.push("/login?redirect=/chat"); 
         } else {
@@ -214,7 +222,6 @@ function ChatPageContent() {
   async function sendToAi(e?: FormEvent, text?: string) {
     e?.preventDefault();
     
-    // 🔥 Direct Redirect to Login Page
     if (typeof window !== "undefined" && localStorage.getItem("is_guest_user") === "true") {
       router.push("/login?redirect=/chat");
       return; 
