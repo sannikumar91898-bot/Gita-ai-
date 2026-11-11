@@ -6,7 +6,7 @@ import Link from "next/link";
 import { ArrowLeft, Sparkles, Scroll, Download, RefreshCcw, AlertCircle, Star, ShieldCheck, CheckCircle2, Home, MessageCircle, Sun, User } from "lucide-react";
 import { useApp } from "../Providers";
 
-// 🔥 10 Language Translation Helper (Aapka same dictionary)
+// 🔥 10 Language Translation Helper
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: { title: "जन्म कुंडली", subtitle: "गीता AI द्वारा जनरेट किया गया", name: "पूरा नाम", dob: "जन्म तिथि", time: "जन्म का समय", place: "जन्म स्थान", calc: "गणना हो रही है...", generate: "कुंडली बनाएं", chart: "जन्म कुंडली", by: "गीता AI द्वारा", lagna: "लग्न", rashi: "राशि", nakshatra: "नक्षत्र", dasha: "वर्तमान दशा", planetsTitle: "ग्रह स्पष्ट (ग्रह)", planet: "ग्रह", sign: "राशि", house: "भाव", noPlanets: "ग्रहों की जानकारी उपलब्ध नहीं है", generated: "जनरेट किया गया", notice: "महत्वपूर्ण सूचना:", scareText: "आपकी कुंडली में एक छिपा हुआ योग है जो विवाह या करियर में रुकावट डाल सकता है। सटीक कारण और उपाय जानने के लिए हमारे ज्योतिषी से बात करें।", chatCTA: "ज्योतिषी से बात करें — पहली चैट मुफ्त", wait: "रुकें...", download: "PDF डाउनलोड", again: "दोबारा बनाएं", consentText: "मैं अपनी जन्म तिथि, समय और स्थान को सुरक्षित रूप से सहेजने की सहमति देता/देती हूँ ताकि मेरी कुंडली और रीडिंग बन सके।", unknownTime: "मुझे अपना सही जन्म समय नहीं पता (12:00 PM मान लिया जाएगा)", aiReport: "AI ज्योतिषीय विश्लेषण", loadingHistory: "आपकी पुरानी कुंडली लोड हो रही है...", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल" },
@@ -55,7 +55,9 @@ export default function KundliPage() {
         
         if (data.chart) {
           setChart(data.chart);
-          if (data.interpretation) setInterpretation(data.interpretation);
+          if (data.interpretation && typeof data.interpretation === "string") {
+            setInterpretation(data.interpretation);
+          }
         }
         if (data.birth) {
           setName(data.birth.name || "");
@@ -114,7 +116,9 @@ export default function KundliPage() {
       }
       
       setChart(data.chart);
-      if (data.interpretation) setInterpretation(data.interpretation);
+      if (data.interpretation && typeof data.interpretation === "string") {
+        setInterpretation(data.interpretation);
+      }
 
     } catch (err: any) {
       setError(err.message);
@@ -158,10 +162,8 @@ export default function KundliPage() {
   }
 
   return (
-    // 🔥 Full Screen Layout (min-h-[100dvh])
     <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
       
-      {/* Container - w-full aur px-3 kiya gaya hai taaki side se chipke */}
       <div className="w-full max-w-2xl mx-auto px-3 pt-4 space-y-5">
         
         {/* HEADER */}
@@ -210,140 +212,121 @@ export default function KundliPage() {
 
             {error && <p className="text-[13px] text-rose-500 bg-rose-500/10 p-3.5 rounded-xl font-bold border border-rose-500/20">{error}</p>}
             
-            <button type="submit" disabled={loading || !consent} className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-4 text-[15px] font-bold text-white transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 flex justify-center items-center gap-2 shadow-lg shadow-orange-500/20 mt-2">
+            <button type="submit" disabled={loading || !consent} className="w-full rounded-2xl bg-gradient-to-r from-orange-500 to-[#ff6b00] py-4 text-[15px] font-black text-white shadow-lg shadow-orange-500/30 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:hover:scale-100 flex justify-center items-center gap-2">
               {loading ? <><Sparkles className="animate-spin" size={20} /> {t("calc")}</> : t("generate")}
             </button>
           </form>
         )}
 
-        {/* RESULT CHART */}
+        {/* RESULT */}
         {chart && (
-          <div className="space-y-5">
-            
-            {/* PDF PRINTABLE AREA */}
-            <div ref={pdfRef} className="rounded-3xl border border-orange-500/30 bg-white p-5 sm:p-6 text-slate-900 shadow-2xl relative overflow-hidden">
+          <div className="space-y-4">
+            <div ref={pdfRef} className="rounded-3xl border border-orange-500/30 bg-white p-5 text-slate-900 shadow-2xl relative overflow-hidden">
               
-              <div className="flex justify-between items-start border-b border-gray-200 pb-4 mb-5">
-                <div className="flex items-center gap-3">
-                  <Scroll className="text-[#ff6b00]" size={28} />
+              <div className="flex justify-between items-start border-b border-gray-200 pb-4 mb-4">
+                <div className="flex items-center gap-2">
+                  <Scroll className="text-orange-600" size={24} />
                   <div>
-                    <h2 className="text-[22px] font-black text-slate-900">{t("chart")}</h2>
-                    <p className="text-[11px] text-gray-500 font-bold uppercase">{t("by")}</p>
+                    <h2 className="text-xl font-bold text-slate-900">{t("chart")}</h2>
+                    <p className="text-[10px] text-gray-500 font-semibold">{t("by")}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-[15px] text-slate-900">{name}</p>
-                  <p className="text-[11px] text-gray-500 mt-0.5">{dob} | {time}</p>
-                  <p className="text-[11px] text-gray-500">{place}</p>
+                  <p className="font-bold text-sm text-slate-900">{name}</p>
+                  <p className="text-[10px] text-gray-500">{dob} | {time}</p>
+                  <p className="text-[10px] text-gray-500">{place}</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">{t("lagna")}</p>
+                  <p className="font-bold text-orange-700">{chart?.lagna?.rashiNameHi || "N/A"}</p>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">{t("rashi")}</p>
+                  <p className="font-bold text-orange-700">{chart?.moonSign?.rashiNameHi || "N/A"}</p>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">{t("nakshatra")}</p>
+                  <p className="font-bold text-orange-700">{chart?.nakshatra?.name || "N/A"} <span className="text-xs font-normal">(Pada {chart?.nakshatra?.pada || "-"})</span></p>
+                </div>
+                <div className="bg-orange-50 p-3 rounded-xl border border-orange-100">
+                  <p className="text-[10px] text-gray-500 font-semibold uppercase">{t("dasha")}</p>
+                  <p className="font-bold text-orange-700">{chart?.currentDasha?.maha || "N/A"}</p>
                 </div>
               </div>
 
-              {/* CHART DETAILS GRID */}
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <div className="bg-orange-50 p-3.5 rounded-xl border border-orange-100">
-                  <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider">{t("lagna")}</p>
-                  <p className="text-[15px] font-black text-slate-800 mt-0.5">{chart.lagna || "N/A"}</p>
-                </div>
-                <div className="bg-orange-50 p-3.5 rounded-xl border border-orange-100">
-                  <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider">{t("rashi")}</p>
-                  <p className="text-[15px] font-black text-slate-800 mt-0.5">{chart.rashi || chart.moonSign || "N/A"}</p>
-                </div>
-                <div className="bg-orange-50 p-3.5 rounded-xl border border-orange-100">
-                  <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider">{t("nakshatra")}</p>
-                  <p className="text-[15px] font-black text-slate-800 mt-0.5">{chart.nakshatra || "N/A"}</p>
-                </div>
-                <div className="bg-orange-50 p-3.5 rounded-xl border border-orange-100">
-                  <p className="text-[10px] text-orange-600 font-bold uppercase tracking-wider">{t("dasha")}</p>
-                  <p className="text-[15px] font-black text-slate-800 mt-0.5">{chart.dasha || chart.currentDasha || "N/A"}</p>
-                </div>
-              </div>
-
-              {/* PLANETS TABLE */}
-              <h3 className="text-[15px] font-black text-slate-800 border-b border-gray-200 pb-2 mb-3">{t("planetsTitle")}</h3>
-              {chart.planets && chart.planets.length > 0 ? (
-                <div className="overflow-hidden rounded-xl border border-gray-200 mb-6">
-                  <table className="w-full text-left text-[13px]">
-                    <thead className="bg-gray-50">
+              <div className="mb-5">
+                <h3 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-1">
+                  <Star size={14} className="text-orange-500" /> {t("planetsTitle")}
+                </h3>
+                <div className="bg-gray-50 rounded-xl border border-gray-200 overflow-hidden text-xs">
+                  <table className="w-full text-left">
+                    <thead className="bg-gray-100 text-gray-500 uppercase">
                       <tr>
-                        <th className="px-4 py-2.5 font-bold text-gray-700">{t("planet")}</th>
-                        <th className="px-4 py-2.5 font-bold text-gray-700">{t("sign")}</th>
-                        <th className="px-4 py-2.5 font-bold text-gray-700">{t("house")}</th>
+                        <th className="px-3 py-2">{t("planet")}</th>
+                        <th className="px-3 py-2">{t("sign")}</th>
+                        <th className="px-3 py-2 text-right">{t("house")}</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {chart.planets.map((p: any, i: number) => (
-                        <tr key={i} className="hover:bg-gray-50">
-                          <td className="px-4 py-2.5 font-semibold text-slate-900">{p.name}</td>
-                          <td className="px-4 py-2.5 text-gray-600">{p.sign}</td>
-                          <td className="px-4 py-2.5 text-gray-600">{p.house}</td>
-                        </tr>
-                      ))}
+                    <tbody className="divide-y divide-gray-200">
+                      {/* 🔥 FIX: Safe rendering of planets data */}
+                      {Array.isArray(chart?.planets) && chart.planets.length > 0 ? (
+                        chart.planets.map((planet: any, idx: number) => (
+                          <tr key={planet?.planet || idx} className="hover:bg-gray-100">
+                            <td className="px-3 py-2 text-slate-800 font-medium">{String(planet?.planet || "N/A")}</td>
+                            <td className="px-3 py-2 text-orange-600">{String(planet?.rashiName || "N/A")}</td>
+                            <td className="px-3 py-2 text-right text-gray-600">{planet?.house !== undefined ? String(planet.house) : "—"}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr><td colSpan={3} className="text-center py-4 text-gray-500">{t("noPlanets")}</td></tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
-              ) : (
-                <p className="text-[12px] text-gray-500 mb-6">{t("noPlanets")}</p>
-              )}
-
-              {/* AI INTERPRETATION */}
-              {interpretation && (
-                <div className="mb-6">
-                  <h3 className="text-[15px] font-black text-slate-800 border-b border-gray-200 pb-2 mb-3">{t("aiReport")}</h3>
-                  <p className="text-[13.5px] text-gray-700 leading-relaxed font-medium whitespace-pre-wrap">{interpretation}</p>
-                </div>
-              )}
-
-              {/* SCARE TEXT / NOTICE */}
-              <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 mt-4">
-                <AlertCircle size={20} className="text-rose-500 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[12px] font-black text-rose-800 uppercase tracking-wide mb-1">{t("notice")}</p>
-                  <p className="text-[12px] font-medium text-rose-700 leading-relaxed">{t("scareText")}</p>
-                </div>
               </div>
 
-            </div> {/* End of pdfRef */}
+              {/* 🔥 FIX: Safe rendering for AI Interpretation (Object crash fix) */}
+              {interpretation && typeof interpretation === "string" && (
+                <div className="mt-6 pt-4 border-t border-gray-200">
+                  <h3 className="text-sm font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <Sparkles size={16} className="text-orange-500" /> {t("aiReport")}
+                  </h3>
+                  <p className="text-sm leading-7 text-gray-700 whitespace-pre-wrap font-medium">
+                    {interpretation}
+                  </p>
+                </div>
+              )}
 
-            {/* ACTION BUTTONS (Outside pdfRef) */}
-            <div className="space-y-3">
-              <Link href="/chat" className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#d81b60] to-[#e91e63] px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-pink-500/20 transition-transform active:scale-[0.98] animate-pulse">
-                <MessageCircle size={20} /> {t("chatCTA")}
-              </Link>
-              
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={handleDownload} disabled={isDownloading} className={`flex items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-bold border transition-colors ${isDark ? "bg-[#151d2c] border-slate-700 text-slate-300 hover:bg-slate-800" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
-                  {isDownloading ? <Sparkles size={18} className="animate-spin" /> : <Download size={18} />} {t("download")}
-                </button>
-                <button onClick={() => { setChart(null); setInterpretation(null); setConsent(false); }} className={`flex items-center justify-center gap-2 rounded-xl py-3.5 text-[14px] font-bold border transition-colors ${isDark ? "bg-[#151d2c] border-slate-700 text-slate-300 hover:bg-slate-800" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
-                  <RefreshCcw size={18} /> {t("again")}
-                </button>
+              <div className="text-center mt-6 pt-3 border-t border-gray-200">
+                <p className="text-[10px] text-gray-400">{t("generated")} {new Date().toLocaleDateString()} | www.gita-ai.com</p>
               </div>
             </div>
 
+            <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-4">
+              <p className="text-sm text-red-400 font-medium leading-relaxed">
+                <span className="font-bold flex items-center gap-1 mb-1"><AlertCircle size={14} /> {t("notice")}</span> 
+                {t("scareText")}
+              </p>
+            </div>
+
+            <Link href="/chat" className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-red-500 px-4 py-3.5 font-bold text-white shadow-lg shadow-red-500/20 transition-transform hover:scale-[1.02]">
+              <span className="text-xl">🔮</span> {t("chatCTA")}
+            </Link>
+
+            <div className="flex gap-3">
+              <button onClick={handleDownload} disabled={isDownloading} className="flex-1 rounded-xl bg-green-600 py-3 text-sm font-bold text-white hover:bg-green-700 disabled:opacity-50 flex items-center justify-center gap-2 transition-all">
+                {isDownloading ? <><Sparkles className="animate-spin" size={16} /> {t("wait")}</> : <><Download size={16} /> {t("download")}</>}
+              </button>
+              <button onClick={() => { setChart(null); setInterpretation(null); }} className={`flex-1 rounded-xl border py-3 text-sm font-bold flex items-center justify-center gap-2 transition-all ${isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-orange-300 text-orange-600 hover:bg-orange-50"}`}>
+                <RefreshCcw size={16} /> {t("again")}
+              </button>
+            </div>
           </div>
         )}
       </div>
-
-      {/* 🔥 BOTTOM NAVIGATION BAR */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
-        <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <Home size={22} />
-          <span className="text-[11px] font-medium">{t("home")}</span>
-        </Link>
-        <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <MessageCircle size={22} />
-          <span className="text-[11px] font-medium">{t("chat")}</span>
-        </Link>
-        <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <Sun size={22} />
-          <span className="text-[11px] font-medium">{t("daily")}</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-          <User size={22} />
-          <span className="text-[11px] font-medium">{t("profile")}</span>
-        </Link>
-      </nav>
-
     </main>
   );
 }
