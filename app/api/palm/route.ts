@@ -10,7 +10,6 @@ export const dynamic = "force-dynamic";
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
 
-// Check karo ki URL aur Key hain ya nahi
 if (!modalUrl || !modalApiKey) {
   console.error("[FATAL] MODAL_API_URL or MODAL_API_KEY is missing in Render!");
 }
@@ -34,10 +33,35 @@ function getLanguageInstruction(lang: string): string {
   return map[lang] || map["hinglish"];
 }
 
+// 🔥 10 Language Psychological Marketing Message (FOMO)
+function getPsychologicalUnauthorizedMessage(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "आपकी हथेली के राज अभी अनकहे हैं। सटीक हस्तरेखा विश्लेषण और अपने भविष्य की सच्चाई जानने के लिए कृपया लॉगिन या रजिस्टर करें।",
+    hinglish: "Aapki hatheli ke raaz abhi ankahe hain. Sahi palm analysis aur apne bhavishya ki sachai jaanne ke liye kripya login ya register karein.",
+    en: "The secrets of your palm are still untold. Please login or register for accurate palm analysis and to uncover the truth about your future.",
+    te: "మీ అరచేతి రహస్యాలు ఇంకా చెప్పబడలేదు. ఖచ్చితమైన పామ్ విశ్లేషణ మరియు మీ భవిష్యత్తు నిజం తెలుసుకోవడానికి దయచేసి లాగిన్ లేదా రిజిస్టర్ చేయండి.",
+    ta: "உங்கள் உள்ளங்கையின் ரகசியங்கள் இன்னும் சொல்லப்படவில்லை. துல்லியமான கைரேகை பகுப்பாய்வு மற்றும் உங்கள் எதிர்கால உண்மையை அறிய தயவுசெய்து உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
+    kn: "ನಿಮ್ಮ ಅಂಗೈ ರಹಸ್ಯಗಳು ಇನ್ನೂ ಹೇಳಲ್ಪಟ್ಟಿಲ್ಲ. ನಿಖರವಾದ ಹಸ್ತರೇಖೆ ವಿಶ್ಲೇಷಣೆ ಮತ್ತು ನಿಮ್ಮ ಭವಿಷ್ಯದ ಸತ್ಯವನ್ನು ತಿಳಿಯಲು ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
+    bn: "আপনার হাতের তালুর রহস্য এখনও অকথিত। সঠিক হস্তরেখা বিশ্লেষণ এবং আপনার ভবিষ্যতের সত্য জানতে অনুগ্রহ করে লগইন বা রেজিস্টার করুন।",
+    mr: "तुमच्या तळहाताची रहस्ये अजून सांगितलेली नाहीत. अचूक हस्तरेषा विश्लेषण आणि तुमच्या भविष्यातील सत्य जाणून घेण्यासाठी कृपया लॉगिन किंवा नोंदणी करा.",
+    gu: "તમારી હથેળીના રહસ્યો હજી કહેવાયા નથી. સચોટ હસ્તરેખા વિશ્લેષણ અને તમારા ભવિષ્યનું સત્ય જાણવા માટે કૃપા કરીને લોગિન અથવા નોંધણી કરો.",
+    ml: "നിങ്ങളുടെ കൈപ്പത്തിയുടെ രഹസ്യങ്ങൾ ഇപ്പോഴും പറഞ്ഞിട്ടില്ല. കൃത്യമായ കൈരേഖ വിശകലനത്തിനായി ദയവായി ലോഗിൻ ചെയ്യുകയോ രജിസ്റ്റർ ചെയ്യുകയോ ചെയ്യുക.",
+  };
+  return map[lang] || map["en"];
+}
+
 export async function POST(request: Request) {
   try {
     const user = await getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    
+    // 🔥 Guest Protection (Psychological Marketing Hook)
+    if (!user || user.isGuest) {
+      return NextResponse.json({ 
+        code: "LOGIN_REQUIRED",
+        error: "Unauthorized",
+        message: getPsychologicalUnauthorizedMessage("hinglish") // Default hinglish, frontend can use 'language' if needed
+      }, { status: 401 });
+    }
 
     const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
