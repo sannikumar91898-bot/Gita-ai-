@@ -2,9 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User, ChevronDown } from "lucide-react";
+import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User, ChevronDown, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
-import { useApp } from "../../Providers"; // 🔥 DHYAN DEIN: 2 folder peeche wala path
+import { useApp } from "../../Providers"; 
 
 const AVATARS = [
   { id: "aries-f", name: "Aries", img: "https://api.dicebear.com/7.x/avataaars/svg?seed=AriesFemale&backgroundColor=FFD700" },
@@ -34,11 +34,13 @@ const AVATARS = [
 ];
 
 export default function ProfileEditPage() {
-  const { me, loading, lang } = useApp();
+  const { me, loading, lang, theme } = useApp();
+  const isDark = theme === "dark";
   
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0].img);
   const [success, setSuccess] = useState(false);
+  const [isSaving, setIsSaving] = useState(false); 
   
   const [name, setName] = useState("");
   const [gender, setGender] = useState("Male");
@@ -46,14 +48,21 @@ export default function ProfileEditPage() {
   const [tob, setTob] = useState("");
   const [place, setPlace] = useState("");
 
+  // 🔥 10 Language Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
-      hi: { title: "प्रोफाइल एडिट करें", selectAvatar: "अपना अवतार चुनें", name: "नाम", gender: "लिंग", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", cityPlaceholder: "शहर का नाम", save: "प्रोफाइल सेव करें", male: "पुरुष", female: "महिला", other: "अन्य", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", successMsg: "प्रोफाइल सफलतापूर्वक सेव हो गई!", changePic: "प्रोफाइल पिक्चर बदलें", selectLib: "लाइब्रेरी से चुनें" },
-      hinglish: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library" },
-      en: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library" },
-      // ... (Baaki bhashayein)
+      hi: { title: "प्रोफाइल एडिट करें", selectAvatar: "अपना अवतार चुनें", name: "नाम", gender: "लिंग", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", cityPlaceholder: "शहर का नाम", save: "प्रोफाइल सेव करें", male: "पुरुष", female: "महिला", other: "अन्य", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", successMsg: "प्रोफाइल सफलतापूर्वक सेव हो गई!", changePic: "प्रोफाइल पिक्चर बदलें", selectLib: "लाइब्रेरी से चुनें", saving: "सेव हो रहा है...", kundliNote: "सटीक ज्योतिषीय भविष्यवाणी के लिए सही जन्म विवरण भरें।" },
+      hinglish: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions." },
+      en: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions." },
+      te: { title: "ప్రొఫైల్ సవరించండి", selectAvatar: "మీ అవతార్‌ను ఎంచుకోండి", name: "పేరు", gender: "లింగం", dob: "పుట్టిన తేదీ", time: "పుట్టిన సమయం", place: "పుట్టిన స్థలం", cityPlaceholder: "నగరం పేరు", save: "ప్రొఫైల్ సేవ్ చేయండి", male: "పురుషుడు", female: "స్త్రీ", other: "ఇతర", home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", successMsg: "ప్రొఫైల్ విజయవంతంగా సేవ్ చేయబడింది!", changePic: "ప్రొఫైల్ చిత్రాన్ని మార్చండి", selectLib: "లైబ్రరీ నుండి ఎంచుకోండి", saving: "సేవ్ అవుతోంది...", kundliNote: "ఖచ్చితమైన జ్యోతిష్య అంచనాల కోసం సరైన పుట్టిన వివరాలను నమోదు చేయండి." },
+      ta: { title: "சுயவிவரத்தைத் திருத்து", selectAvatar: "உங்கள் அவதாரைத் தேர்ந்தெடுக்கவும்", name: "பெயர்", gender: "பாலினம்", dob: "பிறந்த தேதி", time: "பிறந்த நேரம்", place: "பிறந்த இடம்", cityPlaceholder: "நகரத்தின் பெயர்", save: "சுயவிவரத்தைச் சேமி", male: "ஆண்", female: "பெண்", other: "மற்றவை", home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", successMsg: "சுயவிவரம் வெற்றிகரமாக சேமிக்கப்பட்டது!", changePic: "சுயவிவரப் படத்தை மாற்று", selectLib: "நூலகத்திலிருந்து தேர்ந்தெடுக்கவும்", saving: "சேமிக்கப்படுகிறது...", kundliNote: "துல்லியமான ஜோதிட கணிப்புகளுக்கு சரியான பிறப்பு விவரங்களை உள்ளிடவும்." },
+      kn: { title: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", selectAvatar: "ನಿಮ್ಮ ಅವತಾರವನ್ನು ಆಯ್ಕೆಮಾಡಿ", name: "ಹೆಸರು", gender: "ಲಿಂಗ", dob: "ಹುಟ್ಟಿದ ದಿನಾಂಕ", time: "ಹುಟ್ಟಿದ ಸಮಯ", place: "ಹುಟ್ಟಿದ ಸ್ಥಳ", cityPlaceholder: "ನಗರದ ಹೆಸರು", save: "ಪ್ರೊಫೈಲ್ ಉಳಿಸಿ", male: "ಪುರುಷ", female: "ಮಹಿಳೆ", other: "ಇತರೆ", home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", successMsg: "ಪ್ರೊಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ!", changePic: "ಪ್ರೊಫೈಲ್ ಚಿತ್ರವನ್ನು ಬದಲಾಯಿಸಿ", selectLib: "ಲೈಬ್ರರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ", saving: "ಉಳಿಸಲಾಗುತ್ತಿದೆ...", kundliNote: "ನಿಖರವಾದ ಜ್ಯೋತಿಷ್ಯ ಮುನ್ಸೂಚನೆಗಳಿಗಾಗಿ ಸರಿಯಾದ ಜನ್ಮ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ." },
+      bn: { title: "প্রোফাইল সম্পাদনা করুন", selectAvatar: "আপনার অবতার চয়ন করুন", name: "নাম", gender: "লিঙ্গ", dob: "জন্ম তারিখ", time: "জন্মের সময়", place: "জন্মস্থান", cityPlaceholder: "শহরের নাম", save: "প্রোফাইল সংরক্ষণ করুন", male: "পুরুষ", female: "মহিলা", other: "অন্যান্য", home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", successMsg: "প্রোফাইল সফলভাবে সংরক্ষিত হয়েছে!", changePic: "প্রোফাইল ছবি পরিবর্তন করুন", selectLib: "লাইব্রেরি থেকে চয়ন করুন", saving: "সংরক্ষণ করা হচ্ছে...", kundliNote: "সঠিক জ্যোতিষশাস্ত্রীয় ভবিষ্যদ্বাণীর জন্য সঠিক জন্ম বিবরণ লিখুন।" },
+      mr: { title: "प्रोफाइल संपादित करा", selectAvatar: "तुमचा अवतार निवडा", name: "नाव", gender: "लिंग", dob: "जन्म तारीख", time: "जन्म वेळ", place: "जन्म ठिकाण", cityPlaceholder: "शहराचे नाव", save: "प्रोफाइल जतन करा", male: "पुरुष", female: "स्त्री", other: "इतर", home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", successMsg: "प्रोफाइल यशस्वीरित्या जतन केले!", changePic: "प्रोफाइल चित्र बदला", selectLib: "लायब्ररीमधून निवडा", saving: "जतन करत आहे...", kundliNote: "अचूक ज्योतिष अंदाजासाठी अचूक जन्म तपशील प्रविष्ट करा." },
+      gu: { title: "પ્રોફાઇલ સંપાદિત કરો", selectAvatar: "તમારો અવતાર પસંદ કરો", name: "નામ", gender: "લિંગ", dob: "જન્મ તારીખ", time: "જન્મ સમય", place: "જન્મ સ્થળ", cityPlaceholder: "શહેરનું નામ", save: "પ્રોફાઇલ સાચવો", male: "પુરુષ", female: "સ્ત્રી", other: "અન્ય", home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", successMsg: "પ્રોફાઇલ સફળતાપૂર્વક સાચવવામાં આવી!", changePic: "પ્રોફાઇલ ચિત્ર બદલો", selectLib: "લાઇબ્રેરીમાંથી પસંદ કરો", saving: "સાચવી રહ્યું છે...", kundliNote: "સચોટ જ્યોતિષીય આગાહીઓ માટે સચોટ જન્મ વિગતો દાખલ કરો." },
+      ml: { title: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", selectAvatar: "നിങ്ങളുടെ അവതാർ തിരഞ്ഞെടുക്കുക", name: "പേര്", gender: "ലിംഗഭേദം", dob: "ജനനത്തീയതി", time: "ജനന സമയം", place: "ജനനസ്ഥലം", cityPlaceholder: "നഗരത്തിന്റെ പേര്", save: "പ്രൊഫൈൽ സേവ് ചെയ്യുക", male: "പുരുഷൻ", female: "സ്ത്രീ", other: "മറ്റുള്ളവ", home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", successMsg: "പ്രൊഫൈൽ വിജയകരമായി സേവ് ചെയ്തു!", changePic: "പ്രൊഫൈൽ ചിത്രം മാറ്റുക", selectLib: "ലൈബ്രറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", saving: "സേവ് ചെയ്യുന്നു...", kundliNote: "കൃത്യമായ ജ്യോതിഷ ട്രെൻഡുകൾക്കായി ശരിയായ ജനന വിവരങ്ങൾ നൽകുക." },
     };
-    return dict[lang || "hi"]?.[key] || dict["en"][key];
+    return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
   };
 
   useEffect(() => {
@@ -76,29 +85,49 @@ export default function ProfileEditPage() {
     } catch (e) {}
   }, [me]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // 🔥 FIX: Premium Save Logic with Loading State
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSaving(true);
+    
     try {
+      // Future API Integration Note:
+      // await fetch("/api/user/update", { method: "POST", body: JSON.stringify({ name, gender, dob, tob, place })});
+
       localStorage.setItem("gita_profile_name", name);
       localStorage.setItem("gita_profile_avatar", selectedAvatar);
       localStorage.setItem("gita_profile_dob", dob);
       localStorage.setItem("gita_profile_tob", tob);
       localStorage.setItem("gita_profile_place", place);
       localStorage.setItem("gita_profile_gender", gender);
-    } catch (err) {}
 
-    setSuccess(true);
-    setTimeout(() => setSuccess(false), 3000);
+      // Fake delay to show loading spinner (Psychology: Makes user feel data is processing securely)
+      await new Promise(resolve => setTimeout(resolve, 800));
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 3000);
+    } catch (err) {
+      alert("Error saving profile.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
+  // 🔥 Theme Variables
+  const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "bg-[#151d2c] border-slate-800" : "bg-white border-orange-100 shadow-sm";
+  const inputClass = isDark ? "bg-[#0A0F19] border-slate-700 text-white focus:border-[#ff6b00]" : "bg-gray-50 border-gray-200 text-black focus:border-[#ff6b00]";
+  const textMutedClass = isDark ? "text-slate-400" : "text-gray-500";
+  const textHighlightClass = isDark ? "text-white" : "text-gray-900";
+
   return (
-    <main className="min-h-[100dvh] w-full bg-[#0A0F19] text-slate-100 font-sans pb-28">
+    <main className={`min-h-[100dvh] w-full font-sans pb-28 transition-colors duration-300 ${pageClass}`}>
       
-      <div className="w-full px-3 pt-4 space-y-6">
+      <div className="w-full max-w-2xl mx-auto px-3 pt-4 space-y-6">
         
-        <header className="bg-[#151d2c] rounded-2xl flex items-center p-4 border border-slate-800 shadow-md">
-          {/* 🔥 Back Button: Ab ye /profile (Dashboard) par jayega */}
-          <Link href="/profile" className="p-2.5 rounded-full bg-[#0A0F19] text-slate-400 hover:text-white transition-colors">
+        {/* HEADER */}
+        <header className={`rounded-2xl flex items-center p-4 border shadow-md ${cardClass}`}>
+          <Link href="/profile" className={`p-2.5 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:text-black"}`}>
             <ArrowLeft size={20} />
           </Link>
           <h1 className="text-[17px] font-bold text-[#ff6b00] ml-4 tracking-wide">
@@ -106,94 +135,114 @@ export default function ProfileEditPage() {
           </h1>
         </header>
 
+        {/* AVATAR SECTION */}
         <section className="flex flex-col items-center justify-center pt-2">
           <div className="relative">
-            <div className="h-36 w-36 overflow-hidden rounded-full border-4 border-[#151d2c] bg-[#FBBF24] shadow-xl">
+            <div className={`h-36 w-36 overflow-hidden rounded-full border-4 shadow-xl ${isDark ? "border-[#151d2c]" : "border-white"} bg-[#FBBF24]`}>
               <img src={selectedAvatar} alt="Profile" className="h-full w-full object-cover" />
             </div>
             <button
               onClick={() => setPickerOpen(true)}
               type="button"
-              className="absolute bottom-0 right-0 rounded-full bg-[#151d2c] border-2 border-[#0A0F19] p-3 text-slate-300 shadow-lg transition hover:bg-[#1f2937]"
+              className={`absolute bottom-0 right-0 rounded-full border-2 p-3 shadow-lg transition hover:bg-[#1f2937] ${isDark ? "bg-[#151d2c] border-[#0A0F19] text-slate-300" : "bg-white border-gray-100 text-gray-600"}`}
             >
               <Camera size={20} />
             </button>
           </div>
-          <p className="mt-4 text-[13px] font-bold text-slate-400 tracking-wide uppercase">
+          <p className={`mt-4 text-[13px] font-bold tracking-wide uppercase ${textMutedClass}`}>
             {t("selectAvatar")}
           </p>
         </section>
 
-        <form onSubmit={handleSubmit} className="rounded-3xl p-5 sm:p-6 space-y-5 bg-[#151d2c] border border-slate-800 shadow-lg">
+        {/* FORM SECTION */}
+        <form onSubmit={handleSubmit} className={`rounded-3xl p-5 sm:p-6 space-y-5 border shadow-lg ${cardClass}`}>
           
           <div className="space-y-2.5">
-            <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{t("name")}</label>
+            <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("name")}</label>
             <input 
               type="text" 
               value={name} 
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-5 py-4 text-[15px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+              className={`w-full border rounded-xl px-5 py-4 text-[15px] font-medium focus:outline-none transition-colors ${inputClass}`} 
               placeholder={t("name")} 
               required 
             />
           </div>
 
           <div className="space-y-2.5">
-            <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{t("gender")}</label>
+            <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("gender")}</label>
             <div className="relative">
               <select 
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
-                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-5 py-4 text-[15px] font-medium text-white appearance-none focus:outline-none focus:border-[#ff6b00] transition-colors"
+                className={`w-full border rounded-xl px-5 py-4 text-[15px] font-medium appearance-none focus:outline-none transition-colors ${inputClass}`}
               >
                 <option value="Male">{t("male")}</option>
                 <option value="Female">{t("female")}</option>
                 <option value="Other">{t("other")}</option>
               </select>
-              <ChevronDown size={20} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              <ChevronDown size={20} className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none ${textMutedClass}`} />
             </div>
+          </div>
+
+          {/* 🔥 PSYCHOLOGY: Encouraging user to fill accurate data for better AI reading */}
+          <div className={`p-3 rounded-xl flex items-start gap-2 ${isDark ? "bg-orange-500/10 text-orange-200" : "bg-orange-50 text-orange-700"}`}>
+            <Sparkles size={16} className="shrink-0 mt-0.5 text-orange-500" />
+            <p className="text-[11px] font-medium leading-relaxed">{t("kundliNote")}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2.5">
-              <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{t("dob")}</label>
+              <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("dob")}</label>
               <input 
                 type="date" 
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
-                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-4 text-[14px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+                className={`w-full border rounded-xl px-4 py-4 text-[14px] font-medium focus:outline-none transition-colors ${inputClass}`} 
                 required 
               />
             </div>
             <div className="space-y-2.5">
-              <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{t("time")}</label>
+              <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("time")}</label>
               <input 
                 type="time" 
                 value={tob}
                 onChange={(e) => setTob(e.target.value)}
-                className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-4 py-4 text-[14px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+                className={`w-full border rounded-xl px-4 py-4 text-[14px] font-medium focus:outline-none transition-colors ${inputClass}`} 
                 required 
               />
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <label className="text-[12px] font-bold text-slate-400 uppercase tracking-wider">{t("place")}</label>
+            <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("place")}</label>
             <input 
               type="text" 
               placeholder={t("cityPlaceholder")} 
               value={place}
               onChange={(e) => setPlace(e.target.value)}
-              className="w-full bg-[#0A0F19] border border-slate-700 rounded-xl px-5 py-4 text-[15px] font-medium text-white focus:outline-none focus:border-[#ff6b00] transition-colors" 
+              className={`w-full border rounded-xl px-5 py-4 text-[15px] font-medium focus:outline-none transition-colors ${inputClass}`} 
             />
           </div>
 
-          <button type="submit" className="w-full mt-2 bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold py-4 rounded-xl text-[16px] shadow-lg shadow-orange-500/20 active:scale-95 transition-transform">
-            {t("save")}
+          {/* 🔥 PREMIUM SAVE BUTTON WITH LOADING SPINNER */}
+          <button 
+            type="submit" 
+            disabled={isSaving}
+            className="w-full mt-4 bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold py-4 rounded-xl text-[16px] shadow-lg shadow-orange-500/20 active:scale-95 transition-transform disabled:opacity-70 flex justify-center items-center gap-2"
+          >
+            {isSaving ? (
+              <>
+                <Loader2 size={20} className="animate-spin" />
+                {t("saving")}
+              </>
+            ) : (
+              t("save")
+            )}
           </button>
 
           {success && (
-            <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 border border-green-500/20 p-3.5 text-[13px] font-bold text-green-400 mt-4 animate-in fade-in slide-in-from-bottom-2">
+            <div className="flex items-center justify-center gap-2 rounded-xl bg-green-500/10 border border-green-500/20 p-3.5 text-[13px] font-bold text-green-500 mt-4 animate-in fade-in slide-in-from-bottom-2">
               <CheckCircle2 size={18} />
               {t("successMsg")}
             </div>
@@ -201,19 +250,20 @@ export default function ProfileEditPage() {
         </form>
       </div>
 
+      {/* AVATAR PICKER MODAL */}
       {pickerOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-3xl bg-[#151d2c] border border-slate-800 shadow-2xl animate-in zoom-in-95">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className={`w-full max-w-md overflow-hidden rounded-3xl border shadow-2xl animate-in zoom-in-95 ${cardClass}`}>
             
-            <div className="border-b border-slate-800 px-5 py-4 text-center flex items-center justify-between">
-              <h2 className="text-[16px] font-bold text-white flex-1 text-left">{t("changePic")}</h2>
-              <button type="button" onClick={() => setPickerOpen(false)} className="p-2 rounded-full bg-[#0A0F19] text-slate-400 hover:text-white transition-colors">
+            <div className={`border-b px-5 py-4 text-center flex items-center justify-between ${isDark ? "border-slate-800" : "border-gray-200"}`}>
+              <h2 className={`text-[16px] font-bold flex-1 text-left ${textHighlightClass}`}>{t("changePic")}</h2>
+              <button type="button" onClick={() => setPickerOpen(false)} className={`p-2 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:text-black"}`}>
                 <X size={18} />
               </button>
             </div>
 
             <div className="p-5 max-h-[60vh] overflow-y-auto custom-scrollbar">
-              <p className="mb-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">{t("selectLib")}</p>
+              <p className={`mb-4 text-[11px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("selectLib")}</p>
               
               <div className="grid grid-cols-4 gap-3">
                 {AVATARS.map((avatar) => (
@@ -224,17 +274,17 @@ export default function ProfileEditPage() {
                       setSelectedAvatar(avatar.img);
                       setPickerOpen(false);
                     }}
-                    className={`flex flex-col items-center gap-1.5 group p-1.5 rounded-2xl transition ${
+                    className={`flex flex-col items-center gap-1.5 group p-1.5 rounded-2xl transition border ${
                       selectedAvatar === avatar.img 
-                        ? "bg-[#ff6b00]/20 border border-[#ff6b00]/50" 
-                        : "border border-transparent hover:bg-white/5"
+                        ? "bg-orange-500/10 border-orange-500/50" 
+                        : "border-transparent hover:bg-black/5 dark:hover:bg-white/5"
                     }`}
                   >
-                    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-transparent bg-[#FBBF24] transition group-hover:scale-105">
+                    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-transparent bg-[#FBBF24] transition group-hover:scale-105 shadow-sm">
                       <img src={avatar.img} alt={avatar.name} className="h-full w-full object-cover" />
                     </div>
                     <span className={`text-[10px] font-semibold truncate w-full text-center ${
-                      selectedAvatar === avatar.img ? "text-[#ff6b00]" : "text-slate-400"
+                      selectedAvatar === avatar.img ? "text-[#ff6b00]" : textMutedClass
                     }`}>
                       {avatar.name}
                     </span>
@@ -246,16 +296,19 @@ export default function ProfileEditPage() {
         </div>
       )}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
-        <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+      {/* BOTTOM NAVIGATION */}
+      <nav className={`fixed bottom-0 left-0 right-0 z-50 border-t flex justify-around items-center pt-2.5 pb-5 px-2 w-full transition-colors duration-300 ${
+        isDark ? "bg-[#0a0f19] border-slate-800" : "bg-white border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]"
+      }`}>
+        <Link href="/" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
           <Home size={22} />
           <span className="text-[11px] font-medium">{t("home")}</span>
         </Link>
-        <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+        <Link href="/chat" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
           <MessageCircle size={22} />
           <span className="text-[11px] font-medium">{t("chat")}</span>
         </Link>
-        <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
+        <Link href="/daily" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
           <Sun size={22} />
           <span className="text-[11px] font-medium">{t("daily")}</span>
         </Link>
