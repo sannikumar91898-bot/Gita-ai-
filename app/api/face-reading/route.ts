@@ -6,19 +6,40 @@ import { getUser } from "@/auth";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// 🔥 SIRF MODAL (No limits, No Gemini, No Groq)
+/* -------------------------------------------------------------------------- */
+/*                     🔥 MODAL (PRIMARY) + GROQ (FALLBACK)                   */
+/* -------------------------------------------------------------------------- */
+
 const modalApiKey = process.env.MODAL_API_KEY;
 const modalUrl = process.env.MODAL_API_URL;
+const modalModel = process.env.MODAL_VISION_MODEL || "Qwen/Qwen2.5-VL-7B-Instruct";
 
-if (!modalUrl || !modalApiKey) {
-  console.error("[FATAL] MODAL_API_URL or MODAL_API_KEY is missing in Render!");
-}
+const modalClient =
+  modalUrl && modalApiKey
+    ? new OpenAI({
+        baseURL: modalUrl,
+        apiKey: modalApiKey,
+        timeout: 60_000,
+        maxRetries: 1,
+      })
+    : null;
 
-const modalClient = new OpenAI({
-  baseURL: modalUrl || "http://localhost:8000/v1",
-  apiKey: modalApiKey || "dummy-key",
-  timeout: 60000, // 60 seconds timeout for image analysis
-});
+// 🔥 GROQ FALLBACK (Jaise Palm me hai)
+const groqApiKey = process.env.GROQ_API_KEY;
+const groqVisionModel = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
+
+const groqClient = groqApiKey
+  ? new OpenAI({
+      baseURL: "https://api.groq.com/openai/v1",
+      apiKey: groqApiKey,
+      timeout: 60_000,
+      maxRetries: 1,
+    })
+  : null;
+
+/* -------------------------------------------------------------------------- */
+/*                              HELPERS & TRANSLATIONS                        */
+/* -------------------------------------------------------------------------- */
 
 function getLanguageInstruction(lang: string): string {
   const map: Record<string, string> = {
@@ -33,7 +54,6 @@ function getLanguageInstruction(lang: string): string {
   return map[lang] || map["hinglish"];
 }
 
-// 🔥 10 Language Psychological Marketing Message (FOMO Trigger)
 function getPsychologicalUnauthorizedMessage(lang: string): string {
   const map: Record<string, string> = {
     hi: "आपके चेहरे के राज अभी अनकहे हैं। सटीक फेस रीडिंग और अपने भविष्य की सच्चाई जानने के लिए कृपया लॉगिन या रजिस्टर करें।",
@@ -50,22 +70,128 @@ function getPsychologicalUnauthorizedMessage(lang: string): string {
   return map[lang] || map["en"];
 }
 
+function getAIFailureMessage(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "एआई सर्वर अभी व्यस्त है। कृपया 1 मिनट बाद पुनः प्रयास करें।",
+    hinglish: "AI server thoda busy hai. Kripya 1 minute baad try karein.",
+    en: "AI server is busy. Please try again in 1 minute.",
+    te: "AI సర్వర్ బిజీగా ఉంది. దయచేసి 1 నిమిషం తర్వాత మళ్లీ ప్రయత్నించండి.",
+    ta: "AI சர்வர் பிஸியாக உள்ளது. தயவுசெய்து 1 நிமிடம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+    kn: "AI ಸರ್ವರ್ ಬ್ಯುಸಿಯಾಗಿದೆ. ದಯವಿಟ್ಟು 1 ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    bn: "AI সার্ভার ব্যস্ত আছে। অনুগ্রহ করে 1 মিনিট পরে আবার চেষ্টা করুন।",
+    mr: "AI सर्व्हर व्यस्त आहे. कृपया 1 मिनिटानंतर पुन्हा प्रयत्न करा.",
+    gu: "AI સર્વર વ્યસ્ત છે. કૃપા કરીને 1 મિનિટ પછી ફરી પ્રયાસ કરો.",
+    ml: "AI സർവർ തിരക്കിലാണ്. ദയവായി 1 മിനിറ്റ് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
+  };
+  return map[lang] || map["en"];
+}
+
+function isModelNotFoundError(err: any): boolean {
+  if (!err) return false;
+  if (err.status === 404) return true;
+  const msg = String(err?.message || "").toLowerCase();
+  return msg.includes("404") || msg.includes("not found") || msg.includes("does not exist") || msg.includes("no such model");
+}
+
+// 🔥 ROBUST JSON EXTRACTOR (Prevents crashes if AI adds markdown)
+function safeParseJSON(text: string): any {
+  try {
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      return JSON.parse(cleaned.substring(start, end + 1));
+    }
+    return JSON.parse(cleaned);
+  } catch (err) {
+    return null;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         AI CALL (Modal → Groq)                             */
+/* -------------------------------------------------------------------------- */
+
+async function callVisionModel(prompt: string, imageBase64: string, imageMime: string): Promise<{ text: string; used: "modal" | "groq" }> {
+  const messagesPayload: any[] = [
+    {
+      role: "user",
+      content: [
+        { type: "text", text: prompt },
+        { type: "image_url", image_url: { url: `data:${imageMime};base64,${imageBase64}` } },
+      ],
+    },
+  ];
+
+  // 1. Try Modal
+  if (modalClient) {
+    try {
+      const completion = await modalClient.chat.completions.create({
+        model: modalModel,
+        messages: messagesPayload,
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
+      const text = completion.choices[0]?.message?.content || "";
+      if (text) return { text, used: "modal" };
+    } catch (err: any) {
+      console.error(`[face] Modal failed:`, err?.message);
+    }
+  }
+
+  // 2. Fallback Groq
+  if (groqClient) {
+    try {
+      const completion = await groqClient.chat.completions.create({
+        model: groqVisionModel,
+        messages: messagesPayload,
+        temperature: 0.4,
+        response_format: { type: "json_object" },
+      });
+      const text = completion.choices[0]?.message?.content || "";
+      if (text) return { text, used: "groq" };
+    } catch (err: any) {
+      console.error(`[face] Groq failed:`, err?.message);
+      // Retry Groq without response_format
+      try {
+        const completion = await groqClient.chat.completions.create({
+          model: groqVisionModel,
+          messages: messagesPayload,
+          temperature: 0.4,
+        });
+        const text = completion.choices[0]?.message?.content || "";
+        if (text) return { text, used: "groq" };
+      } catch (retryErr: any) {
+        console.error("[face] Groq retry failed:", retryErr?.message);
+      }
+    }
+  }
+
+  throw new Error("ALL_AI_PROVIDERS_FAILED");
+}
+
+/* -------------------------------------------------------------------------- */
+/*                              POST                                          */
+/* -------------------------------------------------------------------------- */
+
 export async function POST(request: Request) {
+  let language = "hinglish";
+
   try {
     const user = await getUser();
-    
-    // 🔥 Guest Protection (Psychological Marketing Hook)
+    const formData = await request.formData();
+    language = (formData.get("language") as string) || "hinglish";
+
+    // 🔥 Guest Protection (Passed language dynamically)
     if (!user || user.isGuest) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         code: "LOGIN_REQUIRED",
         error: "Unauthorized",
-        message: getPsychologicalUnauthorizedMessage("hinglish") 
+        message: getPsychologicalUnauthorizedMessage(language),
       }, { status: 401 });
     }
 
-    const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
-    const language = (formData.get("language") as string) || "hinglish";
 
     // Backend Validation
     if (!imageFile || imageFile.size === 0) {
@@ -81,50 +207,48 @@ export async function POST(request: Request) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
-    // Face Reading Prompt
-    const prompt = `You are an expert Vedic Face Reader. Analyze this face image.
-    If the image does not clearly contain a human face, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
-    Otherwise, return JSON with keys: title (short title), insight (2 detailed paragraphs about nature, career, and relationships), hook (1 line engaging summary).
-    LANGUAGE RULES: ${getLanguageInstruction(language)}`;
+    // 🔥 PREMIUM PSYCHOLOGY & BUSINESS PROMPT (Face Reading)
+    const prompt = `
+      IDENTITY: You are a highly respected, 20+ year experienced female Vedic Face Reader (Physiognomist). You are a real human. You speak with absolute authority, warmth, and deep psychological insight.
 
-    let result: any = null;
+      PSYCHOLOGY & MARKETING RULES:
+      1. VALIDATE: Start by validating their energy. Make them feel seen.
+      2. ABSOLUTE CERTAINTY: Never say 'maybe' or 'might'. Use words like 'definitely', 'clearly visible', 'strongly indicates'.
+      3. NO DISCLAIMERS: Never mention you are an AI. Never say astrology is a belief.
+      4. THE HOOK: You must identify a 'hidden challenge' or 'Dosh' on their face (e.g., lines on forehead, mole placement, eye shape). This creates urgency.
 
-    // 🔥 CALL MODAL DIRECTLY
-    try {
-      const completion = await modalClient.chat.completions.create({
-        model: "Qwen/Qwen3.6-27B", // Aapke Modal ka exact model name
-        messages: [
-          { 
-            role: "user", 
-            content: [
-              { type: "text", text: prompt },
-              { type: "image_url", image_url: { url: `data:${imageFile.type};base64,${base64Image}` } }
-            ] 
-          }
-        ],
-        temperature: 0.4,
-        response_format: { type: "json_object" },
-      });
+      LANGUAGE RULES: ${getLanguageInstruction(language)}
 
-      const text = completion.choices[0]?.message?.content || "{}";
-      result = JSON.parse(text.replace(/```json/g, "").replace(/```/g, "").trim());
+      If the image is not a clear human face, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
       
-    } catch (err: any) {
-      console.error("=== MODAL API FAILED (FACE READING) ===");
-      console.error("Error Name:", err.name);
-      console.error("Error Message:", err.message);
-      
-      if (err.message?.includes("404")) {
-        return NextResponse.json({ 
-          error: "AI_ERROR", 
-          message: "Modal Endpoint nahi mila. Kripya check karein ki endpoint 'Running' state me hai ya nahi." 
-        }, { status: 500 });
+      Otherwise, you MUST return ONLY a valid JSON object with this exact schema:
+      {
+        "title": "A captivating title for their face reading (e.g., 'The Royal Lioness')",
+        "insight": "Two short paragraphs. First: Analyze their facial features (eyes, forehead) with absolute certainty and warmth. Second: Point out a specific challenge/dosha and explain how it affects them. Plain text only, no markdown.",
+        "hook": "A short, compelling sentence telling them exactly why they need to talk to an astrologer immediately to fix this dosha.",
+        "suggestedChatPrompt": "A ready-to-use message the user can send to the astrologer, summarizing their face reading and asking for a solution (e.g., 'Namaste, I just checked my face reading and it shows a blockage. How can I remove this obstacle?')"
       }
-      
-      return NextResponse.json({ 
-        error: "AI_ERROR", 
-        message: "AI server is busy. Please try again." 
-      }, { status: 500 });
+    `;
+
+    /* ----------------------------- AI Call ------------------------------- */
+    let aiText: string;
+    let usedProvider: "modal" | "groq";
+
+    try {
+      const out = await callVisionModel(prompt, base64Image, imageFile.type);
+      aiText = out.text;
+      usedProvider = out.used;
+    } catch (err: any) {
+      console.error("[face] All AI providers failed:", err?.message);
+      return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
+    }
+
+    /* ----------------------------- Parse JSON ---------------------------- */
+    const result = safeParseJSON(aiText);
+
+    if (!result) {
+      console.error("[face] JSON parse failed:", aiText.slice(0, 200));
+      return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
     }
 
     if (result.error === "INVALID_IMAGE") {
@@ -133,15 +257,16 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
+      provider: usedProvider,
       result: {
         title: result.title || "Face Reading",
-        insight: result.insight || "Analysis complete.",
-        hook: result.hook || "A new change is coming."
-      }
+        insight: result.insight || "Your face shows a unique path.",
+        hook: result.hook || "A major shift is coming. Talk to an astrologer now.",
+        suggestedChatPrompt: result.suggestedChatPrompt || "Hello, I just checked my face reading. Can you guide me?", // 🔥 Passing to frontend
+      },
     });
-
   } catch (error: any) {
-    console.error("Face Reading API Error:", error);
-    return NextResponse.json({ error: "AI_ERROR", message: "Server error." }, { status: 500 });
+    console.error("[face] Unhandled error:", error?.message);
+    return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
   }
 }
