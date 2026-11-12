@@ -395,7 +395,7 @@ export async function POST(req: Request) {
       },
     });
     await db.insert(charts).values({ userId: user.id, data: chart });
-    await db.update(users).set({ name }).where(and(eq(users.id, user.id)));
+    await db.update(users).set({ name }).where(eq(users.id, user.id));
     saved = true;
   } catch (error) { 
     console.error("Birth details save failed:", error); 
