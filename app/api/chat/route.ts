@@ -11,24 +11,38 @@ import { checkAILimit } from "@/rate-limit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+/* -------------------------------------------------------------------------- */
+/*                     🔥 GROQ CONFIGURATION (FIXED MODELS)                   */
+/* -------------------------------------------------------------------------- */
+
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
+// 🔥 FIX 1: Updated to the latest active models as per Groq Docs
+const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "openai/gpt-oss-120b";
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
-// 🔥 FIX: Sahi aur valid fallback models daale hain
-const TEXT_MODEL_FALLBACKS = ["llama-3.1-8b-instant", "mixtral-8x7b-32768", "llama3-70b-8192"];
-const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
+// 🔥 FIX 1: Updated fallbacks (removed decommissioned ones)
+const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-20b", "llama-3.2-3b-preview"];
+const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview"];
+
+// 🔥 FIX 2: Throw clear error if API Key is missing instead of using 'dummy-key'
+if (!GROQ_API_KEY && process.env.NODE_ENV === "production") {
+  console.error("[FATAL] GROQ_API_KEY is missing in Render Environment Variables!");
+}
 
 const openai = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
-  apiKey: GROQ_API_KEY || "dummy-key",
+  apiKey: GROQ_API_KEY || "missing-key", 
   timeout: 60_000,
   maxRetries: 1,
 });
 
 const COST_PER_MESSAGE_PAISE = 200;
 const FREE_MESSAGE_LIMIT = 3;
+
+/* -------------------------------------------------------------------------- */
+/*                              PERSONAS & TONE                               */
+/* -------------------------------------------------------------------------- */
 
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
@@ -38,6 +52,10 @@ const PERSONAS: Record<string, PersonaConfig> = {
   devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology, precise life timing", tone: "Highly intellectual, authoritative guru with 22+ years of experience.", rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions." },
   gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu, dosha remedies", tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection." },
 };
+
+/* -------------------------------------------------------------------------- */
+/*                              HELPERS                                       */
+/* -------------------------------------------------------------------------- */
 
 function cleanText(value: unknown, maxLength = 6000): string {
   if (typeof value !== "string") return "";
@@ -106,6 +124,10 @@ function extractRemedy(response: string) {
   return { message, remedy: description ? { title, description } : null };
 }
 
+/* -------------------------------------------------------------------------- */
+/*                 🔥 GROQ CALL WITH SMART FALLBACK                           */
+/* -------------------------------------------------------------------------- */
+
 function isModelNotFoundError(err: any): boolean {
   if (!err) return false;
   if (err.status === 404) return true;
@@ -113,7 +135,6 @@ function isModelNotFoundError(err: any): boolean {
   return msg.includes("404") || msg.includes("not found") || msg.includes("does not exist") || msg.includes("decommissioned") || msg.includes("model_not_found") || msg.includes("no such model");
 }
 
-// 🔥 FIX: Retry logic updated to try fallbacks on ANY error, not just 404
 async function callGroq(
   payload: { messages: any[]; temperature: number; max_tokens: number },
   useVision: boolean
@@ -125,8 +146,13 @@ async function callGroq(
     return await openai.chat.completions.create({ model: primary, ...payload });
   } catch (err: any) {
     console.error(`[chat] Primary model ${primary} failed:`, err?.status, err?.message);
-    
-    // Agar primary fail hota hai (chahe 404 ho ya 429), toh fallback try karo
+
+    // 🔥 FIX 3: ONLY try fallbacks if it's a Model Not Found error. 
+    // If it's a 429 (Rate Limit) or 401 (Auth), throw immediately to save API calls.
+    if (!isModelNotFoundError(err)) {
+      throw err;
+    }
+
     for (const fb of fallbacks) {
       try {
         console.log(`[chat] Trying fallback model: ${fb}`);
@@ -135,10 +161,13 @@ async function callGroq(
         console.error(`[chat] Fallback ${fb} failed:`, fbErr?.status, fbErr?.message);
       }
     }
-    // Agar sab fail ho jayein, toh original error throw karo
     throw err;
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              GET (History)                                 */
+/* -------------------------------------------------------------------------- */
 
 export async function GET(request: Request) {
   try {
@@ -169,6 +198,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Chat history load failed" }, { status: 500 });
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/*                              POST (Send Message)                           */
+/* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
   let isDeducted = false;
