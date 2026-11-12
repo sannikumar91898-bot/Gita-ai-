@@ -18,7 +18,7 @@ function LoginContent() {
   const redirectUrl = searchParams.get("redirect") || "/settings";
 
   const [isLogin, setIsLogin] = useState(true);
-  const [method, setMethod] = useState<"email" | "phone">("email"); // 🔥 NAYA: Email ya Phone
+  const [method, setMethod] = useState<"email" | "phone">("email"); 
 
   // Email State
   const [name, setName] = useState("");
@@ -33,9 +33,8 @@ function LoginContent() {
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(""); // 👈 Type string hai
 
-  // 🔥 10 LANGUAGES DICTIONARY (Email + Naye Google/Phone ke saath)
   const getLoginText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: {
@@ -170,7 +169,6 @@ function LoginContent() {
     ? "w-full rounded-xl border border-slate-700 bg-[#0A0F19] p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-white transition-colors"
     : "w-full rounded-xl border border-gray-200 bg-gray-50 p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-gray-900 transition-colors";
 
-  // 🔥 Setup Recaptcha for Phone Login
   useEffect(() => {
     if (method === "phone" && !recaptchaVerifier) {
       const verifier = setupRecaptcha("send-otp-btn");
@@ -178,7 +176,6 @@ function LoginContent() {
     }
   }, [method, recaptchaVerifier]);
 
-  // 🔥 Email Login / Register (Aapka Original Code)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -190,7 +187,7 @@ function LoginContent() {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ name, email, password, language: lang }), // 🔥 Added language
       });
 
       const data = await res.json();
@@ -207,7 +204,6 @@ function LoginContent() {
     }
   };
 
-  // 🔥 Backend Sync for Firebase (Google/Phone)
   const authenticateWithBackend = async (token: string, identifier: string) => {
     try {
       const res = await fetch("/api/auth/firebase-login", {
@@ -228,9 +224,8 @@ function LoginContent() {
     }
   };
 
-  // 🔥 Google Login
   const handleGoogleLogin = async () => {
-    setError(null);
+    setError(""); // 🔥 FIX: null ki jagah empty string
     setLoading(true);
     try {
       const { user, error: fbError } = await loginWithGoogle();
@@ -247,9 +242,8 @@ function LoginContent() {
     }
   };
 
-  // 🔥 Send Phone OTP
   const handleSendOtp = async () => {
-    setError(null);
+    setError(""); // 🔥 FIX: null ki jagah empty string
     if (phone.length !== 10) {
       setError(lang === "hi" ? "कृपया 10 अंकों का सही नंबर दर्ज करें।" : "Please enter a valid 10-digit number.");
       return;
@@ -276,9 +270,8 @@ function LoginContent() {
     }
   };
 
-  // 🔥 Verify Phone OTP
   const handleVerifyOtp = async () => {
-    setError(null);
+    setError(""); // 🔥 FIX: null ki jagah empty string
     if (otp.length !== 6) {
       setError(lang === "hi" ? "कृपया 6 अंकों का सही OTP दर्ज करें।" : "Please enter the correct 6-digit OTP.");
       return;
@@ -305,7 +298,6 @@ function LoginContent() {
 
       <div className="w-full max-w-md relative z-10">
         
-        {/* HEADER */}
         <header className={`flex items-center justify-between rounded-2xl border p-3 mb-6 backdrop-blur-md bg-opacity-80 ${cardClass}`}>
           <div className="flex items-center gap-3">
             <Link href={redirectUrl} className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:text-white" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
@@ -317,7 +309,6 @@ function LoginContent() {
           </div>
         </header>
 
-        {/* MAIN CARD */}
         <div className={`rounded-3xl border p-6 sm:p-8 ${cardClass}`}>
           
           <div className="text-center mb-6">
@@ -332,14 +323,12 @@ function LoginContent() {
             </p>
           </div>
 
-          {/* ERROR MESSAGE */}
           {error && (
             <div className="mb-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-[13px] font-bold text-rose-500 break-words animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
 
-          {/* 🔥 METHOD TABS (Email / Phone) */}
           <div className={`flex p-1 rounded-xl mb-6 ${isDark ? "bg-[#0A0F19]" : "bg-gray-100"}`}>
             <button 
               onClick={() => { setMethod("email"); setShowOtp(false); setError(""); }}
@@ -355,10 +344,6 @@ function LoginContent() {
             </button>
           </div>
 
-
-          {/* ========================================= */}
-          {/* 🔥 EMAIL LOGIN FLOW (Aapka Original Code) */}
-          {/* ========================================= */}
           {method === "email" && (
             <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4">
               {!isLogin && (
@@ -410,9 +395,6 @@ function LoginContent() {
             </form>
           )}
 
-          {/* ========================================= */}
-          {/* 🔥 PHONE LOGIN FLOW (Naya Code)           */}
-          {/* ========================================= */}
           {method === "phone" && (
             <div className="space-y-4 animate-in fade-in slide-in-from-left-4">
               {!showOtp ? (
@@ -468,14 +450,12 @@ function LoginContent() {
             </div>
           )}
 
-          {/* OR DIVIDER */}
           <div className="my-6 flex items-center gap-4 relative z-10">
             <div className={`flex-1 h-px ${isDark ? "bg-slate-800" : "bg-gray-200"}`}></div>
             <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("or")}</span>
             <div className={`flex-1 h-px ${isDark ? "bg-slate-800" : "bg-gray-200"}`}></div>
           </div>
 
-          {/* 🔥 GOOGLE LOGIN BUTTON (Naya Code) */}
           <button
             onClick={handleGoogleLogin}
             disabled={loading}
@@ -492,7 +472,6 @@ function LoginContent() {
             {t("googleBtn")}
           </button>
 
-          {/* 🔥 TRUST BADGES (Aapka Original Code) */}
           <div className={`mt-6 pt-6 border-t flex flex-col items-center gap-3 ${isDark ? "border-slate-800" : "border-gray-100"}`}>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">
@@ -504,7 +483,6 @@ function LoginContent() {
             </div>
           </div>
 
-          {/* TOGGLE LOGIN/REGISTER (Aapka Original Code) */}
           {method === "email" && (
             <div className="mt-6 text-center text-[13px] font-medium">
               <span className={isDark ? "text-slate-400" : "text-gray-500"}>
