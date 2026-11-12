@@ -1,3 +1,4 @@
+// schema.ts
 import {
   pgTable,
   uuid,
@@ -26,6 +27,11 @@ export const users = pgTable("users", {
   freeMessagesUsed: integer("free_messages_used").notNull().default(0),
   walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  
+  // 🔥 NAYE COLUMNS: Palm aur Face Reading ke free scans track karne ke liye
+  freePalmScansUsed: integer("free_palm_scans_used").notNull().default(0),
+  freeFaceScansUsed: integer("free_face_scans_used").notNull().default(0),
+  
 }, (table) => ({
   walletBalanceCheck: check(
     "wallet_balance_check",
@@ -43,14 +49,11 @@ export const sessions = pgTable("sessions", {
 export const birthDetails = pgTable("birth_details", {
   userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  // 🔥 NAYA: Gender aur Unknown Time columns
   gender: text("gender").default("Not specified"), 
   isBirthTimeUnknown: boolean("is_birth_time_unknown").notNull().default(false),
-  
   dob: date("dob").notNull(),
   birthTime: text("birth_time").notNull(),
   birthPlace: text("birth_place").notNull(),
-  // 🔥 FIX: lat/lng ko nullable kiya taaki error na aaye
   lat: doublePrecision("lat"),
   lng: doublePrecision("lng"),
   timeZone: text("time_zone").default("Asia/Kolkata"),
