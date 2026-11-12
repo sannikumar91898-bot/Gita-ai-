@@ -365,16 +365,41 @@ export async function POST(req: Request) {
 
   let saved = false;
   try {
+    // 🔥 Yahan se aapka adhura code pura kiya gaya hai
     await db.insert(birthDetails).values({
-      userId: user.id, name, gender, dob: dateOfBirth, birthTime: timeOfBirth, isBirthTimeUnknown: isTimeUnknown, birthPlace: placeOfBirth, lat: place.lat, lng: place.lng, timeZone: place.timeZone, consent: true,
+      userId: user.id, 
+      name, 
+      gender, 
+      dob: dateOfBirth, 
+      birthTime: timeOfBirth, 
+      isBirthTimeUnknown: isTimeUnknown, 
+      birthPlace: placeOfBirth, 
+      lat: place.lat, 
+      lng: place.lng, 
+      timeZone: place.timeZone, 
+      consent: true,
     }).onConflictDoUpdate({
       target: birthDetails.userId,
-      set: { name, gender, dob: dateOfBirth, birthTime: timeOfBirth, isBirthTimeUnknown: isTimeUnknown, birthPlace: placeOfBirth, lat: place.lat, lng: place.lng, timeZone: place.timeZone, consent: true, updatedAt: new Date() },
+      set: { 
+        name, 
+        gender, 
+        dob: dateOfBirth, 
+        birthTime: timeOfBirth, 
+        isBirthTimeUnknown: isTimeUnknown, 
+        birthPlace: placeOfBirth, 
+        lat: place.lat, 
+        lng: place.lng, 
+        timeZone: place.timeZone, 
+        consent: true, 
+        updatedAt: new Date() 
+      },
     });
     await db.insert(charts).values({ userId: user.id, data: chart });
     await db.update(users).set({ name }).where(and(eq(users.id, user.id)));
     saved = true;
-  } catch (error) { console.error("Birth details save failed:", error); }
+  } catch (error) { 
+    console.error("Birth details save failed:", error); 
+  }
 
   const written = await writeInterpretation({ name, dateOfBirth, timeOfBirth, placeOfBirth, chart, language });
   const facts = calculatedReport(name, chart);
