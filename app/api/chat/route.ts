@@ -344,33 +344,10 @@ export async function POST(request: Request) {
 
     /* ----------------------------- Kundli Context ------------------------ */
     const birth = birthRows[0];
-    const chartRow = chartRows[0]; // 🔥 FIX: Chart data fetch kiya
-    let kundliContext = "User birth details not provided yet. Do NOT give specific planetary predictions.";
-
+    let kundliContext = "User birth details not provided yet.";
     if (birth) {
       const genderInfo = birth.gender ? `Gender: ${birth.gender}.` : "Gender: Not specified.";
       kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
-      
-      // 🔥 MAIN FIX: Calculated Chart ko context me add kiya
-      if (chartRow && chartRow.data) {
-        const chartData = chartRow.data as any;
-        if (chartData.lagna && chartData.moonSign && chartData.currentDasha) {
-          kundliContext += `\n\nUSER'S EXACT CALCULATED KUNDLI (Use this for accurate predictions, do not make up planets):`;
-          kundliContext += `\nLagna (Ascendant): ${chartData.lagna.rashiName} (${chartData.lagna.rashiNameHi || ''})`;
-          kundliContext += `\nMoon Sign: ${chartData.moonSign.rashiName} (${chartData.moonSign.rashiNameHi || ''})`;
-          kundliContext += `\nNakshatra: ${chartData.nakshatra.name} (Pada ${chartData.nakshatra.pada})`;
-          
-          if (chartData.currentDasha) {
-            kundliContext += `\nCurrent Mahadasha: ${chartData.currentDasha.maha.lord} (Ends: ${chartData.currentDasha.maha.end.slice(0,10)})`;
-            kundliContext += `\nCurrent Antardasha: ${chartData.currentDasha.antar.lord} (Ends: ${chartData.currentDasha.antar.end.slice(0,10)})`;
-          }
-          
-          if (Array.isArray(chartData.planets)) {
-            const planetsStr = chartData.planets.map((p: any) => `${p.planet} in ${p.rashiName} (House ${p.house})${p.retrograde ? ' [Retrograde]' : ''}`).join(', ');
-            kundliContext += `\nPlanetary Positions: ${planetsStr}`;
-          }
-        }
-      }
     }
 
     // 🔥 FIX 3: PREMIUM PSYCHOLOGY + BUSINESS + ASTROLOGY SYSTEM PROMPT
@@ -389,12 +366,11 @@ ${kundliContext}
 1. You are a premium consultant. Provide immense value so the user feels their time and money are worth it.
 2. Be highly empathetic but authoritative. Validate their feelings, then give a firm astrological direction.
 3. ALWAYS end your message with a thought-provoking question. (e.g., "Would you like to know the exact timing for this?" or "Shall we check your birth chart for the exact remedy?"). This keeps the user engaged and increases chat retention.
-4. Use the EXACT planetary positions and dashas provided in the User Context above. If the chart is not provided, politely ask for birth details.
 
 🔮 STRICT ASTROLOGY RULES:
 1. NEVER hallucinate or make up fake astrological terms (e.g., do NOT invent names like "Shukra Vishnu Dasha").
 2. Use ONLY standard Vedic Astrology concepts (Mahadasha, Antardasha, 7th House, Venus, etc.).
-3. If the user has provided birth details but the chart is missing, tell them to generate their Kundli first.
+3. If you do not have the user's exact Birth Time and Birth Place, you CANNOT give exact dates, names of future partners, or specific gemstone recommendations. Politely ask for their birth details to give a precise answer.
 
 🌍 LANGUAGE:
 ${getLanguageInstruction(language)}
