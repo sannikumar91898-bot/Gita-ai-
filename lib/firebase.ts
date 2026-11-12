@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
+  GithubAuthProvider, // 🔥 NAYA: GitHub Auth Provider
   signInWithPopup, 
   RecaptchaVerifier, 
   signInWithPhoneNumber,
@@ -41,6 +42,7 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "बहुत अधिक प्रयास। कृपया कुछ देर बाद प्रयास करें।",
       "auth/invalid-phone-number": "गलत फोन नंबर। कृपया देश कोड (+91) के साथ डालें।",
       "auth/invalid-verification-code": "गलत OTP। कृपया सही कोड डालें।",
+      "auth/account-exists-with-different-credential": "यह ईमेल किसी अन्य लॉगिन विधि से जुड़ा है।",
       "default": "लॉगिन में समस्या आई। कृपया दोबारा प्रयास करें।"
     },
     hinglish: {
@@ -49,6 +51,7 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "Bahut zyada attempts. Kripya thodi der baad try karein.",
       "auth/invalid-phone-number": "Galat phone number. Kripya country code (+91) ke sath daalein.",
       "auth/invalid-verification-code": "Galat OTP. Kripya sahi code daalein.",
+      "auth/account-exists-with-different-credential": "Yeh email kisi aur login method se juda hai.",
       "default": "Login me dikkat aayi. Kripya dobara try karein."
     },
     en: {
@@ -57,6 +60,7 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "Too many attempts. Please try again later.",
       "auth/invalid-phone-number": "Invalid phone number. Please include country code.",
       "auth/invalid-verification-code": "Invalid OTP. Please enter the correct code.",
+      "auth/account-exists-with-different-credential": "This email is linked to another login method.",
       "default": "Login failed. Please try again."
     },
     te: {
@@ -105,13 +109,11 @@ export function getFirebaseError(lang: string, code: string): string {
 /* -------------------------------------------------------------------------- */
 
 /**
- * Google Login Function
- * Business: One-click login reduces friction and increases user retention.
+ * Google Login
  */
 export const loginWithGoogle = async () => {
   try {
     const provider = new GoogleAuthProvider();
-    // Force account selection (UX Best Practice)
     provider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(auth, provider);
     return { user: result.user, error: null };
@@ -122,24 +124,44 @@ export const loginWithGoogle = async () => {
 };
 
 /**
- * Setup Invisible reCAPTCHA for Phone OTP
- * NOTE: Must be called on the client side (inside a useEffect or onClick).
+ * 🔥 NAYA: GitHub Login
+ * Business: Tech-savvy users ke liye premium one-click option.
  */
-export const setupRecaptcha = (buttonId: string) => {
+export const loginWithGithub = async () => {
+  try {
+    const provider = new GithubAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    return { user: result.user, error: null };
+  } catch (error: any) {
+    console.error("GitHub Login Error:", error.code);
+    return { user: null, error: error.code };
+  }
+};
+
+/**
+ * 🔥 FIXED: Setup Invisible reCAPTCHA for Phone OTP
+ * Error was happening because we were passing the button ID instead of the container.
+ */
+export const setupRecaptcha = (containerId: string = "recaptcha-container") => {
   if (typeof window === "undefined") return null;
   
   try {
-    // Agar pehle se recaptcha container hai, toh use clear karein (Prevents duplication crash)
-    const recaptchaContainer = document.getElementById("recaptcha-container");
-    if (recaptchaContainer) recaptchaContainer.innerHTML = "";
+    const container = document.getElementById(containerId);
+    if (!container) {
+      console.error(`reCAPTCHA container (${containerId}) not found in DOM.`);
+      return null;
+    }
 
-    const verifier = new RecaptchaVerifier(auth, buttonId, {
+    // Clear container if it already has a child to prevent "already rendered" error
+    container.innerHTML = "";
+
+    const verifier = new RecaptchaVerifier(auth, container, {
       size: "invisible",
       callback: () => {
-        // reCAPTCHA solved, allow signInWithPhoneNumber.
+        // reCAPTCHA solved
       },
       'expired-callback': () => {
-        // Response expired. Ask user to solve reCAPTCHA again.
+        // Response expired
       }
     });
     return verifier;
