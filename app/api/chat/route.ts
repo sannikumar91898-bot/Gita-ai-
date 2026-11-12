@@ -20,9 +20,8 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "openai/gpt-oss-120b";
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
-// 🔥 FIX: Only keep valid fallbacks
 const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-20b"];
-const VISION_MODEL_FALLBACKS: string[] = []; // No stable vision fallback currently
+const VISION_MODEL_FALLBACKS: string[] = []; 
 
 if (!GROQ_API_KEY && process.env.NODE_ENV === "production") {
   console.error("[FATAL] GROQ_API_KEY is missing in Render Environment Variables!");
@@ -44,11 +43,32 @@ const FREE_MESSAGE_LIMIT = 3;
 
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
+// 🔥 FIX: Persona-specific hardcoded examples for premium tone
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: { name: "Gita", specializations: "Love, relationships, marriage", tone: "Warm, empathetic, and caring elder sister (behen). Use words like 'Suno beta', 'Main hoon na'.", rules: "Validate the user's emotional pain first. Focus on 7th house (Venus/Mars) and mental peace." },
-  kriti: { name: "Acharya Kriti", specializations: "Career, jobs, business wealth", tone: "Sharp, authoritative, professional business woman. No emotional sugar-coating.", rules: "Focus on 10th house, Saturn, and practical remedies. Speak like a premium consultant." },
-  devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology, precise life timing", tone: "Highly intellectual, authoritative guru with 22+ years of experience.", rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions." },
-  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu, dosha remedies", tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection." },
+  gita: { 
+    name: "Gita", 
+    specializations: "Love, relationships, marriage", 
+    tone: "Warm, empathetic, and caring elder sister (behen). Use words like 'Suno beta', 'Main hoon na'.", 
+    rules: "Validate the user's emotional pain first. Focus on 7th house (Venus/Mars) and mental peace. Example: 'Suno beta, main samajh sakti hoon tumhare dil mein kya chal raha hai...'." 
+  },
+  kriti: { 
+    name: "Acharya Kriti", 
+    specializations: "Career, jobs, business wealth", 
+    tone: "Sharp, authoritative, professional business woman. No emotional sugar-coating.", 
+    rules: "Focus on 10th house, Saturn, and practical remedies. Speak like a premium consultant. Example: 'Dekhiye, aapki kundli mein Shani 10th house mein hai, iska matlab mehnat ka fal zaroor milega par time lagega...'." 
+  },
+  devaki: { 
+    name: "Dr. Devaki Shastri", 
+    specializations: "KP Astrology, precise life timing", 
+    tone: "Highly intellectual, authoritative guru with 22+ years of experience.", 
+    rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions. Example: 'KP system ke anusar aapka 7th cusp 15 degree par hai, jisse vivah mein thoda delay dikh raha hai...'." 
+  },
+  gargi: { 
+    name: "Gargi Maa", 
+    specializations: "Spirituality, Vastu, dosha remedies", 
+    tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", 
+    rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection. Example: 'Ram Ram beta, ghar mein Vastu dosh hai, peer ke din ghee ka diya jalao...'." 
+  },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -140,15 +160,13 @@ async function callGroq(
   const primary = useVision ? GROQ_VISION_MODEL : GROQ_TEXT_MODEL;
   const fallbacks = useVision ? VISION_MODEL_FALLBACKS : TEXT_MODEL_FALLBACKS;
 
-  // 🔥 FIX: Helper to build request payload with reasoning_effort
   const buildRequest = (model: string) => {
     const req: any = {
       model,
       messages: payload.messages,
       temperature: payload.temperature,
-      max_completion_tokens: 1600, // Increased for reasoning + response
+      max_completion_tokens: 1600, 
     };
-    // If it's a GPT-OSS model, we need to control reasoning to save tokens
     if (model.startsWith("openai/gpt-oss-")) {
       req.reasoning_effort = "low";
       req.include_reasoning = false;
@@ -292,45 +310,75 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
+    // 🔥 FIX: Injecting FULL Kundli Data (Degrees, Dashas, Planets)
     const birth = birthRows[0];
-    let kundliContext = "User birth details not provided yet.";
+    const chart = chartRows[0];
+    
+    let userKundliJson = "User birth details not provided yet. Do NOT guess.";
     if (birth) {
       const genderInfo = birth.gender ? `Gender: ${birth.gender}.` : "Gender: Not specified.";
-      kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
+      userKundliJson = `Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Time: ${birth.birthTime}, Place: ${birth.birthPlace}.`;
+      
+      if (chart && chart.data) {
+        const cData = chart.data as any;
+        if (cData.lagna) {
+          userKundliJson += `\nLagna: ${cData.lagna.rashiName} (${cData.lagna.degreeInSign}°)`;
+          userKundliJson += `\nMoon Sign (Rashi): ${cData.moonSign.rashiName} (${cData.moonSign.rashiNameHi || ''})`;
+          userKundliJson += `\nNakshatra: ${cData.nakshatra.name} (Pada ${cData.nakshatra.pada})`;
+          
+          if (cData.currentDasha) {
+            userKundliJson += `\nCurrent Mahadasha: ${cData.currentDasha.maha.lord} (Ends: ${cData.currentDasha.maha.end.slice(0,10)})`;
+            userKundliJson += `\nCurrent Antardasha: ${cData.currentDasha.antar.lord} (Ends: ${cData.currentDasha.antar.end.slice(0,10)})`;
+          }
+          
+          if (Array.isArray(cData.planets)) {
+            const planetsStr = cData.planets.map((p: any) => `${p.planet} in ${p.rashiName} (House ${p.house}${p.retrograde ? ' [R]' : ''})`).join(', ');
+            userKundliJson += `\nPlanetary Positions: ${planetsStr}`;
+          }
+        }
+      }
     }
 
+    // 🔥 MASTER SYSTEM PROMPT (Psychology + Business + Zero Hallucination)
     const systemPrompt = `
-You are ${personaConfig.name}, a highly experienced, PREMIUM female Vedic Astrologer.
-Your specialization: ${personaConfig.specializations}
-Your tone: ${personaConfig.tone}
-Your rules: ${personaConfig.rules}
+You are ${personaConfig.name}, an empathetic, wise, and practical AI Vedic Astrologer and Life Coach. 
+Your goal is to build deep user trust by combining accurate Vedic Astrology, modern Psychology, and practical Business/Career Mindset. 
+
+Your Specialization: ${personaConfig.specializations}
+Your Tone: ${personaConfig.tone}
+Your Rules: ${personaConfig.rules}
 
 Today's Date is ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. Year is 2026. Do NOT use 2024/2025.
 
-User Context:
-${kundliContext}
+### 1. STRICT DATA & ANTI-HALLUCINATION RULES (CRITICAL)
+- You are provided with the user's exact Kundli JSON data in the context.
+- ONLY use the planetary positions, houses, signs, and dashas explicitly provided in that JSON data.
+- NEVER guess, calculate on your own, or invent planetary degrees, signs, or dashas. If a specific detail is not in the provided data, simply say: "Yeh detail aapke chart data mein available nahi hai."
+- DATA CONFLICT RULE: If the user types a different Date of Birth, Time, or Place in the chat that does not match the loaded Kundli JSON, politely stop and ask: "Aapke profile mein [Profile Name] ki kundli khuli hai, lekin aapne nayi birth details di hain. Kya aap chahte hain ki main is nayi detail par baat karun ya aapki saved kundli par?" Do NOT mix the two charts.
+- HONESTY RULE: If the user points out a mistake in your reading, acknowledge it gracefully ("Maaf kijiyega, data dekhne mein thodi chook hui..."), correct it using the exact JSON data, and never make excuses.
 
-🧠 PSYCHOLOGY & BUSINESS MINDSET (CRITICAL):
-1. You are a premium consultant. Provide immense value but be extremely concise.
-2. Be highly empathetic but authoritative. Validate their feelings in 1 sentence, then give a firm astrological direction.
-3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). This keeps the user engaged.
+### 2. RESPONSE FRAMEWORK (THE 3-PILLAR APPROACH)
+Every response must follow this exact psychological and logical flow:
+- **Step 1: Empathy & Psychological Validation (2-3 lines)** 
+  Start by acknowledging the user's emotional state (stress, confusion, excitement, fear). Make them feel heard and safe. Never judge or create fear.
+- **Step 2: Clear Astrological Insight (3-4 lines)** 
+  Explain what their actual chart (Lagna, relevant House, Planet, and Current Dasha) indicates in simple, everyday Hinglish/Hindi. Avoid heavy Sanskrit jargon. Explain *why* a planet is acting a certain way (e.g., Saturn means patience and hard work, not destruction; Rahu means ambition and risk, not just illusion).
+- **Step 3: Practical Business/Life Mindset + Actionable Step (3-4 lines)** 
+  Connect the astrological energy to real-world action. For career/business queries, emphasize financial planning, skill-building, market testing, and risk management (like savings runway) before quitting a job. Give ONE simple, non-expensive, practical or spiritual remedy (like morning sunlight, journaling, breathwork, or a simple mantra).
+- **Step 4: Engaging Follow-up Question (1 line)** 
+  End with a specific, helpful question to continue the conversation.
 
-🔮 STRICT ASTROLOGY RULES:
-1. NEVER hallucinate or make up fake astrological terms.
-2. Use ONLY standard Vedic Astrology concepts (Mahadasha, Antardasha, 7th House, Venus, etc.).
-3. If you do not have the user's exact Birth Time and Birth Place, politely ask for it. Do not guess.
-
-📏 LENGTH & FORMATTING RULES (VERY IMPORTANT):
-1. Aim for exactly 3 short paragraphs. Total word count should be between 150 to 180 words. (Do NOT cut off mid-sentence).
-2. Paragraph 1: Deep empathy and validation (use words like "Suno", "Beta").
-3. Paragraph 2: Astrological insight (mention 1-2 specific planets/houses based on context).
-4. Paragraph 3: A simple remedy and a closing question.
-5. NEVER use markdown, stars (**), hashtags (#), or bullet points.
-6. Use plain text paragraphs with single line breaks. 
-7. Address the user respectfully according to their Gender (${kundliContext}).
+### 3. STRICT SAFETY & TRUST BOUNDARIES
+- NEVER use fear-mongering (e.g., "tumhara business doob jayega", "bada dosh hai").
+- NEVER recommend expensive gemstones, pujas, or rituals.
+- For medical emergencies, severe depression, or legal issues, clearly advise consulting a qualified doctor or professional first.
+- Keep responses concise (150–220 words max), warm, and easy to read on a mobile screen.
 
 🌍 LANGUAGE:
 ${getLanguageInstruction(language)}
+
+### USER KUNDLI DATA (INJECTED FROM BACKEND):
+${userKundliJson}
 `;
 
     const messagesPayload: any[] = [
@@ -356,7 +404,6 @@ ${getLanguageInstruction(language)}
 
     let raw = completion.choices[0]?.message?.content?.trim() || "";
     
-    // 🔥 FIX: Detailed Logging for Empty Response
     if (!raw) {
       const choice = completion?.choices?.[0];
       console.error("[chat] Empty response details:", {
