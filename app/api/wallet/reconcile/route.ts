@@ -39,14 +39,28 @@ export async function POST() {
     // 2. Har pending payment ko Razorpay se check karein
     for (const payment of pendingPayments) {
       try {
-        // Razorpay par is order ke payments fetch karein
+        // 🔥 FIX 1: Razorpay se us specific order ki details fetch karein
         const rzpOrders: any = await razorpay.orders.fetchPayments(payment.orderId);
         
         // Agar koi captured payment milta hai
         const capturedPayment = rzpOrders.items?.find((p: any) => p.status === "captured");
 
         if (capturedPayment) {
-          // 3. Bonus Logic (₹51+ par 10%)
+          // 🔥 FIX 2: Amount, Currency aur Order ID verify karein
+          if (capturedPayment.amount !== payment.amountPaise) {
+            console.error(`[Reconcile] Amount mismatch for ${payment.orderId}`);
+            continue;
+          }
+          if (capturedPayment.currency !== "INR") {
+            console.error(`[Reconcile] Currency mismatch for ${payment.orderId}`);
+            continue;
+          }
+          if (capturedPayment.order_id !== payment.orderId) {
+            console.error(`[Reconcile] Order ID mismatch for ${payment.orderId}`);
+            continue;
+          }
+
+          // Bonus Logic (₹51+ par 10%)
           let finalAmountToAdd = payment.amountPaise;
           const amountInRupees = payment.amountPaise / 100;
           if (amountInRupees >= 51) {
@@ -67,6 +81,7 @@ export async function POST() {
               ))
               .returning();
 
+            // 🔥 FIX 3: Sirf tabhi credit karein jab DB me status update hua ho (Duplicate Credit Protection)
             if (updated.length > 0) {
               await tx.update(users)
                 .set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${finalAmountToAdd}` })
@@ -76,8 +91,6 @@ export async function POST() {
               totalRecoveredPaise += finalAmountToAdd;
             }
           });
-
-          console.log(`[Reconcile] Recovered payment ${payment.orderId} for user ${user.id}, amount: ₹${finalAmountToAdd / 100}`);
         }
       } catch (err: any) {
         console.error(`[Reconcile] Failed for order ${payment.orderId}:`, err.message);
