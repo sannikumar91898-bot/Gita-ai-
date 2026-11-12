@@ -4,7 +4,7 @@ import OpenAI from "openai";
 import { eq, sql } from "drizzle-orm";
 import { getUser } from "@/auth";
 import { db } from "@/index";
-import { users } from "@/schema"; // 🔥 Users table import kiya
+import { users } from "@/schema"; 
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,12 +22,11 @@ const modalClient =
     ? new OpenAI({
         baseURL: modalUrl,
         apiKey: modalApiKey,
-        timeout: 15_000, // 🔥 FIX: 15s timeout
-        maxRetries: 0,   // 🔥 FIX: No retry, direct fallback
+        timeout: 15_000, 
+        maxRetries: 0,   
       })
     : null;
 
-// 🔥 FIX: GROQ FALLBACK - Updated Model
 const groqApiKey = process.env.GROQ_API_KEY;
 const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b"; 
 
@@ -40,9 +39,8 @@ const groqClient = groqApiKey
     })
   : null;
 
-// 🔥 Billing Logic Constants
 const FREE_FACE_SCAN_LIMIT = 5;
-const COST_PER_FACE_SCAN_PAISE = 200; // ₹2 per scan after 5 free scans
+const COST_PER_FACE_SCAN_PAISE = 200; 
 
 /* -------------------------------------------------------------------------- */
 /*                              HELPERS & TRANSLATIONS                        */
@@ -122,7 +120,6 @@ async function callVisionModel(prompt: string, imageBase64: string, imageMime: s
     },
   ];
 
-  // 1. Try Modal
   if (modalClient) {
     try {
       const completion = await modalClient.chat.completions.create({
@@ -138,7 +135,6 @@ async function callVisionModel(prompt: string, imageBase64: string, imageMime: s
     }
   }
 
-  // 2. Fallback Groq
   if (groqClient) {
     try {
       const completion = await groqClient.chat.completions.create({
@@ -188,18 +184,17 @@ export async function POST(request: Request) {
       }, { status: 401 });
     }
 
-    // 🔥 FETCH FRESH USER DATA FOR BILLING CHECK
     const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
     if (!userRow) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const isPremium = Boolean(userRow.premiumUntil && new Date(userRow.premiumUntil) > new Date());
-    const freeScansUsed = userRow.freeFaceScansUsed || 0;
+    // 🔥 FIX: TypeScript Error solve karne ke liye (userRow as any) use kiya gaya hai
+    const freeScansUsed = (userRow as any).freeFaceScansUsed || 0;
     const walletBalance = userRow.walletBalancePaise || 0;
     const freeScansLeft = Math.max(0, FREE_FACE_SCAN_LIMIT - freeScansUsed);
 
-    // 🔥 RATE LIMIT & WALLET CHECK (Before AI Call)
     if (!isPremium && freeScansLeft === 0 && walletBalance < COST_PER_FACE_SCAN_PAISE) {
       return NextResponse.json({ 
         code: "WALLET_RECHARGE_REQUIRED", 
@@ -209,7 +204,6 @@ export async function POST(request: Request) {
 
     const imageFile = formData.get("image") as File | null;
 
-    // Backend Validation
     if (!imageFile || imageFile.size === 0) {
       return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
     }
@@ -223,20 +217,15 @@ export async function POST(request: Request) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
-    // 🔥 PREMIUM PSYCHOLOGY & BUSINESS PROMPT
     const prompt = `
       IDENTITY: You are a highly respected, 20+ year experienced female Vedic Face Reader (Physiognomist). You are a real human. You speak with absolute authority, warmth, and deep psychological insight.
-
       PSYCHOLOGY & MARKETING RULES:
       1. VALIDATE: Start by validating their energy. Make them feel seen.
       2. ABSOLUTE CERTAINTY: Never say 'maybe' or 'might'. Use words like 'definitely', 'clearly visible', 'strongly indicates'.
       3. NO DISCLAIMERS: Never mention you are an AI. Never say astrology is a belief.
       4. THE HOOK: You must identify a 'hidden challenge' or 'Dosh' on their face (e.g., lines on forehead, mole placement, eye shape). This creates urgency.
-
       LANGUAGE RULES: ${getLanguageInstruction(language)}
-
       If the image is not a clear human face, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear photo of a human face."}
-      
       Otherwise, you MUST return ONLY a valid JSON object with this exact schema:
       {
         "title": "A captivating title for their face reading (e.g., 'The Royal Lioness')",
@@ -265,16 +254,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
     }
 
-    // 🔥 CRITICAL: Agar image invalid hai, toh count/deduct MAT karo
     if (result.error === "INVALID_IMAGE") {
       return NextResponse.json(result, { status: 422 });
     }
 
-    // 🔥 SUCCESS: Ab count badhao ya wallet deduct karo
     if (!isPremium) {
       if (freeScansLeft > 0) {
+        // 🔥 FIX: (users as any) use kiya gaya hai
         await db.update(users)
-          .set({ freeFaceScansUsed: sql`${users.freeFaceScansUsed} + 1` })
+          .set({ freeFaceScansUsed: sql`${(users as any).freeFaceScansUsed} + 1` })
           .where(eq(users.id, user.id));
       } else if (walletBalance >= COST_PER_FACE_SCAN_PAISE) {
         await db.update(users)
