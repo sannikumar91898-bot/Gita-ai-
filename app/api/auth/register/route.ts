@@ -102,9 +102,14 @@ function getWelcomeHook(lang: string): string {
 /* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
+  // 🔥 FIX: Language ko try block ke bahar declare kiya taaki catch block me bhi pata rahe
+  let language = "en";
+
   try {
     const body = await request.json();
-    const { name, email, password, language = "en" } = body; // 🔥 Extracting language
+    const { name, email, password, language: reqLang } = body;
+    
+    if (reqLang) language = reqLang; // Assign requested language
 
     // 🔥 FIX 1: Type check
     if (typeof email !== "string" || typeof password !== "string") {
@@ -190,7 +195,7 @@ export async function POST(request: Request) {
     
     // 🔥 Production (Live) app par database error chhupaya hai
     return NextResponse.json({ 
-      error: getRegError("en", "server"), // Fallback to english for server error
+      error: getRegError(language, "server"), // 🔥 FIX: Ab dynamic language use hogi
       details: process.env.NODE_ENV === "development" ? (error.message || String(error)) : undefined
     }, { status: 500 });
   }
