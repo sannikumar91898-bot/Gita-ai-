@@ -13,16 +13,16 @@ declare global {
 // 🔥 10 Language Translation Helper
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
-    hi: { title: "मेरा वॉलेट", total: "कुल बैलेंस", secured: "सुरक्षित", choose: "दक्षिणा चुनें", bonus: "10% एक्स्ट्रा बोनस", noBonus: "कोई बोनस नहीं", totalDakshina: "कुल दक्षिणा", pay: "₹X दक्षिणा दें", processing: "प्रोसेस हो रहा है...", verifying: "पेमेंट वेरिफाई हो रहा है...", success: "दक्षिणा सफल! बैलेंस अपडेट हो गया है।", securePay: "100% सुरक्षित भुगतान • UPI / कार्ड", sticky: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "अभी बात करें — पहली चैट FREE", chat: "चैट" },
-    hinglish: { title: "My Wallet", total: "Total Balance", secured: "Secured", choose: "Choose Dakshina", bonus: "10% Extra Bonus", noBonus: "No Bonus", totalDakshina: "Total Dakshina", pay: "Pay ₹X Dakshina", processing: "Processing...", verifying: "Verifying payment...", success: "Dakshina successful! Balance updated.", securePay: "100% Secure Payments • UPI / Card", sticky: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chat: "Chat" },
-    en: { title: "My Wallet", total: "Total Balance", secured: "Secured", choose: "Choose Dakshina", bonus: "10% Extra Bonus", noBonus: "No Bonus", totalDakshina: "Total Dakshina", pay: "Pay ₹X Dakshina", processing: "Processing...", verifying: "Verifying payment...", success: "Dakshina successful! Balance updated.", securePay: "100% Secure Payments • UPI / Card", sticky: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chat: "Chat" },
-    te: { title: "నా వాలెట్", total: "మొత్తం నిల్వ", secured: "సురక్షితం", choose: "దక్షిణ ఎంచుకోండి", bonus: "10% అదనపు బోనస్", noBonus: "బోనస్ లేదు", totalDakshina: "మొత్తం దక్షిణ", pay: "₹X దక్షిణ చెల్లించండి", processing: "ప్రాసెస్ అవుతోంది...", verifying: "చెల్లింపు ధృవీకరిస్తోంది...", success: "దక్షిణ విజయవంతం! బ్యాలెన్స్ అప్‌డేట్ అయింది.", securePay: "100% సురక్షిత చెల్లింపులు • UPI / కార్డ్", sticky: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం", chat: "చాట్" },
-    ta: { title: "எனது பணப்பை", total: "மொத்த இருப்பு", secured: "பாதுகாப்பானது", choose: "தட்சிணை தேர்ந்தெடுக்கவும்", bonus: "10% கூடுதல் போனஸ்", noBonus: "போனஸ் இல்லை", totalDakshina: "மொத்த தட்சிணை", pay: "₹X தட்சிணை செலுத்துங்கள்", processing: "செயலாக்கப்படுகிறது...", verifying: "பணம் சரிபார்க்கப்படுகிறது...", success: "தட்சிணை வெற்றி! இருப்பு புதுப்பிக்கப்பட்டது.", securePay: "100% பாதுகாப்பான பணம் • UPI / கார்டு", sticky: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்", chat: "அரட்டை" },
-    kn: { title: "ನನ್ನ ವಾಲೆಟ್", total: "ಒಟ್ಟು ಬಾಕಿ", secured: "ಸುರಕ್ಷಿತ", choose: "ದಕ್ಷಿಣೆ ಆಯ್ಕೆಮಾಡಿ", bonus: "10% ಹೆಚ್ಚುವರಿ ಬೋನಸ್", noBonus: "ಬೋನಸ್ ಇಲ್ಲ", totalDakshina: "ಒಟ್ಟು ದಕ್ಷಿಣೆ", pay: "₹X ದಕ್ಷಿಣೆ ಪಾವತಿಸಿ", processing: "ಪ್ರಕ್ರಿಯೆಯಲ್ಲಿದೆ...", verifying: "ಪಾವತಿ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...", success: "ದಕ್ಷಿಣೆ ಯಶಸ್ವಿ! ಬ್ಯಾಲೆನ್ಸ್ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.", securePay: "100% ಸುರಕ್ಷಿತ ಪಾವತಿಗಳು • UPI / ಕಾರ್ಡ್", sticky: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chat: "ಚಾಟ್" },
-    bn: { title: "আমার ওয়ালেট", total: "মোট ব্যালেন্স", secured: "সুরক্ষিত", choose: "দক্ষিণা চয়ন করুন", bonus: "10% অতিরিক্ত বোনাস", noBonus: "কোনো বোনাস নেই", totalDakshina: "মোট দক্ষিণা", pay: "₹X দক্ষিণা দিন", processing: "প্রসেস হচ্ছে...", verifying: "পেমেন্ট যাচাই করা হচ্ছে...", success: "দক্ষিণা সফল! ব্যালেন্স আপডেট হয়েছে।", securePay: "100% সুরক্ষিত পেমেন্ট • UPI / কার্ড", sticky: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি", chat: "চ্যাট" },
-    mr: { title: "माझे वॉलेट", total: "एकूण शिल्लक", secured: "सुरक्षित", choose: "दक्षिणा निवडा", bonus: "10% अतिरिक्त बोनस", noBonus: "बोनस नाही", totalDakshina: "एकूण दक्षिणा", pay: "₹X दक्षिणा द्या", processing: "प्रक्रिया सुरू आहे...", verifying: "पेमेंट तपासत आहे...", success: "दक्षिणा यशस्वी! बॅलन्स अपडेट झाला.", securePay: "100% सुरक्षित पेमेंट • UPI / कार्ड", sticky: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत", chat: "चॅट" },
-    gu: { title: "મારું વોલેટ", total: "કુલ બેલેન્સ", secured: "સુરક્ષિત", choose: "દક્ષિણા પસંદ કરો", bonus: "10% વધારાનું બોનસ", noBonus: "કોઈ બોનસ નથી", totalDakshina: "કુલ દક્ષિણા", pay: "₹X દક્ષિણા આપો", processing: "પ્રોસેસ થઈ રહ્યું છે...", verifying: "પેમેન્ટ ચકાસી રહ્યું છે...", success: "દક્ષિણા સફળ! બેલેન્સ અપડેટ થયું.", securePay: "100% સુરક્ષિત પેમેન્ટ • UPI / કાર્ડ", sticky: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત", chat: "ચેટ" },
-    ml: { title: "എന്റെ വാലറ്റ്", total: "മൊത്തം ബാലൻസ്", secured: "സുരക്ഷിതം", choose: "ദക്ഷിണ തിരഞ്ഞെടുക്കുക", bonus: "10% അധിക ബോണസ്", noBonus: "ബോണസ് ഇല്ല", totalDakshina: "മൊത്തം ദക്ഷിണ", pay: "₹X ദക്ഷിണ നൽകുക", processing: "പ്രോസസ്സ് ചെയ്യുന്നു...", verifying: "പേയ്‌മെന്റ് സ്ഥിരീകരിക്കുന്നു...", success: "ദക്ഷിണ വിജയകരം! ബാലൻസ് അപ്‌ഡേറ്റ് ചെയ്തു.", securePay: "100% സുരക്ഷിത പേയ്‌മെന്റുകൾ • UPI / കാർഡ്", sticky: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", chat: "ചാറ്റ്" },
+    hi: { title: "मेरा वॉलेट", total: "कुल बैलेंस", secured: "सुरक्षित", choose: "दक्षिणा चुनें", bonus: "10% एक्स्ट्रा बोनस", noBonus: "कोई बोनस नहीं", totalDakshina: "कुल दक्षिणा", pay: "₹X दक्षिणा दें", processing: "प्रोसेस हो रहा है...", verifying: "पेमेंट वेरिफाई हो रहा है...", recovering: "पेमेंट रिकवर हो रहा है...", success: "दक्षिणा सफल! बैलेंस अपडेट हो गया है।", failMsg: "पेमेंट वेरिफाई नहीं हो पाया। कृपया 1 मिनट बाद रिफ्रेश करें, पैसा सुरक्षित है।", securePay: "100% सुरक्षित भुगतान • UPI / कार्ड", sticky: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "अभी बात करें — पहली चैट FREE", chat: "चैट" },
+    hinglish: { title: "My Wallet", total: "Total Balance", secured: "Secured", choose: "Choose Dakshina", bonus: "10% Extra Bonus", noBonus: "No Bonus", totalDakshina: "Total Dakshina", pay: "Pay ₹X Dakshina", processing: "Processing...", verifying: "Verifying payment...", recovering: "Recovering payment...", success: "Dakshina successful! Balance updated.", failMsg: "Payment verify failed. Please refresh after 1 min, money is safe.", securePay: "100% Secure Payments • UPI / Card", sticky: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chat: "Chat" },
+    en: { title: "My Wallet", total: "Total Balance", secured: "Secured", choose: "Choose Dakshina", bonus: "10% Extra Bonus", noBonus: "No Bonus", totalDakshina: "Total Dakshina", pay: "Pay ₹X Dakshina", processing: "Processing...", verifying: "Verifying payment...", recovering: "Recovering payment...", success: "Dakshina successful! Balance updated.", failMsg: "Payment verify failed. Please refresh after 1 min, money is safe.", securePay: "100% Secure Payments • UPI / Card", sticky: "Astrologer • 24x7 Available", stickySub: "Talk Now — First Chat FREE", chat: "Chat" },
+    te: { title: "నా వాలెట్", total: "మొత్తం నిల్వ", secured: "సురక్షితం", choose: "దక్షిణ ఎంచుకోండి", bonus: "10% అదనపు బోనస్", noBonus: "బోనస్ లేదు", totalDakshina: "మొత్తం దక్షిణ", pay: "₹X దక్షిణ చెల్లించండి", processing: "ప్రాసెస్ అవుతోంది...", verifying: "చెల్లింపు ధృవీకరిస్తోంది...", recovering: "చెల్లింపు రికవరీ అవుతోంది...", success: "దక్షిణ విజయవంతం! బ్యాలెన్స్ అప్‌డేట్ అయింది.", failMsg: "చెల్లింపు ధృవీకరణ విఫలమైంది. దయచేసి 1 నిమిషం తర్వాత రిఫ్రెష్ చేయండి, డబ్బు సురక్షితం.", securePay: "100% సురక్షిత చెల్లింపులు • UPI / కార్డ్", sticky: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం", chat: "చాట్" },
+    ta: { title: "எனது பணப்பை", total: "மொத்த இருப்பு", secured: "பாதுகாப்பானது", choose: "தட்சிணை தேர்ந்தெடுக்கவும்", bonus: "10% கூடுதல் போனஸ்", noBonus: "போனஸ் இல்லை", totalDakshina: "மொத்த தட்சிணை", pay: "₹X தட்சிணை செலுத்துங்கள்", processing: "செயலாக்கப்படுகிறது...", verifying: "பணம் சரிபார்க்கப்படுகிறது...", recovering: "பணம் மீட்டெடுக்கப்படுகிறது...", success: "தட்சிணை வெற்றி! இருப்பு புதுப்பிக்கப்பட்டது.", failMsg: "பணம் சரிபார்க்க முடியவில்லை. 1 நிமிடம் கழித்து புதுப்பிக்கவும், பணம் பாதுகாப்பானது.", securePay: "100% பாதுகாப்பான பணம் • UPI / கார்டு", sticky: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்", chat: "அரட்டை" },
+    kn: { title: "ನನ್ನ ವಾಲೆಟ್", total: "ಒಟ್ಟು ಬಾಕಿ", secured: "ಸುರಕ್ಷಿತ", choose: "ದಕ್ಷಿಣೆ ಆಯ್ಕೆಮಾಡಿ", bonus: "10% ಹೆಚ್ಚುವರಿ ಬೋನಸ್", noBonus: "ಬೋನಸ್ ಇಲ್ಲ", totalDakshina: "ಒಟ್ಟು ದಕ್ಷಿಣೆ", pay: "₹X ದಕ್ಷಿಣೆ ಪಾವತಿಸಿ", processing: "ಪ್ರಕ್ರಿಯೆಯಲ್ಲಿದೆ...", verifying: "ಪಾವತಿ ಪರಿಶೀಲಿಸಲಾಗುತ್ತಿದೆ...", recovering: "ಪಾವತಿ ಮರುಪಡೆಯಲಾಗುತ್ತಿದೆ...", success: "ದಕ್ಷಿಣೆ ಯಶಸ್ವಿ! ಬ್ಯಾಲೆನ್ಸ್ ಅಪ್‌ಡೇಟ್ ಆಗಿದೆ.", failMsg: "ಪಾವತಿ ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ. 1 ನಿಮಿಷದ ನಂತರ ರಿಫ್ರೆಶ್ ಮಾಡಿ, ಹಣ ಸುರಕ್ಷಿತವಾಗಿದೆ.", securePay: "100% ಸುರಕ್ಷಿತ ಪಾವತಿಗಳು • UPI / ಕಾರ್ಡ್", sticky: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chat: "ಚಾಟ್" },
+    bn: { title: "আমার ওয়ালেট", total: "মোট ব্যালেন্স", secured: "সুরক্ষিত", choose: "দক্ষিণা চয়ন করুন", bonus: "10% অতিরিক্ত বোনাস", noBonus: "কোনো বোনাস নেই", totalDakshina: "মোট দক্ষিণা", pay: "₹X দক্ষিণা দিন", processing: "প্রসেস হচ্ছে...", verifying: "পেমেন্ট যাচাই করা হচ্ছে...", recovering: "পেমেন্ট পুনরুদ্ধার করা হচ্ছে...", success: "দক্ষিণা সফল! ব্যালেন্স আপডেট হয়েছে।", failMsg: "পেমেন্ট যাচাই ব্যর্থ হয়েছে। 1 মিনিট পরে রিফ্রেশ করুন, টাকা নিরাপদ।", securePay: "100% সুরক্ষিত পেমেন্ট • UPI / কার্ড", sticky: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি", chat: "চ্যাট" },
+    mr: { title: "माझे वॉलेट", total: "एकूण शिल्लक", secured: "सुरक्षित", choose: "दक्षिणा निवडा", bonus: "10% अतिरिक्त बोनस", noBonus: "बोनस नाही", totalDakshina: "एकूण दक्षिणा", pay: "₹X दक्षिणा द्या", processing: "प्रक्रिया सुरू आहे...", verifying: "पेमेंट तपासत आहे...", recovering: "पेमेंट रिकव्हर करत आहे...", success: "दक्षिणा यशस्वी! बॅलन्स अपडेट झाला.", failMsg: "पेमेंट पडताळणी अयशस्वी. 1 मिनिटानंतर रिफ्रेश करा, पैसे सुरक्षित आहेत.", securePay: "100% सुरक्षित पेमेंट • UPI / कार्ड", sticky: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत", chat: "चॅट" },
+    gu: { title: "મારું વોલેટ", total: "કુલ બેલેન્સ", secured: "સુરક્ષિત", choose: "દક્ષિણા પસંદ કરો", bonus: "10% વધારાનું બોનસ", noBonus: "કોઈ બોનસ નથી", totalDakshina: "કુલ દક્ષિણા", pay: "₹X દક્ષિણા આપો", processing: "પ્રોસેસ થઈ રહ્યું છે...", verifying: "પેમેન્ટ ચકાસી રહ્યું છે...", recovering: "પેમેન્ટ રિકવર થઈ રહ્યું છે...", success: "દક્ષિણા સફળ! બેલેન્સ અપડેટ થયું.", failMsg: "પેમેન્ટ ચકાસણી નિષ્ફળ. 1 મિનિટ પછી રિફ્રેશ કરો, પૈસા સુરક્ષિત છે.", securePay: "100% સુરક્ષિત પેમેન્ટ • UPI / કાર્ડ", sticky: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત", chat: "ચેટ" },
+    ml: { title: "എന്റെ വാലറ്റ്", total: "മൊത്തം ബാലൻസ്", secured: "സുരക്ഷിതം", choose: "ദക്ഷിണ തിരഞ്ഞെടുക്കുക", bonus: "10% അധിക ബോണസ്", noBonus: "ബോണസ് ഇല്ല", totalDakshina: "മൊത്തം ദക്ഷിണ", pay: "₹X ദക്ഷിണ നൽകുക", processing: "പ്രോസസ്സ് ചെയ്യുന്നു...", verifying: "പേയ്‌മെന്റ് സ്ഥിരീകരിക്കുന്നു...", recovering: "പേയ്‌മെന്റ് വീണ്ടെടുക്കുന്നു...", success: "ദക്ഷിണ വിജയകരം! ബാലൻസ് അപ്‌ഡേറ്റ് ചെയ്തു.", failMsg: "പേയ്‌മെന്റ് സ്ഥിരീകരണം പരാജയപ്പെട്ടു. 1 മിനിറ്റ് കഴിഞ്ഞ് റിഫ്രെഷ് ചെയ്യുക, പണം സുരക്ഷിതമാണ്.", securePay: "100% സുരക്ഷിത പേയ്‌മെന്റുകൾ • UPI / കാർഡ്", sticky: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", chat: "ചാറ്റ്" },
   };
   return ui[lang]?.[key] || ui["en"][key];
 };
@@ -49,7 +49,7 @@ export default function WalletPage() {
 
   const [amount, setAmount] = useState(11); 
   const [loading, setLoading] = useState(false);
-  const [verifying, setVerifying] = useState(false); // 🔥 NAYA: Verifying state
+  const [verifying, setVerifying] = useState(false);
   const [success, setSuccess] = useState(false);
   const [walletBalance, setWalletBalance] = useState(0);
 
@@ -76,6 +76,29 @@ export default function WalletPage() {
     document.body.appendChild(script);
     return () => { if (document.body.contains(script)) document.body.removeChild(script); };
   }, []);
+
+  // 🔥 NAYA FUNCTION: Verify fail hone par Reconcile call karega
+  const reconcilePayment = async () => {
+    try {
+      setVerifying(true);
+      const res = await fetch("/api/wallet/reconcile", { method: "POST" });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        await refresh();
+        await fetchProfile();
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 6000);
+      } else {
+        alert(t("failMsg"));
+      }
+    } catch (err) {
+      console.error("Reconcile error:", err);
+      alert(t("failMsg"));
+    } finally {
+      setVerifying(false);
+    }
+  };
 
   const handlePayment = async () => {
     if (typeof window === "undefined" || !window.Razorpay) {
@@ -109,7 +132,6 @@ export default function WalletPage() {
         order_id: orderData.orderId,
         image: "/icon-192.png",
         handler: async function (response: any) {
-          // 🔥 FIX 1: Verifying state ON karo, Razorpay checkout band karo but success mat dikhao
           setVerifying(true);
           setLoading(false);
 
@@ -126,22 +148,20 @@ export default function WalletPage() {
             const verifyData = await verifyRes.json();
 
             if (verifyRes.ok && verifyData.success) {
-              // 🔥 FIX 2: Pehle Global refresh (Homepage), phir Local Wallet refresh — AWAIT ke sath
               await refresh();
               await fetchProfile();
-              
-              // 🔥 FIX 3: Sirf ab Success dikhao jab balance update ho chuka ho
               setSuccess(true);
               setVerifying(false);
               setTimeout(() => setSuccess(false), 6000);
             } else {
-              setVerifying(false);
-              alert("Payment verification failed. Please contact support. Your money is safe and will be credited within 24 hours.");
+              // 🔥 FIX: Verify fail hone par automatic Reconcile call karein
+              console.log("Verify failed, trying Reconcile...");
+              await reconcilePayment();
             }
           } catch (error) {
             console.error("Verify error:", error);
-            setVerifying(false);
-            alert("Verification network error. Please contact support. Your money is safe.");
+            // 🔥 FIX: Network error par bhi automatic Reconcile call karein
+            await reconcilePayment();
           }
         },
         prefill: { name: "Guest User", email: "guest@example.com", contact: "9999999999" },
