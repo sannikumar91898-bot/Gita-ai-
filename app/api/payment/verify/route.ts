@@ -7,6 +7,9 @@ import { users, payments } from "@/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { getUser } from "@/auth";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   try {
     const user = await getUser();
@@ -27,6 +30,7 @@ export async function POST(req: Request) {
       .update(body.toString())
       .digest("hex");
 
+    // Length check (Server crash se bachne ke liye)
     if (expectedSignature.length !== razorpay_signature.length) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
@@ -40,7 +44,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid payment signature" }, { status: 400 });
     }
 
-    // 2. Database se order dhundo (🔥 FIX: Status 'created' ki condition yahan se hata di 🔥)
+    // 2. Database se order dhundo 
+    // 🔥 FIX: Status 'created' ki condition yahan se hata di hai taaki Webhook conflict na kare
     const paymentRecord = await db.select().from(payments)
       .where(and(
         eq(payments.orderId, razorpay_order_id), 
@@ -92,9 +97,8 @@ export async function POST(req: Request) {
       finalAmountToAdd += Math.floor(amountInRupees * 0.1) * 100;
     }
 
-    // 5. ATOMIC TRANSACTION
+    // 5. ATOMIC TRANSACTION (Double spending se bachne ke liye)
     await db.transaction(async (tx) => {
-      // Status update
       const updatedPayment = await tx.update(payments)
         .set({ 
           paymentId: razorpay_payment_id, 
@@ -107,6 +111,7 @@ export async function POST(req: Request) {
         ))
         .returning();
 
+      // Agar updatedPayment khali aaya, matlab kisi aur process (webhook) ne pehle hi isko process kar diya hai
       if (updatedPayment.length === 0) {
         throw new Error("PAYMENT_ALREADY_PROCESSED");
       }
@@ -124,10 +129,10 @@ export async function POST(req: Request) {
     });
 
   } catch (error: any) {
-    console.error("Verify Error:", error.message);
+    console.error("Verify Error:", error?.message);
     
-    if (error.message === "PAYMENT_ALREADY_PROCESSED") {
-      // Agar yahan aaya matlab DB update hone ki koshish mein race lagi
+    if (error?.message === "PAYMENT_ALREADY_PROCESSED") {
+      // Agar yahan aaya matlab DB update hone ki koshish mein race lagi, par process ho chuka hai
       return NextResponse.json({ success: true, message: "Already processed." }, { status: 200 }); 
     }
     
