@@ -18,12 +18,12 @@ export const dynamic = "force-dynamic";
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
-// 🔥 FIX: Updated Vision Models (Puraane decommissioned models hata diye hain)
-const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
+// 🔥 FIX: Qwen 2.5 Vision model is currently the best for Image analysis on Groq
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen2.5-vl-32b-instruct";
 
 const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "llama3-70b-8192"];
-// 🔥 FIX: Fallback me sabse strong vision model dala hai
-const VISION_MODEL_FALLBACKS = ["llama-3.2-90b-vision-preview"];
+// 🔥 FIX: Fallback to Llama vision if Qwen fails
+const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
 
 const openai = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
@@ -349,7 +349,7 @@ export async function POST(request: Request) {
       kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
     }
 
-    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + SHORT & CRISP RESPONSE PROMPT
+    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + BALANCED LENGTH PROMPT
     const systemPrompt = `
 You are ${personaConfig.name}, a highly experienced, PREMIUM female Vedic Astrologer.
 Your specialization: ${personaConfig.specializations}
@@ -362,9 +362,9 @@ User Context:
 ${kundliContext}
 
 🧠 PSYCHOLOGY & BUSINESS MINDSET (CRITICAL):
-1. You are a premium consultant. Provide immense value but be extremely concise.
+1. You are a premium consultant. The user is paying per minute, so provide immense value but do not ramble.
 2. Be highly empathetic but authoritative. Validate their feelings in 1 sentence, then give a firm astrological direction.
-3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). This keeps the user engaged.
+3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). 
 
 🔮 STRICT ASTROLOGY RULES:
 1. NEVER hallucinate or make up fake astrological terms.
@@ -372,11 +372,13 @@ ${kundliContext}
 3. If you do not have the user's exact Birth Time and Birth Place, politely ask for it. Do not guess.
 
 📏 LENGTH & FORMATTING RULES (VERY IMPORTANT):
-1. MAXIMUM 120 WORDS. Do NOT exceed this limit under any circumstance.
-2. Write in short, punchy sentences.
-3. NEVER use markdown, stars (**), hashtags (#), or bullet points.
-4. Use plain text paragraphs with single line breaks. 
-5. Address the user respectfully according to their Gender (${kundliContext}).
+1. Aim for exactly 3 short paragraphs. Total word count should be between 150 to 180 words. (Do NOT cut off mid-sentence).
+2. Paragraph 1: Deep empathy and validation (use words like "Suno", "Beta").
+3. Paragraph 2: Astrological insight (mention 1-2 specific planets/houses based on context).
+4. Paragraph 3: A simple remedy and a closing question.
+5. NEVER use markdown, stars (**), hashtags (#), or bullet points.
+6. Use plain text paragraphs with single line breaks. 
+7. Address the user respectfully according to their Gender (${kundliContext}).
 
 🌍 LANGUAGE:
 ${getLanguageInstruction(language)}
@@ -401,8 +403,8 @@ ${getLanguageInstruction(language)}
 
     /* ----------------------------- AI Call ------------------------------- */
     const completion = await callGroq(
-      // 🔥 FIX: max_tokens ko 1000 se 350 kar diya hai taaki AI bekar me lamba na likhe
-      { messages: messagesPayload, temperature: 0.4, max_tokens: 350 }, 
+      // 🔥 FIX: max_tokens ko 650 kar diya hai taaki Hindi/Hinglish me answer beech me na kate
+      { messages: messagesPayload, temperature: 0.4, max_tokens: 650 }, 
       Boolean(imageFile)
     );
 
@@ -459,6 +461,8 @@ ${getLanguageInstruction(language)}
     });
   } catch (error: any) {
     /* ----------------------------- Refund -------------------------------- */
+    // 🔥 NOTE: Refund logic is idempotent. It only triggers if 'isDeducted' is true.
+    // Once refunded, the function exits. Double-refund is not possible here.
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
