@@ -33,7 +33,9 @@ function LoginContent() {
   const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(""); // 👈 Type string hai
+  
+  // 🔥 FIX: TypeScript Error Fix. Ab 'null' bhi accept hoga.
+  const [error, setError] = useState<string | null>(null); 
 
   const getLoginText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
@@ -179,7 +181,7 @@ function LoginContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError("");
+    setError(null);
 
     const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
 
@@ -187,7 +189,7 @@ function LoginContent() {
       const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, language: lang }), // 🔥 Added language
+        body: JSON.stringify({ name, email, password, language: lang }), 
       });
 
       const data = await res.json();
@@ -225,7 +227,7 @@ function LoginContent() {
   };
 
   const handleGoogleLogin = async () => {
-    setError(""); // 🔥 FIX: null ki jagah empty string
+    setError(null); 
     setLoading(true);
     try {
       const { user, error: fbError } = await loginWithGoogle();
@@ -243,7 +245,7 @@ function LoginContent() {
   };
 
   const handleSendOtp = async () => {
-    setError(""); // 🔥 FIX: null ki jagah empty string
+    setError(null); 
     if (phone.length !== 10) {
       setError(lang === "hi" ? "कृपया 10 अंकों का सही नंबर दर्ज करें।" : "Please enter a valid 10-digit number.");
       return;
@@ -271,7 +273,7 @@ function LoginContent() {
   };
 
   const handleVerifyOtp = async () => {
-    setError(""); // 🔥 FIX: null ki jagah empty string
+    setError(null); 
     if (otp.length !== 6) {
       setError(lang === "hi" ? "कृपया 6 अंकों का सही OTP दर्ज करें।" : "Please enter the correct 6-digit OTP.");
       return;
@@ -331,13 +333,13 @@ function LoginContent() {
 
           <div className={`flex p-1 rounded-xl mb-6 ${isDark ? "bg-[#0A0F19]" : "bg-gray-100"}`}>
             <button 
-              onClick={() => { setMethod("email"); setShowOtp(false); setError(""); }}
+              onClick={() => { setMethod("email"); setShowOtp(false); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-bold rounded-lg transition-all ${method === "email" ? "bg-white dark:bg-[#1e293b] text-[#ff6b00] shadow-sm" : "text-gray-500"}`}
             >
               <Mail size={16} /> {t("email")}
             </button>
             <button 
-              onClick={() => { setMethod("phone"); setError(""); }}
+              onClick={() => { setMethod("phone"); setError(null); }}
               className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-bold rounded-lg transition-all ${method === "phone" ? "bg-white dark:bg-[#1e293b] text-[#ff6b00] shadow-sm" : "text-gray-500"}`}
             >
               <Phone size={16} /> {t("phoneBtn")}
@@ -489,7 +491,7 @@ function LoginContent() {
                 {isLogin ? t("noAccount") + " " : t("hasAccount") + " "}
               </span>
               <button
-                onClick={() => { setIsLogin(!isLogin); setError(""); }}
+                onClick={() => { setIsLogin(!isLogin); setError(null); }}
                 className="font-bold text-[#ff6b00] hover:underline"
               >
                 {isLogin ? t("registerHere") : t("loginHere")}
