@@ -3,7 +3,7 @@ import { initializeApp, getApps, getApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  GithubAuthProvider, // 🔥 NAYA: GitHub Auth Provider
+  GithubAuthProvider, 
   signInWithPopup, 
   RecaptchaVerifier, 
   signInWithPhoneNumber,
@@ -20,20 +20,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-
-// Initialize Auth
 const auth = getAuth(app);
 
-/* -------------------------------------------------------------------------- */
-/*                   🔥 PREMIUM BUSINESS & PSYCHOLOGY HOOKS                   */
-/* -------------------------------------------------------------------------- */
+// 🔥 TypeScript Window Interface (Global Verifier ke liye)
+declare global {
+  interface Window {
+    recaptchaVerifier: RecaptchaVerifier | undefined;
+  }
+}
 
-/**
- * 10 Language Error Translator
- * Psychology: Jab user ko error dikhta hai, toh woh apni language mein ho toh trust badhta hai.
- */
 export function getFirebaseError(lang: string, code: string): string {
   const dict: Record<string, Record<string, string>> = {
     hi: {
@@ -42,7 +38,7 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "बहुत अधिक प्रयास। कृपया कुछ देर बाद प्रयास करें।",
       "auth/invalid-phone-number": "गलत फोन नंबर। कृपया देश कोड (+91) के साथ डालें।",
       "auth/invalid-verification-code": "गलत OTP। कृपया सही कोड डालें।",
-      "auth/account-exists-with-different-credential": "यह ईमेल किसी अन्य लॉगिन विधि से जुड़ा है।",
+      "auth/invalid-app-credential": "सुरक्षा जाँच (CAPTCHA) विफल रही। कृपया Chrome ब्राउज़र में खोलें या पेज रिफ्रेश करें।",
       "default": "लॉगिन में समस्या आई। कृपया दोबारा प्रयास करें।"
     },
     hinglish: {
@@ -51,7 +47,7 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "Bahut zyada attempts. Kripya thodi der baad try karein.",
       "auth/invalid-phone-number": "Galat phone number. Kripya country code (+91) ke sath daalein.",
       "auth/invalid-verification-code": "Galat OTP. Kripya sahi code daalein.",
-      "auth/account-exists-with-different-credential": "Yeh email kisi aur login method se juda hai.",
+      "auth/invalid-app-credential": "Security check (CAPTCHA) fail hua. Kripya Chrome browser me kholein ya page refresh karein.",
       "default": "Login me dikkat aayi. Kripya dobara try karein."
     },
     en: {
@@ -60,57 +56,21 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/too-many-requests": "Too many attempts. Please try again later.",
       "auth/invalid-phone-number": "Invalid phone number. Please include country code.",
       "auth/invalid-verification-code": "Invalid OTP. Please enter the correct code.",
-      "auth/account-exists-with-different-credential": "This email is linked to another login method.",
+      "auth/invalid-app-credential": "Security check failed. Please open in Chrome browser or refresh.",
       "default": "Login failed. Please try again."
     },
-    te: {
-      "default": "లాగిన్‌లో సమస్య ఉంది. దయచేసి మళ్లీ ప్రయత్నించండి.",
-      "auth/network-request-failed": "ఇంటర్నెట్ కనెక్షన్ బలహీనంగా ఉంది.",
-      "auth/too-many-requests": "చాలా ప్రయత్నాలు. కొంత సేపటి తర్వాత ప్రయత్నించండి.",
-    },
-    ta: {
-      "default": "உள்நுழைவில் சிக்கல். மீண்டும் முயற்சிக்கவும்.",
-      "auth/network-request-failed": "இணைய இணைப்பு பலவீனமாக உள்ளது.",
-      "auth/too-many-requests": "அதிக முயற்சிகள். சிறிது நேரம் கழித்து முயற்சிக்கவும்.",
-    },
-    kn: {
-      "default": "ಲಾಗಿನ್‌ನಲ್ಲಿ ಸಮಸ್ಯೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-      "auth/network-request-failed": "ಇಂಟರ್ನೆಟ್ ಸಂಪರ್ಕ ದುರ್ಬಲವಾಗಿದೆ.",
-      "auth/too-many-requests": "ಹೆಚ್ಚು ಪ್ರಯತ್ನಗಳು. ಸ್ವಲ್ಪ ಸಮಯದ ನಂತರ ಪ್ರಯತ್ನಿಸಿ.",
-    },
-    bn: {
-      "default": "লগইনে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
-      "auth/network-request-failed": "ইন্টারনেট সংযোগ দুর্বল।",
-      "auth/too-many-requests": "অনেক বেশি চেষ্টা। কিছুক্ষণ পর আবার চেষ্টা করুন।",
-    },
-    mr: {
-      "default": "लॉगिनमध्ये समस्या आली. कृपया पुन्हा प्रयत्न करा.",
-      "auth/network-request-failed": "इंटरनेट कनेक्शन कमजोर आहे.",
-      "auth/too-many-requests": "खूप जास्त प्रयत्न. कृपया थोड्या वेळाने प्रयत्न करा.",
-    },
-    gu: {
-      "default": "લોગિનમાં સમસ્યા. ફરી પ્રયાસ કરો.",
-      "auth/network-request-failed": "ઇન્ટરનેટ કનેક્શન નબળું છે.",
-      "auth/too-many-requests": "ઘણા બધા પ્રયાસો. થોડા સમય પછી પ્રયાસ કરો.",
-    },
-    ml: {
-      "default": "ലോഗിൻ ചെയ്യുന്നതിൽ പ്രശ്നമുണ്ട്. വീണ്ടും ശ്രമിക്കുക.",
-      "auth/network-request-failed": "ഇന്റർനെറ്റ് കണക്ഷൻ ദുർബലമാണ്.",
-      "auth/too-many-requests": "കൂടുതൽ ശ്രമങ്ങൾ. കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
-    }
+    te: { "default": "లాగిన్‌లో సమస్య ఉంది. దయచేసి మళ్లీ ప్రయత్నించండి.", "auth/invalid-app-credential": "భద్రతా తనిఖీ విఫలమైంది. Chrome బ్రౌజర్‌లో తెరవండి." },
+    ta: { "default": "உள்நுழைவில் சிக்கல். மீண்டும் முயற்சிக்கவும்.", "auth/invalid-app-credential": "பாதுகாப்பு சரிபார்ப்பு தோல்வியடைந்தது. Chrome இல் திறக்கவும்." },
+    kn: { "default": "ಲಾಗಿನ್‌ನಲ್ಲಿ ಸಮಸ್ಯೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "auth/invalid-app-credential": "ಭದ್ರತಾ ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ. Chrome ನಲ್ಲಿ ತೆರೆಯಿರಿ." },
+    bn: { "default": "লগইনে সমস্যা হয়েছে। আবার চেষ্টা করুন।", "auth/invalid-app-credential": "নিরাপত্তা যাচাই ব্যর্থ। Chrome এ খুলুন।" },
+    mr: { "default": "लॉगिनमध्ये समस्या आली. कृपया पुन्हा प्रयत्न करा.", "auth/invalid-app-credential": "सुरक्षा तपासणी अयशस्वी. Chrome मध्ये उघडा." },
+    gu: { "default": "લોગિનમાં સમસ્યા. ફરી પ્રયાસ કરો.", "auth/invalid-app-credential": "સુરક્ષા ચકાસણી નિષ્ફળ. Chrome માં ખોલો." },
+    ml: { "default": "ലോഗിൻ ചെയ്യുന്നതിൽ പ്രശ്നമുണ്ട്. വീണ്ടും ശ്രമിക്കുക.", "auth/invalid-app-credential": "സുരക്ഷാ പരിശോധന പരാജയപ്പെട്ടു. Chrome ൽ തുറക്കുക." }
   };
-  
   const userDict = dict[lang || "hi"] || dict["en"];
   return userDict[code] || userDict["default"];
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              AUTH FUNCTIONS                                */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Google Login
- */
 export const loginWithGoogle = async () => {
   try {
     const provider = new GoogleAuthProvider();
@@ -118,62 +78,59 @@ export const loginWithGoogle = async () => {
     const result = await signInWithPopup(auth, provider);
     return { user: result.user, error: null };
   } catch (error: any) {
-    console.error("Google Login Error:", error.code);
     return { user: null, error: error.code };
   }
 };
 
-/**
- * 🔥 NAYA: GitHub Login
- * Business: Tech-savvy users ke liye premium one-click option.
- */
 export const loginWithGithub = async () => {
   try {
     const provider = new GithubAuthProvider();
     const result = await signInWithPopup(auth, provider);
     return { user: result.user, error: null };
   } catch (error: any) {
-    console.error("GitHub Login Error:", error.code);
     return { user: null, error: error.code };
   }
 };
 
-/**
- * 🔥 FIXED: Setup Invisible reCAPTCHA for Phone OTP
- * Error was happening because we were passing the button ID instead of the container.
- */
+// 🔥 FIX: Proper reCAPTCHA Setup & Cleanup (No innerHTML crash)
 export const setupRecaptcha = (containerId: string = "recaptcha-container") => {
   if (typeof window === "undefined") return null;
   
   try {
+    // 1. Cleanup old verifier properly
+    if (window.recaptchaVerifier) {
+      window.recaptchaVerifier.clear();
+      window.recaptchaVerifier = undefined;
+    }
+
     const container = document.getElementById(containerId);
     if (!container) {
-      console.error(`reCAPTCHA container (${containerId}) not found in DOM.`);
+      console.error(`reCAPTCHA container (${containerId}) not found.`);
       return null;
     }
 
-    // Clear container if it already has a child to prevent "already rendered" error
-    container.innerHTML = "";
-
-    const verifier = new RecaptchaVerifier(auth, container, {
+    // 2. Create new verifier and attach to window (Survives React re-renders)
+    window.recaptchaVerifier = new RecaptchaVerifier(auth, container, {
       size: "invisible",
       callback: () => {
-        // reCAPTCHA solved
+        console.log("reCAPTCHA solved successfully");
       },
       'expired-callback': () => {
-        // Response expired
+        console.warn("reCAPTCHA expired. Cleaning up.");
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = undefined;
+        }
       }
     });
-    return verifier;
+    
+    return window.recaptchaVerifier;
   } catch (error) {
     console.error("Recaptcha Setup Error:", error);
     return null;
   }
 };
 
-/**
- * Send Phone OTP
- */
 export const sendPhoneOTP = async (phoneNumber: string, appVerifier: RecaptchaVerifier): Promise<{ result: ConfirmationResult | null; error: string | null }> => {
   try {
     const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
@@ -184,15 +141,11 @@ export const sendPhoneOTP = async (phoneNumber: string, appVerifier: RecaptchaVe
   }
 };
 
-/**
- * Firebase Logout
- */
 export const firebaseLogout = async () => {
   try {
     await firebaseSignOut(auth);
     return { success: true };
   } catch (error) {
-    console.error("Firebase Logout Error:", error);
     return { success: false };
   }
 };
