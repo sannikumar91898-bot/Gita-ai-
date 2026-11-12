@@ -11,18 +11,14 @@ import { checkAILimit } from "@/rate-limit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/* -------------------------------------------------------------------------- */
-/*                     🔥 GROQ CONFIGURATION (ENV-CONFIGURABLE)               */
-/* -------------------------------------------------------------------------- */
-
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
-// 🔥 FIX: Qwen 2.5 Vision model is currently the best for Image analysis on Groq
-const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen2.5-vl-32b-instruct";
+// 🔥 FIX 1: Vision Model updated to qwen/qwen3.8-27b
+const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
 const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "llama3-70b-8192"];
-// 🔥 FIX: Fallback to Llama vision if Qwen fails
+// 🔥 FIX 1: Old Llama models kept as fallback just in case
 const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
 
 const openai = new OpenAI({
@@ -35,42 +31,14 @@ const openai = new OpenAI({
 const COST_PER_MESSAGE_PAISE = 200;
 const FREE_MESSAGE_LIMIT = 3;
 
-/* -------------------------------------------------------------------------- */
-/*                              PERSONAS & TONE                               */
-/* -------------------------------------------------------------------------- */
-
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: { 
-    name: "Gita", 
-    specializations: "Love, relationships, marriage", 
-    tone: "Warm, empathetic, and caring elder sister (behen). Use words like 'Suno beta', 'Main hoon na'.", 
-    rules: "Validate the user's emotional pain first. Focus on 7th house (Venus/Mars) and mental peace." 
-  },
-  kriti: { 
-    name: "Acharya Kriti", 
-    specializations: "Career, jobs, business wealth", 
-    tone: "Sharp, authoritative, professional business woman. No emotional sugar-coating.", 
-    rules: "Focus on 10th house, Saturn, and practical remedies. Speak like a premium consultant." 
-  },
-  devaki: { 
-    name: "Dr. Devaki Shastri", 
-    specializations: "KP Astrology, precise life timing", 
-    tone: "Highly intellectual, authoritative guru with 22+ years of experience.", 
-    rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions." 
-  },
-  gargi: { 
-    name: "Gargi Maa", 
-    specializations: "Spirituality, Vastu, dosha remedies", 
-    tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", 
-    rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection." 
-  },
+  gita: { name: "Gita", specializations: "Love, relationships, marriage", tone: "Warm, empathetic, and caring elder sister (behen). Use words like 'Suno beta', 'Main hoon na'.", rules: "Validate the user's emotional pain first. Focus on 7th house (Venus/Mars) and mental peace." },
+  kriti: { name: "Acharya Kriti", specializations: "Career, jobs, business wealth", tone: "Sharp, authoritative, professional business woman. No emotional sugar-coating.", rules: "Focus on 10th house, Saturn, and practical remedies. Speak like a premium consultant." },
+  devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology, precise life timing", tone: "Highly intellectual, authoritative guru with 22+ years of experience.", rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions." },
+  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu, dosha remedies", tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection." },
 };
-
-/* -------------------------------------------------------------------------- */
-/*                              HELPERS                                       */
-/* -------------------------------------------------------------------------- */
 
 function cleanText(value: unknown, maxLength = 6000): string {
   if (typeof value !== "string") return "";
@@ -86,12 +54,9 @@ function getLanguageInstruction(lang: string): string {
     hi: "Reply strictly in pure Hindi (Devanagari script).",
     hinglish: "Reply strictly in Hinglish (Roman Hindi mixed with English).",
     en: "Reply strictly in English.",
-    te: "Reply strictly in Telugu (తెలుగు).",
-    ta: "Reply strictly in Tamil (தமிழ்).",
-    kn: "Reply strictly in Kannada (ಕನ್ನಡ).",
-    bn: "Reply strictly in Bengali (বাংলা).",
-    mr: "Reply strictly in Marathi (मराठी).",
-    gu: "Reply strictly in Gujarati (ગુજરાતી).",
+    te: "Reply strictly in Telugu (తెలుగు).", ta: "Reply strictly in Tamil (தமிழ்).",
+    kn: "Reply strictly in Kannada (ಕನ್ನಡ).", bn: "Reply strictly in Bengali (বাংলা).",
+    mr: "Reply strictly in Marathi (मराठी).", gu: "Reply strictly in Gujarati (ગુજરાતી).",
     ml: "Reply strictly in Malayalam (മലയാളം).",
   };
   return map[lang] || map["hinglish"];
@@ -142,22 +107,11 @@ function extractRemedy(response: string) {
   return { message, remedy: description ? { title, description } : null };
 }
 
-/* -------------------------------------------------------------------------- */
-/*                 🔥 GROQ CALL WITH AUTO-FALLBACK                            */
-/* -------------------------------------------------------------------------- */
-
 function isModelNotFoundError(err: any): boolean {
   if (!err) return false;
   if (err.status === 404) return true;
   const msg = String(err?.message || "").toLowerCase();
-  return (
-    msg.includes("404") ||
-    msg.includes("not found") ||
-    msg.includes("does not exist") ||
-    msg.includes("decommissioned") ||
-    msg.includes("model_not_found") ||
-    msg.includes("no such model")
-  );
+  return msg.includes("404") || msg.includes("not found") || msg.includes("does not exist") || msg.includes("decommissioned") || msg.includes("model_not_found") || msg.includes("no such model");
 }
 
 async function callGroq(
@@ -183,16 +137,10 @@ async function callGroq(
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                              GET (History)                                 */
-/* -------------------------------------------------------------------------- */
-
 export async function GET(request: Request) {
   try {
     const user = await getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Session not found." }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
 
     const { searchParams } = new URL(request.url);
     const rawPersona = searchParams.get("persona");
@@ -201,23 +149,16 @@ export async function GET(request: Request) {
 
     let conv;
     if (reqConvId) {
-      const [c] = await db.select().from(conversations)
-        .where(and(eq(conversations.id, reqConvId), eq(conversations.userId, user.id)))
-        .limit(1);
+      const [c] = await db.select().from(conversations).where(and(eq(conversations.id, reqConvId), eq(conversations.userId, user.id))).limit(1);
       conv = c;
     } else {
-      const [c] = await db.select().from(conversations)
-        .where(and(eq(conversations.userId, user.id), eq(conversations.persona, persona)))
-        .orderBy(desc(conversations.updatedAt))
-        .limit(1);
+      const [c] = await db.select().from(conversations).where(and(eq(conversations.userId, user.id), eq(conversations.persona, persona))).orderBy(desc(conversations.updatedAt)).limit(1);
       conv = c;
     }
 
     if (!conv) return NextResponse.json({ success: true, conversationId: null, messages: [] });
 
-    const history = await db.select().from(messages)
-      .where(eq(messages.conversationId, conv.id))
-      .orderBy(messages.createdAt);
+    const history = await db.select().from(messages).where(eq(messages.conversationId, conv.id)).orderBy(messages.createdAt);
 
     return NextResponse.json({ success: true, conversationId: conv.id, messages: history });
   } catch (error) {
@@ -225,10 +166,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Chat history load failed" }, { status: 500 });
   }
 }
-
-/* -------------------------------------------------------------------------- */
-/*                              POST (Send Message)                           */
-/* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
   let isDeducted = false;
@@ -239,15 +176,10 @@ export async function POST(request: Request) {
 
   try {
     const user = await getUser();
-    if (!user) {
-      return NextResponse.json({ error: "Session not found." }, { status: 401 });
-    }
+    if (!user) return NextResponse.json({ error: "Session not found." }, { status: 401 });
 
     if (user.isGuest) {
-      return NextResponse.json({ 
-        code: "LOGIN_REQUIRED", 
-        error: "Please login or register to start a premium consultation." 
-      }, { status: 401 });
+      return NextResponse.json({ code: "LOGIN_REQUIRED", error: "Please login or register to start a premium consultation." }, { status: 401 });
     }
 
     userId = user.id;
@@ -255,13 +187,10 @@ export async function POST(request: Request) {
     if (typeof checkAILimit === 'function') {
       const rateLimit = await checkAILimit(userId);
       if (!rateLimit.allowed) { 
-        return NextResponse.json({ 
-          error: "Too many requests. Please wait a minute." 
-        }, { status: 429 });
+        return NextResponse.json({ error: "Too many requests. Please wait a minute." }, { status: 429 });
       }
     }
 
-    /* ----------------------------- Parse form ---------------------------- */
     const formData = await request.formData();
     const userMessage = cleanText(formData.get("message"));
     const rawPersona = formData.get("persona");
@@ -271,41 +200,24 @@ export async function POST(request: Request) {
     const imageFile = formData.get("image") as File | null;
     userLang = language;
 
-    if (!userMessage && !imageFile) {
-      return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
-    }
+    if (!userMessage && !imageFile) return NextResponse.json({ error: "Message khali hai." }, { status: 400 });
 
-    /* ----------------------- Conversation Ownership ---------------------- */
     if (requestedConversationId) {
-      const [existingConv] = await db
-        .select({ id: conversations.id })
-        .from(conversations)
-        .where(and(eq(conversations.id, requestedConversationId), eq(conversations.userId, userId)))
-        .limit(1);
-
-      if (!existingConv) {
-        return NextResponse.json({ error: getUnauthorizedChatMessage(language) }, { status: 404 });
-      }
+      const [existingConv] = await db.select({ id: conversations.id }).from(conversations).where(and(eq(conversations.id, requestedConversationId), eq(conversations.userId, userId))).limit(1);
+      if (!existingConv) return NextResponse.json({ error: getUnauthorizedChatMessage(language) }, { status: 404 });
     }
 
-    /* ----------------------------- Billing ------------------------------- */
     const isPremium = Boolean(user.premiumUntil && new Date(user.premiumUntil) > new Date());
     const hasFreeMessages = (user.freeMessagesUsed ?? 0) < FREE_MESSAGE_LIMIT;
 
     if (!isPremium) {
       if (hasFreeMessages) {
-        const upd = await db.update(users)
-          .set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` })
-          .where(and(eq(users.id, userId), lt(users.freeMessagesUsed, FREE_MESSAGE_LIMIT)))
-          .returning();
+        const upd = await db.update(users).set({ freeMessagesUsed: sql`${users.freeMessagesUsed} + 1` }).where(and(eq(users.id, userId), lt(users.freeMessagesUsed, FREE_MESSAGE_LIMIT))).returning();
         if (upd.length === 0) throw new Error("Free messages exhausted");
         isDeducted = true;
         deductedType = "free";
       } else if ((user.walletBalancePaise ?? 0) >= COST_PER_MESSAGE_PAISE) {
-        const upd = await db.update(users)
-          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` })
-          .where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE)))
-          .returning();
+        const upd = await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MESSAGE_PAISE}` }).where(and(eq(users.id, userId), gte(users.walletBalancePaise, COST_PER_MESSAGE_PAISE))).returning();
         if (upd.length === 0) throw new Error("Wallet deduction failed");
         isDeducted = true;
         deductedType = "wallet";
@@ -314,34 +226,24 @@ export async function POST(request: Request) {
       }
     }
 
-    /* ----------------------------- Conversation -------------------------- */
     let convId = requestedConversationId;
     if (!convId) {
-      const [newConv] = await db.insert(conversations)
-        .values({ userId, title: "New Chat", persona })
-        .returning();
+      const [newConv] = await db.insert(conversations).values({ userId, title: "New Chat", persona }).returning();
       convId = newConv.id;
     }
 
-    /* ----------------------------- Context ------------------------------- */
     const [birthRows, chartRows, previousMessages] = await Promise.all([
       db.select().from(birthDetails).where(eq(birthDetails.userId, userId)).limit(1),
       db.select().from(charts).where(eq(charts.userId, userId)).orderBy(desc(charts.createdAt)).limit(1),
-      db.select({ role: messages.role, content: messages.content }).from(messages)
-        .where(eq(messages.conversationId, convId))
-        .orderBy(desc(messages.createdAt))
-        .limit(10),
+      db.select({ role: messages.role, content: messages.content }).from(messages).where(eq(messages.conversationId, convId)).orderBy(desc(messages.createdAt)).limit(10),
     ]);
 
-    const [uMsg] = await db.insert(messages)
-      .values({ conversationId: convId, userId, role: "user", content: userMessage || "Photo" })
-      .returning();
+    const [uMsg] = await db.insert(messages).values({ conversationId: convId, userId, role: "user", content: userMessage || "Photo" }).returning();
     savedUserMsgId = uMsg.id;
 
     const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
-    /* ----------------------------- Kundli Context ------------------------ */
     const birth = birthRows[0];
     let kundliContext = "User birth details not provided yet.";
     if (birth) {
@@ -349,7 +251,6 @@ export async function POST(request: Request) {
       kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
     }
 
-    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + BALANCED LENGTH PROMPT
     const systemPrompt = `
 You are ${personaConfig.name}, a highly experienced, PREMIUM female Vedic Astrologer.
 Your specialization: ${personaConfig.specializations}
@@ -362,9 +263,9 @@ User Context:
 ${kundliContext}
 
 🧠 PSYCHOLOGY & BUSINESS MINDSET (CRITICAL):
-1. You are a premium consultant. The user is paying per minute, so provide immense value but do not ramble.
+1. You are a premium consultant. Provide immense value but be extremely concise.
 2. Be highly empathetic but authoritative. Validate their feelings in 1 sentence, then give a firm astrological direction.
-3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). 
+3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). This keeps the user engaged.
 
 🔮 STRICT ASTROLOGY RULES:
 1. NEVER hallucinate or make up fake astrological terms.
@@ -384,7 +285,6 @@ ${kundliContext}
 ${getLanguageInstruction(language)}
 `;
 
-    /* ----------------------------- Build Payload ------------------------- */
     const messagesPayload: any[] = [
       { role: "system", content: systemPrompt },
       ...history,
@@ -401,9 +301,7 @@ ${getLanguageInstruction(language)}
       ];
     }
 
-    /* ----------------------------- AI Call ------------------------------- */
     const completion = await callGroq(
-      // 🔥 FIX: max_tokens ko 650 kar diya hai taaki Hindi/Hinglish me answer beech me na kate
       { messages: messagesPayload, temperature: 0.4, max_tokens: 650 }, 
       Boolean(imageFile)
     );
@@ -411,42 +309,26 @@ ${getLanguageInstruction(language)}
     let raw = completion.choices[0]?.message?.content?.trim() || "";
     if (!raw) throw new Error("EMPTY_AI_RESPONSE");
 
-    // Strip markdown stars/hashes for safe rendering
     raw = raw.replace(/[\*\#]/g, "");
 
-    /* ----------------------------- Persist Assistant --------------------- */
     const { message, remedy } = extractRemedy(raw);
 
-    const [assistantRow] = await db.insert(messages)
-      .values({ conversationId: convId, userId, role: "assistant", content: message })
-      .returning();
+    const [assistantRow] = await db.insert(messages).values({ conversationId: convId, userId, role: "assistant", content: message }).returning();
 
     let remedyRow: { id: string; title: string; description: string } | null = null;
     if (remedy) {
       try {
-        const [r] = await db.insert(remedies)
-          .values({ userId, title: remedy.title, description: remedy.description })
-          .returning();
+        const [r] = await db.insert(remedies).values({ userId, title: remedy.title, description: remedy.description }).returning();
         if (r) remedyRow = { id: r.id, title: r.title, description: r.description };
       } catch (remedyErr) {
         console.error("[chat.POST] remedy insert failed:", remedyErr);
       }
     }
 
-    await db.update(conversations)
-      .set({ updatedAt: new Date() })
-      .where(eq(conversations.id, convId));
+    await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, convId));
 
-    /* ----------------------------- Response ------------------------------ */
-    const nextWalletBalance =
-      !isPremium && deductedType === "wallet"
-        ? (user.walletBalancePaise ?? 0) - COST_PER_MESSAGE_PAISE
-        : user.walletBalancePaise;
-
-    const nextFreeUsed =
-      !isPremium && deductedType === "free"
-        ? (user.freeMessagesUsed ?? 0) + 1
-        : user.freeMessagesUsed;
+    const nextWalletBalance = !isPremium && deductedType === "wallet" ? (user.walletBalancePaise ?? 0) - COST_PER_MESSAGE_PAISE : user.walletBalancePaise;
+    const nextFreeUsed = !isPremium && deductedType === "free" ? (user.freeMessagesUsed ?? 0) + 1 : user.freeMessagesUsed;
 
     return NextResponse.json({
       success: true,
@@ -460,29 +342,19 @@ ${getLanguageInstruction(language)}
       },
     });
   } catch (error: any) {
-    /* ----------------------------- Refund -------------------------------- */
-    // 🔥 NOTE: Refund logic is idempotent. It only triggers if 'isDeducted' is true.
-    // Once refunded, the function exits. Double-refund is not possible here.
     if (isDeducted && userId) {
       try {
         if (deductedType === "wallet") {
-          await db.update(users)
-            .set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` })
-            .where(eq(users.id, userId));
+          await db.update(users).set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MESSAGE_PAISE}` }).where(eq(users.id, userId));
         } else if (deductedType === "free") {
-          await db.update(users)
-            .set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` })
-            .where(eq(users.id, userId));
+          await db.update(users).set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` }).where(eq(users.id, userId));
         }
         console.error(`[chat.POST] refunded ${deductedType} for user ${userId} due to failure`);
       } catch (refundError) {
-        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", {
-          userId, deductedType, refundError,
-        });
+        console.error("[chat.POST] REFUND FAILED — manual intervention needed:", { userId, deductedType, refundError });
       }
     }
 
-    /* ----------------------------- Cleanup orphaned user msg ------------- */
     if (savedUserMsgId) {
       try {
         await db.delete(messages).where(eq(messages.id, savedUserMsgId));
@@ -496,9 +368,6 @@ ${getLanguageInstruction(language)}
     console.error("Message:", error?.message);
     console.error("User:", userId, "Lang:", userLang);
 
-    return NextResponse.json(
-      { code: "AI_ERROR", error: getAIErrorMessage(userLang) },
-      { status: 500 }
-    );
+    return NextResponse.json({ code: "AI_ERROR", error: getAIErrorMessage(userLang) }, { status: 500 });
   }
 }
