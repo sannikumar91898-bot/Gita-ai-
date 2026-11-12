@@ -65,7 +65,8 @@ export default function AstrologerChatPage() {
         currentBalance: "वर्तमान बैलेंस", addCash: "अभी रिचार्ज करें", maybeLater: "बाद में", 
         chatEnded: "आपकी चैट अधूरी रह गई... सच्चाई जानने के लिए रिचार्ज करें।",
         missingDetails: "कृपया चैट शुरू करने से पहले अपनी जन्म कुंडली की जानकारी भरें।",
-        fillDetails: "विवरण भरें", preparing: "प्रीमियम फॉर्म पर ले जाया जा रहा है..."
+        fillDetails: "विवरण भरें", preparing: "ज्योतिषी जी तैयार हो रही हैं...",
+        typing: "टाइप कर रही हैं..."
       },
       hinglish: {
         connecting: "Jyotishi jud rahi hain...", placeholder: "Apna sawal likhein...",
@@ -73,7 +74,8 @@ export default function AstrologerChatPage() {
         currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
         chatEnded: "Aapki chat adhuri reh gayi... sachai jaanne ke liye recharge karein.",
         missingDetails: "Kripya chat shuru karne se pehle apni janam kundli ki jankari bharein.",
-        fillDetails: "Details Bharein", preparing: "Premium form par le jaya ja raha hai..."
+        fillDetails: "Details Bharein", preparing: "Jyotishi ji taiyaar ho rahi hain...",
+        typing: "Typing kar rahi hain..."
       },
       en: {
         connecting: "Astrologer is connecting...", placeholder: "Ask your question...",
@@ -81,16 +83,16 @@ export default function AstrologerChatPage() {
         currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
         chatEnded: "Your chat was left incomplete... Recharge to hear the truth.",
         missingDetails: "Please fill your birth details before starting a chat.",
-        fillDetails: "Fill Details", preparing: "Redirecting to premium form..."
+        fillDetails: "Fill Details", preparing: "Astrologer is getting ready...",
+        typing: "Typing..."
       },
-      // ... (Baaki languages same rahengi, aap inhe pichle code se copy kar sakte hain)
-      te: { connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...", paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది.", currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత", chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది...", missingDetails: "దయచేసి చాట్ ప్రారంభించే ముందు మీ పుట్టిన వివరాలను పూరించండి.", fillDetails: "వివరాలు పూరించండి", preparing: "ప్రీమియం ఫారమ్‌కి మళ్ళించబడుతోంది..." },
-      ta: { connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...", paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது.", currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்", chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை...", missingDetails: "அரட்டையைத் தொடங்குவதற்கு முன் உங்கள் பிறப்பு விவரங்களை நிரப்பவும்.", fillDetails: "விவரங்களை நிரப்பவும்", preparing: "பிரீமியம் படிவத்திற்கு திருப்பிவிடப்படுகிறது..." },
-      kn: { connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...", paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ.", currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ", chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ...", missingDetails: "ದಯವಿಟ್ಟು ಚಾಟ್ ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.", fillDetails: "ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ", preparing: "ಪ್ರೀಮಿಯಂ ಫಾರ್ಮ್‌ಗೆ ಮರುನಿರ್ದೇಶಿಸಲಾಗುತ್ತಿದೆ..." },
-      bn: { connecting: "জ্যোতিষী সংযোগ করছেন...", placeholder: "আপনার প্রশ্ন জিজ্ঞাসা করুন...", paywallTitle: "ব্যালেন্স শেষ", paywallDesc: "আপনার ফ্রি মেসেজ বা ওয়ালেট ব্যালেন্স শেষ।", currentBalance: "বর্তমান ব্যালেন্স", addCash: "এখনই রিচার্জ করুন", maybeLater: "পরে", chatEnded: "আপনার চ্যাট অসম্পূর্ণ ছিল...", missingDetails: "চ্যাট শুরু করার আগে আপনার জন্ম বিবরণ পূরণ করুন।", fillDetails: "বিবরণ পূরণ করুন", preparing: "প্রিমিয়াম ফর্মে পুনর্নির্দেশ করা হচ্ছে..." },
-      mr: { connecting: "ज्योतिषी जोडत आहेत...", placeholder: "तुमचा प्रश्न विचारा...", paywallTitle: "बॅलन्स संपला आहे", paywallDesc: "तुमचे फ्री मेसेज किंवा वॉलेट बॅलन्स संपले आहे.", currentBalance: "सध्याचा बॅलन्स", addCash: "आता रिचार्ज करा", maybeLater: "नंतर", chatEnded: "तुमची चॅट अपूर्ण राहिली...", missingDetails: "कृपया चॅट सुरू करण्यापूर्वी तुमची जन्म तपशील भरा.", fillDetails: "तपशील भरा", preparing: "प्रीमियम फॉर्मवर पाठवले जात आहे..." },
-      gu: { connecting: "જ્યોતિષી જોડાઈ રહ્યા છે...", placeholder: "તમારો પ્રશ્ન પૂછો...", paywallTitle: "બેલેન્સ ખતમ", paywallDesc: "તમારા ફ્રી મેસેજ અથવા વોલેટ બેલેન્સ ખતમ થઈ ગયા છે.", currentBalance: "વર્તમાન બેલેન્સ", addCash: "હમણાં જ રિચાર્જ કરો", maybeLater: "પછી", chatEnded: "તમારી ચેટ અધૂરી રહી ગઈ...", missingDetails: "કૃપા કરીને ચેટ શરૂ કરતા પહેલા તમારી જન્મ વિગતો ભરો.", fillDetails: "વિગતો ભરો", preparing: "પ્રીમિયમ ફોર્મ પર રીડાયરેક્ટ કરી રહ્યા છીએ..." },
-      ml: { connecting: "ജ്യോതിഷി ബന്ധിപ്പിക്കുന്നു...", placeholder: "നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക...", paywallTitle: "ബാലൻസ് തീർന്നു", paywallDesc: "നിങ്ങളുടെ സൗജന്യ സന്ദേശങ്ങളോ വാലറ്റ് ബാലൻസോ തീർന്നു.", currentBalance: "നിലവിലെ ബാലൻസ്", addCash: "ഇപ്പോൾ റീചാർജ് ചെയ്യുക", maybeLater: "പിന്നീട്", chatEnded: "നിങ്ങളുടെ ചാറ്റ് അപൂർണ്ണമായി...", missingDetails: "ചാറ്റ് ആരംഭിക്കുന്നതിന് മുമ്പ് നിങ്ങളുടെ ജനന വിവരങ്ങൾ പൂരിപ്പിക്കുക.", fillDetails: "വിവരങ്ങൾ പൂരിപ്പിക്കുക", preparing: "പ്രീമിയം ഫോമിലേക്ക് റീഡയറക്‌ട് ചെയ്യുന്നു..." },
+      te: { connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...", paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది.", currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత", chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది...", missingDetails: "దయచేసి చాట్ ప్రారంభించే ముందు మీ పుట్టిన వివరాలను పూరించండి.", fillDetails: "వివరాలు పూరించండి", preparing: "జ్యోతిష్యుడు సిద్ధమవుతున్నారు...", typing: "టైప్ చేస్తోంది..." },
+      ta: { connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...", paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது.", currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்", chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை...", missingDetails: "அரட்டையைத் தொடங்குவதற்கு முன் உங்கள் பிறப்பு விவரங்களை நிரப்பவும்.", fillDetails: "விவரங்களை நிரப்பவும்", preparing: "ஜோதிடர் தயாராகிறார்...", typing: "தட்டச்சு செய்கிறது..." },
+      kn: { connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...", paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ.", currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ", chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ...", missingDetails: "ದಯವಿಟ್ಟು ಚಾಟ್ ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.", fillDetails: "ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ", preparing: "ಜ್ಯೋತಿಷಿ ಸಿದ್ಧರಾಗುತ್ತಿದ್ದಾರೆ...", typing: "ಟೈಪ್ ಮಾಡುತ್ತಿದ್ದಾರೆ..." },
+      bn: { connecting: "জ্যোতিষী সংযোগ করছেন...", placeholder: "আপনার প্রশ্ন জিজ্ঞাসা করুন...", paywallTitle: "ব্যালেন্স শেষ", paywallDesc: "আপনার ফ্রি মেসেজ বা ওয়ালেট ব্যালেন্স শেষ।", currentBalance: "বর্তমান ব্যালেন্স", addCash: "এখনই রিচার্জ করুন", maybeLater: "পরে", chatEnded: "আপনার চ্যাট অসম্পূর্ণ ছিল...", missingDetails: "চ্যাট শুরু করার আগে আপনার জন্ম বিবরণ পূরণ করুন।", fillDetails: "বিবরণ পূরণ করুন", preparing: "জ্যোতিষী প্রস্তুত হচ্ছেন...", typing: "টাইপ করছেন..." },
+      mr: { connecting: "ज्योतिषी जोडत आहेत...", placeholder: "तुमचा प्रश्न विचारा...", paywallTitle: "बॅलन्स संपला आहे", paywallDesc: "तुमचे फ्री मेसेज किंवा वॉलेट बॅलन्स संपले आहे.", currentBalance: "सध्याचा बॅलन्स", addCash: "आता रिचार्ज करा", maybeLater: "नंतर", chatEnded: "तुमची चॅट अपूर्ण राहिली...", missingDetails: "कृपया चॅट सुरू करण्यापूर्वी तुमची जन्म तपशील भरा.", fillDetails: "तपशील भरा", preparing: "ज्योतिषी तयार होत आहेत...", typing: "टाइप करत आहे..." },
+      gu: { connecting: "જ્યોતિષી જોડાઈ રહ્યા છે...", placeholder: "તમારો પ્રશ્ન પૂછો...", paywallTitle: "બેલેન્સ ખતમ", paywallDesc: "તમારા ફ્રી મેસેજ અથવા વોલેટ બેલેન્સ ખતમ થઈ ગયા છે.", currentBalance: "વર્તમાન બેલેન્સ", addCash: "હમણાં જ રિચાર્જ કરો", maybeLater: "પછી", chatEnded: "તમારી ચેટ અધૂરી રહી ગઈ...", missingDetails: "કૃપા કરીને ચેટ શરૂ કરતા પહેલા તમારી જન્મ વિગતો ભરો.", fillDetails: "વિગતો ભરો", preparing: "જ્યોતિષી તૈયાર થઈ રહ્યા છે...", typing: "ટાઇપ કરી રહ્યા છે..." },
+      ml: { connecting: "ജ്യോതിഷി ബന്ധിപ്പിക്കുന്നു...", placeholder: "നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക...", paywallTitle: "ബാലൻസ് തീർന്നു", paywallDesc: "നിങ്ങളുടെ സൗജന്യ സന്ദേശങ്ങളോ വാലറ്റ് ബാലൻസോ തീർന്നു.", currentBalance: "നിലവിലെ ബാലൻസ്", addCash: "ഇപ്പോൾ റീചാർജ് ചെയ്യുക", maybeLater: "പിന്നീട്", chatEnded: "നിങ്ങളുടെ ചാറ്റ് അപൂർണ്ണമായി...", missingDetails: "ചാറ്റ് ആരംഭിക്കുന്നതിന് മുമ്പ് നിങ്ങളുടെ ജനന വിവരങ്ങൾ പൂരിപ്പിക്കുക.", fillDetails: "വിവരങ്ങൾ പൂരിപ്പിക്കുക", preparing: "ജ്യോതിഷി തയ്യാറെടുക്കുന്നു...", typing: "ടൈപ്പ് ചെയ്യുന്നു..." },
     };
     return dict[lang || "en"]?.[key] || dict["en"][key];
   };
@@ -169,7 +171,6 @@ export default function AstrologerChatPage() {
   // 🔥 FIX: REDIRECT TO PREMIUM ONBOARDING PAGE IF DETAILS MISSING
   useEffect(() => {
     if (me?.user && !me?.birth) {
-      // Agar details nahi hain, toh seedha premium form wale page par bhejo
       router.replace(`/chat?redirect=/chat/${id}`);
     }
   }, [me, router, id]);
@@ -298,7 +299,6 @@ export default function AstrologerChatPage() {
     return <div className={`flex h-[100dvh] items-center justify-center ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}><Sparkles className="animate-spin text-orange-500" size={32} /></div>;
   }
 
-  // 🔥 FIX: If details are missing, show a premium loading screen instead of the boring lock
   if (me?.user && !me?.birth) {
     return (
       <div className={`flex h-[100dvh] flex-col items-center justify-center p-4 ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-900"}`}>
@@ -347,12 +347,12 @@ export default function AstrologerChatPage() {
         </Link>
       </header>
 
-      {/* WARNING BANNER */}
+      {/* WARNING BANNER (Positive Marketing) */}
       {walletBalance < 200 && (
          <Link href="/wallet" className={`flex items-center justify-between gap-2 px-4 py-2.5 text-[12px] font-bold border-b animate-in slide-in-from-top-2 ${isDark ? "bg-amber-950/40 border-amber-900/50 text-amber-300" : "bg-amber-50 border-amber-200 text-amber-800"}`}>
           <div className="flex items-center gap-2">
             <Heart size={16} className="text-rose-500 animate-pulse" />
-            <span>{getChatText("chatEnded")}</span>
+            <span>Apni kundli ke grahon aur sahi timing samajhne ke liye recharge karein.</span>
           </div>
           <span className="underline shrink-0">{getChatText("addCash")}</span>
         </Link>
@@ -384,6 +384,7 @@ export default function AstrologerChatPage() {
                 </div>
               )}
 
+              {/* Message List */}
               {messages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                   {message.role === "assistant" && (
@@ -406,15 +407,17 @@ export default function AstrologerChatPage() {
                 </div>
               ))}
 
+              {/* 🔥 TYPING INDICATOR (Humane feel) */}
               {loadingChat && (
-                <div className="flex gap-3 justify-start">
+                <div className="flex gap-3 justify-start animate-in fade-in slide-in-from-bottom-2">
                   <div className="h-8 w-8 rounded-full overflow-hidden shrink-0 mt-1 shadow-sm border border-slate-700">
                     <img src={astrologer.photo} alt="Astro" className="h-full w-full object-cover" />
                   </div>
                   <div className={`inline-flex items-center gap-1.5 rounded-[1.3rem] rounded-tl-sm px-5 py-4 border shadow-sm ${isDark ? "bg-[#151E2E] border-slate-800" : "bg-white border-orange-100"}`}>
-                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce"></span>
-                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                    <span className="w-2 h-2 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+                    <span className="text-[12px] font-semibold text-slate-400 mr-1">{getChatText("typing")}</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce"></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-bounce" style={{ animationDelay: '0.4s' }}></span>
                   </div>
                 </div>
               )}
