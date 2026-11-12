@@ -34,7 +34,7 @@ function createMessageId(): string {
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang, theme, me, loading, refresh } = useApp(); // 🔥 Added loading and refresh
+  const { lang, theme, me, loading, refresh } = useApp(); 
 
   const isDark = theme === "dark";
   const id = typeof params?.id === "string" ? params.id : "";
@@ -43,7 +43,7 @@ export default function AstrologerChatPage() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loadingChat, setLoadingChat] = useState(false); // renamed from loading to avoid clash
+  const [loadingChat, setLoadingChat] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState(0);
@@ -83,7 +83,6 @@ export default function AstrologerChatPage() {
         missingDetails: "Please fill your birth details before starting a chat.",
         fillDetails: "Fill Details", preparing: "Preparing session..."
       },
-      // Add other languages here as per your previous code...
       te: { connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...", paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది.", currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత", chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది...", missingDetails: "దయచేసి చాట్ ప్రారంభించే ముందు మీ పుట్టిన వివరాలను పూరించండి.", fillDetails: "వివరాలు పూరించండి", preparing: "సెషన్ సిద్ధమవుతోంది..." },
       ta: { connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...", paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது.", currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்", chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை...", missingDetails: "அரட்டையைத் தொடங்குவதற்கு முன் உங்கள் பிறப்பு விவரங்களை நிரப்பவும்.", fillDetails: "விவரங்களை நிரப்பவும்", preparing: "அமர்வு தயாராகிறது..." },
       kn: { connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...", paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ.", currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ", chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ...", missingDetails: "ದಯವಿಟ್ಟು ಚಾಟ್ ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.", fillDetails: "ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ", preparing: "ಸೆಷನ್ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..." },
@@ -105,27 +104,7 @@ export default function AstrologerChatPage() {
     }
   }, []);
 
-  // 🔥 FIX 2: Guest session creation and UI block logic
-  useEffect(() => {
-    if (loading) return;
-    if (!me?.user) {
-      // Create guest session if missing
-      fetch("/api/auth/guest", { method: "POST" })
-        .then(res => res.json())
-        .then(() => {
-          if (refresh) refresh();
-        })
-        .catch(console.error);
-    }
-  }, [loading, me, refresh]);
-
-  useEffect(() => {
-    if (loading || !me?.user || !me?.birth) return;
-    const controller = new AbortController();
-    void loadHistory(controller.signal);
-    return () => controller.abort();
-  }, [id, validId, astrologer, loading, me, loadHistory]);
-
+  // 🔥 FIX: loadHistory declaration moved UP so it can be used in useEffect below
   const loadHistory = useCallback(
     async (signal?: AbortSignal) => {
       if (!VALID_PERSONAS.has(id)) return;
@@ -173,6 +152,27 @@ export default function AstrologerChatPage() {
     },
     [id, router],
   );
+
+  // 🔥 Guest session creation and UI block logic
+  useEffect(() => {
+    if (loading) return;
+    if (!me?.user) {
+      fetch("/api/auth/guest", { method: "POST" })
+        .then(res => res.json())
+        .then(() => {
+          if (refresh) refresh();
+        })
+        .catch(console.error);
+    }
+  }, [loading, me, refresh]);
+
+  // 🔥 FIX: Now loadHistory is properly defined above this useEffect
+  useEffect(() => {
+    if (loading || !me?.user || !me?.birth) return;
+    const controller = new AbortController();
+    void loadHistory(controller.signal);
+    return () => controller.abort();
+  }, [id, validId, astrologer, loading, me, loadHistory]);
 
   useEffect(() => {
     activePersonaRef.current = id;
@@ -287,12 +287,10 @@ export default function AstrologerChatPage() {
     }
   }
 
-  // 🔥 GUEST / LOGIN CHECK: If global loading or no user yet
   if (loading) {
     return <div className={`flex h-[100dvh] items-center justify-center ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}><Sparkles className="animate-spin text-orange-500" size={32} /></div>;
   }
 
-  // 🔥 If user exists but no birth details (Guest or Logged in)
   if (me?.user && !me?.birth) {
     return (
       <div className={`flex h-[100dvh] flex-col items-center justify-center p-4 ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-900"}`}>
@@ -312,7 +310,6 @@ export default function AstrologerChatPage() {
     );
   }
 
-  // 🔥 If no user session yet (guest creation in progress)
   if (!me?.user) {
     return (
       <div className={`flex h-[100dvh] flex-col items-center justify-center p-4 ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}>
