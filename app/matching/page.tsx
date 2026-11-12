@@ -27,7 +27,7 @@ const getLoadingSteps = (lang: string) => {
   return steps[lang] || steps["hinglish"];
 };
 
-// 🔥 Global Translation Helper for UI
+// 🔥 Global Translation Helper for UI (10 Languages)
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: { 
@@ -91,10 +91,9 @@ export default function MatchingPage() {
 
   const resultRef = useRef<HTMLDivElement>(null);
 
-  // Helper to get localized text
   const t = (key: string) => getUIText(lang, key);
 
-  // Premium Colors (Full Width adjustments)
+  // Premium Colors
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
   const inputClass = `w-full rounded-xl border px-4 py-3.5 text-[14px] font-medium outline-none transition-all focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 ${isDark ? "border-slate-700 bg-[#0A0F19] text-white" : "border-gray-200 bg-gray-50 text-slate-900"}`;
@@ -184,12 +183,15 @@ export default function MatchingPage() {
     setResult(null);
   };
 
+  // 🔥 Dynamic Prompt for Chat (Psychology & Marketing)
+  const suggestedChatPrompt = encodeURIComponent(
+    `Namaste, mera (${boy.name}) aur (${girl.name}) ka kundli milan ${result?.totalScore || result?.score || 0}/36 aaya hai. Kya aap ismein chhipe dosh aur rukawaton ka karan bata sakti hain?`
+  );
+
   return (
-    // 🔥 Full Screen Layout (w-full aur min-h-[100dvh])
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
       
-      {/* Container - w-full aur px-3 kiya gaya hai taaki side se chipke */}
-      <div className="w-full px-3 pt-4 space-y-5 flex-1">
+      <div className="w-full px-3 pt-4 space-y-5 flex-1 max-w-2xl mx-auto">
         
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
@@ -205,6 +207,21 @@ export default function MatchingPage() {
             </p>
           </div>
         </header>
+
+        {/* LOADING STATE */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
+            <div className="relative w-28 h-28 mb-8">
+              <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00]/20"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00] border-t-transparent animate-spin"></div>
+              <Heart className="absolute inset-0 m-auto text-[#ff6b00] animate-pulse" size={36} fill="currentColor" />
+            </div>
+            <h2 className="text-xl font-black text-[#ff6b00] mb-2">{t("title")}</h2>
+            <p className={`text-[13px] font-medium text-center px-4 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              {loadingText}
+            </p>
+          </div>
+        )}
 
         {/* FORM SCREEN */}
         {!result && !loading && (
@@ -284,128 +301,128 @@ export default function MatchingPage() {
                 </div>
               </div>
 
-              <button type="submit" disabled={loading} className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 mt-2">
-                {loading ? loadingText : t("matchBtn")}
+              {/* SUBMIT BUTTON */}
+              <button 
+                type="submit" 
+                className="w-full mt-4 bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold py-4 rounded-xl text-[15px] shadow-lg shadow-orange-500/20 active:scale-95 transition-all flex justify-center items-center gap-2"
+              >
+                <Sparkles size={20} />
+                {t("matchBtn")}
               </button>
+
             </form>
           </>
         )}
 
-        {/* LOADING SCREEN */}
-        {loading && (
-          <div className={`flex flex-col items-center justify-center h-[50vh] rounded-[1.5rem] border ${cardClass}`}>
-            <Sparkles size={40} className="text-[#ff6b00] animate-spin mb-4" />
-            <p className="text-[15px] font-bold text-[#ff6b00] animate-pulse text-center px-4">{loadingText}</p>
-          </div>
-        )}
-
-        {/* RESULT SCREEN (Jo aapke code me adhura tha) */}
+        {/* RESULT SCREEN */}
         {result && !loading && (
-          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="space-y-5 animate-in slide-in-from-bottom-4 duration-500">
             
-            {/* PDF TARGET AREA */}
-            <div ref={resultRef} className={`space-y-5 rounded-[1.5rem] border-2 p-5 sm:p-6 relative overflow-hidden ${isDark ? "border-orange-900/30 bg-[#151d2c]" : "border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50"}`}>
+            <div ref={resultRef} className={`p-6 rounded-[1.5rem] border text-center relative overflow-hidden ${cardClass}`}>
+              <div className="absolute top-0 right-0 p-4 opacity-5"><Heart size={120} /></div>
               
-              {/* Result Header */}
-              <div className="text-center pb-2 border-b border-slate-800/50">
-                <h2 className="text-[22px] font-black text-[#ff6b00]">{t("result")}</h2>
-                <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase tracking-wider">{t("scoreSub")}</p>
-              </div>
-
+              <h2 className="text-xl font-black text-[#ff6b00] mb-2">{t("result")}</h2>
+              <p className="text-[12px] font-bold text-slate-500 mb-6">{boy.name} ❤️ {girl.name}</p>
+              
               {/* Score Circle */}
-              <div className="flex flex-col items-center justify-center py-4">
-                <div className="relative h-36 w-36 flex items-center justify-center">
-                  <svg className="absolute inset-0 h-full w-full -rotate-90 transform" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="8" fill="transparent" className={isDark ? "text-slate-800" : "text-gray-200"} />
-                    <circle cx="50" cy="50" r="45" stroke="currentColor" strokeWidth="8" fill="transparent" strokeDasharray="282.7" strokeDashoffset={282.7 - (282.7 * (result.totalScore || 0)) / 36} className="text-[#ff6b00]" strokeLinecap="round" />
-                  </svg>
-                  <span className="text-[42px] font-black text-[#ff6b00] drop-shadow-sm">{result.totalScore || 0}</span>
-                </div>
-                <p className="text-[13px] font-bold text-slate-400 mt-2">{t("total")}</p>
-                <div className={`mt-3 px-4 py-1.5 rounded-full text-[12px] font-bold ${result.totalScore >= 25 ? "bg-green-500/20 text-green-500" : result.totalScore >= 18 ? "bg-yellow-500/20 text-yellow-500" : "bg-rose-500/20 text-rose-500"}`}>
-                  {result.totalScore >= 25 ? t("excellent") : result.totalScore >= 18 ? t("good") : result.totalScore >= 12 ? t("avg") : t("poor")}
-                </div>
+              <div className="relative w-36 h-36 mx-auto my-4 flex items-center justify-center rounded-full bg-gradient-to-br from-orange-50 to-white dark:from-[#2a1a15] dark:to-[#151d2c] shadow-inner border-4 border-[#ff6b00]/20">
+                 <div className="text-center">
+                   <span className="text-5xl font-black text-[#ff6b00]">{result.totalScore || result.score || 0}</span>
+                   <span className="block text-[10px] font-bold text-slate-500 mt-1">{t("total")}</span>
+                 </div>
               </div>
 
-              {/* Breakdown (Assuming result.breakdown is an array) */}
+              {/* Status Badge */}
+              <div className={`inline-block px-4 py-1.5 rounded-full font-bold text-[12px] mb-6 ${
+                (result.totalScore || result.score || 0) >= 25 ? "bg-emerald-500/20 text-emerald-500" : 
+                (result.totalScore || result.score || 0) >= 18 ? "bg-orange-500/20 text-orange-500" : "bg-rose-500/20 text-rose-500"
+              }`}>
+                {(result.totalScore || result.score || 0) >= 25 ? t("excellent") : (result.totalScore || result.score || 0) >= 18 ? t("good") : t("poor")}
+              </div>
+
+              {/* Breakdown (If API sends it) */}
               {result.breakdown && Array.isArray(result.breakdown) && (
-                <div className="space-y-3 pt-3">
-                  <h3 className="text-[14px] font-bold text-[#ff6b00] border-b border-slate-800/50 pb-2">{t("breakdown")}</h3>
-                  {result.breakdown.map((item: any, idx: number) => (
-                    <div key={idx} className={`flex justify-between items-center p-3 rounded-xl border ${isDark ? "bg-[#0A0F19] border-slate-800" : "bg-white border-gray-200"}`}>
-                      <div className="flex flex-col">
-                        <span className={`text-[13px] font-bold ${isDark ? "text-slate-200" : "text-slate-800"}`}>{item.name}</span>
-                        <span className="text-[11px] text-slate-500">{item.description}</span>
-                      </div>
-                      <div className="flex items-center gap-1 font-bold">
-                        <span className="text-[14px] text-[#ff6b00]">{item.score}</span>
-                        <span className="text-[12px] text-slate-500">/{item.maxScore || 8}</span>
-                      </div>
+                <div className="space-y-2 mt-4 text-left px-2">
+                  <h3 className={`text-[13px] font-bold mb-3 border-b pb-2 ${isDark ? "text-slate-300 border-slate-700" : "text-gray-700 border-gray-200"}`}>{t("breakdown")}</h3>
+                  {result.breakdown.map((item: any, i: number) => (
+                    <div key={i} className="flex justify-between items-center text-[13px] py-1">
+                       <span className={isDark ? "text-slate-400" : "text-gray-600"}>{item.name}</span>
+                       <span className="font-bold text-[#ff6b00]">{item.score} / {item.max || 8}</span>
                     </div>
                   ))}
                 </div>
               )}
+
+              {/* Warning / Dosh */}
+              {result.dosh && (
+                <div className={`mt-6 p-4 rounded-xl border text-left ${isDark ? "border-rose-500/30 bg-rose-500/10" : "border-red-200 bg-red-50"}`}>
+                  <p className={`flex items-start gap-2 text-[12px] font-bold ${isDark ? "text-rose-400" : "text-red-600"}`}>
+                    <ShieldAlert size={16} className="shrink-0 mt-0.5" />
+                    {result.dosh}
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Action Buttons (Chat, Download, Reset) */}
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <Link href="/chat" className="col-span-2 w-full flex items-center justify-center gap-2 bg-gradient-to-r from-[#d81b60] to-[#e91e63] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-pink-500/20 active:scale-95 transition-transform text-[14px]">
-                <MessageCircle size={18} /> {t("chat")}
-              </Link>
-              
-              <button onClick={downloadPdf} disabled={isDownloading} className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[13px] border transition-colors ${isDark ? "bg-[#151d2c] border-slate-700 text-slate-300 hover:bg-slate-800" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
-                {isDownloading ? <RefreshCw size={16} className="animate-spin" /> : <Download size={16} />} {t("pdf")}
+            {/* CTAs */}
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={downloadPdf} disabled={isDownloading} className={`flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[14px] border transition-all ${isDark ? "border-slate-700 bg-[#151d2c] text-white hover:bg-slate-800" : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}>
+                {isDownloading ? <RefreshCw size={18} className="animate-spin" /> : <Download size={18} />} 
+                {t("pdf")}
               </button>
-              
-              <button onClick={resetForm} className={`flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-[13px] border transition-colors ${isDark ? "bg-[#151d2c] border-slate-700 text-slate-300 hover:bg-slate-800" : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"}`}>
-                <RotateCcw size={16} /> {t("reset")}
+              <button onClick={resetForm} className={`flex items-center justify-center gap-2 py-3.5 rounded-xl font-bold text-[14px] border transition-all ${isDark ? "border-slate-700 bg-[#151d2c] text-white hover:bg-slate-800" : "border-gray-200 bg-white text-gray-700 hover:bg-gray-50"}`}>
+                <RotateCcw size={18} /> {t("reset")}
               </button>
             </div>
+
+            {/* Chat CTA with Pre-filled Prompt */}
+            <Link 
+              href={`/chat/gita?prefill=${suggestedChatPrompt}`}
+              className="w-full flex items-center justify-center gap-2 py-4 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] text-white font-bold text-[15px] shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+            >
+              <MessageCircle size={20} /> {t("chat")}
+            </Link>
           </div>
         )}
-
       </div>
 
-      {/* 🔥 STICKY BOTTOM BANNER & NAVIGATION (Wapas Joda Gaya Hai) */}
+      {/* STICKY BOTTOM BANNER */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
-        
-        {/* Pink Banner */}
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
-               <Crown size={16} className="text-white" />
+             <div className="h-8 w-8 rounded-full border border-white/30 bg-white/10 flex items-center justify-center">
+                <Crown size={16} className="text-white" />
              </div>
              <div>
-               <p className="text-[11px] font-bold text-white leading-tight">{t("bannerTitle")}</p>
-               <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
+                <p className="text-[11px] font-black text-white leading-tight">{t("bannerTitle")}</p>
+                <p className="text-[9px] text-pink-100 font-medium">{t("bannerSub")}</p>
              </div>
           </div>
-          <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
-               <Crown size={16} className="text-[#d81b60]" fill="#d81b60" />
-          </div>
+          <Link href="/chat" className="rounded-full bg-white px-4 py-1.5 text-[11px] font-extrabold text-[#d81b60] shadow-sm active:scale-95 transition-transform">
+            Chat Now
+          </Link>
         </div>
 
-        {/* Bottom Navigation Bar */}
-        <nav className="bg-[#0a0f19] border-t border-slate-800 flex justify-around items-center pt-2.5 pb-5 px-2 w-full">
-          <Link href="/" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <Home size={22} />
-            <span className="text-[11px] font-medium">{t("home")}</span>
-          </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <MessageCircle size={22} />
-            <span className="text-[11px] font-medium">{t("chatNav")}</span>
-          </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <Sun size={22} />
-            <span className="text-[11px] font-medium">{t("daily")}</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors">
-            <User size={22} />
-            <span className="text-[11px] font-medium">{t("profile")}</span>
-          </Link>
+        {/* Bottom Navigation */}
+        <nav className={`border-t flex justify-around items-center pb-safe pt-2 pb-2 ${isDark ? "bg-[#0b101b] border-slate-800" : "bg-white border-gray-200"}`}>
+           <Link href="/" className={`flex flex-col items-center gap-1 ${isDark ? "text-slate-500 hover:text-slate-300" : "text-gray-400 hover:text-gray-700"}`}>
+              <Home size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("home")}</span>
+           </Link>
+           <Link href="/chat" className={`flex flex-col items-center gap-1 ${isDark ? "text-slate-500 hover:text-slate-300" : "text-gray-400 hover:text-gray-700"}`}>
+              <MessageCircle size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("chatNav")}</span>
+           </Link>
+           <Link href="/daily" className={`flex flex-col items-center gap-1 ${isDark ? "text-slate-500 hover:text-slate-300" : "text-gray-400 hover:text-gray-700"}`}>
+              <Sun size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("daily")}</span>
+           </Link>
+           <Link href="/profile" className={`flex flex-col items-center gap-1 ${isDark ? "text-slate-500 hover:text-slate-300" : "text-gray-400 hover:text-gray-700"}`}>
+              <User size={22} strokeWidth={2} />
+              <span className="text-[10px] font-semibold">{t("profile")}</span>
+           </Link>
         </nav>
       </div>
-
     </main>
   );
 }
