@@ -1,13 +1,16 @@
 // app/api/face-reading/route.ts
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
+import { eq, sql } from "drizzle-orm";
 import { getUser } from "@/auth";
+import { db } from "@/index";
+import { users } from "@/schema"; // 🔥 Users table import kiya
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* -------------------------------------------------------------------------- */
-/*                     🔥 MODAL (PRIMARY) + GROQ (FALLBACK)                   */
+/*                     🔥 CONFIGURATION (FIXED)                               */
 /* -------------------------------------------------------------------------- */
 
 const modalApiKey = process.env.MODAL_API_KEY;
@@ -19,23 +22,27 @@ const modalClient =
     ? new OpenAI({
         baseURL: modalUrl,
         apiKey: modalApiKey,
-        timeout: 60_000,
-        maxRetries: 1,
+        timeout: 15_000, // 🔥 FIX: 15s timeout
+        maxRetries: 0,   // 🔥 FIX: No retry, direct fallback
       })
     : null;
 
-// 🔥 GROQ FALLBACK (Jaise Palm me hai)
+// 🔥 FIX: GROQ FALLBACK - Updated Model
 const groqApiKey = process.env.GROQ_API_KEY;
-const groqVisionModel = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
+const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b"; 
 
 const groqClient = groqApiKey
   ? new OpenAI({
       baseURL: "https://api.groq.com/openai/v1",
       apiKey: groqApiKey,
-      timeout: 60_000,
-      maxRetries: 1,
+      timeout: 15_000,
+      maxRetries: 0,
     })
   : null;
+
+// 🔥 Billing Logic Constants
+const FREE_FACE_SCAN_LIMIT = 5;
+const COST_PER_FACE_SCAN_PAISE = 200; // ₹2 per scan after 5 free scans
 
 /* -------------------------------------------------------------------------- */
 /*                              HELPERS & TRANSLATIONS                        */
@@ -76,24 +83,16 @@ function getAIFailureMessage(lang: string): string {
     hinglish: "AI server thoda busy hai. Kripya 1 minute baad try karein.",
     en: "AI server is busy. Please try again in 1 minute.",
     te: "AI సర్వర్ బిజీగా ఉంది. దయచేసి 1 నిమిషం తర్వాత మళ్లీ ప్రయత్నించండి.",
-    ta: "AI சர்வர் பிஸியாக உள்ளது. தயவுசெய்து 1 நிமிடம் கழித்து மீண்டும் முயற்சிக்கவும்.",
-    kn: "AI ಸರ್ವರ್ ಬ್ಯುಸಿಯಾಗಿದೆ. ದಯವಿಟ್ಟು 1 ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-    bn: "AI সার্ভার ব্যস্ত আছে। অনুগ্রহ করে 1 মিনিট পরে আবার চেষ্টা করুন।",
-    mr: "AI सर्व्हर व्यस्त आहे. कृपया 1 मिनिटानंतर पुन्हा प्रयत्न करा.",
-    gu: "AI સર્વર વ્યસ્ત છે. કૃપા કરીને 1 મિનિટ પછી ફરી પ્રયાસ કરો.",
-    ml: "AI സർവർ തിരക്കിലാണ്. ദയവായി 1 മിനിറ്റ് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
+    ta: "சர்வர் பிஸியாக உள்ளது. தயவுசெய்து 1 நிமிடம் கழித்து மீண்டும் முயற்சிக்கவும்.",
+    kn: "ಸರ್ವರ್ ಬ್ಯುಸಿಯಾಗಿದೆ. ದಯವಿಟ್ಟು 1 ನಿಮಿಷದ ನಂತರ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    bn: "সার্ভার ব্যস্ত আছে। অনুগ্রহ করে 1 মিনিট পরে আবার চেষ্টা করুন।",
+    mr: "सर्व्हर व्यस्त आहे. कृपया 1 मिनिटानंतर पुन्हा प्रयत्न करा.",
+    gu: "સર્વર વ્યસ્ત છે. કૃપા કરીને 1 મિનિટ પછી ફરી પ્રયાસ કરો.",
+    ml: "സർവർ തിരക്കിലാണ്. ദയവായി 1 മിനിറ്റ് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക.",
   };
   return map[lang] || map["en"];
 }
 
-function isModelNotFoundError(err: any): boolean {
-  if (!err) return false;
-  if (err.status === 404) return true;
-  const msg = String(err?.message || "").toLowerCase();
-  return msg.includes("404") || msg.includes("not found") || msg.includes("does not exist") || msg.includes("no such model");
-}
-
-// 🔥 ROBUST JSON EXTRACTOR (Prevents crashes if AI adds markdown)
 function safeParseJSON(text: string): any {
   try {
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
@@ -152,7 +151,6 @@ async function callVisionModel(prompt: string, imageBase64: string, imageMime: s
       if (text) return { text, used: "groq" };
     } catch (err: any) {
       console.error(`[face] Groq failed:`, err?.message);
-      // Retry Groq without response_format
       try {
         const completion = await groqClient.chat.completions.create({
           model: groqVisionModel,
@@ -182,13 +180,31 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     language = (formData.get("language") as string) || "hinglish";
 
-    // 🔥 Guest Protection (Passed language dynamically)
     if (!user || user.isGuest) {
       return NextResponse.json({
         code: "LOGIN_REQUIRED",
         error: "Unauthorized",
         message: getPsychologicalUnauthorizedMessage(language),
       }, { status: 401 });
+    }
+
+    // 🔥 FETCH FRESH USER DATA FOR BILLING CHECK
+    const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!userRow) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const isPremium = Boolean(userRow.premiumUntil && new Date(userRow.premiumUntil) > new Date());
+    const freeScansUsed = userRow.freeFaceScansUsed || 0;
+    const walletBalance = userRow.walletBalancePaise || 0;
+    const freeScansLeft = Math.max(0, FREE_FACE_SCAN_LIMIT - freeScansUsed);
+
+    // 🔥 RATE LIMIT & WALLET CHECK (Before AI Call)
+    if (!isPremium && freeScansLeft === 0 && walletBalance < COST_PER_FACE_SCAN_PAISE) {
+      return NextResponse.json({ 
+        code: "WALLET_RECHARGE_REQUIRED", 
+        error: "Free scans exhausted. Please recharge your wallet to continue." 
+      }, { status: 402 }); 
     }
 
     const imageFile = formData.get("image") as File | null;
@@ -207,7 +223,7 @@ export async function POST(request: Request) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
-    // 🔥 PREMIUM PSYCHOLOGY & BUSINESS PROMPT (Face Reading)
+    // 🔥 PREMIUM PSYCHOLOGY & BUSINESS PROMPT
     const prompt = `
       IDENTITY: You are a highly respected, 20+ year experienced female Vedic Face Reader (Physiognomist). You are a real human. You speak with absolute authority, warmth, and deep psychological insight.
 
@@ -226,11 +242,10 @@ export async function POST(request: Request) {
         "title": "A captivating title for their face reading (e.g., 'The Royal Lioness')",
         "insight": "Two short paragraphs. First: Analyze their facial features (eyes, forehead) with absolute certainty and warmth. Second: Point out a specific challenge/dosha and explain how it affects them. Plain text only, no markdown.",
         "hook": "A short, compelling sentence telling them exactly why they need to talk to an astrologer immediately to fix this dosha.",
-        "suggestedChatPrompt": "A ready-to-use message the user can send to the astrologer, summarizing their face reading and asking for a solution (e.g., 'Namaste, I just checked my face reading and it shows a blockage. How can I remove this obstacle?')"
+        "suggestedChatPrompt": "A ready-to-use message the user can send to the astrologer, summarizing their face reading and asking for a solution."
       }
     `;
 
-    /* ----------------------------- AI Call ------------------------------- */
     let aiText: string;
     let usedProvider: "modal" | "groq";
 
@@ -243,7 +258,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
     }
 
-    /* ----------------------------- Parse JSON ---------------------------- */
     const result = safeParseJSON(aiText);
 
     if (!result) {
@@ -251,8 +265,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
     }
 
+    // 🔥 CRITICAL: Agar image invalid hai, toh count/deduct MAT karo
     if (result.error === "INVALID_IMAGE") {
       return NextResponse.json(result, { status: 422 });
+    }
+
+    // 🔥 SUCCESS: Ab count badhao ya wallet deduct karo
+    if (!isPremium) {
+      if (freeScansLeft > 0) {
+        await db.update(users)
+          .set({ freeFaceScansUsed: sql`${users.freeFaceScansUsed} + 1` })
+          .where(eq(users.id, user.id));
+      } else if (walletBalance >= COST_PER_FACE_SCAN_PAISE) {
+        await db.update(users)
+          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_FACE_SCAN_PAISE}` })
+          .where(eq(users.id, user.id));
+      }
     }
 
     return NextResponse.json({
@@ -262,8 +290,9 @@ export async function POST(request: Request) {
         title: result.title || "Face Reading",
         insight: result.insight || "Your face shows a unique path.",
         hook: result.hook || "A major shift is coming. Talk to an astrologer now.",
-        suggestedChatPrompt: result.suggestedChatPrompt || "Hello, I just checked my face reading. Can you guide me?", // 🔥 Passing to frontend
+        suggestedChatPrompt: result.suggestedChatPrompt || "Hello, I just checked my face reading. Can you guide me?",
       },
+      scansLeft: isPremium ? "Unlimited" : Math.max(0, freeScansLeft - 1),
     });
   } catch (error: any) {
     console.error("[face] Unhandled error:", error?.message);
