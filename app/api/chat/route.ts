@@ -17,15 +17,13 @@ export const dynamic = "force-dynamic";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// 🔥 FIX 1: Updated to the latest active models as per Groq Docs
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "openai/gpt-oss-120b";
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
-// 🔥 FIX 1: Updated fallbacks (removed decommissioned ones)
-const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-20b", "llama-3.2-3b-preview"];
-const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview"];
+// 🔥 FIX: Only keep valid fallbacks
+const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-20b"];
+const VISION_MODEL_FALLBACKS: string[] = []; // No stable vision fallback currently
 
-// 🔥 FIX 2: Throw clear error if API Key is missing instead of using 'dummy-key'
 if (!GROQ_API_KEY && process.env.NODE_ENV === "production") {
   console.error("[FATAL] GROQ_API_KEY is missing in Render Environment Variables!");
 }
@@ -142,13 +140,27 @@ async function callGroq(
   const primary = useVision ? GROQ_VISION_MODEL : GROQ_TEXT_MODEL;
   const fallbacks = useVision ? VISION_MODEL_FALLBACKS : TEXT_MODEL_FALLBACKS;
 
+  // 🔥 FIX: Helper to build request payload with reasoning_effort
+  const buildRequest = (model: string) => {
+    const req: any = {
+      model,
+      messages: payload.messages,
+      temperature: payload.temperature,
+      max_completion_tokens: 1600, // Increased for reasoning + response
+    };
+    // If it's a GPT-OSS model, we need to control reasoning to save tokens
+    if (model.startsWith("openai/gpt-oss-")) {
+      req.reasoning_effort = "low";
+      req.include_reasoning = false;
+    }
+    return req;
+  };
+
   try {
-    return await openai.chat.completions.create({ model: primary, ...payload });
+    return await openai.chat.completions.create(buildRequest(primary));
   } catch (err: any) {
     console.error(`[chat] Primary model ${primary} failed:`, err?.status, err?.message);
 
-    // 🔥 FIX 3: ONLY try fallbacks if it's a Model Not Found error. 
-    // If it's a 429 (Rate Limit) or 401 (Auth), throw immediately to save API calls.
     if (!isModelNotFoundError(err)) {
       throw err;
     }
@@ -156,7 +168,7 @@ async function callGroq(
     for (const fb of fallbacks) {
       try {
         console.log(`[chat] Trying fallback model: ${fb}`);
-        return await openai.chat.completions.create({ model: fb, ...payload });
+        return await openai.chat.completions.create(buildRequest(fb));
       } catch (fbErr: any) {
         console.error(`[chat] Fallback ${fb} failed:`, fbErr?.status, fbErr?.message);
       }
@@ -343,7 +355,18 @@ ${getLanguageInstruction(language)}
     );
 
     let raw = completion.choices[0]?.message?.content?.trim() || "";
-    if (!raw) throw new Error("EMPTY_AI_RESPONSE");
+    
+    // 🔥 FIX: Detailed Logging for Empty Response
+    if (!raw) {
+      const choice = completion?.choices?.[0];
+      console.error("[chat] Empty response details:", {
+        model: completion?.model,
+        finish_reason: choice?.finish_reason,
+        completion_tokens: completion?.usage?.completion_tokens,
+        reasoning_tokens: completion?.usage?.completion_tokens_details?.reasoning_tokens,
+      });
+      throw new Error("EMPTY_AI_RESPONSE");
+    }
 
     raw = raw.replace(/[\*\#]/g, "");
 
