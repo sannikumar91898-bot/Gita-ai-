@@ -18,9 +18,11 @@ export const dynamic = "force-dynamic";
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
+// 🔥 FIX: Updated Vision Models (Puraane decommissioned models hata diye hain)
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
 
 const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "llama3-70b-8192"];
+// 🔥 FIX: Fallback me sabse strong vision model dala hai
 const VISION_MODEL_FALLBACKS = ["llama-3.2-90b-vision-preview"];
 
 const openai = new OpenAI({
@@ -241,7 +243,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Session not found." }, { status: 401 });
     }
 
-    // 🔥 FIX 1: Guest Check (Premium Business Logic)
     if (user.isGuest) {
       return NextResponse.json({ 
         code: "LOGIN_REQUIRED", 
@@ -251,10 +252,8 @@ export async function POST(request: Request) {
 
     userId = user.id;
 
-    // 🔥 FIX 2: Rate Limiting (Spam Protection)
     if (typeof checkAILimit === 'function') {
       const rateLimit = await checkAILimit(userId);
-      // 🔥 FIX: 'success' ki jagah 'allowed' kar diya gaya hai (TypeScript Error Fix)
       if (!rateLimit.allowed) { 
         return NextResponse.json({ 
           error: "Too many requests. Please wait a minute." 
@@ -350,7 +349,7 @@ export async function POST(request: Request) {
       kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
     }
 
-    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + BUSINESS + ASTROLOGY SYSTEM PROMPT
+    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + SHORT & CRISP RESPONSE PROMPT
     const systemPrompt = `
 You are ${personaConfig.name}, a highly experienced, PREMIUM female Vedic Astrologer.
 Your specialization: ${personaConfig.specializations}
@@ -363,22 +362,24 @@ User Context:
 ${kundliContext}
 
 🧠 PSYCHOLOGY & BUSINESS MINDSET (CRITICAL):
-1. You are a premium consultant. Provide immense value so the user feels their time and money are worth it.
-2. Be highly empathetic but authoritative. Validate their feelings, then give a firm astrological direction.
-3. ALWAYS end your message with a thought-provoking question. (e.g., "Would you like to know the exact timing for this?" or "Shall we check your birth chart for the exact remedy?"). This keeps the user engaged and increases chat retention.
+1. You are a premium consultant. Provide immense value but be extremely concise.
+2. Be highly empathetic but authoritative. Validate their feelings in 1 sentence, then give a firm astrological direction.
+3. ALWAYS end your message with a short, thought-provoking question. (e.g., "Shall we check the exact timing?" or "Do you want the remedy?"). This keeps the user engaged.
 
 🔮 STRICT ASTROLOGY RULES:
-1. NEVER hallucinate or make up fake astrological terms (e.g., do NOT invent names like "Shukra Vishnu Dasha").
+1. NEVER hallucinate or make up fake astrological terms.
 2. Use ONLY standard Vedic Astrology concepts (Mahadasha, Antardasha, 7th House, Venus, etc.).
-3. If you do not have the user's exact Birth Time and Birth Place, you CANNOT give exact dates, names of future partners, or specific gemstone recommendations. Politely ask for their birth details to give a precise answer.
+3. If you do not have the user's exact Birth Time and Birth Place, politely ask for it. Do not guess.
+
+📏 LENGTH & FORMATTING RULES (VERY IMPORTANT):
+1. MAXIMUM 120 WORDS. Do NOT exceed this limit under any circumstance.
+2. Write in short, punchy sentences.
+3. NEVER use markdown, stars (**), hashtags (#), or bullet points.
+4. Use plain text paragraphs with single line breaks. 
+5. Address the user respectfully according to their Gender (${kundliContext}).
 
 🌍 LANGUAGE:
 ${getLanguageInstruction(language)}
-
-📝 FORMATTING RULES:
-1. NEVER use markdown, stars (**), hashtags (#), or bullet points.
-2. Output plain text paragraphs with single line breaks.
-3. Address the user respectfully according to their Gender (${kundliContext}).
 `;
 
     /* ----------------------------- Build Payload ------------------------- */
@@ -400,7 +401,8 @@ ${getLanguageInstruction(language)}
 
     /* ----------------------------- AI Call ------------------------------- */
     const completion = await callGroq(
-      { messages: messagesPayload, temperature: 0.4, max_tokens: 1000 },
+      // 🔥 FIX: max_tokens ko 1000 se 350 kar diya hai taaki AI bekar me lamba na likhe
+      { messages: messagesPayload, temperature: 0.4, max_tokens: 350 }, 
       Boolean(imageFile)
     );
 
