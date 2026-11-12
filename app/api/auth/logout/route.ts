@@ -18,11 +18,12 @@ export async function POST() {
     }
 
     // 2. 🔥 HttpOnly Cookie ko delete karein (Browser se hatane ke liye)
-    const cookieStore = cookies();
+    // 🔥 MAIN FIX: Next.js me cookies() async hota hai, isliye await lagana zaroori hai
+    const cookieStore = await cookies();
     
-    // 🔥 MAIN FIX: Cookie ka naam "session" se badal kar "gita_session" kiya gaya hai
+    // Cookie ka naam wahi hai jo aapke auth.ts se match karta hai
     cookieStore.set({
-      name: "gita_session", // Yeh aapke auth.ts se match karta hai
+      name: "gita_session", 
       value: "",
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
