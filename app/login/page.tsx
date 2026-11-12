@@ -4,7 +4,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, ShieldCheck, Loader2, CheckCircle2, Star } from "lucide-react";
 import { useApp } from "../Providers";
 
 function LoginContent() {
@@ -22,7 +22,7 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔥 10 LANGUAGES DICTIONARY
+  // 🔥 10 LANGUAGES DICTIONARY (Full Support)
   const getLoginText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: {
@@ -32,16 +32,18 @@ function LoginContent() {
         name: "आपका नाम", email: "ईमेल एड्रेस", password: "पासवर्ड",
         loginBtn: "लॉगिन करें", registerBtn: "रजिस्टर करें",
         noAccount: "अकाउंट नहीं है?", hasAccount: "पहले से अकाउंट है?",
-        registerHere: "यहाँ रजिस्टर करें", loginHere: "यहाँ लॉगिन करें", pleaseWait: "कृपया रुकें..."
+        registerHere: "यहाँ रजिस्टर करें", loginHere: "यहाँ लॉगिन करें", pleaseWait: "कृपया रुकें...",
+        secure: "100% सुरक्षित और गोपनीय", trusted: "10,000+ यूजर्स का भरोसा"
       },
       hinglish: {
         login: "Login", createAccount: "Create Account", welcomeBack: "Welcome Back", joinGita: "Join Gita AI",
-        loginDesc: "Login to access your wallet, orders, and saved kundli.",
-        joinDesc: "Create an account to save your chats and kundli.",
+        loginDesc: "Apne wallet, orders aur saved kundli ko access karne ke liye login karein.",
+        joinDesc: "Apni chats aur kundli save karne ke liye account banayein.",
         name: "Your Name", email: "Email Address", password: "Password",
         loginBtn: "Login", registerBtn: "Register",
-        noAccount: "Don't have an account?", hasAccount: "Already have an account?",
-        registerHere: "Register here", loginHere: "Login here", pleaseWait: "Please wait..."
+        noAccount: "Account nahi hai?", hasAccount: "Pehle se account hai?",
+        registerHere: "Yahan register karein", loginHere: "Yahan login karein", pleaseWait: "Kripya rukein...",
+        secure: "100% Secure & Private", trusted: "Trusted by 10,000+ users"
       },
       en: {
         login: "Login", createAccount: "Create Account", welcomeBack: "Welcome Back", joinGita: "Join Gita AI",
@@ -50,16 +52,18 @@ function LoginContent() {
         name: "Your Name", email: "Email Address", password: "Password",
         loginBtn: "Login", registerBtn: "Register",
         noAccount: "Don't have an account?", hasAccount: "Already have an account?",
-        registerHere: "Register here", loginHere: "Login here", pleaseWait: "Please wait..."
+        registerHere: "Register here", loginHere: "Login here", pleaseWait: "Please wait...",
+        secure: "100% Secure & Private", trusted: "Trusted by 10,000+ users"
       },
       te: {
         login: "లాగిన్", createAccount: "ఖాతా సృష్టించండి", welcomeBack: "తిరిగి స్వాగతం", joinGita: "గీత AIలో చేరండి",
         loginDesc: "మీ వాలెట్, ఆర్డర్లు మరియు సేవ్ చేసిన కుండలిని యాక్సెస్ చేయడానికి లాగిన్ చేయండి.",
         joinDesc: "మీ చాట్లు మరియు కుండలిని సేవ్ చేయడానికి ఖాతా సృష్టించండి.",
-        name: "మీ పేరు", email: "ఇమెయిల్ చిరునామా", password: "పాస్వర్డ్",
+        name: "మీ పేరు", email: "ఇమెయిల్ చిరునామా", password: "పాస్‌వర్డ్",
         loginBtn: "లాగిన్", registerBtn: "నమోదు చేయండి",
         noAccount: "ఖాతా లేదా?", hasAccount: "ఇప్పటికే ఖాతా ఉందా?",
-        registerHere: "ఇక్కడ నమోదు చేయండి", loginHere: "ఇక్కడ లాగిన్ చేయండి", pleaseWait: "దయచేసి వేచి ఉండండి..."
+        registerHere: "ఇక్కడ నమోదు చేయండి", loginHere: "ఇక్కడ లాగిన్ చేయండి", pleaseWait: "దయచేసి వేచి ఉండండి...",
+        secure: "100% సురక్షితం & గోప్యత", trusted: "10,000+ వినియోగదారుల నమ్మకం"
       },
       ta: {
         login: "உள்நுழை", createAccount: "கணக்கை உருவாக்கு", welcomeBack: "மீண்டும் வருக", joinGita: "கீதா AI இல் சேரவும்",
@@ -68,16 +72,18 @@ function LoginContent() {
         name: "உங்கள் பெயர்", email: "மின்னஞ்சல் முகவரி", password: "கடவுச்சொல்",
         loginBtn: "உள்நுழை", registerBtn: "பதிவு செய்",
         noAccount: "கணக்கு இல்லையா?", hasAccount: "ஏற்கனவே கணக்கு உள்ளதா?",
-        registerHere: "இங்கே பதிவு செய்யவும்", loginHere: "இங்கே உள்நுழையவும்", pleaseWait: "காத்திருங்கள்..."
+        registerHere: "இங்கே பதிவு செய்யவும்", loginHere: "இங்கே உள்நுழையவும்", pleaseWait: "காத்திருங்கள்...",
+        secure: "100% பாதுகாப்பானது & தனியுரிமை", trusted: "10,000+ பயனர்களின் நம்பிக்கை"
       },
       kn: {
         login: "ಲಾಗಿನ್", createAccount: "ಖಾತೆ ರಚಿಸಿ", welcomeBack: "ಮತ್ತೆ ಸ್ವಾಗತ", joinGita: "ಗೀತಾ AI ಗೆ ಸೇರಿ",
         loginDesc: "ನಿಮ್ಮ ವಾಲೆಟ್, ಆರ್ಡರ್ಗಳು ಮತ್ತು ಉಳಿಸಿದ ಕುಂಡಲಿಯನ್ನು ಪ್ರವೇಶಿಸಲು ಲಾಗಿನ್ ಮಾಡಿ.",
-        joinDesc: "ನಿಮ್ಮ ಚಾಟ್ಗಳು ಮತ್ತು ಕುಂಡಲಿಯನ್ನು ಉಳಿಸಲು ಖಾತೆ ರಚಿಸಿ.",
-        name: "ನಿಮ್ಮ ಹೆಸರು", email: "ಇಮೇಲ್ ವಿಳಾಸ", password: "ಪಾಸ್ವರ್ಡ್",
+        joinDesc: "ನಿಮ್ಮ ಚಾಟ್‌ಗಳು ಮತ್ತು ಕುಂಡಲಿಯನ್ನು ಉಳಿಸಲು ಖಾತೆ ರಚಿಸಿ.",
+        name: "ನಿಮ್ಮ ಹೆಸರು", email: "ಇಮೇಲ್ ವಿಳಾಸ", password: "ಪಾಸ್‌ವರ್ಡ್",
         loginBtn: "ಲಾಗಿನ್", registerBtn: "ನೋಂದಾಯಿಸಿ",
         noAccount: "ಖಾತೆ ಇಲ್ಲವೇ?", hasAccount: "ಈಗಾಗಲೇ ಖಾತೆ ಇದೆಯೇ?",
-        registerHere: "ಇಲ್ಲಿ ನೋಂದಾಯಿಸಿ", loginHere: "ಇಲ್ಲಿ ಲಾಗಿನ್ ಮಾಡಿ", pleaseWait: "ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ..."
+        registerHere: "ಇಲ್ಲಿ ನೋಂದಾಯಿಸಿ", loginHere: "ಇಲ್ಲಿ ಲಾಗಿನ್ ಮಾಡಿ", pleaseWait: "ದಯವಿಟ್ಟು ನಿರೀಕ್ಷಿಸಿ...",
+        secure: "100% ಸುರಕ್ಷಿತ & ಖಾಸಗಿ", trusted: "10,000+ ಬಳಕೆದಾರರ ನಂಬಿಕೆ"
       },
       bn: {
         login: "লগইন", createAccount: "অ্যাকাউন্ট তৈরি করুন", welcomeBack: "ফিরে আসার জন্য স্বাগতম", joinGita: "গীতা AI-তে যোগ দিন",
@@ -86,7 +92,8 @@ function LoginContent() {
         name: "আপনার নাম", email: "ইমেল ঠিকানা", password: "পাসওয়ার্ড",
         loginBtn: "লগইন", registerBtn: "নিবন্ধন করুন",
         noAccount: "অ্যাকাউন্ট নেই?", hasAccount: "ইতিমধ্যে একটি অ্যাকাউন্ট আছে?",
-        registerHere: "এখানে নিবন্ধন করুন", loginHere: "এখানে লগইন করুন", pleaseWait: "অপেক্ষা করুন..."
+        registerHere: "এখানে নিবন্ধন করুন", loginHere: "এখানে লগইন করুন", pleaseWait: "অপেক্ষা করুন...",
+        secure: "100% সুরক্ষিত এবং গোপনীয়", trusted: "10,000+ ব্যবহারকারীর আস্থা"
       },
       mr: {
         login: "लॉग इन करा", createAccount: "खाते तयार करा", welcomeBack: "पुन्हा स्वागत आहे", joinGita: "गीता AI मध्ये सामील व्हा",
@@ -95,7 +102,8 @@ function LoginContent() {
         name: "तुमचे नाव", email: "ईमेल पत्ता", password: "पासवर्ड",
         loginBtn: "लॉग इन करा", registerBtn: "नोंदणी करा",
         noAccount: "खाते नाही?", hasAccount: "आधीच खाते आहे?",
-        registerHere: "येथे नोंदणी करा", loginHere: "येथे लॉग इन करा", pleaseWait: "कृपया थांबा..."
+        registerHere: "येथे नोंदणी करा", loginHere: "येथे लॉग इन करा", pleaseWait: "कृपया थांबा...",
+        secure: "100% सुरक्षित आणि खाजगी", trusted: "10,000+ वापरकर्त्यांचा विश्वास"
       },
       gu: {
         login: "લોગિન", createAccount: "એકાઉન્ટ બનાવો", welcomeBack: "પાછા સ્વાગત છે", joinGita: "ગીતા AI માં જોડાઓ",
@@ -104,28 +112,30 @@ function LoginContent() {
         name: "તમારું નામ", email: "ઇમેઇલ સરનામું", password: "પાસવર્ડ",
         loginBtn: "લોગિન", registerBtn: "નોંધણી કરો",
         noAccount: "એકાઉન્ટ નથી?", hasAccount: "પહેલેથી જ એકાઉન્ટ છે?",
-        registerHere: "અહીં નોંધણી કરો", loginHere: "અહીં લોગિન કરો", pleaseWait: "કૃપા કરીને રાહ જુઓ..."
+        registerHere: "અહીં નોંધણી કરો", loginHere: "અહીં લોગિન કરો", pleaseWait: "કૃપા કરીને રાહ જુઓ...",
+        secure: "100% સુરક્ષિત અને ખાનગી", trusted: "10,000+ વપરાશકર્તાઓનો વિશ્વાસ"
       },
       ml: {
         login: "ലോഗിൻ", createAccount: "അക്കൗണ്ട് സൃഷ്ടിക്കുക", welcomeBack: "വീണ്ടും സ്വാഗതം", joinGita: "ഗീത AI-യിൽ ചേരുക",
         loginDesc: "നിങ്ങളുടെ വാലറ്റ്, ഓർഡറുകൾ, സേവ് ചെയ്ത കുണ്ഡലി എന്നിവ ആക്സസ് ചെയ്യാൻ ലോഗിൻ ചെയ്യുക.",
         joinDesc: "നിങ്ങളുടെ ചാറ്റുകളും കുണ്ഡലിയും സേവ് ചെയ്യാൻ ഒരു അക്കൗണ്ട് സൃഷ്ടിക്കുക.",
-        name: "നിങ്ങളുടെ പേര്", email: "ഇമെയിൽ വിലാസം", password: "പാസ്വേഡ്",
+        name: "നിങ്ങളുടെ പേര്", email: "ഇമെയിൽ വിലാസം", password: "പാസ്‌വേഡ്",
         loginBtn: "ലോഗിൻ", registerBtn: "രജിസ്റ്റർ ചെയ്യുക",
         noAccount: "അക്കൗണ്ട് ഇല്ലേ?", hasAccount: "ഇതിനകം ഒരു അക്കൗണ്ട് ഉണ്ടോ?",
-        registerHere: "ഇവിടെ രജിസ്റ്റർ ചെയ്യുക", loginHere: "ഇവിടെ ലോഗിൻ ചെയ്യുക", pleaseWait: "കാത്തിരിക്കുക..."
+        registerHere: "ഇവിടെ രജിസ്റ്റർ ചെയ്യുക", loginHere: "ഇവിടെ ലോഗിൻ ചെയ്യുക", pleaseWait: "കാത്തിരിക്കുക...",
+        secure: "100% സുരക്ഷിതവും സ്വകാര്യവും", trusted: "10,000+ ഉപയോക്താക്കളുടെ വിശ്വാസം"
       }
     };
-    return dict[lang || "hi"]?.[key] || dict["en"][key];
+    return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
   };
 
   const t = (key: string) => getLoginText(key);
 
-  const pageClass = isDark ? "bg-slate-950 text-violet-50" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark ? "border-slate-800 bg-[#1e293b]" : "border-orange-100 bg-white shadow-sm";
+  const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-2xl" : "border-orange-100 bg-white shadow-xl";
   const inputClass = isDark
-    ? "w-full rounded-xl border border-slate-700 bg-slate-900 p-3 pl-10 text-sm focus:border-orange-500 focus:outline-none text-white"
-    : "w-full rounded-xl border border-gray-300 bg-white p-3 pl-10 text-sm focus:border-orange-500 focus:outline-none text-gray-900";
+    ? "w-full rounded-xl border border-slate-700 bg-[#0A0F19] p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-white transition-colors"
+    : "w-full rounded-xl border border-gray-200 bg-gray-50 p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-gray-900 transition-colors";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -156,31 +166,43 @@ function LoginContent() {
   };
 
   return (
-    <main className={`min-h-screen w-full px-4 pt-5 ${pageClass}`}>
-      <div className="mx-auto max-w-md space-y-6">
+    <main className={`min-h-[100dvh] w-full flex flex-col items-center justify-center p-4 relative overflow-hidden ${pageClass}`}>
+      
+      {/* 🔥 PREMIUM BACKGROUND GLOW (Psychology: Makes the app feel high-end) */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[80vw] max-w-[600px] max-h-[600px] bg-gradient-to-b from-[#ff6b00]/20 to-transparent rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="w-full max-w-md relative z-10">
         
-        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
-          <Link href={redirectUrl} className={`rounded-xl p-2 ${isDark ? "bg-slate-800 text-violet-200" : "bg-orange-50 text-orange-600"}`}>
-            <ArrowLeft size={18} />
-          </Link>
-          <h1 className="text-base font-black uppercase tracking-tight text-orange-600">
-            {isLogin ? t("login") : t("createAccount")}
-          </h1>
+        {/* HEADER */}
+        <header className={`flex items-center justify-between rounded-2xl border p-3 mb-6 backdrop-blur-md bg-opacity-80 ${cardClass}`}>
+          <div className="flex items-center gap-3">
+            <Link href={redirectUrl} className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-slate-300 hover:text-white" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
+              <ArrowLeft size={18} />
+            </Link>
+            <h1 className="text-[15px] font-black uppercase tracking-wider text-[#ff6b00]">
+              {isLogin ? t("login") : t("createAccount")}
+            </h1>
+          </div>
         </header>
 
+        {/* MAIN CARD */}
         <div className={`rounded-3xl border p-6 sm:p-8 ${cardClass}`}>
-          <div className="text-center mb-6">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20 mb-4">
-              <Sparkles className="text-orange-500" size={32} />
+          
+          <div className="text-center mb-8">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#ff6b00]/20 to-[#ff3d00]/20 mb-4 shadow-inner">
+              <Sparkles className="text-[#ff6b00]" size={32} />
             </div>
-            <h2 className="text-2xl font-bold mb-2">{isLogin ? t("welcomeBack") : t("joinGita")}</h2>
-            <p className={`text-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
+              {isLogin ? t("welcomeBack") : t("joinGita")}
+            </h2>
+            <p className={`text-[13px] font-medium leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               {isLogin ? t("loginDesc") : t("joinDesc")}
             </p>
           </div>
 
+          {/* ERROR MESSAGE */}
           {error && (
-            <div className="mb-4 rounded-xl border border-red-500 bg-red-500/10 p-3 text-sm text-red-500 break-words">
+            <div className="mb-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-[13px] font-bold text-rose-500 break-words animate-in fade-in slide-in-from-top-2">
               {error}
             </div>
           )}
@@ -188,8 +210,8 @@ function LoginContent() {
           <form onSubmit={handleSubmit} className="space-y-4">
             
             {!isLogin && (
-              <div className="relative">
-                <User size={18} className="absolute left-3 top-3.5 text-gray-400" />
+              <div className="relative animate-in fade-in slide-in-from-top-2">
+                <User size={18} className="absolute left-3.5 top-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder={t("name")}
@@ -202,7 +224,7 @@ function LoginContent() {
             )}
 
             <div className="relative">
-              <Mail size={18} className="absolute left-3 top-3.5 text-gray-400" />
+              <Mail size={18} className="absolute left-3.5 top-4 text-gray-400" />
               <input
                 type="email"
                 placeholder={t("email")}
@@ -214,7 +236,7 @@ function LoginContent() {
             </div>
 
             <div className="relative">
-              <Lock size={18} className="absolute left-3 top-3.5 text-gray-400" />
+              <Lock size={18} className="absolute left-3.5 top-4 text-gray-400" />
               <input
                 type="password"
                 placeholder={t("password")}
@@ -226,26 +248,48 @@ function LoginContent() {
               />
             </div>
 
+            {/* SUBMIT BUTTON */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-xl bg-orange-600 px-4 py-3 font-bold text-white transition-all hover:bg-orange-700 disabled:opacity-50"
+              className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100"
             >
-              {loading ? t("pleaseWait") : isLogin ? t("loginBtn") : t("registerBtn")}
+              {loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  {t("pleaseWait")}
+                </>
+              ) : (
+                isLogin ? t("loginBtn") : t("registerBtn")
+              )}
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm">
+          {/* 🔥 TRUST BADGES (Psychology & Marketing) */}
+          <div className={`mt-8 pt-6 border-t flex flex-col items-center gap-3 ${isDark ? "border-slate-800" : "border-gray-100"}`}>
+            <div className="flex items-center gap-4">
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                <ShieldCheck size={14} /> {t("secure")}
+              </span>
+              <span className="flex items-center gap-1.5 text-[11px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full">
+                <Star size={14} className="fill-amber-500" /> {t("trusted")}
+              </span>
+            </div>
+          </div>
+
+          {/* TOGGLE LOGIN/REGISTER */}
+          <div className="mt-6 text-center text-[13px] font-medium">
             <span className={isDark ? "text-slate-400" : "text-gray-500"}>
               {isLogin ? t("noAccount") + " " : t("hasAccount") + " "}
             </span>
             <button
               onClick={() => { setIsLogin(!isLogin); setError(""); }}
-              className="font-bold text-orange-500 hover:underline"
+              className="font-bold text-[#ff6b00] hover:underline"
             >
               {isLogin ? t("registerHere") : t("loginHere")}
             </button>
           </div>
+
         </div>
       </div>
     </main>
@@ -254,7 +298,11 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">Loading...</div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0F19] text-white">
+        <Loader2 className="animate-spin text-[#ff6b00]" size={40} />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );
