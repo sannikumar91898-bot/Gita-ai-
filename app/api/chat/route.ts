@@ -6,6 +6,8 @@ import OpenAI from "openai";
 import { getUser } from "@/auth";
 import { db } from "@/index";
 import { birthDetails, charts, conversations, messages, remedies, users } from "@/schema";
+// 🔥 FIX: Rate limit import (Agar aapke project mein path alag hai, toh isko adjust karein)
+import { checkAILimit } from "@/rate-limit"; 
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,11 +18,9 @@ export const dynamic = "force-dynamic";
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Primary models (env overridable) — production me tune kar sakte ho
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview";
 
-// Fallbacks tried in order if primary 404s (model decommissioned)
 const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "llama3-70b-8192"];
 const VISION_MODEL_FALLBACKS = ["llama-3.2-90b-vision-preview"];
 
@@ -35,16 +35,36 @@ const COST_PER_MESSAGE_PAISE = 200;
 const FREE_MESSAGE_LIMIT = 3;
 
 /* -------------------------------------------------------------------------- */
-/*                              PERSONAS                                      */
+/*                              PERSONAS & TONE                               */
 /* -------------------------------------------------------------------------- */
 
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
 const PERSONAS: Record<string, PersonaConfig> = {
-  gita: { name: "Gita", specializations: "Love, relationships", tone: "Warm elder sister. Use 'Suno', 'Main hoon na'.", rules: "Validate pain first." },
-  kriti: { name: "Acharya Kriti", specializations: "Career, jobs", tone: "Sharp professional mentor.", rules: "Focus on 10th house." },
-  devaki: { name: "Dr. Devaki Shastri", specializations: "KP Astrology", tone: "Authoritative guru.", rules: "Use exact degrees." },
-  gargi: { name: "Gargi Maa", specializations: "Spirituality, Vastu", tone: "Maternal, soothing. Calls user 'Beta'.", rules: "Prescribe remedies." },
+  gita: { 
+    name: "Gita", 
+    specializations: "Love, relationships, marriage", 
+    tone: "Warm, empathetic, and caring elder sister (behen). Use words like 'Suno beta', 'Main hoon na'.", 
+    rules: "Validate the user's emotional pain first. Focus on 7th house (Venus/Mars) and mental peace." 
+  },
+  kriti: { 
+    name: "Acharya Kriti", 
+    specializations: "Career, jobs, business wealth", 
+    tone: "Sharp, authoritative, professional business woman. No emotional sugar-coating.", 
+    rules: "Focus on 10th house, Saturn, and practical remedies. Speak like a premium consultant." 
+  },
+  devaki: { 
+    name: "Dr. Devaki Shastri", 
+    specializations: "KP Astrology, precise life timing", 
+    tone: "Highly intellectual, authoritative guru with 22+ years of experience.", 
+    rules: "Use exact degrees and KP system terms. Demand birth time and place for exact predictions." 
+  },
+  gargi: { 
+    name: "Gargi Maa", 
+    specializations: "Spirituality, Vastu, dosha remedies", 
+    tone: "Maternal, deeply soothing, and protective. Calls user 'Beta'.", 
+    rules: "Prescribe simple household remedies, Vastu tips, and mantras. Focus on peace and protection." 
+  },
 };
 
 /* -------------------------------------------------------------------------- */
@@ -76,7 +96,6 @@ function getLanguageInstruction(lang: string): string {
   return map[lang] || map["hinglish"];
 }
 
-// 🔥 10 Language error messages
 function getUnauthorizedChatMessage(lang: string): string {
   const map: Record<string, string> = {
     hi: "यह चैट आपकी नहीं है या डिलीट हो चुकी है। कृपया नई चैट शुरू करें।",
@@ -148,26 +167,17 @@ async function callGroq(
   const fallbacks = useVision ? VISION_MODEL_FALLBACKS : TEXT_MODEL_FALLBACKS;
 
   try {
-    console.log(`[chat] Trying primary model: ${primary}`);
     return await openai.chat.completions.create({ model: primary, ...payload });
   } catch (err: any) {
-    console.error(`[chat] Primary model ${primary} failed:`, err?.status, err?.message);
-
-    if (!isModelNotFoundError(err)) {
-      // Not a model-availability issue — throw (e.g., timeout, auth, rate limit)
-      throw err;
-    }
+    if (!isModelNotFoundError(err)) throw err;
 
     for (const fb of fallbacks) {
       try {
-        console.log(`[chat] Trying fallback model: ${fb}`);
         return await openai.chat.completions.create({ model: fb, ...payload });
       } catch (fbErr: any) {
         console.error(`[chat] Fallback ${fb} failed:`, fbErr?.status, fbErr?.message);
       }
     }
-
-    // All models failed with 404 — throw the original error
     throw err;
   }
 }
@@ -231,7 +241,27 @@ export async function POST(request: Request) {
     if (!user) {
       return NextResponse.json({ error: "Session not found." }, { status: 401 });
     }
+
+    // 🔥 FIX 1: Guest Check (Premium Business Logic)
+    if (user.isGuest) {
+      return NextResponse.json({ 
+        code: "LOGIN_REQUIRED", 
+        error: "Please login or register to start a premium consultation." 
+      }, { status: 401 });
+    }
+
     userId = user.id;
+
+    // 🔥 FIX 2: Rate Limiting (Spam Protection)
+    // Agar aapne rate-limit file nahi banayi hai, toh is block ko hata dein
+    if (typeof checkAILimit === 'function') {
+      const rateLimit = await checkAILimit(userId);
+      if (!rateLimit.success) {
+        return NextResponse.json({ 
+          error: "Too many requests. Please wait a minute." 
+        }, { status: 429 });
+      }
+    }
 
     /* ----------------------------- Parse form ---------------------------- */
     const formData = await request.formData();
@@ -315,21 +345,41 @@ export async function POST(request: Request) {
 
     /* ----------------------------- Kundli Context ------------------------ */
     const birth = birthRows[0];
-    let kundliContext = "Birth details not provided yet.";
+    let kundliContext = "User birth details not provided yet.";
     if (birth) {
-      const genderInfo = birth.gender ? `Gender: ${birth.gender}.` : "";
-      kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Place: ${birth.birthPlace}.`;
+      const genderInfo = birth.gender ? `Gender: ${birth.gender}.` : "Gender: Not specified.";
+      kundliContext = `User Name: ${birth.name}. ${genderInfo} DOB: ${birth.dob}, Birth Place: ${birth.birthPlace}.`;
     }
 
+    // 🔥 FIX 3: PREMIUM PSYCHOLOGY + BUSINESS + ASTROLOGY SYSTEM PROMPT
     const systemPrompt = `
-You are ${personaConfig.name}, a female astrologer. ${personaConfig.tone}
+You are ${personaConfig.name}, a highly experienced, PREMIUM female Vedic Astrologer.
+Your specialization: ${personaConfig.specializations}
+Your tone: ${personaConfig.tone}
+Your rules: ${personaConfig.rules}
+
 Today's Date is ${new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}. Year is 2026. Do NOT use 2024/2025.
-${getLanguageInstruction(language)}
+
+User Context:
 ${kundliContext}
-CRITICAL RULES:
+
+🧠 PSYCHOLOGY & BUSINESS MINDSET (CRITICAL):
+1. You are a premium consultant. Provide immense value so the user feels their time and money are worth it.
+2. Be highly empathetic but authoritative. Validate their feelings, then give a firm astrological direction.
+3. ALWAYS end your message with a thought-provoking question. (e.g., "Would you like to know the exact timing for this?" or "Shall we check your birth chart for the exact remedy?"). This keeps the user engaged and increases chat retention.
+
+🔮 STRICT ASTROLOGY RULES:
+1. NEVER hallucinate or make up fake astrological terms (e.g., do NOT invent names like "Shukra Vishnu Dasha").
+2. Use ONLY standard Vedic Astrology concepts (Mahadasha, Antardasha, 7th House, Venus, etc.).
+3. If you do not have the user's exact Birth Time and Birth Place, you CANNOT give exact dates, names of future partners, or specific gemstone recommendations. Politely ask for their birth details to give a precise answer.
+
+🌍 LANGUAGE:
+${getLanguageInstruction(language)}
+
+📝 FORMATTING RULES:
 1. NEVER use markdown, stars (**), hashtags (#), or bullet points.
 2. Output plain text paragraphs with single line breaks.
-3. Address the user according to their Gender.
+3. Address the user respectfully according to their Gender (${kundliContext}).
 `;
 
     /* ----------------------------- Build Payload ------------------------- */
@@ -419,7 +469,6 @@ CRITICAL RULES:
             .set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` })
             .where(eq(users.id, userId));
         }
-        console.error(`[chat.POST] refunded ${deductedType} for user ${userId} due to failure`);
       } catch (refundError) {
         console.error("[chat.POST] REFUND FAILED — manual intervention needed:", {
           userId, deductedType, refundError,
@@ -436,13 +485,11 @@ CRITICAL RULES:
       }
     }
 
-    /* ----------------------------- Log details --------------------------- */
     console.error("=== GROQ AI ERROR ===");
     console.error("Status:", error?.status);
     console.error("Message:", error?.message);
     console.error("User:", userId, "Lang:", userLang);
 
-    /* ----------------------------- Return clean error ------------------- */
     return NextResponse.json(
       { code: "AI_ERROR", error: getAIErrorMessage(userLang) },
       { status: 500 }
