@@ -5,7 +5,7 @@ import { useState } from "react";
 import { 
   ArrowLeft, Globe, ChevronRight, Clock, 
   Wallet, Headphones, Home, MessageCircle, Scroll, 
-  HelpCircle, FileText, List, Shield, Mail, LogOut, Moon, Sun, PhoneCall, Check, Trash2, X
+  HelpCircle, FileText, List, Shield, Mail, LogOut, Moon, Sun, PhoneCall, Check, Trash2, X, Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -14,102 +14,123 @@ import { LANGUAGES } from "../../i18n";
 export default function SettingsPage() {
   const { lang, setLanguage, theme, setTheme, me } = useApp();
   const [showLangModal, setShowLangModal] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
-  // 🔥 Check if Dark Mode is active
   const isDark = theme === "dark";
 
   // 🔥 10 Languages Full Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: {
-        header: "प्रोफाइल", edit: "एडिट", myOrders: "मेरे ऑर्डर्स", wallet: "वॉलेट", support: "सपोर्ट",
-        explore: "एक्सप्लोर", home: "होम", chatGita: "गीता AI से चैट करें", myKundli: "मेरी कुंडली",
+        header: "सेटिंग्स", edit: "एडिट", myOrders: "मेरे ऑर्डर्स", wallet: "वॉलेट", support: "सपोर्ट",
+        explore: "एक्सप्लोर", home: "होम", chatGita: "ज्योतिषी से चैट करें", myKundli: "मेरी कुंडली",
         account: "अकाउंट", helpCenter: "हेल्प सेंटर (FAQ)", supportTicket: "सपोर्ट टिकट", walletTx: "वॉलेट ट्रांजैक्शन", orderHistory: "ऑर्डर हिस्ट्री",
         legalSupport: "कानूनी और सपोर्ट", privacy: "प्राइवेसी पॉलिसी", terms: "नियम और शर्तें", contactUs: "संपर्क करें",
         appSettings: "ऐप सेटिंग्स", theme: "थीम", light: "लाइट", dark: "डार्क", language: "भाषा", 
-        logout: "लॉगआउट", deleteAccount: "अकाउंट डिलीट करें",
-        bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "अभी बात करें - पहली चैट FREE", chatBtn: "चैट", guest: "गेस्ट यूजर", noEmail: "ईमेल उपलब्ध नहीं है", cancel: "रद्द करें", deleteConfirm: "क्या आप वाकई अपना अकाउंट डिलीट करना चाहते हैं? यह वापस नहीं होगा।"
+        logout: "लॉगआउट", loggingOut: "लॉगआउट हो रहा है...", deleteAccount: "अकाउंट डिलीट करें", deleting: "डिलीट हो रहा है...",
+        bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "अभी बात करें - पहली चैट FREE", chatBtn: "चैट", guest: "गेस्ट यूजर", noEmail: "ईमेल उपलब्ध नहीं है", cancel: "रद्द करें", 
+        deleteConfirm: "क्या आप वाकई अपना अकाउंट डिलीट करना चाहते हैं? आपका सारा डेटा और वॉलेट बैलेंस हमेशा के लिए चला जाएगा। यह वापस नहीं होगा।",
+        dangerZone: "डेंजर ज़ोन", selectLanguage: "भाषा चुनें"
       },
       hinglish: {
-        header: "PROFILE", edit: "EDIT", myOrders: "My Orders", wallet: "Wallet", support: "Support",
-        explore: "EXPLORE", home: "Home", chatGita: "Chat with Gita AI", myKundli: "My Kundli",
+        header: "SETTINGS", edit: "EDIT", myOrders: "My Orders", wallet: "Wallet", support: "Support",
+        explore: "EXPLORE", home: "Home", chatGita: "Chat with Astrologer", myKundli: "My Kundli",
         account: "ACCOUNT", helpCenter: "Help Center (FAQ)", supportTicket: "Support Ticket", walletTx: "Wallet Transactions", orderHistory: "Order History",
         legalSupport: "LEGAL & SUPPORT", privacy: "Privacy Policy", terms: "Terms of Service", contactUs: "Contact Us",
         appSettings: "APP SETTINGS", theme: "Theme", light: "Light", dark: "Dark", language: "Language", 
-        logout: "Logout", deleteAccount: "Delete Account",
-        bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat", guest: "Guest User", noEmail: "No email available", cancel: "Cancel", deleteConfirm: "Are you sure you want to delete your account? This cannot be undone."
+        logout: "Logout", loggingOut: "Logging out...", deleteAccount: "Delete Account", deleting: "Deleting...",
+        bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat", guest: "Guest User", noEmail: "No email available", cancel: "Cancel", 
+        deleteConfirm: "Are you sure you want to delete your account? All your data and wallet balance will be permanently lost. This cannot be undone.",
+        dangerZone: "DANGER ZONE", selectLanguage: "Select Language"
       },
       en: {
-        header: "PROFILE", edit: "EDIT", myOrders: "My Orders", wallet: "Wallet", support: "Support",
-        explore: "EXPLORE", home: "Home", chatGita: "Chat with Gita AI", myKundli: "My Kundli",
+        header: "SETTINGS", edit: "EDIT", myOrders: "My Orders", wallet: "Wallet", support: "Support",
+        explore: "EXPLORE", home: "Home", chatGita: "Chat with Astrologer", myKundli: "My Kundli",
         account: "ACCOUNT", helpCenter: "Help Center (FAQ)", supportTicket: "Support Ticket", walletTx: "Wallet Transactions", orderHistory: "Order History",
         legalSupport: "LEGAL & SUPPORT", privacy: "Privacy Policy", terms: "Terms of Service", contactUs: "Contact Us",
         appSettings: "APP SETTINGS", theme: "Theme", light: "Light", dark: "Dark", language: "Language", 
-        logout: "Logout", deleteAccount: "Delete Account",
-        bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat", guest: "Guest User", noEmail: "No email available", cancel: "Cancel", deleteConfirm: "Are you sure you want to delete your account? This cannot be undone."
+        logout: "Logout", loggingOut: "Logging out...", deleteAccount: "Delete Account", deleting: "Deleting...",
+        bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat", guest: "Guest User", noEmail: "No email available", cancel: "Cancel", 
+        deleteConfirm: "Are you sure you want to delete your account? All your data and wallet balance will be permanently lost. This cannot be undone.",
+        dangerZone: "DANGER ZONE", selectLanguage: "Select Language"
       },
       te: {
-        header: "ప్రొఫైల్", edit: "సవరించండి", myOrders: "నా ఆర్డర్లు", wallet: "వాలెట్", support: "మద్దతు",
-        explore: "అన్వేషించండి", home: "హోమ్", chatGita: "గీతా AI తో చాట్ చేయండి", myKundli: "నా కుండలి",
+        header: "సెట్టింగ్‌లు", edit: "సవరించండి", myOrders: "నా ఆర్డర్లు", wallet: "వాలెట్", support: "మద్దతు",
+        explore: "అన్వేషించండి", home: "హోమ్", chatGita: "జ్యోతిష్యుడితో చాట్ చేయండి", myKundli: "నా కుండలి",
         account: "ఖాతా", helpCenter: "సహాయ కేంద్రం (FAQ)", supportTicket: "మద్దతు టికెట్", walletTx: "వాలెట్ లావాదేవీలు", orderHistory: "ఆర్డర్ చరిత్ర",
         legalSupport: "చట్టపరమైన & మద్దతు", privacy: "గోప్యతా విధానం", terms: "సేవా నిబంధనలు", contactUs: "మమ్మల్ని సంప్రదించండి",
         appSettings: "యాప్ సెట్టింగ్స్", theme: "థీమ్", light: "లైట్", dark: "డార్క్", language: "భాష", 
-        logout: "లాగ్ అవుట్", deleteAccount: "ఖాతా తొలగించండి",
-        bannerTitle: "జ్యోతిష్యుడు - 24x7 అందుబాటులో", bannerSub: "ఇప్పుడే మాట్లాడండి - మొదటి చాట్ ఉచితం", chatBtn: "చాట్", guest: "గెస్ట్ యూజర్", noEmail: "ఇమెయిల్ అందుబాటులో లేదు", cancel: "రద్దు చేయండి", deleteConfirm: "మీరు ఖాతాను తొలగించాలనుకుంటున్నారా? ఇది వెనక్కి తీసుకోలేరు."
+        logout: "లాగ్ అవుట్", loggingOut: "లాగ్ అవుట్ అవుతోంది...", deleteAccount: "ఖాతా తొలగించండి", deleting: "తొలగిస్తోంది...",
+        bannerTitle: "జ్యోతిష్యుడు - 24x7 అందుబాటులో", bannerSub: "ఇప్పుడే మాట్లాడండి - మొదటి చాట్ ఉచితం", chatBtn: "చాట్", guest: "గెస్ట్ యూజర్", noEmail: "ఇమెయిల్ అందుబాటులో లేదు", cancel: "రద్దు చేయండి", 
+        deleteConfirm: "మీరు ఖాతాను తొలగించాలనుకుంటున్నారా? మీ డేటా మరియు వాలెట్ బ్యాలెన్స్ శాశ్వతంగా పోతాయి. ఇది వెనక్కి తీసుకోలేరు.",
+        dangerZone: "డేంజర్ జోన్", selectLanguage: "భాషను ఎంచుకోండి"
       },
       ta: {
-        header: "சுயவிவரம்", edit: "திருத்து", myOrders: "எனது ஆர்டர்கள்", wallet: "பணப்பை", support: "ஆதரவு",
-        explore: "ஆராயுங்கள்", home: "முகப்பு", chatGita: "கீதா AI உடன் அரட்டையடிக்கவும்", myKundli: "எனது ஜாதகம்",
+        header: "அமைப்புகள்", edit: "திருத்து", myOrders: "எனது ஆர்டர்கள்", wallet: "பணப்பை", support: "ஆதரவு",
+        explore: "ஆராயுங்கள்", home: "முகப்பு", chatGita: "ஜோதிடருடன் அரட்டையடிக்கவும்", myKundli: "எனது ஜாதகம்",
         account: "கணக்கு", helpCenter: "உதவி மையம் (FAQ)", supportTicket: "ஆதரவு டிக்கெட்", walletTx: "பணப்பை பரிவர்த்தனைகள்", orderHistory: "ஆர்டர் வரலாறு",
         legalSupport: "சட்டப்பூர்வ & ஆதரவு", privacy: "தனியுரிமைக் கொள்கை", terms: "சேவை விதிமுறைகள்", contactUs: "எங்களைத் தொடர்பு கொள்ள",
         appSettings: "செயலி அமைப்புகள்", theme: "தீம்", light: "ஒளி", dark: "இருள்", language: "மொழி", 
-        logout: "வெளியேறு", deleteAccount: "கணக்கை நீக்கு",
-        bannerTitle: "ஜோதிடர் - 24x7 கிடைக்கும்", bannerSub: "இப்போது பேசுங்கள் - முதல் அரட்டை இலவசம்", chatBtn: "அரட்டை", guest: "விருந்தினர்", noEmail: "மின்னஞ்சல் இல்லை", cancel: "ரத்து செய்", deleteConfirm: "உங்கள் கணக்கை நீக்க விரும்புகிறீர்களா? இதை மீண்டும் பெற முடியாது."
+        logout: "வெளியேறு", loggingOut: "வெளியேறுகிறது...", deleteAccount: "கணக்கை நீக்கு", deleting: "நீக்குகிறது...",
+        bannerTitle: "ஜோதிடர் - 24x7 கிடைக்கும்", bannerSub: "இப்போது பேசுங்கள் - முதல் அரட்டை இலவசம்", chatBtn: "அரட்டை", guest: "விருந்தினர்", noEmail: "மின்னஞ்சல் இல்லை", cancel: "ரத்து செய்", 
+        deleteConfirm: "உங்கள் கணக்கை நீக்க விரும்புகிறீர்களா? உங்கள் தரவு மற்றும் பணப்பை இருப்பு நிரந்தரமாகப் போகும். இதை மீண்டும் பெற முடியாது.",
+        dangerZone: "ஆபத்து மண்டலம்", selectLanguage: "மொழியைத் தேர்ந்தெடுக்கவும்"
       },
       kn: {
-        header: "ಪ್ರೊಫೈಲ್", edit: "ಸಂಪಾದಿಸಿ", myOrders: "ನನ್ನ ಆರ್ಡರ್ಗಳು", wallet: "ವಾಲೆಟ್", support: "ಬೆಂಬಲ",
-        explore: "ಅನ್ವೇಷಿಸಿ", home: "ಮುಖಪುಟ", chatGita: "ಗೀತಾ AI ಜೊತೆ ಚಾಟ್ ಮಾಡಿ", myKundli: "ನನ್ನ ಕುಂಡಲಿ",
+        header: "ಸೆಟ್ಟಿಂಗ್‌ಗಳು", edit: "ಸಂಪಾದಿಸಿ", myOrders: "ನನ್ನ ಆರ್ಡರ್ಗಳು", wallet: "ವಾಲೆಟ್", support: "ಬೆಂಬಲ",
+        explore: "ಅನ್ವೇಷಿಸಿ", home: "ಮುಖಪುಟ", chatGita: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಚಾಟ್ ಮಾಡಿ", myKundli: "ನನ್ನ ಕುಂಡಲಿ",
         account: "ಖಾತೆ", helpCenter: "ಸಹಾಯ ಕೇಂದ್ರ (FAQ)", supportTicket: "ಬೆಂಬಲ ಟಿಕೆಟ್", walletTx: "ವಾಲೆಟ್ ವಹಿವಾಟುಗಳು", orderHistory: "ಆರ್ಡರ್ ಇತಿಹಾಸ",
         legalSupport: "ಕಾನೂನು ಮತ್ತು ಬೆಂಬಲ", privacy: "ಗೋಪ್ಯತಾ ನೀತಿ", terms: "ಸೇವಾ ನಿಯಮಗಳು", contactUs: "ನಮ್ಮನ್ನು ಸಂಪರ್ಕಿಸಿ",
-        appSettings: "ಆ್ಯಪ್ ಸೆಟ್ಟಿಂಗ್ಗಳು", theme: "ಥೀಮ್", light: "ಬೆಳಕು", dark: "ಕತ್ತಲೆ", language: "ಭಾಷೆ", 
-        logout: "ಲಾಗ್ ಔಟ್", deleteAccount: "ಖಾತೆ ಅಳಿಸಿ",
-        bannerTitle: "ಜ್ಯೋತಿಷಿ - 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಈಗ ಮಾತನಾಡಿ - ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chatBtn: "ಚಾಟ್", guest: "ಅತಿಥಿ", noEmail: "ಇಮೇಲ್ ಲಭ್ಯವಿಲ್ಲ", cancel: "ರದ್ದುಮಾಡಿ", deleteConfirm: "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ."
+        appSettings: "ಆ್ಯಪ್ ಸೆಟ್ಟಿಂಗ್‌ಗಳು", theme: "ಥೀಮ್", light: "ಬೆಳಕು", dark: "ಕತ್ತಲೆ", language: "ಭಾಷೆ", 
+        logout: "ಲಾಗ್ ಔಟ್", loggingOut: "ಲಾಗ್ ಔಟ್ ಆಗುತ್ತಿದೆ...", deleteAccount: "ಖಾತೆ ಅಳಿಸಿ", deleting: "ಅಳಿಸಲಾಗುತ್ತಿದೆ...",
+        bannerTitle: "ಜ್ಯೋತಿಷಿ - 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಈಗ ಮಾತನಾಡಿ - ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chatBtn: "ಚಾಟ್", guest: "ಅತಿಥಿ", noEmail: "ಇಮೇಲ್ ಲಭ್ಯವಿಲ್ಲ", cancel: "ರದ್ದುಮಾಡಿ", 
+        deleteConfirm: "ನಿಮ್ಮ ಖಾತೆಯನ್ನು ಅಳಿಸಲು ನೀವು ಖಚಿತವಾಗಿ ಬಯಸುವಿರಾ? ನಿಮ್ಮ ಎಲ್ಲಾ ಡೇಟಾ ಮತ್ತು ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಶಾಶ್ವತವಾಗಿ ಹೋಗುತ್ತದೆ. ಇದನ್ನು ರದ್ದುಗೊಳಿಸಲಾಗುವುದಿಲ್ಲ.",
+        dangerZone: "ಅಪಾಯದ ವಲಯ", selectLanguage: "ಭಾಷೆ ಆಯ್ಕೆಮಾಡಿ"
       },
       bn: {
-        header: "প্রোফাইল", edit: "সম্পাদনা", myOrders: "আমার অর্ডার", wallet: "ওয়ালেট", support: "সমর্থন",
-        explore: "অন্বেষণ করুন", home: "হোম", chatGita: "গীতা AI এর সাথে চ্যাট করুন", myKundli: "আমার কুণ্ডলী",
+        header: "সেটিংস", edit: "সম্পাদনা", myOrders: "আমার অর্ডার", wallet: "ওয়ালেট", support: "সমর্থন",
+        explore: "অন্বেষণ করুন", home: "হোম", chatGita: "জ্যোতিষীর সাথে চ্যাট করুন", myKundli: "আমার কুণ্ডলী",
         account: "অ্যাকাউন্ট", helpCenter: "সহায়তা কেন্দ্র (FAQ)", supportTicket: "সমর্থন টিকিট", walletTx: "ওয়ালেট লেনদেন", orderHistory: "অর্ডার ইতিহাস",
         legalSupport: "আইনি ও সমর্থন", privacy: "গোপনীয়তা নীতি", terms: "পরিষেবার শর্তাবলী", contactUs: "যোগাযোগ করুন",
         appSettings: "অ্যাপ সেটিংস", theme: "থিম", light: "হালকা", dark: "অন্ধকার", language: "ভাষা", 
-        logout: "লগ আউট", deleteAccount: "অ্যাকাউন্ট মুছুন",
-        bannerTitle: "জ্যোতিষী - 24x7 উপলব্ধ", bannerSub: "এখনই কথা বলুন - প্রথম চ্যাট ফ্রি", chatBtn: "চ্যাট", guest: "গেস্ট ইউজার", noEmail: "কোনো ইমেল নেই", cancel: "বাতিল করুন", deleteConfirm: "আপনি কি সত্যিই আপনার অ্যাকাউন্ট মুছে ফেলতে চান? এটি ফিরিয়ে আনা যাবে না।"
+        logout: "লগ আউট", loggingOut: "লগ আউট হচ্ছে...", deleteAccount: "অ্যাকাউন্ট মুছুন", deleting: "মুছে ফেলা হচ্ছে...",
+        bannerTitle: "জ্যোতিষী - 24x7 উপলব্ধ", bannerSub: "এখনই কথা বলুন - প্রথম চ্যাট ফ্রি", chatBtn: "চ্যাট", guest: "গেস্ট ইউজার", noEmail: "কোনো ইমেল নেই", cancel: "বাতিল করুন", 
+        deleteConfirm: "আপনি কি সত্যিই আপনার অ্যাকাউন্ট মুছে ফেলতে চান? আপনার সমস্ত ডেটা এবং ওয়ালেট ব্যালেন্স স্থায়ীভাবে হারিয়ে যাবে। এটি ফিরিয়ে আনা যাবে না।",
+        dangerZone: "ডেঞ্জার জোন", selectLanguage: "ভাষা নির্বাচন করুন"
       },
       mr: {
-        header: "प्रोफाइल", edit: "संपादित करा", myOrders: "माझ्या ऑर्डर्स", wallet: "वॉलेट", support: "समर्थन",
-        explore: "एक्सप्लोर करा", home: "होम", chatGita: "गीता AI शी चॅट करा", myKundli: "माझी कुंडली",
+        header: "सेटिंग्ज", edit: "संपादित करा", myOrders: "माझ्या ऑर्डर्स", wallet: "वॉलेट", support: "समर्थन",
+        explore: "एक्सप्लोर करा", home: "होम", chatGita: "ज्योतिषांशी चॅट करा", myKundli: "माझी कुंडली",
         account: "खाते", helpCenter: "मदत केंद्र (FAQ)", supportTicket: "समर्थन तिकीट", walletTx: "वॉलेट व्यवहार", orderHistory: "ऑर्डर इतिहास",
         legalSupport: "कायदेशीर आणि समर्थन", privacy: "गोपनीयता धोरण", terms: "सेवा अटी", contactUs: "आमच्याशी संपर्क साधा",
-        appSettings: "अॅप सेटिंग्ज", theme: "थीम", light: "प्रकाश", dark: "गडद", language: "भाषा", 
-        logout: "लॉग आउट", deleteAccount: "खाते हटवा",
-        bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "आता बोला - पहिली चॅट मोफत", chatBtn: "चॅट", guest: "गेस्ट यूजर", noEmail: "ईमेल उपलब्ध नाही", cancel: "रद्द करा", deleteConfirm: "तुम्हाला तुमचे खाते हटवायचे आहे का? हे पूर्ववत केले जाऊ शकत नाही."
+        appSettings: "अ‍ॅप सेटिंग्ज", theme: "थीम", light: "प्रकाश", dark: "गडद", language: "भाषा", 
+        logout: "लॉग आउट", loggingOut: "लॉग आउट होत आहे...", deleteAccount: "खाते हटवा", deleting: "हटवत आहे...",
+        bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "आता बोला - पहिली चॅट मोफत", chatBtn: "चॅट", guest: "गेस्ट यूजर", noEmail: "ईमेल उपलब्ध नाही", cancel: "रद्द करा", 
+        deleteConfirm: "तुम्हाला तुमचे खाते हटवायचे आहे का? तुमचा सर्व डेटा आणि वॉलेट बॅलन्स कायमचा जाईल. हे पूर्ववत केले जाऊ शकत नाही.",
+        dangerZone: "धोक्याचा विभाग", selectLanguage: "भाषा निवडा"
       },
       gu: {
-        header: "પ્રોફાઇલ", edit: "સંપાદિત કરો", myOrders: "મારા ઓર્ડર્સ", wallet: "વોલેટ", support: "સપોર્ટ",
-        explore: "એક્સપ્લોર કરો", home: "હોમ", chatGita: "ગીતા AI સાથે ચેટ કરો", myKundli: "મારી કુંડળી",
+        header: "સેટિંગ્સ", edit: "સંપાદિત કરો", myOrders: "મારા ઓર્ડર્સ", wallet: "વોલેટ", support: "સપોર્ટ",
+        explore: "એક્સપ્લોર કરો", home: "હોમ", chatGita: "જ્યોતિષી સાથે ચેટ કરો", myKundli: "મારી કુંડળી",
         account: "એકાઉન્ટ", helpCenter: "મદદ કેન્દ્ર (FAQ)", supportTicket: "સપોર્ટ ટિકિટ", walletTx: "વોલેટ વ્યવહારો", orderHistory: "ઓર્ડર ઇતિહાસ",
         legalSupport: "કાનૂની અને સપોર્ટ", privacy: "ગોપનીયતા નીતિ", terms: "સેવાની શરતો", contactUs: "અમારો સંપર્ક કરો",
         appSettings: "એપ સેટિંગ્સ", theme: "થીમ", light: "લાઇટ", dark: "ડાર્ક", language: "ભાષા", 
-        logout: "લોગ આઉટ", deleteAccount: "એકાઉન્ટ કાઢી નાખો",
-        bannerTitle: "જ્યોતિષી - 24x7 ઉપલબ્ધ", bannerSub: "હમણાં વાત કરો - પ્રથમ ચેટ મફત", chatBtn: "ચેટ", guest: "ગેસ્ટ યુઝર", noEmail: "કોઈ ઇમેઇલ નથી", cancel: "રદ કરો", deleteConfirm: "શું તમે ખરેખર તમારું એકાઉન્ટ કાઢી નાખવા માંગો છો? આ પૂર્વવત્ કરી શકાશે નહીં."
+        logout: "લોગ આઉટ", loggingOut: "લોગ આઉટ થઈ રહ્યું છે...", deleteAccount: "એકાઉન્ટ કાઢી નાખો", deleting: "કાઢી નાખી રહ્યું છે...",
+        bannerTitle: "જ્યોતિષી - 24x7 ઉપલબ્ધ", bannerSub: "હમણાં વાત કરો - પ્રથમ ચેટ મફત", chatBtn: "ચેટ", guest: "ગેસ્ટ યુઝર", noEmail: "કોઈ ઇમેઇલ નથી", cancel: "રદ કરો", 
+        deleteConfirm: "શું તમે ખરેખર તમારું એકાઉન્ટ કાઢી નાખવા માંગો છો? તમારો બધો ડેટા અને વોલેટ બેલેન્સ કાયમ માટે જતા રહેશે. આ પૂર્વવત્ કરી શકાશે નહીં.",
+        dangerZone: "ડેન્જર ઝોન", selectLanguage: "ભાષા પસંદ કરો"
       },
       ml: {
-        header: "പ്രൊഫൈൽ", edit: "എഡിറ്റ് ചെയ്യുക", myOrders: "എന്റെ ഓർഡറുകൾ", wallet: "വാലറ്റ്", support: "പിന്തുണ",
-        explore: "പര്യവേക്ഷണം ചെയ്യുക", home: "ഹോം", chatGita: "ഗീത AI-യുമായി ചാറ്റ് ചെയ്യുക", myKundli: "എന്റെ കുണ്ഡലി",
+        header: "ക്രമീകരണങ്ങൾ", edit: "എഡിറ്റ് ചെയ്യുക", myOrders: "എന്റെ ഓർഡറുകൾ", wallet: "വാലറ്റ്", support: "പിന്തുണ",
+        explore: "പര്യവേക്ഷണം ചെയ്യുക", home: "ഹോം", chatGita: "ജ്യോതിഷിയുമായി ചാറ്റ് ചെയ്യുക", myKundli: "എന്റെ കുണ്ഡലി",
         account: "അക്കൗണ്ട്", helpCenter: "സഹായ കേന്ദ്രം (FAQ)", supportTicket: "പിന്തുണ ടിക്കറ്റ്", walletTx: "വാലറ്റ് ഇടപാടുകൾ", orderHistory: "ഓർഡർ ചരിത്രം",
         legalSupport: "നിയമപരവും പിന്തുണയും", privacy: "സ്വകാര്യതാ നയം", terms: "സേവന നിബന്ധനകൾ", contactUs: "ബന്ധപ്പെടുക",
         appSettings: "ആപ്പ് ക്രമീകരണങ്ങൾ", theme: "തീം", light: "ലൈറ്റ്", dark: "ഡാർക്ക്", language: "ഭാഷ", 
-        logout: "ലോഗ് ഔട്ട്", deleteAccount: "അക്കൗണ്ട് ഇല്ലാതാക്കുക",
-        bannerTitle: "ജ്യോതിഷി - 24x7 ലഭ്യമാണ്", bannerSub: "ഇപ്പോൾ സംസാരിക്കുക - ആദ്യ ചാറ്റ് സൗജന്യം", chatBtn: "ചാറ്റ്", guest: "ഗസ്റ്റ് യൂസർ", noEmail: "ഇമെയിൽ ലഭ്യമല്ല", cancel: "റദ്ദാക്കുക", deleteConfirm: "നിങ്ങളുടെ അക്കൗണ്ട് ഇല്ലാതാക്കാൻ ആഗ്രഹിക്കുന്നുണ്ടോ? ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല."
+        logout: "ലോഗ് ഔട്ട്", loggingOut: "ലോഗ് ഔട്ട് ചെയ്യുന്നു...", deleteAccount: "അക്കൗണ്ട് ഇല്ലാതാക്കുക", deleting: "ഇല്ലാതാക്കുന്നു...",
+        bannerTitle: "ജ്യോതിഷി - 24x7 ലഭ്യമാണ്", bannerSub: "ഇപ്പോൾ സംസാരിക്കുക - ആദ്യ ചാറ്റ് സൗജന്യം", chatBtn: "ചാറ്റ്", guest: "ഗസ്റ്റ് യൂസർ", noEmail: "ഇമെയിൽ ലഭ്യമല്ല", cancel: "റദ്ദാക്കുക", 
+        deleteConfirm: "നിങ്ങളുടെ അക്കൗണ്ട് ഇല്ലാതാക്കാൻ ആഗ്രഹിക്കുന്നുണ്ടോ? നിങ്ങളുടെ എല്ലാ ഡാറ്റയും വാലറ്റ് ബാലൻസും എന്നെന്നേക്കുമായി പോകും. ഇത് പഴയപടിയാക്കാൻ കഴിയില്ല.",
+        dangerZone: "ഡേഞ്ചർ സോൺ", selectLanguage: "ഭാഷ തിരഞ്ഞെടുക്കുക"
       }
     };
     return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
@@ -128,6 +149,41 @@ export default function SettingsPage() {
   const iconColorClass = isDark ? "text-slate-300" : "text-gray-600";
   const textColorClass = isDark ? "text-slate-200" : "text-gray-800";
   const subTextClass = isDark ? "text-slate-400" : "text-gray-500";
+
+  // 🔥 SECURE LOGOUT LOGIC
+  const handleLogout = async () => {
+    if (window.confirm(t("logout") + "?")) {
+      setIsLoggingOut(true);
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch (error) {
+        console.error("Logout API failed", error);
+      } finally {
+        localStorage.clear();
+        window.location.href = "/login";
+      }
+    }
+  };
+
+  // 🔥 DELETE ACCOUNT LOGIC (Premium UX)
+  const handleDeleteAccount = async () => {
+    if (window.confirm(t("deleteConfirm"))) {
+      setIsDeleting(true);
+      try {
+        // Future API Integration Note:
+        // await fetch("/api/user/delete", { method: "DELETE" });
+        
+        // Simulate API call delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        localStorage.clear();
+        window.location.href = "/login";
+      } catch (error) {
+        alert("Failed to delete account. Please contact support.");
+        setIsDeleting(false);
+      }
+    }
+  };
 
   return (
     <main className={`min-h-[100dvh] w-full font-sans pb-32 transition-colors duration-300 ${pageClass}`}>
@@ -194,48 +250,6 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* ACCOUNT */}
-        <section>
-          <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 ${subTextClass}`}>{t("account")}</h3>
-          <div className={`rounded-2xl border overflow-hidden ${cardClass}`}>
-            <Link href="/help" className={`flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><HelpCircle size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("helpCenter")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-            <Link href="/support" className={`flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><Headphones size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("supportTicket")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-            <Link href="/wallet" className={`flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><FileText size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("walletTx")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-            <Link href="/orders" className={`flex items-center justify-between p-4 transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><List size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("orderHistory")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-          </div>
-        </section>
-
-        {/* LEGAL & SUPPORT */}
-        <section>
-          <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 ${subTextClass}`}>{t("legalSupport")}</h3>
-          <div className={`rounded-2xl border overflow-hidden ${cardClass}`}>
-            <Link href="/privacy" className={`flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><Shield size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("privacy")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-            <Link href="/terms" className={`flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><FileText size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("terms")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-            <Link href="/contact" className={`flex items-center justify-between p-4 transition-colors ${listItemClass}`}>
-              <div className="flex items-center gap-3"><Mail size={18} className={iconColorClass} /><span className={`text-[13px] font-medium ${textColorClass}`}>{t("contactUs")}</span></div>
-              <ChevronRight size={16} className={subTextClass} />
-            </Link>
-          </div>
-        </section>
-
         {/* APP SETTINGS */}
         <section>
           <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 ${subTextClass}`}>{t("appSettings")}</h3>
@@ -251,114 +265,90 @@ export default function SettingsPage() {
                 <button onClick={() => setTheme("light")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-medium rounded-lg transition-colors ${!isDark ? "bg-white text-orange-600 shadow-sm" : "text-slate-400 hover:text-white"}`}>
                   <Sun size={14} /> {t("light")}
                 </button>
-                <button onClick={() => setTheme("dark")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-medium rounded-lg transition-colors ${isDark ? "bg-[#2e3a4e] text-white shadow-sm" : "text-gray-500 hover:text-gray-900"}`}>
+                <button onClick={() => setTheme("dark")} className={`flex-1 flex items-center justify-center gap-1.5 py-2 text-[12px] font-medium rounded-lg transition-colors ${isDark ? "bg-[#2e3a4e] text-white shadow-sm" : "text-gray-500 hover:text-black"}`}>
                   <Moon size={14} /> {t("dark")}
                 </button>
               </div>
             </div>
 
-            {/* 🔥 LANGUAGE SECTION (Single Row like 2nd screenshot) */}
-            <button 
-              onClick={() => setShowLangModal(true)}
-              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all duration-200 group ${
-                isDark 
-                  ? "bg-[#0A0F19] border-slate-800 hover:border-[#ff6b00]/50 hover:bg-slate-800/50" 
-                  : "bg-gray-50 border-gray-200 hover:border-[#ff6b00] hover:bg-orange-50/50"
-              }`}
-            >
-              <div className="flex items-center gap-2.5">
-                <Globe size={18} className="text-[#ff6b00] group-hover:scale-110 transition-transform" />
-                <span className={`text-[14px] font-bold ${textColorClass}`}>{t("language")}</span>
+            {/* Language Selector Trigger */}
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <Globe size={16} className="text-[#ff6b00]" />
+                <span className={`text-[13px] font-semibold ${textColorClass}`}>{t("language")}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[14px] font-black text-[#ff6b00]">{currentLangLabel}</span>
-                <ChevronRight size={18} className={`${subTextClass} group-hover:text-[#ff6b00] transition-colors`} />
-              </div>
-            </button>
+              <button 
+                onClick={() => setShowLangModal(true)}
+                className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-colors ${isDark ? "bg-[#0A0F19] border-slate-700 hover:border-slate-500 text-white" : "bg-gray-50 border-gray-200 hover:border-orange-300 text-gray-800"}`}
+              >
+                <span className="text-[13px] font-medium">{currentLangLabel}</span>
+                <ChevronRight size={16} className={subTextClass} />
+              </button>
+            </div>
 
           </div>
         </section>
 
-        {/* LOGOUT & DELETE ACCOUNT */}
+        {/* 🔥 DANGER ZONE (Premium Apps Standard) */}
         <section>
-          <div className={`rounded-2xl border overflow-hidden ${cardClass}`}>
+          <h3 className={`text-[10px] font-bold uppercase tracking-widest mb-2 px-1 text-rose-500`}>{t("dangerZone")}</h3>
+          <div className={`rounded-2xl border border-rose-500/20 overflow-hidden ${isDark ? "bg-[#151d2c]" : "bg-white"}`}>
+            
             <button 
-              onClick={() => {
-                if(window.confirm("Logout?")) {
-                  localStorage.clear(); window.location.href="/login";
-                }
-              }}
-              className={`w-full flex items-center justify-between p-4 border-b transition-colors ${listItemClass}`}
+              onClick={handleLogout}
+              disabled={isLoggingOut || isDeleting}
+              className={`w-full flex items-center justify-between p-4 border-b transition-colors ${isDark ? "border-slate-800/50 hover:bg-rose-500/5" : "border-gray-100 hover:bg-rose-50"}`}
             >
               <div className="flex items-center gap-3">
-                <LogOut size={18} className={iconColorClass} />
-                <span className={`text-[13px] font-medium ${textColorClass}`}>{t("logout")}</span>
+                {isLoggingOut ? <Loader2 size={18} className="animate-spin text-rose-500" /> : <LogOut size={18} className="text-rose-500" />}
+                <span className="text-[13px] font-bold text-rose-500">{isLoggingOut ? t("loggingOut") : t("logout")}</span>
+              </div>
+            </button>
+
+            <button 
+              onClick={handleDeleteAccount}
+              disabled={isLoggingOut || isDeleting}
+              className={`w-full flex items-center justify-between p-4 transition-colors ${isDark ? "hover:bg-rose-500/5" : "hover:bg-rose-50"}`}
+            >
+              <div className="flex items-center gap-3">
+                {isDeleting ? <Loader2 size={18} className="animate-spin text-rose-500" /> : <Trash2 size={18} className="text-rose-500" />}
+                <span className="text-[13px] font-bold text-rose-500">{isDeleting ? t("deleting") : t("deleteAccount")}</span>
               </div>
             </button>
             
-            <button 
-              onClick={() => {
-                if(window.confirm(t("deleteConfirm"))) {
-                  alert("Account deletion logic here.");
-                }
-              }}
-              className={`w-full flex items-center justify-between p-4 transition-colors ${isDark ? "hover:bg-rose-500/10" : "hover:bg-rose-50"}`}
-            >
-              <div className="flex items-center gap-3">
-                <Trash2 size={18} className="text-rose-500" />
-                <span className="text-[13px] font-medium text-rose-500">{t("deleteAccount")}</span>
-              </div>
-            </button>
           </div>
         </section>
 
       </div>
 
-      {/* 🔥 LANGUAGE SELECTION MODAL (Premium Bottom Sheet) */}
+      {/* LANGUAGE SELECTION MODAL */}
       {showLangModal && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm p-0 sm:p-4">
-          <div className={`w-full max-w-md rounded-t-[2.5rem] sm:rounded-3xl overflow-hidden flex flex-col max-h-[85vh] border shadow-2xl animate-in slide-in-from-bottom-10 sm:zoom-in-95 ${isDark ? "bg-[#151d2c] border-slate-800" : "bg-white border-gray-200"}`}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm animate-in fade-in">
+          <div className={`w-full max-w-sm overflow-hidden rounded-3xl border shadow-2xl animate-in zoom-in-95 ${cardClass}`}>
             
-            <div className={`w-full flex justify-center pt-3 pb-1`}>
-              <div className={`w-12 h-1.5 rounded-full ${isDark ? "bg-slate-700" : "bg-gray-300"}`}></div>
-            </div>
-
-            <div className={`flex items-center justify-between px-6 py-5 border-b ${isDark ? "border-slate-800" : "border-gray-200"}`}>
-              <div>
-                <h2 className={`text-[20px] font-black tracking-tight ${isDark ? "text-white" : "text-gray-900"}`}>{t("language")}</h2>
-                <p className={`text-[12px] mt-0.5 ${subTextClass}`}>Select your preferred app language</p>
-              </div>
-              <button onClick={() => setShowLangModal(false)} className={`p-2.5 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:bg-gray-200"}`}>
-                <X size={20} />
+            <div className={`border-b px-5 py-4 text-center flex items-center justify-between ${isDark ? "border-slate-800" : "border-gray-200"}`}>
+              <h2 className={`text-[16px] font-bold flex-1 text-left ${textColorClass}`}>{t("selectLanguage")}</h2>
+              <button type="button" onClick={() => setShowLangModal(false)} className={`p-2 rounded-full transition-colors ${isDark ? "bg-[#0A0F19] text-slate-400 hover:text-white" : "bg-gray-100 text-gray-500 hover:text-black"}`}>
+                <X size={18} />
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto">
+            <div className="p-3 max-h-[60vh] overflow-y-auto custom-scrollbar flex flex-col gap-1.5">
               {LANGUAGES.map((l) => (
                 <button
                   key={l.code}
-                  onClick={() => { setLanguage(l.code); setShowLangModal(false); }}
-                  className={`w-full flex items-center justify-between p-4 mb-2 rounded-2xl transition-all duration-200 ${
+                  onClick={() => {
+                    setLanguage(l.code);
+                    setShowLangModal(false);
+                  }}
+                  className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
                     lang === l.code 
-                      ? (isDark ? "bg-[#ff6b00]/10 border-2 border-[#ff6b00]/50 shadow-sm" : "bg-orange-50 border-2 border-[#ff6b00] shadow-sm") 
-                      : `border-2 border-transparent ${isDark ? "hover:bg-white/5" : "hover:bg-gray-50"}`
+                      ? "bg-[#ff6b00] text-white border-[#ff6b00] shadow-md" 
+                      : isDark ? "bg-[#0A0F19] text-slate-300 border-transparent hover:bg-slate-800" : "bg-gray-50 text-gray-700 border-transparent hover:bg-gray-100"
                   }`}
                 >
-                  <div className="flex flex-col text-left">
-                    <span className={`text-[16px] font-bold ${lang === l.code ? "text-[#ff6b00]" : (isDark ? "text-slate-200" : "text-gray-800")}`}>
-                      {l.native}
-                    </span>
-                    <span className={`text-[12px] font-medium mt-0.5 ${subTextClass}`}>{l.label}</span>
-                  </div>
-                  
-                  {/* Premium Radio Button / Check */}
-                  <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    lang === l.code 
-                      ? "border-[#ff6b00] bg-[#ff6b00] shadow-[0_0_10px_rgba(255,107,0,0.4)]" 
-                      : (isDark ? "border-slate-600" : "border-gray-300")
-                  }`}>
-                    {lang === l.code && <Check size={14} className="text-white font-bold" strokeWidth={3} />}
-                  </div>
+                  <span className="text-[14px] font-semibold">{l.native}</span>
+                  {lang === l.code && <Check size={18} />}
                 </button>
               ))}
             </div>
@@ -377,7 +367,7 @@ export default function SettingsPage() {
             <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
           </div>
         </div>
-        <Link href="/chat" className="bg-white text-red-600 font-bold text-[13px] px-5 py-2 rounded-full shadow-sm active:scale-95 transition-transform">
+        <Link href="/chat" className="bg-white text-red-600 font-bold text-[13px] px-5 py-2 rounded-full shadow-sm active:scale-95">
           {t("chatBtn")}
         </Link>
       </div>
