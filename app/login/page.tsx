@@ -74,7 +74,6 @@ function LoginContent() {
         phoneLabel: "Mobile Number", sendOtp: "Send OTP", otpLabel: "Enter OTP", verify: "Verify", back: "Back",
         initError: "Phone verification failed to init. Refresh page."
       },
-      // Shortened for brevity, keeping other languages intact
       te: { login: "లాగిన్", createAccount: "ఖాతా సృష్టించండి", welcomeBack: "తిరిగి స్వాగతం", joinGita: "గీత AIలో చేరండి", loginDesc: "మీ వాలెట్ మరియు కుండలిని యాక్సెస్ చేయడానికి లాగిన్ చేయండి.", joinDesc: "మీ చాట్లు సేవ్ చేయడానికి ఖాతా సృష్టించండి.", name: "మీ పేరు", email: "ఇమెయిల్", password: "పాస్‌వర్డ్", loginBtn: "లాగిన్", registerBtn: "నమోదు చేయండి", noAccount: "ఖాతా లేదా?", hasAccount: "ఖాతా ఉందా?", registerHere: "నమోదు చేయండి", loginHere: "లాగిన్ చేయండి", pleaseWait: "వేచి ఉండండి...", secure: "100% సురక్షితం", trusted: "10,000+ నమ్మకం", orText: "లేదా ఈమెయిల్/ఫోన్ తో", googleBtn: "Google తో కొనసాగండి", githubBtn: "GitHub", phoneBtn: "ఫోన్", phoneLabel: "మొబైల్ నంబర్", sendOtp: "OTP పంపండి", otpLabel: "OTP నమోదు చేయండి", verify: "ధృవీకరించండి", back: "వెనుకకు", initError: "ఫోన్ వెరిఫికేషన్ ప్రారంభం కాలేదు." },
       ta: { login: "உள்நுழை", createAccount: "கணக்கை உருவாக்கு", welcomeBack: "மீண்டும் வருக", joinGita: "கீதா AI இல் சேரவும்", loginDesc: "உங்கள் பணப்பை மற்றும் ஜாதகத்தை அணுக உள்நுழையவும்.", joinDesc: "உங்கள் அரட்டைகளை சேமிக்க கணக்கை உருவாக்கவும்.", name: "உங்கள் பெயர்", email: "மின்னஞ்சல்", password: "கடவுச்சொல்", loginBtn: "உள்நுழை", registerBtn: "பதிவு செய்", noAccount: "கணக்கு இல்லையா?", hasAccount: "கணக்கு உள்ளதா?", registerHere: "பதிவு செய்யவும்", loginHere: "உள்நுழையவும்", pleaseWait: "காத்திருங்கள்...", secure: "100% பாதுகாப்பானது", trusted: "10,000+ நம்பிக்கை", orText: "அல்லது மின்னஞ்சல்/தொலைபேசி", googleBtn: "Google மூலம் தொடரவும்", githubBtn: "GitHub", phoneBtn: "தொலைபேசி", phoneLabel: "மொபைல் எண்", sendOtp: "OTP அனுப்பு", otpLabel: "OTP ஐ உள்ளிடவும்", verify: "சரிபார்க்கவும்", back: "பின்னால்", initError: "தொலைபேசி சரிபார்ப்பு தோல்வியடைந்தது." },
       kn: { login: "ಲಾಗಿನ್", createAccount: "ಖಾತೆ ರಚಿಸಿ", welcomeBack: "ಮತ್ತೆ ಸ್ವಾಗತ", joinGita: "ಗೀತಾ AI ಗೆ ಸೇರಿ", loginDesc: "ನಿಮ್ಮ ವಾಲೆಟ್ ಮತ್ತು ಕುಂಡಲಿಯನ್ನು ಪ್ರವೇಶಿಸಲು ಲಾಗಿನ್ ಮಾಡಿ.", joinDesc: "ನಿಮ್ಮ ಚಾಟ್‌ಗಳನ್ನು ಉಳಿಸಲು ಖಾತೆ ರಚಿಸಿ.", name: "ನಿಮ್ಮ ಹೆಸರು", email: "ಇಮೇಲ್", password: "ಪಾಸ್‌ವರ್ಡ್", loginBtn: "ಲಾಗಿನ್", registerBtn: "ನೋಂದಾಯಿಸಿ", noAccount: "ಖಾತೆ ಇಲ್ಲವೇ?", hasAccount: "ಖಾತೆ ಇದೆಯೇ?", registerHere: "ನೋಂದಾಯಿಸಿ", loginHere: "ಲಾಗಿನ್ ಮಾಡಿ", pleaseWait: "ನಿರೀಕ್ಷಿಸಿ...", secure: "100% ಸುರಕ್ಷಿತ", trusted: "10,000+ ನಂಬಿಕೆ", orText: "ಅಥವಾ ಇಮೇಲ್/ಫೋನ್", googleBtn: "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ", githubBtn: "GitHub", phoneBtn: "ಫೋನ್", phoneLabel: "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ", sendOtp: "OTP ಕಳುಹಿಸಿ", otpLabel: "OTP ನಮೂದಿಸಿ", verify: "ಪರಿಶೀಲಿಸಿ", back: "ಹಿಂದೆ", initError: "ಫೋನ್ ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ." },
@@ -94,7 +93,6 @@ function LoginContent() {
     ? "w-full rounded-xl border border-slate-700 bg-[#0A0F19] p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-white transition-colors"
     : "w-full rounded-xl border border-gray-200 bg-gray-50 p-3.5 pl-11 text-[15px] font-medium focus:border-[#ff6b00] focus:outline-none text-gray-900 transition-colors";
 
-  // 🔥 Proper reCAPTCHA setup
   useEffect(() => {
     if (method !== "phone") return;
     const verifier = setupRecaptcha("recaptcha-container");
@@ -219,7 +217,8 @@ function LoginContent() {
             <div className="mx-auto w-20 h-20 relative flex items-center justify-center mb-5 group">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b00] to-[#ff3d00] rounded-full blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
               <div className={`relative flex items-center justify-center w-full h-full rounded-full border-2 backdrop-blur-xl shadow-[inset_0_0_20px_rgba(255,107,0,0.2)] ${isDark ? "border-white/10 bg-white/5" : "border-white bg-white/60"}`}>
-                <Sparkles className="text-transparent bg-clip-text bg-gradient-to-br from-[#ff6b00] to-[#ff3d00] drop-shadow-[0_0_8px_rgba(255,107,0,0.8)]" size={36} strokeWidth={2.5} />
+                {/* 🔥 FIXED SPARKLES ICON (Ab khali nahi dikhega) */}
+                <Sparkles className="text-white drop-shadow-[0_0_12px_rgba(255,107,0,1)]" size={36} strokeWidth={2.5} />
               </div>
             </div>
             <h2 className={`text-2xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
@@ -236,7 +235,6 @@ function LoginContent() {
             </div>
           )}
 
-          {/* 🔥 GOOGLE BUTTON (PRIMARY CTA) */}
           <div className="mb-6 relative z-10">
             <button
               onClick={handleGoogleLogin}
@@ -255,14 +253,12 @@ function LoginContent() {
             </button>
           </div>
 
-          {/* DIVIDER */}
           <div className="mb-6 flex items-center gap-4 relative z-10">
             <div className={`flex-1 h-px ${isDark ? "bg-slate-800" : "bg-gray-200"}`}></div>
             <span className={`text-[10px] font-bold uppercase tracking-wider ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("orText")}</span>
             <div className={`flex-1 h-px ${isDark ? "bg-slate-800" : "bg-gray-200"}`}></div>
           </div>
 
-          {/* TABS (Email/Phone) */}
           <div className={`flex p-1 rounded-xl mb-6 relative z-10 ${isDark ? "bg-[#0A0F19]" : "bg-gray-100"}`}>
             <button 
               onClick={() => { setMethod("email"); setShowOtp(false); setError(null); }}
@@ -311,9 +307,7 @@ function LoginContent() {
                     <span className={`absolute left-11 top-4 text-[15px] font-bold ${isDark ? "text-slate-300" : "text-gray-600"}`}>+91</span>
                     <input type="tel" placeholder={t("phoneLabel")} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} className={`${inputClass} pl-[5.5rem]`} />
                   </div>
-                  
                   <div id="recaptcha-container"></div>
-                  
                   <button onClick={handleSendOtp} disabled={loading || phone.length !== 10} className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100">
                     {loading ? <Loader2 size={20} className="animate-spin" /> : t("sendOtp")}
                   </button>
