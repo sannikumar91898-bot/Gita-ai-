@@ -55,18 +55,21 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Currency mismatch" }, { status: 400 });
     }
 
-    // 4. Database mein order dhundein
+    // 4. Database mein order dhundein (Sirf orderId se, status se nahi)
     const paymentRecord = await db.select().from(payments)
-      .where(and(
-        eq(payments.orderId, razorpay_order_id), 
-        eq(payments.status, "created")
-      ))
+      .where(eq(payments.orderId, razorpay_order_id))
       .limit(1);
 
     const payment = paymentRecord[0];
     
-    // Agar order pehle se 'paid' hai, toh kuch mat karein (Idempotency)
+    // 🔥 FIX 1: Agar order database me hi nahi mila, toh 404 do (Razorpay retry karega)
     if (!payment) {
+      console.error(`Webhook Error: Order ${razorpay_order_id} not found in DB.`);
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // 🔥 FIX 2: Agar order pehle se 'paid' hai, toh kuch mat karein (Idempotency)
+    if (payment.status === "paid") {
       return NextResponse.json({ status: "already_processed" }, { status: 200 });
     }
 
@@ -93,7 +96,7 @@ export async function POST(req: Request) {
         })
         .where(and(
           eq(payments.id, payment.id), 
-          eq(payments.status, "created") 
+          eq(payments.status, "created") // Safety check
         ))
         .returning();
 
@@ -102,7 +105,6 @@ export async function POST(req: Request) {
       }
 
       // User ke wallet me paise add karein
-      // Yahan payment.userId use karenge kyunki getUser() webhook me kaam nahi karega (webhook me user session nahi hota)
       await tx.update(users)
         .set({ walletBalancePaise: sql`${users.walletBalancePaise} + ${finalAmountToAdd}` })
         .where(eq(users.id, payment.userId)); 
