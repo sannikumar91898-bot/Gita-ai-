@@ -7,6 +7,8 @@ import { getUser } from "@/auth";
 import { db } from "@/index";
 import { birthDetails, charts, conversations, messages, remedies, users } from "@/schema";
 import { checkAILimit } from "@/rate-limit"; 
+// 🔥 FIX: Import Knowledge Base
+import { getKnowledgeAnswerText } from "@/lib/knowledge-base";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -43,7 +45,6 @@ const FREE_MESSAGE_LIMIT = 3;
 
 type PersonaConfig = { name: string; specializations: string; tone: string; rules: string; };
 
-// 🔥 FIX: Persona-specific hardcoded examples for premium tone
 const PERSONAS: Record<string, PersonaConfig> = {
   gita: { 
     name: "Gita", 
@@ -310,7 +311,32 @@ export async function POST(request: Request) {
     const personaConfig = PERSONAS[persona];
     const history = previousMessages.reverse().map(m => ({ role: m.role, content: m.content }));
 
-    // 🔥 FIX: Injecting FULL Kundli Data (Degrees, Dashas, Planets)
+    // 🔥 KNOWLEDGE BASE CHECK (AI Call se pehle)
+    const knowledgeAnswer = getKnowledgeAnswerText(userMessage, language as any, personaConfig.specializations);
+    
+    if (knowledgeAnswer) {
+      // Agar direct answer mil gaya, toh AI ko call mat karo
+      const [assistantRow] = await db.insert(messages).values({ conversationId: convId, userId, role: "assistant", content: knowledgeAnswer }).returning();
+      
+      await db.update(conversations).set({ updatedAt: new Date() }).where(eq(conversations.id, convId));
+
+      const nextWalletBalance = !isPremium && deductedType === "wallet" ? (user.walletBalancePaise ?? 0) - COST_PER_MESSAGE_PAISE : user.walletBalancePaise;
+      const nextFreeUsed = !isPremium && deductedType === "free" ? (user.freeMessagesUsed ?? 0) + 1 : user.freeMessagesUsed;
+
+      return NextResponse.json({
+        success: true,
+        conversationId: convId,
+        userMessageId: uMsg.id,
+        message: { id: assistantRow.id, role: "assistant", content: knowledgeAnswer },
+        remedy: null,
+        balance: {
+          walletBalancePaise: nextWalletBalance,
+          freeMessagesUsed: nextFreeUsed,
+        },
+      });
+    }
+
+    // 🔥 AI CALL (Agar Knowledge Base me nahi mila)
     const birth = birthRows[0];
     const chart = chartRows[0];
     
@@ -339,7 +365,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // 🔥 MASTER SYSTEM PROMPT (Psychology + Business + Zero Hallucination)
     const systemPrompt = `
 You are ${personaConfig.name}, an empathetic, wise, and practical AI Vedic Astrologer and Life Coach. 
 Your goal is to build deep user trust by combining accurate Vedic Astrology, modern Psychology, and practical Business/Career Mindset. 
