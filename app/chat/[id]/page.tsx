@@ -34,7 +34,7 @@ function createMessageId(): string {
 export default function AstrologerChatPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
-  const { lang, theme, me } = useApp(); // 🔥 Added 'me' for onboarding check
+  const { lang, theme, me, loading, refresh } = useApp(); // 🔥 Added loading and refresh
 
   const isDark = theme === "dark";
   const id = typeof params?.id === "string" ? params.id : "";
@@ -43,18 +43,15 @@ export default function AstrologerChatPage() {
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [loadingChat, setLoadingChat] = useState(false); // renamed from loading to avoid clash
   const [historyLoading, setHistoryLoading] = useState(true);
   const [conversationId, setConversationId] = useState<string | null>(null);
-  
   const [walletBalance, setWalletBalance] = useState(0);
-  
   const [showPaywall, setShowPaywall] = useState(false);
-
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const endRef = useRef<HTMLDivElement>(null);
   const requestInProgress = useRef(false);
   const activePersonaRef = useRef(id);
@@ -68,7 +65,7 @@ export default function AstrologerChatPage() {
         currentBalance: "वर्तमान बैलेंस", addCash: "अभी रिचार्ज करें", maybeLater: "बाद में", 
         chatEnded: "आपकी चैट अधूरी रह गई... सच्चाई जानने के लिए रिचार्ज करें।",
         missingDetails: "कृपया चैट शुरू करने से पहले अपनी जन्म कुंडली की जानकारी भरें।",
-        fillDetails: "विवरण भरें"
+        fillDetails: "विवरण भरें", preparing: "सेशन तैयार हो रहा है..."
       },
       hinglish: {
         connecting: "Jyotishi jud rahi hain...", placeholder: "Apna sawal likhein...",
@@ -76,7 +73,7 @@ export default function AstrologerChatPage() {
         currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
         chatEnded: "Aapki chat adhuri reh gayi... sachai jaanne ke liye recharge karein.",
         missingDetails: "Kripya chat shuru karne se pehle apni janam kundli ki jankari bharein.",
-        fillDetails: "Details Bharein"
+        fillDetails: "Details Bharein", preparing: "Session taiyaar ho raha hai..."
       },
       en: {
         connecting: "Astrologer is connecting...", placeholder: "Ask your question...",
@@ -84,64 +81,16 @@ export default function AstrologerChatPage() {
         currentBalance: "Current Balance", addCash: "Recharge Now", maybeLater: "Maybe Later",
         chatEnded: "Your chat was left incomplete... Recharge to hear the truth.",
         missingDetails: "Please fill your birth details before starting a chat.",
-        fillDetails: "Fill Details"
+        fillDetails: "Fill Details", preparing: "Preparing session..."
       },
-      te: {
-        connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...",
-        paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది. మీ భవిష్యత్తు నిజం తెలుసుకోవడానికి రీఛార్జ్ చేయండి.", 
-        currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత",
-        chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది... నిజం తెలుసుకోవడానికి రీఛార్జ్ చేయండి.",
-        missingDetails: "దయచేసి చాట్ ప్రారంభించే ముందు మీ పుట్టిన వివరాలను పూరించండి.",
-        fillDetails: "వివరాలు పూరించండి"
-      },
-      ta: {
-        connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...",
-        paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது. உங்கள் எதிர்கால உண்மையை அறிய ரீசார்ஜ் செய்யுங்கள்.", 
-        currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்",
-        chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை... உண்மையை அறிய ரீசார்ஜ் செய்யுங்கள்.",
-        missingDetails: "அரட்டையைத் தொடங்குவதற்கு முன் உங்கள் பிறப்பு விவரங்களை நிரப்பவும்.",
-        fillDetails: "விவரங்களை நிரப்பவும்"
-      },
-      kn: {
-        connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...",
-        paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ. ನಿಮ್ಮ ಭವಿಷ್ಯದ ಸತ್ಯ ತಿಳಿಯಲು ರೀಚಾರ್ಜ್ ಮಾಡಿ.", 
-        currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ",
-        chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ... ಸತ್ಯ ತಿಳಿಯಲು ರೀಚಾರ್ಜ್ ಮಾಡಿ.",
-        missingDetails: "ದಯವಿಟ್ಟು ಚಾಟ್ ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.",
-        fillDetails: "ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ"
-      },
-      bn: {
-        connecting: "জ্যোতিষী সংযোগ করছেন...", placeholder: "আপনার প্রশ্ন জিজ্ঞাসা করুন...",
-        paywallTitle: "ব্যালেন্স শেষ", paywallDesc: "আপনার ফ্রি মেসেজ বা ওয়ালেট ব্যালেন্স শেষ। ভবিষ্যতের সত্য জানতে রিচার্জ করুন।", 
-        currentBalance: "বর্তমান ব্যালেন্স", addCash: "এখনই রিচার্জ করুন", maybeLater: "পরে",
-        chatEnded: "আপনার চ্যাট অসম্পূর্ণ ছিল... সত্য জানতে রিচার্জ করুন।",
-        missingDetails: "চ্যাট শুরু করার আগে আপনার জন্ম বিবরণ পূরণ করুন।",
-        fillDetails: "বিবরণ পূরণ করুন"
-      },
-      mr: {
-        connecting: "ज्योतिषी जोडत आहेत...", placeholder: "तुमचा प्रश्न विचारा...",
-        paywallTitle: "बॅलन्स संपला आहे", paywallDesc: "तुमचे फ्री मेसेज किंवा वॉलेट बॅलन्स संपले आहे. भविष्यातील सत्य जाणून घेण्यासाठी रिचार्ज करा.", 
-        currentBalance: "सध्याचा बॅलन्स", addCash: "आता रिचार्ज करा", maybeLater: "नंतर",
-        chatEnded: "तुमची चॅट अपूर्ण राहिली... सत्य जाणून घेण्यासाठी रिचार्ज करा.",
-        missingDetails: "कृपया चॅट सुरू करण्यापूर्वी तुमची जन्म तपशील भरा.",
-        fillDetails: "तपशील भरा"
-      },
-      gu: {
-        connecting: "જ્યોતિષી જોડાઈ રહ્યા છે...", placeholder: "તમારો પ્રશ્ન પૂછો...",
-        paywallTitle: "બેલેન્સ ખતમ", paywallDesc: "તમારા ફ્રી મેસેજ અથવા વોલેટ બેલેન્સ ખતમ થઈ ગયા છે. ભવિષ્યનું સત્ય જાણવા રિચાર્જ કરો.", 
-        currentBalance: "વર્તમાન બેલેન્સ", addCash: "હમણાં જ રિચાર્જ કરો", maybeLater: "પછી",
-        chatEnded: "તમારી ચેટ અધૂરી રહી ગઈ... સત્ય જાણવા રિચાર્જ કરો.",
-        missingDetails: "કૃપા કરીને ચેટ શરૂ કરતા પહેલા તમારી જન્મ વિગતો ભરો.",
-        fillDetails: "વિગતો ભરો"
-      },
-      ml: {
-        connecting: "ജ്യോതിഷി ബന്ധിപ്പിക്കുന്നു...", placeholder: "നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക...",
-        paywallTitle: "ബാലൻസ് തീർന്നു", paywallDesc: "നിങ്ങളുടെ സൗജന്യ സന്ദേശങ്ങളോ വാലറ്റ് ബാലൻസോ തീർന്നു. ഭാവിയുടെ സത്യം അറിയാൻ റീചാർജ് ചെയ്യുക.", 
-        currentBalance: "നിലവിലെ ബാലൻസ്", addCash: "ഇപ്പോൾ റീചാർജ് ചെയ്യുക", maybeLater: "പിന്നീട്",
-        chatEnded: "നിങ്ങളുടെ ചാറ്റ് അപൂർണ്ണമായി... സത്യം അറിയാൻ റീചാർജ് ചെയ്യുക.",
-        missingDetails: "ചാറ്റ് ആരംഭിക്കുന്നതിന് മുമ്പ് നിങ്ങളുടെ ജനന വിവരങ്ങൾ പൂരിപ്പിക്കുക.",
-        fillDetails: "വിവരങ്ങൾ പൂരിപ്പിക്കുക"
-      }
+      // Add other languages here as per your previous code...
+      te: { connecting: "జ్యోతిష్యుడు కనెక్ట్ అవుతున్నారు...", placeholder: "మీ ప్రశ్న అడగండి...", paywallTitle: "బ్యాలెన్స్ అయిపోయింది", paywallDesc: "మీ ఉచిత సందేశాలు లేదా వాలెట్ బ్యాలెన్స్ ముగిసింది.", currentBalance: "ప్రస్తుత బ్యాలెన్స్", addCash: "ఇప్పుడే రీఛార్జ్ చేయండి", maybeLater: "తర్వాత", chatEnded: "మీ చాట్ అసంపూర్ణంగా మిగిలిపోయింది...", missingDetails: "దయచేసి చాట్ ప్రారంభించే ముందు మీ పుట్టిన వివరాలను పూరించండి.", fillDetails: "వివరాలు పూరించండి", preparing: "సెషన్ సిద్ధమవుతోంది..." },
+      ta: { connecting: "ஜோதிடர் இணைகிறார்...", placeholder: "உங்கள் கேள்வியைக் கேளுங்கள்...", paywallTitle: "இருப்பு தீர்ந்தது", paywallDesc: "உங்கள் இலவச செய்திகள் அல்லது பணப்பை இருப்பு தீர்ந்தது.", currentBalance: "தற்போதைய இருப்பு", addCash: "இப்போதே ரீசார்ஜ் செய்", maybeLater: "பின்னர்", chatEnded: "உங்கள் அரட்டை முழுமையடையவில்லை...", missingDetails: "அரட்டையைத் தொடங்குவதற்கு முன் உங்கள் பிறப்பு விவரங்களை நிரப்பவும்.", fillDetails: "விவரங்களை நிரப்பவும்", preparing: "அமர்வு தயாராகிறது..." },
+      kn: { connecting: "ಜ್ಯೋತಿಷಿ ಸಂಪರ್ಕಿಸುತ್ತಿದ್ದಾರೆ...", placeholder: "ನಿಮ್ಮ ಪ್ರಶ್ನೆ ಕೇಳಿ...", paywallTitle: "ಬ್ಯಾಲೆನ್ಸ್ ಖಾಲಿಯಾಗಿದೆ", paywallDesc: "ನಿಮ್ಮ ಉಚಿತ ಸಂದೇಶಗಳು ಅಥವಾ ವಾಲೆಟ್ ಬ್ಯಾಲೆನ್ಸ್ ಮುಗಿದಿದೆ.", currentBalance: "ಪ್ರಸ್ತುತ ಬ್ಯಾಲೆನ್ಸ್", addCash: "ಈಗಲೇ ರೀಚಾರ್ಜ್ ಮಾಡಿ", maybeLater: "ನಂತರ", chatEnded: "ನಿಮ್ಮ ಚಾಟ್ ಅಪೂರ್ಣವಾಗಿದೆ...", missingDetails: "ದಯವಿಟ್ಟು ಚಾಟ್ ಪ್ರಾರಂಭಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.", fillDetails: "ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ", preparing: "ಸೆಷನ್ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..." },
+      bn: { connecting: "জ্যোতিষী সংযোগ করছেন...", placeholder: "আপনার প্রশ্ন জিজ্ঞাসা করুন...", paywallTitle: "ব্যালেন্স শেষ", paywallDesc: "আপনার ফ্রি মেসেজ বা ওয়ালেট ব্যালেন্স শেষ।", currentBalance: "বর্তমান ব্যালেন্স", addCash: "এখনই রিচার্জ করুন", maybeLater: "পরে", chatEnded: "আপনার চ্যাট অসম্পূর্ণ ছিল...", missingDetails: "চ্যাট শুরু করার আগে আপনার জন্ম বিবরণ পূরণ করুন।", fillDetails: "বিবরণ পূরণ করুন", preparing: "সেশন প্রস্তুত হচ্ছে..." },
+      mr: { connecting: "ज्योतिषी जोडत आहेत...", placeholder: "तुमचा प्रश्न विचारा...", paywallTitle: "बॅलन्स संपला आहे", paywallDesc: "तुमचे फ्री मेसेज किंवा वॉलेट बॅलन्स संपले आहे.", currentBalance: "सध्याचा बॅलन्स", addCash: "आता रिचार्ज करा", maybeLater: "नंतर", chatEnded: "तुमची चॅट अपूर्ण राहिली...", missingDetails: "कृपया चॅट सुरू करण्यापूर्वी तुमची जन्म तपशील भरा.", fillDetails: "तपशील भरा", preparing: "सत्र तयार होत आहे..." },
+      gu: { connecting: "જ્યોતિષી જોડાઈ રહ્યા છે...", placeholder: "તમારો પ્રશ્ન પૂછો...", paywallTitle: "બેલેન્સ ખતમ", paywallDesc: "તમારા ફ્રી મેસેજ અથવા વોલેટ બેલેન્સ ખતમ થઈ ગયા છે.", currentBalance: "વર્તમાન બેલેન્સ", addCash: "હમણાં જ રિચાર્જ કરો", maybeLater: "પછી", chatEnded: "તમારી ચેટ અધૂરી રહી ગઈ...", missingDetails: "કૃપા કરીને ચેટ શરૂ કરતા પહેલા તમારી જન્મ વિગતો ભરો.", fillDetails: "વિગતો ભરો", preparing: "સેશન તૈયાર થઈ રહ્યું છે..." },
+      ml: { connecting: "ജ്യോതിഷി ബന്ധിപ്പിക്കുന്നു...", placeholder: "നിങ്ങളുടെ ചോദ്യം ചോദിക്കുക...", paywallTitle: "ബാലൻസ് തീർന്നു", paywallDesc: "നിങ്ങളുടെ സൗജന്യ സന്ദേശങ്ങളോ വാലറ്റ് ബാലൻസോ തീർന്നു.", currentBalance: "നിലവിലെ ബാലൻസ്", addCash: "ഇപ്പോൾ റീചാർജ് ചെയ്യുക", maybeLater: "പിന്നീട്", chatEnded: "നിങ്ങളുടെ ചാറ്റ് അപൂർണ്ണമായി...", missingDetails: "ചാറ്റ് ആരംഭിക്കുന്നതിന് മുമ്പ് നിങ്ങളുടെ ജനന വിവരങ്ങൾ പൂരിപ്പിക്കുക.", fillDetails: "വിവരങ്ങൾ പൂരിപ്പിക്കുക", preparing: "സെഷൻ തയ്യാറാക്കുന്നു..." },
     };
     return dict[lang || "en"]?.[key] || dict["en"][key];
   };
@@ -150,25 +99,32 @@ export default function AstrologerChatPage() {
     try {
       const res = await fetch("/api/me", { cache: "no-store" });
       const data = await res.json();
-      if (data.user) {
-        setWalletBalance(data.user.walletBalancePaise || 0);
-      }
+      if (data.user) setWalletBalance(data.user.walletBalancePaise || 0);
     } catch (e) {
       console.error("Failed to fetch wallet balance", e);
     }
   }, []);
 
+  // 🔥 FIX 2: Guest session creation and UI block logic
   useEffect(() => {
-    void fetchProfile();
-  }, [fetchProfile]);
-
-  // 🔥 ONBOARDING CHECK: Agar user ke birth details nahi hain, toh profile edit par bhejo
-  useEffect(() => {
-    // Agar user logged in hai par birth details nahi hai
-    if (me?.user && !me?.birth) {
-      router.replace(`/profile/edit?redirect=/chat/${id}`);
+    if (loading) return;
+    if (!me?.user) {
+      // Create guest session if missing
+      fetch("/api/auth/guest", { method: "POST" })
+        .then(res => res.json())
+        .then(() => {
+          if (refresh) refresh();
+        })
+        .catch(console.error);
     }
-  }, [me, router, id]);
+  }, [loading, me, refresh]);
+
+  useEffect(() => {
+    if (loading || !me?.user || !me?.birth) return;
+    const controller = new AbortController();
+    void loadHistory(controller.signal);
+    return () => controller.abort();
+  }, [id, validId, astrologer, loading, me, loadHistory]);
 
   const loadHistory = useCallback(
     async (signal?: AbortSignal) => {
@@ -176,12 +132,6 @@ export default function AstrologerChatPage() {
       setHistoryLoading(true);
 
       try {
-        const guestRes = await fetch("/api/auth/guest", { method: "POST" });
-        if (!guestRes.ok) {
-          const guestData = await guestRes.json().catch(() => ({}));
-          throw new Error(guestData.error || "Guest session could not be created.");
-        }
-
         const query = new URLSearchParams({ persona: id });
         const response = await fetch(`/api/chat?${query.toString()}`, {
           method: "GET",
@@ -230,17 +180,14 @@ export default function AstrologerChatPage() {
       router.replace("/");
       return;
     }
-    const controller = new AbortController();
     setMessages([]);
     setConversationId(null);
     setInput("");
-    void loadHistory(controller.signal);
-    return () => { controller.abort(); };
-  }, [id, validId, astrologer, router, loadHistory]);
+  }, [id, validId, astrologer, router]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [messages, loading, imagePreview]);
+  }, [messages, loadingChat, imagePreview]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -262,17 +209,16 @@ export default function AstrologerChatPage() {
       return; 
     }
 
-    if ((!text.trim() && !imageFile) || loading || !astrologer || !validId || historyLoading || requestInProgress.current) return;
+    if ((!text.trim() && !imageFile) || loadingChat || !astrologer || !validId || historyLoading || requestInProgress.current) return;
 
     const selectedPersona = id;
     const content = text.trim();
     const tempImageUrl = imageFile ? URL.createObjectURL(imageFile) : undefined;
-    
     const userMessage: Message = { id: createMessageId(), role: "user", content: content || "Photo bheji hai", image: tempImageUrl };
 
     setMessages((previous) => [...previous, userMessage]);
     setInput("");
-    setLoading(true);
+    setLoadingChat(true);
     requestInProgress.current = true;
 
     try {
@@ -336,16 +282,17 @@ export default function AstrologerChatPage() {
       }
     } finally {
       requestInProgress.current = false;
-      if (activePersonaRef.current === selectedPersona) setLoading(false);
+      if (activePersonaRef.current === selectedPersona) setLoadingChat(false);
       clearImage();
     }
   }
 
-  if (!astrologer || !validId) {
+  // 🔥 GUEST / LOGIN CHECK: If global loading or no user yet
+  if (loading) {
     return <div className={`flex h-[100dvh] items-center justify-center ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}><Sparkles className="animate-spin text-orange-500" size={32} /></div>;
   }
 
-  // 🔥 If user details are missing, show a blocking screen (Prevents chat without details)
+  // 🔥 If user exists but no birth details (Guest or Logged in)
   if (me?.user && !me?.birth) {
     return (
       <div className={`flex h-[100dvh] flex-col items-center justify-center p-4 ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-900"}`}>
@@ -363,6 +310,20 @@ export default function AstrologerChatPage() {
         </div>
       </div>
     );
+  }
+
+  // 🔥 If no user session yet (guest creation in progress)
+  if (!me?.user) {
+    return (
+      <div className={`flex h-[100dvh] flex-col items-center justify-center p-4 ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}>
+        <Loader2 className="animate-spin text-orange-500 mb-4" size={32} />
+        <p className="text-sm font-medium">{getChatText("preparing")}</p>
+      </div>
+    );
+  }
+
+  if (!astrologer || !validId) {
+    return <div className={`flex h-[100dvh] items-center justify-center ${isDark ? "bg-[#0B0F19] text-white" : "bg-[#FFF9E6] text-gray-600"}`}><Sparkles className="animate-spin text-orange-500" size={32} /></div>;
   }
 
   return (
@@ -408,7 +369,6 @@ export default function AstrologerChatPage() {
             </div>
           ) : (
             <>
-              {/* Intent Chips */}
               {messages.length === 0 && (
                 <div className="flex flex-wrap justify-center gap-2 mb-6 animate-in fade-in slide-in-from-bottom-4">
                   {INTENT_CHIPS.map((chip, idx) => (
@@ -425,16 +385,13 @@ export default function AstrologerChatPage() {
                 </div>
               )}
 
-              {/* Messages */}
               {messages.map((message) => (
                 <div key={message.id} className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  
                   {message.role === "assistant" && (
                     <div className="h-8 w-8 rounded-full overflow-hidden shrink-0 mt-1 shadow-sm border border-slate-700">
                       <img src={astrologer.photo} alt="Astro" className="h-full w-full object-cover" />
                     </div>
                   )}
-
                   <div className={`max-w-[85%] sm:max-w-[75%] rounded-[1.3rem] px-5 py-3.5 text-[15.5px] leading-relaxed shadow-md ${
                     message.role === "user" 
                       ? "bg-gradient-to-br from-orange-400 to-orange-600 text-white rounded-tr-sm font-medium" 
@@ -450,8 +407,7 @@ export default function AstrologerChatPage() {
                 </div>
               ))}
 
-              {/* Loading Indicator */}
-              {loading && (
+              {loadingChat && (
                 <div className="flex gap-3 justify-start">
                   <div className="h-8 w-8 rounded-full overflow-hidden shrink-0 mt-1 shadow-sm border border-slate-700">
                     <img src={astrologer.photo} alt="Astro" className="h-full w-full object-cover" />
@@ -472,7 +428,6 @@ export default function AstrologerChatPage() {
       {/* INPUT AREA */}
       <div className={`shrink-0 border-t p-3 sm:p-4 ${isDark ? "border-slate-800 bg-[#151E2E]" : "border-orange-100 bg-white"}`}>
         <div className="max-w-4xl mx-auto flex flex-col gap-2">
-          
           {imagePreview && (
             <div className="relative inline-block w-max">
               <img src={imagePreview} alt="Preview" className="h-16 w-16 object-cover rounded-lg border border-orange-500" />
@@ -481,18 +436,13 @@ export default function AstrologerChatPage() {
               </button>
             </div>
           )}
-
           <div className={`flex items-end gap-2 rounded-2xl border-2 p-2 transition-all ${
             isDark ? "bg-[#0B0F19] border-slate-700 focus-within:border-orange-500" : "bg-gray-50 border-gray-200 focus-within:border-orange-400"
           }`}>
-            <button 
-              onClick={() => fileInputRef.current?.click()} 
-              className={`p-2 rounded-xl transition-colors ${isDark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-500 hover:text-black hover:bg-gray-200"}`}
-            >
+            <button onClick={() => fileInputRef.current?.click()} className={`p-2 rounded-xl transition-colors ${isDark ? "text-slate-400 hover:text-white hover:bg-slate-800" : "text-gray-500 hover:text-black hover:bg-gray-200"}`}>
               <ImageIcon size={22} />
             </button>
             <input type="file" ref={fileInputRef} onChange={handleImageSelect} accept="image/jpeg, image/png, image/webp" className="hidden" />
-
             <textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -506,10 +456,9 @@ export default function AstrologerChatPage() {
                 }
               }}
             />
-
             <button
               onClick={() => sendMessage(input, selectedImage)}
-              disabled={(!input.trim() && !selectedImage) || loading}
+              disabled={(!input.trim() && !selectedImage) || loadingChat}
               className="p-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white shadow-md disabled:opacity-50 disabled:grayscale transition-all active:scale-95"
             >
               <Send size={20} />
@@ -518,44 +467,32 @@ export default function AstrologerChatPage() {
         </div>
       </div>
 
-      {/* 🔥 PREMIUM PAYWALL MODAL */}
+      {/* PAYWALL MODAL */}
       {showPaywall && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in">
           <div className={`w-full max-w-sm rounded-3xl border p-6 text-center shadow-2xl animate-in zoom-in-95 ${isDark ? "bg-[#151E2E] border-slate-700" : "bg-white border-orange-100"}`}>
-            
             <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mb-4">
               <Lock className="text-red-500" size={32} />
             </div>
-
             <h2 className={`text-xl font-black mb-2 ${isDark ? "text-white" : "text-gray-900"}`}>
               {getChatText("paywallTitle")}
             </h2>
             <p className={`text-[13px] mb-6 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               {getChatText("paywallDesc")}
             </p>
-
             <div className={`rounded-xl p-3 mb-6 flex justify-between items-center border ${isDark ? "bg-[#0B0F19] border-slate-800" : "bg-gray-50 border-gray-200"}`}>
               <span className={`text-xs font-bold uppercase ${isDark ? "text-slate-400" : "text-gray-500"}`}>{getChatText("currentBalance")}</span>
               <span className="text-xl font-black text-red-500">₹{walletBalance / 100}</span>
             </div>
-
-            <Link 
-              href="/wallet" 
-              className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-[15px] shadow-lg active:scale-95 transition-all mb-3"
-            >
+            <Link href="/wallet" className="block w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 text-white font-bold text-[15px] shadow-lg active:scale-95 transition-all mb-3">
               {getChatText("addCash")}
             </Link>
-
-            <button 
-              onClick={() => setShowPaywall(false)} 
-              className={`text-[13px] font-bold w-full py-2 ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
-            >
+            <button onClick={() => setShowPaywall(false)} className={`text-[13px] font-bold w-full py-2 ${isDark ? "text-slate-500 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}>
               {getChatText("maybeLater")}
             </button>
           </div>
         </div>
       )}
-
     </div>
   );
 }
