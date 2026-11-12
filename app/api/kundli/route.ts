@@ -277,10 +277,9 @@ async function writeInterpretation(params: { name: string; dateOfBirth: string; 
   }
 }
 
-// 🔥 NAYA: Ye function chat ke liye ek ready-made prompt banata hai
+// 🔥 FIXED: RASHIS_HI ka use kiya gaya hai
 function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart): string {
-  // Simple logic: Check for common challenging placements (like Saturn in 7th, or Mars dosha) to make the prompt sound personalized.
-  const moon = chart.moonSign.rashiNameHi;
+  const moon = RASHIS_HI[chart.moonSign.rashi]; // 🔥 Yahan fix kiya gaya hai
   const dasha = chart.currentDasha ? chart.currentDasha.maha.lord : "Shani";
   
   const dict: Record<string, string> = {
@@ -297,7 +296,6 @@ function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart):
   };
   return dict[lang] || dict["hinglish"];
 }
-
 
 export async function GET() {
   const user = await getUser();
