@@ -53,9 +53,11 @@ function getGuestHook(lang: string): string {
 /* -------------------------------------------------------------------------- */
 
 export async function POST(request: Request) {
+  // 🔥 FIX: Language ko try block ke bahar declare kiya taaki catch block me bhi pata rahe
+  let language = "hinglish"; 
+
   try {
-    // 🔥 FIX 1: Parse language from request body (Frontend se aayegi)
-    let language = "hinglish"; // Default fallback
+    // 🔥 Parse language from request body (Frontend se aayegi)
     try {
       const body = await request.json();
       if (body?.language) language = body.language;
@@ -63,7 +65,7 @@ export async function POST(request: Request) {
       // Agar body empty hai, toh default language use hogi
     }
 
-    // 🔥 FIX: Agar user ka session pehle se hai, toh naya guest mat banao
+    // 🔥 Agar user ka session pehle se hai, toh naya guest mat banao
     const existingUser = await getUser();
     if (existingUser) {
       return NextResponse.json(
@@ -109,15 +111,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Guest session creation failed:", error);
 
-    // 🔥 Extract language for error message (fallback to en if parsing fails)
-    let errorLang = "en";
-    try { 
-      // Request body is already consumed, so we use a default or header if needed.
-      // For simplicity, falling back to English. 
-    } catch {}
-
+    // 🔥 FIX: Ab catch block me 'language' available hai, toh error sahi bhasha me jayega
     return NextResponse.json(
-      { error: getGuestError(errorLang) },
+      { error: getGuestError(language) },
       { status: 500 }
     );
   }
