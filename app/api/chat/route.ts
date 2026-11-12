@@ -6,7 +6,6 @@ import OpenAI from "openai";
 import { getUser } from "@/auth";
 import { db } from "@/index";
 import { birthDetails, charts, conversations, messages, remedies, users } from "@/schema";
-// 🔥 FIX: Rate limit import (Agar aapke project mein path alag hai, toh isko adjust karein)
 import { checkAILimit } from "@/rate-limit"; 
 
 export const runtime = "nodejs";
@@ -253,10 +252,10 @@ export async function POST(request: Request) {
     userId = user.id;
 
     // 🔥 FIX 2: Rate Limiting (Spam Protection)
-    // Agar aapne rate-limit file nahi banayi hai, toh is block ko hata dein
     if (typeof checkAILimit === 'function') {
       const rateLimit = await checkAILimit(userId);
-      if (!rateLimit.success) {
+      // 🔥 FIX: 'success' ki jagah 'allowed' kar diya gaya hai (TypeScript Error Fix)
+      if (!rateLimit.allowed) { 
         return NextResponse.json({ 
           error: "Too many requests. Please wait a minute." 
         }, { status: 429 });
@@ -469,6 +468,7 @@ ${getLanguageInstruction(language)}
             .set({ freeMessagesUsed: sql`GREATEST(${users.freeMessagesUsed} - 1, 0)` })
             .where(eq(users.id, userId));
         }
+        console.error(`[chat.POST] refunded ${deductedType} for user ${userId} due to failure`);
       } catch (refundError) {
         console.error("[chat.POST] REFUND FAILED — manual intervention needed:", {
           userId, deductedType, refundError,
