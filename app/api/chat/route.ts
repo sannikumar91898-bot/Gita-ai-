@@ -14,11 +14,10 @@ export const dynamic = "force-dynamic";
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const GROQ_TEXT_MODEL = process.env.GROQ_TEXT_MODEL || "llama-3.3-70b-versatile";
-// 🔥 FIX 1: Vision Model updated to qwen/qwen3.8-27b
 const GROQ_VISION_MODEL = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
-const TEXT_MODEL_FALLBACKS = ["openai/gpt-oss-120b", "llama-3.1-8b-instant", "llama3-70b-8192"];
-// 🔥 FIX 1: Old Llama models kept as fallback just in case
+// 🔥 FIX: Sahi aur valid fallback models daale hain
+const TEXT_MODEL_FALLBACKS = ["llama-3.1-8b-instant", "mixtral-8x7b-32768", "llama3-70b-8192"];
 const VISION_MODEL_FALLBACKS = ["llama-3.2-11b-vision-preview", "llama-3.2-90b-vision-preview"];
 
 const openai = new OpenAI({
@@ -114,6 +113,7 @@ function isModelNotFoundError(err: any): boolean {
   return msg.includes("404") || msg.includes("not found") || msg.includes("does not exist") || msg.includes("decommissioned") || msg.includes("model_not_found") || msg.includes("no such model");
 }
 
+// 🔥 FIX: Retry logic updated to try fallbacks on ANY error, not just 404
 async function callGroq(
   payload: { messages: any[]; temperature: number; max_tokens: number },
   useVision: boolean
@@ -124,15 +124,18 @@ async function callGroq(
   try {
     return await openai.chat.completions.create({ model: primary, ...payload });
   } catch (err: any) {
-    if (!isModelNotFoundError(err)) throw err;
-
+    console.error(`[chat] Primary model ${primary} failed:`, err?.status, err?.message);
+    
+    // Agar primary fail hota hai (chahe 404 ho ya 429), toh fallback try karo
     for (const fb of fallbacks) {
       try {
+        console.log(`[chat] Trying fallback model: ${fb}`);
         return await openai.chat.completions.create({ model: fb, ...payload });
       } catch (fbErr: any) {
         console.error(`[chat] Fallback ${fb} failed:`, fbErr?.status, fbErr?.message);
       }
     }
+    // Agar sab fail ho jayein, toh original error throw karo
     throw err;
   }
 }
