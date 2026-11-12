@@ -1,0 +1,362 @@
+// app/palm-reading/page.tsx
+"use client";
+
+import { useState, useRef, useEffect, Suspense } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { 
+  ArrowLeft, Camera, Upload, Sparkles, ShieldCheck, 
+  MessageCircle, Star, X, Loader2, RefreshCw, AlertTriangle, Wallet 
+} from "lucide-react";
+import { useApp } from "../Providers";
+
+function PalmReadingContent() {
+  const router = useRouter();
+  const { theme, lang } = useApp();
+  const isDark = theme === "dark";
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [scansLeft, setScansLeft] = useState<number | string>(5);
+  
+  const [loadingStep, setLoadingStep] = useState(0);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 🔥 10 Language Translation Helper
+  const getText = (key: string) => {
+    const dict: Record<string, Record<string, string>> = {
+      hi: {
+        title: "हस्तरेखा विश्लेषण", sub: "अपनी हथेली की फोटो अपलोड करें",
+        uploadBtn: "फोटो अपलोड करें", analyzeBtn: "हथेली पढ़ें", analyzing: "विश्लेषण हो रहा है...",
+        resultTitle: "आपकी हस्तरेखा रिपोर्ट", chatBtn: "ज्योतिषी से बात करें", 
+        scansLeft: "आज के बचे हुए फ्री स्कैन:", freeBadge: "पहले 5 स्कैन फ्री",
+        errInvalid: "कृपया हथेली की साफ फोटो अपलोड करें।", errBusy: "सर्वर व्यस्त है। कृपया बाद में प्रयास करें।",
+        secure: "100% सुरक्षित और गोपनीय", trust: "10,000+ यूज़र्स का भरोसा",
+        changeImg: "फोटो बदलें", retake: "दोबारा कोशिश करें"
+      },
+      hinglish: {
+        title: "Palm Reading", sub: "Apni hatheli ki photo upload karein",
+        uploadBtn: "Upload Photo", analyzeBtn: "Read Palm", analyzing: "Analyzing...",
+        resultTitle: "Your Palm Report", chatBtn: "Talk to Astrologer",
+        scansLeft: "Today's free scans left:", freeBadge: "First 5 Scans FREE",
+        errInvalid: "Kripya hatheli ki saaf photo upload karein.", errBusy: "Server busy. Kripya baad me try karein.",
+        secure: "100% Secure & Private", trust: "Trusted by 10,000+ users",
+        changeImg: "Change Photo", retake: "Try Again"
+      },
+      en: {
+        title: "Palm Reading", sub: "Upload a photo of your palm",
+        uploadBtn: "Upload Photo", analyzeBtn: "Read Palm", analyzing: "Analyzing...",
+        resultTitle: "Your Palm Report", chatBtn: "Talk to Astrologer",
+        scansLeft: "Today's free scans left:", freeBadge: "First 5 Scans FREE",
+        errInvalid: "Please upload a clear palm photo.", errBusy: "Server is busy. Please try again later.",
+        secure: "100% Secure & Private", trust: "Trusted by 10,000+ users",
+        changeImg: "Change Photo", retake: "Try Again"
+      },
+      // ... (Add other 7 languages here, keeping the UI intact)
+      te: { title: "పామ్ రీడింగ్", sub: "మీ అరచేతి ఫోటోను అప్‌లోడ్ చేయండి", uploadBtn: "ఫోటో అప్‌లోడ్", analyzeBtn: "పామ్ చదవండి", analyzing: "విశ్లేషిస్తోంది...", resultTitle: "మీ పామ్ నివేదిక", chatBtn: "జ్యోతిష్యుడితో మాట్లాడండి", scansLeft: "ఈరోజు ఉచిత స్కాన్‌లు:", freeBadge: "మొదటి 5 స్కాన్‌లు ఉచితం", errInvalid: "స్పష్టమైన పామ్ ఫోటోను అప్‌లోడ్ చేయండి.", errBusy: "సర్వర్ బిజీగా ఉంది. తర్వాత ప్రయత్నించండి.", secure: "100% సురక్షితం", trust: "10,000+ నమ్మకం", changeImg: "ఫోటో మార్చండి", retake: "మళ్లీ ప్రయత్నించండి" },
+      ta: { title: "கைரேகை படிப்பு", sub: "உங்கள் உள்ளங்கையின் புகைப்படத்தை பதிவேற்றவும்", uploadBtn: "புகைப்படத்தை பதிவேற்று", analyzeBtn: "கைரேகையை படி", analyzing: "பகுப்பாய்வு செய்கிறது...", resultTitle: "உங்கள் கைரேகை அறிக்கை", chatBtn: "ஜோதிடரிடம் பேசுங்கள்", scansLeft: "இன்றைய இலவச ஸ்கேன்கள்:", freeBadge: "முதல் 5 ஸ்கேன்கள் இலவசம்", errInvalid: "தெளிவான கைரேகை புகைப்படத்தை பதிவேற்றவும்.", errBusy: "சர்வர் பிஸியாக உள்ளது. பின்னர் முயற்சிக்கவும்.", secure: "100% பாதுகாப்பானது", trust: "10,000+ நம்பிக்கை", changeImg: "புகைப்படத்தை மாற்று", retake: "மீண்டும் முயற்சி" },
+      kn: { title: "ಹಸ್ತರೇಖೆ ಓದುವಿಕೆ", sub: "ನಿಮ್ಮ ಅಂಗೈ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", uploadBtn: "ಫೋಟೋ ಅಪ್‌ಲೋಡ್", analyzeBtn: "ಅಂಗೈ ಓದಿ", analyzing: "ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", resultTitle: "ನಿಮ್ಮ ಹಸ್ತರೇಖೆ ವರದಿ", chatBtn: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ", scansLeft: "ಇಂದಿನ ಉಚಿತ ಸ್ಕ್ಯಾನ್‌ಗಳು:", freeBadge: "ಮೊದಲ 5 ಸ್ಕ್ಯಾನ್‌ಗಳು ಉಚಿತ", errInvalid: "ಸ್ಪಷ್ಟವಾದ ಅಂಗೈ ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.", errBusy: "ಸರ್ವರ್ ಬ್ಯುಸಿಯಾಗಿದೆ. ನಂತರ ಪ್ರಯತ್ನಿಸಿ.", secure: "100% ಸುರಕ್ಷಿತ", trust: "10,000+ ನಂಬಿಕೆ", changeImg: "ಫೋಟೋ ಬದಲಾಯಿಸಿ", retake: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ" },
+      bn: { title: "হস্তরেখা পাঠ", sub: "আপনার হাতের তালুর ছবি আপলোড করুন", uploadBtn: "ছবি আপলোড করুন", analyzeBtn: "হাত পড়ুন", analyzing: "বিশ্লেষণ করা হচ্ছে...", resultTitle: "আপনার হস্তরেখা রিপোর্ট", chatBtn: "জ্যোতিষীর সাথে কথা বলুন", scansLeft: "আজকের ফ্রি স্ক্যান:", freeBadge: "প্রথম ৫টি স্ক্যান ফ্রি", errInvalid: "স্পষ্ট হাতের তালুর ছবি আপলোড করুন।", errBusy: "সার্ভার ব্যস্ত। পরে চেষ্টা করুন।", secure: "100% সুরক্ষিত", trust: "10,000+ আস্থা", changeImg: "ছবি পরিবর্তন করুন", retake: "আবার চেষ্টা করুন" },
+      mr: { title: "हस्तरेषा वाचन", sub: "तुमच्या तळहाताचा फोटो अपलोड करा", uploadBtn: "फोटो अपलोड करा", analyzeBtn: "हात वाचा", analyzing: "विश्लेषण करत आहे...", resultTitle: "तुमचा हस्तरेषा अहवाल", chatBtn: "ज्योतिषाशी बोला", scansLeft: "आजचे मोफत स्कॅन:", freeBadge: "पहिले ५ स्कॅन मोफत", errInvalid: "कृपया तळहाताचा स्पष्ट फोटो अपलोड करा.", errBusy: "सर्व्हर व्यस्त आहे. नंतर प्रयत्न करा.", secure: "100% सुरक्षित", trust: "10,000+ विश्वास", changeImg: "फोटो बदला", retake: "पुन्हा प्रयत्न करा" },
+      gu: { title: "હસ્તરેખા વાંચન", sub: "તમારી હથેળીનો ફોટો અપલોડ કરો", uploadBtn: "ફોટો અપલોડ કરો", analyzeBtn: "હાથ વાંચો", analyzing: "વિશ્લેષણ થઈ રહ્યું છે...", resultTitle: "તમારો હસ્તરેખા રિપોર્ટ", chatBtn: "જ્યોતિષી સાથે વાત કરો", scansLeft: "આજના મફત સ્કેન:", freeBadge: "પ્રથમ 5 સ્કેન મફત", errInvalid: "કૃપા કરીને સ્પષ્ટ હથેળીનો ફોટો અપલોડ કરો.", errBusy: "સર્વર વ્યસ્ત છે. પછી પ્રયાસ કરો.", secure: "100% સુરક્ષિત", trust: "10,000+ વિશ્વાસ", changeImg: "ફોટો બદલો", retake: "ફરી પ્રયાસ કરો" },
+      ml: { title: "കൈരേഖ വായന", sub: "നിങ്ങളുടെ കൈപ്പത്തിയുടെ ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക", uploadBtn: "ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക", analyzeBtn: "കൈ വായിക്കുക", analyzing: "വിശകലനം ചെയ്യുന്നു...", resultTitle: "നിങ്ങളുടെ കൈരേഖ റിപ്പോർട്ട്", chatBtn: "ജ്യോതിഷിയോട് സംസാരിക്കുക", scansLeft: "ഇന്നത്തെ സൗജന്യ സ്കാനുകൾ:", freeBadge: "ആദ്യ 5 സ്കാനുകൾ സൗജന്യം", errInvalid: "വ്യക്തമായ കൈപ്പത്തി ഫോട്ടോ അപ്‌ലോഡ് ചെയ്യുക.", errBusy: "സർവർ തിരക്കിലാണ്. പിന്നീട് ശ്രമിക്കുക.", secure: "100% സുരക്ഷിതം", trust: "10,000+ വിശ്വാസം", changeImg: "ഫോട്ടോ മാറ്റുക", retake: "വീണ്ടും ശ്രമിക്കുക" },
+    };
+    return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
+  };
+
+  const t = (key: string) => getText(key);
+
+  // 🔥 Loading Messages (Psychology: Build anticipation)
+  const getLoadingMessages = () => {
+    const messages: Record<string, string[]> = {
+      hi: ["हथेली की रेखाओं का विश्लेषण...", "भाग्य रेखा की जाँच...", "ग्रहों की स्थिति मिलान...", "विस्तृत रिपोर्ट तैयार..."],
+      hinglish: ["Analyzing palm lines...", "Checking fate line...", "Aligning planetary positions...", "Generating detailed report..."],
+      en: ["Analyzing palm lines...", "Checking fate line...", "Aligning planetary positions...", "Generating detailed report..."],
+    };
+    return messages[lang || "hi"] || messages["en"];
+  };
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (loading) {
+      const msgs = getLoadingMessages();
+      let i = 0;
+      interval = setInterval(() => {
+        i = (i + 1) % msgs.length;
+        setLoadingStep(i);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [loading, lang]);
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("Image must be under 10MB.");
+      return;
+    }
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      setError("Only JPG, PNG or WEBP are supported.");
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+    setError(null);
+    setResult(null);
+  };
+
+  const handleAnalyze = async () => {
+    if (!imageFile) return;
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+      formData.append("language", lang || "hinglish");
+
+      const res = await fetch("/api/palm", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      // 🔥 401: Unauthorized
+      if (res.status === 401) {
+        router.push("/login?redirect=/palm-reading");
+        return;
+      }
+
+      // 🔥 402: Wallet Recharge Required (Free limit exhausted)
+      if (res.status === 402 || data.code === "WALLET_RECHARGE_REQUIRED") {
+        router.push("/wallet?reason=palm_limit");
+        return;
+      }
+
+      // 🔥 422: Invalid Image
+      if (res.status === 422) {
+        setError(t("errInvalid"));
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || t("errBusy"));
+      }
+
+      // Success
+      setResult(data.result);
+      if (data.scansLeft !== undefined) {
+        setScansLeft(data.scansLeft);
+      }
+
+    } catch (err: any) {
+      setError(err.message || t("errBusy"));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const reset = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    setResult(null);
+    setError(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // 🔥 Chat Redirect with Prefill
+  const handleChatNow = () => {
+    if (result?.suggestedChatPrompt) {
+      router.push(`/chat/gita?prefill=${encodeURIComponent(result.suggestedChatPrompt)}`);
+    } else {
+      router.push("/chat/gita");
+    }
+  };
+
+  const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-2xl" : "border-orange-100 bg-white shadow-xl";
+
+  return (
+    <main className={`min-h-[100dvh] w-full pb-28 font-sans relative overflow-hidden ${pageClass}`}>
+      
+      {/* Premium Background Glow */}
+      <div className="absolute top-0 right-0 w-[60vw] h-[60vw] max-w-[400px] max-h-[400px] bg-gradient-to-bl from-[#ff6b00]/20 to-transparent rounded-full blur-[100px] pointer-events-none"></div>
+
+      <div className="w-full max-w-md mx-auto px-4 pt-5 relative z-10">
+        
+        {/* HEADER */}
+        <header className={`flex items-center justify-between rounded-2xl border p-4 mb-6 ${cardClass}`}>
+          <div className="flex items-center gap-3">
+            <Link href="/" className={`rounded-xl p-2 transition-colors ${isDark ? "bg-slate-800 text-slate-300" : "bg-orange-50 text-orange-600"}`}>
+              <ArrowLeft size={18} />
+            </Link>
+            <div>
+              <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
+              <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("sub")}</p>
+            </div>
+          </div>
+        </header>
+
+        {/* FREE SCANS BADGE */}
+        {!result && (
+          <div className="flex items-center justify-between mb-4 px-1">
+            <span className="flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full border border-emerald-500/20">
+              <ShieldCheck size={14} /> {t("freeBadge")}
+            </span>
+            <span className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              {t("scansLeft")} <span className="text-[#ff6b00] text-[13px]">{scansLeft}</span>
+            </span>
+          </div>
+        )}
+
+        {/* ERROR MESSAGE */}
+        {error && (
+          <div className="mb-5 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 flex items-start gap-2 text-[13px] font-bold text-rose-500 animate-in fade-in slide-in-from-top-2">
+            <AlertTriangle size={18} className="shrink-0 mt-0.5" />
+            {error}
+          </div>
+        )}
+
+        {/* 🔥 LOADING STATE */}
+        {loading && (
+          <div className={`rounded-3xl border p-8 flex flex-col items-center justify-center min-h-[350px] text-center ${cardClass}`}>
+            <div className="relative w-24 h-24 mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00]/20"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00] border-t-transparent animate-spin"></div>
+              <Sparkles className="absolute inset-0 m-auto text-[#ff6b00] animate-pulse" size={32} />
+            </div>
+            <h3 className="text-lg font-black text-[#ff6b00] mb-2">{t("analyzing")}</h3>
+            <p className={`text-[13px] font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              {getLoadingMessages()[loadingStep]}
+            </p>
+          </div>
+        )}
+
+        {/* 🔥 UPLOAD STATE */}
+        {!loading && !result && (
+          <div className={`rounded-[2rem] border p-6 ${cardClass}`}>
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className={`relative w-full aspect-[4/5] max-h-[350px] rounded-2xl border-2 border-dashed flex flex-col items-center justify-center cursor-pointer overflow-hidden transition-all duration-300 ${
+                isDark ? "border-slate-600 hover:border-[#ff6b00] bg-[#0A0F19]/50" : "border-gray-300 hover:border-[#ff6b00] bg-gray-50"
+              }`}
+            >
+              {imagePreview ? (
+                <>
+                  <img src={imagePreview} alt="Palm Preview" className="absolute inset-0 w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                    <span className="bg-white text-black px-4 py-2 rounded-full font-bold text-sm">{t("changeImg")}</span>
+                  </div>
+                </>
+              ) : (
+                <div className="text-center p-6 flex flex-col items-center">
+                  <div className="w-20 h-20 rounded-full bg-[#ff6b00]/10 flex items-center justify-center mb-4">
+                    <Camera size={36} className="text-[#ff6b00]" />
+                  </div>
+                  <p className="text-[15px] font-bold mb-1">{t("uploadBtn")}</p>
+                  <p className={`text-[12px] ${isDark ? "text-slate-400" : "text-gray-500"}`}>JPG, PNG, WEBP (Max 10MB)</p>
+                </div>
+              )}
+            </div>
+
+            <input 
+              type="file" 
+              accept="image/jpeg, image/png, image/webp"
+              hidden 
+              ref={fileInputRef} 
+              onChange={handleImageSelect} 
+            />
+
+            <button
+              onClick={handleAnalyze}
+              disabled={!imageFile}
+              className="w-full mt-6 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+            >
+              <Sparkles size={20} /> {t("analyzeBtn")}
+            </button>
+          </div>
+        )}
+
+        {/* 🔥 RESULT STATE */}
+        {!loading && result && (
+          <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className={`rounded-[2rem] border p-6 relative overflow-hidden ${cardClass}`}>
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#ff6b00]/10 blur-3xl rounded-full pointer-events-none"></div>
+
+              <div className="text-center mb-6 relative z-10">
+                <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-[#ff6b00]/20 to-[#ff3d00]/20 flex items-center justify-center mb-4">
+                  <Star className="text-[#ff6b00] fill-[#ff6b00]" size={28} />
+                </div>
+                <h2 className={`text-xl font-black mb-1 ${isDark ? "text-white" : "text-gray-900"}`}>
+                  {result.title || t("resultTitle")}
+                </h2>
+              </div>
+
+              <div className="space-y-4 relative z-10">
+                <p className={`text-[14px] leading-relaxed font-medium ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                  {result.insight}
+                </p>
+                
+                <div className={`p-4 rounded-xl border ${isDark ? "bg-rose-500/10 border-rose-500/20" : "bg-red-50 border-red-100"}`}>
+                  <p className={`text-[13px] font-bold ${isDark ? "text-rose-400" : "text-red-600"}`}>
+                    ⚠️ {result.hook}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* CHAT CTA */}
+            <button
+              onClick={handleChatNow}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95"
+            >
+              <MessageCircle size={20} /> {t("chatBtn")}
+            </button>
+
+            {/* RESET BUTTON */}
+            <button
+              onClick={reset}
+              className={`w-full flex items-center justify-center gap-2 rounded-xl px-4 py-3.5 font-bold text-[14px] border transition-all ${
+                isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              }`}
+            >
+              <RefreshCw size={18} /> {t("retake")}
+            </button>
+          </div>
+        )}
+
+        {/* TRUST BADGES */}
+        <div className="mt-8 flex justify-center gap-4">
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-3 py-1.5 rounded-full">
+            <ShieldCheck size={12} /> {t("secure")}
+          </span>
+          <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-full">
+            <Star size={12} className="fill-amber-500" /> {t("trust")}
+          </span>
+        </div>
+
+      </div>
+    </main>
+  );
+}
+
+export default function PalmReadingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0F19] text-white">
+        <Loader2 className="animate-spin text-[#ff6b00]" size={40} />
+      </div>
+    }>
+      <PalmReadingContent />
+    </Suspense>
+  );
+}
