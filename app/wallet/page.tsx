@@ -44,7 +44,7 @@ const getOfferDesc = (lang: string, price: number) => {
 };
 
 export default function WalletPage() {
-  const { lang, theme, refresh } = useApp(); // 🔥 refresh import kiya
+  const { lang, theme, refresh } = useApp(); 
   const isDark = theme === "dark";
 
   const [amount, setAmount] = useState(11); 
@@ -120,7 +120,6 @@ export default function WalletPage() {
 
           if (verifyRes.ok && verifyData.success) {
             setSuccess(true);
-            // 🔥 FIX: Global context refresh (Homepage par balance update hoga)
             await refresh();
             void fetchProfile();
             setTimeout(() => setSuccess(false), 5000);
@@ -200,39 +199,47 @@ export default function WalletPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {offers.map((offer) => (
-              <button
-                key={offer.price}
-                onClick={() => setAmount(offer.price)}
-                className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-4 transition-all duration-200 ${
-                  amount === offer.price
-                    ? "border-orange-500 bg-gradient-to-b from-orange-50 to-white dark:from-orange-500/10 dark:to-[#151E2E] shadow-lg shadow-orange-500/10 scale-[1.02]"
-                    : isDark ? "border-slate-700/50 bg-[#151E2E] hover:border-slate-600" : "border-gray-200 bg-white hover:border-orange-300 hover:shadow-md"
-                }`}
-              >
-                {offer.tag && (
-                  <span className={`absolute -top-2.5 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white shadow-sm ${
-                    offer.tag === "Popular" || offer.tag === "Best" ? "bg-gradient-to-r from-rose-500 to-red-500" : 
-                    offer.tag === "Premium" ? "bg-gradient-to-r from-amber-500 to-orange-500" : 
-                    "bg-slate-700"
-                  }`}>
-                    {offer.tag}
+            {offers.map((offer) => {
+              const isSelected = amount === offer.price;
+              
+              return (
+                <button
+                  key={offer.price}
+                  onClick={() => setAmount(offer.price)}
+                  className={`relative flex flex-col items-center justify-center rounded-2xl border-2 p-4 transition-all duration-200 ${
+                    isSelected
+                      ? `border-orange-500 shadow-lg shadow-orange-500/10 scale-[1.02] ${isDark ? "bg-[#1e293b]" : "bg-orange-50"}` // 🔥 FIX: Explicit background colors
+                      : isDark ? "border-slate-700/50 bg-[#151E2E] hover:border-slate-600" : "border-gray-200 bg-white hover:border-orange-300 hover:shadow-md"
+                  }`}
+                >
+                  {offer.tag && (
+                    <span className={`absolute -top-2.5 rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-widest text-white shadow-sm ${
+                      offer.tag === "Popular" || offer.tag === "Best" ? "bg-gradient-to-r from-rose-500 to-red-500" : 
+                      offer.tag === "Premium" ? "bg-gradient-to-r from-amber-500 to-orange-500" : 
+                      "bg-slate-700"
+                    }`}>
+                      {offer.tag}
+                    </span>
+                  )}
+                  
+                  {/* 🔥 FIX: Explicit text colors */}
+                  <span className={`text-2xl font-black ${isSelected ? (isDark ? "text-orange-400" : "text-orange-600") : isDark ? "text-white" : "text-gray-800"}`}>
+                    ₹{offer.price}
                   </span>
-                )}
-                <span className={`text-2xl font-black ${amount === offer.price ? "text-orange-500" : isDark ? "text-white" : "text-gray-800"}`}>
-                  ₹{offer.price}
-                </span>
-                
-                <div className={`mt-1.5 w-full flex items-center justify-center rounded-md py-1 ${offer.price >= 51 ? "bg-emerald-500/10" : "bg-slate-500/10"}`}>
-                  <span className={`text-[10px] font-black ${offer.price >= 51 ? "text-emerald-500" : isDark ? "text-slate-400" : "text-gray-500"}`}>
-                    {offer.price >= 51 ? `+₹${Math.floor(offer.price * 0.1)} Bonus` : t("noBonus")}
+                  
+                  {/* 🔥 FIX: Explicit pill background */}
+                  <div className={`mt-1.5 w-full flex items-center justify-center rounded-md py-1 ${offer.price >= 51 ? "bg-emerald-500/10" : isDark ? "bg-slate-700/50" : "bg-slate-100"}`}>
+                    <span className={`text-[10px] font-black ${offer.price >= 51 ? "text-emerald-500" : isDark ? "text-slate-400" : "text-gray-500"}`}>
+                      {offer.price >= 51 ? `+₹${Math.floor(offer.price * 0.1)} Bonus` : t("noBonus")}
+                    </span>
+                  </div>
+                  
+                  <span className={`text-[10px] font-bold mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                    {getOfferDesc(lang, offer.price)}
                   </span>
-                </div>
-                <span className={`text-[10px] font-bold mt-2 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-                  {getOfferDesc(lang, offer.price)}
-                </span>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </section>
 
