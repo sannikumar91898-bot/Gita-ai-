@@ -24,9 +24,9 @@ const modalClient =
       })
     : null;
 
-// 🔥 GROQ FALLBACK — qwen/qwen3.8-27b (vision)
+// 🔥 GROQ FALLBACK
 const groqApiKey = process.env.GROQ_API_KEY;
-const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
+const groqVisionModel = process.env.GROQ_VISION_MODEL || "llama-3.2-11b-vision-preview"; // Groq's actual vision model
 
 const groqClient = groqApiKey
   ? new OpenAI({
@@ -45,7 +45,7 @@ if (!groqClient) {
 }
 
 /* -------------------------------------------------------------------------- */
-/*                              HELPERS                                       */
+/*                              HELPERS & TRANSLATIONS                        */
 /* -------------------------------------------------------------------------- */
 
 function getLanguageInstruction(lang: string): string {
@@ -106,6 +106,22 @@ function isModelNotFoundError(err: any): boolean {
   );
 }
 
+// 🔥 ROBUST JSON EXTRACTOR (Prevents crashes if AI adds markdown)
+function safeParseJSON(text: string): any {
+  try {
+    const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
+    // Find first { and last }
+    const start = cleaned.indexOf('{');
+    const end = cleaned.lastIndexOf('}');
+    if (start !== -1 && end !== -1 && end > start) {
+      return JSON.parse(cleaned.substring(start, end + 1));
+    }
+    return JSON.parse(cleaned);
+  } catch (err) {
+    return null;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /*                         AI CALL (Modal → Groq)                             */
 /* -------------------------------------------------------------------------- */
@@ -128,7 +144,6 @@ async function callVisionModel(
   // 1. Try Modal
   if (modalClient) {
     try {
-      console.log(`[palm] Trying Modal model: ${modalModel}`);
       const completion = await modalClient.chat.completions.create({
         model: modalModel,
         messages: messagesPayload,
@@ -138,32 +153,24 @@ async function callVisionModel(
       const text = completion.choices[0]?.message?.content || "";
       if (text) return { text, used: "modal" };
     } catch (err: any) {
-      console.error(
-        `[palm] Modal failed (${err?.status || "no-status"}):`,
-        err?.message
-      );
+      console.error(`[palm] Modal failed:`, err?.message);
     }
   }
 
-  // 2. Fallback Groq qwen/qwen3.8-27b
+  // 2. Fallback Groq
   if (groqClient) {
     try {
-      console.log(`[palm] Falling back to Groq model: ${groqVisionModel}`);
       const completion = await groqClient.chat.completions.create({
         model: groqVisionModel,
         messages: messagesPayload,
         temperature: 0.4,
-        // Note: Groq supports json_object on some models; if it fails we retry without
         response_format: { type: "json_object" },
       });
       const text = completion.choices[0]?.message?.content || "";
       if (text) return { text, used: "groq" };
     } catch (err: any) {
-      console.error(
-        `[palm] Groq failed (${err?.status || "no-status"}):`,
-        err?.message
-      );
-      // Retry Groq without response_format (some vision endpoints don't support it)
+      console.error(`[palm] Groq failed:`, err?.message);
+      // Retry Groq without response_format
       try {
         const completion = await groqClient.chat.completions.create({
           model: groqVisionModel,
@@ -190,22 +197,22 @@ export async function POST(request: Request) {
 
   try {
     const user = await getUser();
+    const formData = await request.formData();
+    language = (formData.get("language") as string) || "hinglish";
 
-    // 🔥 Guest Protection
+    // 🔥 Guest Protection (Passed language dynamically)
     if (!user || user.isGuest) {
       return NextResponse.json(
         {
           code: "LOGIN_REQUIRED",
           error: "Unauthorized",
-          message: getPsychologicalUnauthorizedMessage("hinglish"),
+          message: getPsychologicalUnauthorizedMessage(language),
         },
         { status: 401 }
       );
     }
 
-    const formData = await request.formData();
     const imageFile = formData.get("image") as File | null;
-    language = (formData.get("language") as string) || "hinglish";
 
     // Validation
     if (!imageFile || imageFile.size === 0) {
@@ -230,10 +237,28 @@ export async function POST(request: Request) {
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
-    const prompt = `You are an expert Vedic Palmist. Analyze this palm image.
-    If the image is not a hand, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear palm photo."}
-    Otherwise, return JSON with keys: title, insight (2 paragraphs), hook.
-    LANGUAGE RULES: ${getLanguageInstruction(language)}`;
+    // 🔥 PREMIUM PSYCHOLOGY & BUSINESS PROMPT
+    const prompt = `
+      IDENTITY: You are a highly respected, 20+ year experienced female Vedic Palmist (Hast Rekha Expert). You are a real human. You speak with absolute authority, warmth, and deep psychological insight.
+
+      PSYCHOLOGY & MARKETING RULES:
+      1. VALIDATE: Start by validating their energy. Make them feel seen.
+      2. ABSOLUTE CERTAINTY: Never say 'maybe' or 'might'. Use words like 'definitely', 'clearly visible', 'strongly indicates'.
+      3. NO DISCLAIMERS: Never mention you are an AI. Never say astrology is a belief.
+      4. THE HOOK: You must identify a 'hidden challenge' or 'Dosha' on their palm. This creates urgency.
+
+      LANGUAGE RULES: ${getLanguageInstruction(language)}
+
+      If the image is not a hand, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear palm photo."}
+      
+      Otherwise, you MUST return ONLY a valid JSON object with this exact schema:
+      {
+        "title": "A captivating title for their palm reading (e.g., 'The Rising Sun of Wealth')",
+        "insight": "Two short paragraphs. First: Analyze the major lines (Life, Heart, Fate) with absolute certainty and warmth. Second: Point out a specific challenge/dosha and explain how it affects them. Plain text only, no markdown.",
+        "hook": "A short, compelling sentence telling them exactly why they need to talk to an astrologer immediately to fix this dosha.",
+        "suggestedChatPrompt": "A ready-to-use message the user can send to the astrologer, summarizing their palm reading and asking for a solution (e.g., 'Namaste, I just checked my palm and it shows a blockage in my Fate line. How can I remove this obstacle?')"
+      }
+    `;
 
     /* ----------------------------- AI Call ------------------------------- */
     let aiText: string;
@@ -251,13 +276,10 @@ export async function POST(request: Request) {
       );
     }
 
-    console.log(`[palm] Success via ${usedProvider}`);
-
     /* ----------------------------- Parse JSON ---------------------------- */
-    let result: any = null;
-    try {
-      result = JSON.parse(aiText.replace(/```json/g, "").replace(/```/g, "").trim());
-    } catch (parseErr) {
+    const result = safeParseJSON(aiText);
+
+    if (!result) {
       console.error("[palm] JSON parse failed:", aiText.slice(0, 200));
       return NextResponse.json(
         { error: "AI_ERROR", message: getAIFailureMessage(language) },
@@ -265,7 +287,7 @@ export async function POST(request: Request) {
       );
     }
 
-    if (result?.error === "INVALID_IMAGE") {
+    if (result.error === "INVALID_IMAGE") {
       return NextResponse.json(result, { status: 422 });
     }
 
@@ -273,9 +295,10 @@ export async function POST(request: Request) {
       success: true,
       provider: usedProvider,
       result: {
-        title: result?.title || "Palm Reading",
-        insight: result?.insight || "Analysis complete.",
-        hook: result?.hook || "A new change is coming.",
+        title: result.title || "Palm Reading",
+        insight: result.insight || "Your palm shows a unique path.",
+        hook: result.hook || "A major shift is coming. Talk to an astrologer now.",
+        suggestedChatPrompt: result.suggestedChatPrompt || "Hello, I just checked my palm. Can you guide me?", // 🔥 Passing to frontend
       },
     });
   } catch (error: any) {
