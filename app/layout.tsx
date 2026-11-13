@@ -6,24 +6,41 @@ import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://gita-ai-1.onrender.com"), 
+  // 🔥 1. Custom Domain Set
+  metadataBase: new URL("https://gitatalk.in"), 
   title: {
-    default: "Gita AI — Best AI Astrologer & Free Online Kundli",
-    template: "%s | Gita AI Astrology",
+    default: "GitaTalk – Best AI Astrologer & Free Online Kundli",
+    template: "%s | GitaTalk",
   },
   description:
-    "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, palmistry, and face reading. 100% Free first chat!",
+    "Talk to GitaTalk AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, palmistry, and face reading. 100% Free first chat!",
   keywords: [
     "AI Astrologer", "Online Kundli", "Free Kundli Milan", "Vedic Astrology", 
-    "Daily Horoscope", "Palmistry AI", "Face Reading", "Gita AI", "Astrology Chat",
+    "Daily Horoscope", "Palmistry AI", "Face Reading", "GitaTalk", "Astrology Chat",
     "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India"
   ],
-  authors: [{ name: "Gita AI Team" }],
-  creator: "Gita AI",
-  publisher: "Gita AI",
-  alternates: { canonical: "/" },
+  authors: [{ name: "GitaTalk Team" }],
+  creator: "GitaTalk",
+  publisher: "GitaTalk",
   
-  // 🔥 Google Search Console Verification 🔥
+  // 🔥 2. Canonical & Hreflang (10 Languages) Fix
+  alternates: { 
+    canonical: "/",
+    languages: {
+      'hi': '/',
+      'en': '/',
+      'te': '/',
+      'ta': '/',
+      'kn': '/',
+      'bn': '/',
+      'mr': '/',
+      'gu': '/',
+      'ml': '/',
+      'x-default': '/',
+    },
+  },
+  
+  // Google Search Console Verification
   verification: {
     google: "ZcIHuXYR5-z_kC0EliGBYoR41O-duRHgJ9tQVqp3E1I", 
   },
@@ -39,25 +56,26 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  // 🔥 3. OpenGraph Fix (Custom Domain)
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://gita-ai-1.onrender.com", 
-    siteName: "Gita AI",
-    title: "Gita AI — Best AI Astrologer & Free Online Kundli",
-    description: "Talk to Gita AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
+    url: "https://gitatalk.in", 
+    siteName: "GitaTalk",
+    title: "GitaTalk – Best AI Astrologer & Free Online Kundli",
+    description: "Talk to GitaTalk AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
     images: [
       {
         url: "/gita-portrait.jpg", 
         width: 1200,
         height: 630,
-        alt: "Gita AI - Your Favorite AI Astrologer",
+        alt: "GitaTalk - Your Favorite AI Astrologer",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Gita AI — Best AI Astrologer",
+    title: "GitaTalk – Best AI Astrologer",
     description: "Get accurate online kundli matching and daily horoscope for free.",
     images: ["/gita-portrait.jpg"], 
   },
@@ -84,29 +102,29 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔥 ULTIMATE JSON-LD (Google Rich Snippets ke liye) 🔥
+  // 🔥 ULTIMATE JSON-LD (Custom Domain ke sath Fix)
   const jsonLd = [
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      "name": "Gita AI",
-      "url": "https://gita-ai-1.onrender.com",
+      "name": "GitaTalk",
+      "url": "https://gitatalk.in",
       "description": "AI-powered Vedic astrology platform for Kundli, Horoscope, and Matchmaking.",
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://gita-ai-1.onrender.com/search?q={search_term_string}",
+        "target": "https://gitatalk.in/search?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     },
     {
       "@context": "https://schema.org",
       "@type": "Organization",
-      "name": "Gita AI",
-      "url": "https://gita-ai-1.onrender.com",
-      "logo": "https://gita-ai-1.onrender.com/icon-512.png",
+      "name": "GitaTalk",
+      "url": "https://gitatalk.in",
+      "logo": "https://gitatalk.in/icon-512.png",
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91-XXXXXXXXXX", // Apna number dalein (Optional)
+        "telephone": "+91-XXXXXXXXXX", // Apna number dalein
         "contactType": "customer service",
         "email": "gitaaisupport@gmail.com"
       }
@@ -114,11 +132,11 @@ export default function RootLayout({
     {
       "@context": "https://schema.org",
       "@type": "Product",
-      "name": "Gita AI Premium",
+      "name": "GitaTalk Premium",
       "description": "Unlimited AI Astrologer Chat & Premium Reports",
       "brand": {
         "@type": "Brand",
-        "name": "Gita AI"
+        "name": "GitaTalk"
       },
       "offers": {
         "@type": "Offer",
@@ -133,7 +151,6 @@ export default function RootLayout({
     <html lang="hi" suppressHydrationWarning> 
       <body className="antialiased overflow-x-hidden">
         
-        {/* Inject Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
