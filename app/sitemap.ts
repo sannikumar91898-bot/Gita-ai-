@@ -2,7 +2,7 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // 🔥 100% Custom Domain (onrender.com हटा दिया गया है)
+  // 🔥 100% Custom Domain
   const baseUrl = "https://gitatalk.in"; 
   
   const currentDate = new Date();
@@ -55,6 +55,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 0.7,
+    },
+    // 🔥 NEW: Legal Pages (For Trust & E-E-A-T)
+    {
+      url: `${baseUrl}/privacy-policy`,
+      lastModified: currentDate,
+      changeFrequency: 'yearly',
+      priority: 0.3,
+    },
+    {
+      url: `${baseUrl}/terms`,
+      lastModified: currentDate,
+      changeFrequency: 'yearly',
+      priority: 0.3,
     },
   ];
 }
