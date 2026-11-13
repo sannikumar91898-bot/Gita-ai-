@@ -1,11 +1,11 @@
-// app/privacy/page.tsx
+// app/terms/page.tsx
 "use client";
 
-import { ArrowLeft, Shield, Lock, Eye, Database, Mail } from "lucide-react";
+import { ArrowLeft, FileText, CreditCard, RefreshCcw, AlertTriangle, Mail, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
-export default function PrivacyPolicyPage() {
+export default function TermsPage() {
   const { theme } = useApp();
   const isDark = theme === "dark";
 
@@ -22,56 +22,58 @@ export default function PrivacyPolicyPage() {
             <ArrowLeft size={18} />
           </Link>
           <div>
-            <h1 className="text-lg font-black uppercase tracking-tight text-orange-500">Privacy Policy</h1>
+            <h1 className="text-lg font-black uppercase tracking-tight text-orange-500">Terms & Conditions</h1>
             <p className={`text-xs font-medium ${isDark ? "text-slate-400" : "text-gray-500"}`}>Last updated: November 2026</p>
           </div>
         </header>
 
         {/* CONTENT */}
         <div className={`rounded-2xl border p-6 space-y-6 ${cardClass}`}>
+          
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Database size={18} /> 1. Information We Collect
+              <FileText size={18} /> 1. Nature of Service
             </h2>
             <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              To provide accurate Vedic astrology readings, we collect personal information such as your Name, Date of Birth, Time of Birth, and Place of Birth. If you use our Face Reading or Palmistry features, we temporarily process your uploaded images.
+              GitaTalk provides AI-based astrological guidance and access to independent human astrologers. Astrology is a traditional belief system. Our services are for <strong>guidance and entertainment purposes only</strong> and do not replace professional medical, legal, or financial advice.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Eye size={18} /> 2. How We Use Your Data
+              <CreditCard size={18} /> 2. Payments & Wallet
             </h2>
             <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              Your data is used solely to generate Kundli calculations, horoscopes, and personalized AI astrological guidance. We do not sell your personal data to third parties. Your chat history is stored securely to provide you with continuous context.
+              We offer a Free First Chat. Subsequent chats with human astrologers are charged per minute as displayed on their profile. Wallet recharges are processed securely via trusted payment gateways like Razorpay. You must be 18+ to make payments.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Shield size={18} /> 3. AI & Third-Party Services
+              <RefreshCcw size={18} /> 3. Refund Policy
+            </h2>
+            <div className={`text-sm leading-relaxed space-y-2 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+              <p>• <strong>Technical Errors:</strong> If a chat disconnects due to an issue from our end, the deducted amount will be automatically refunded to your GitaTalk wallet.</p>
+              <p>• <strong>Duplicate Payments:</strong> If you are charged twice by mistake, you can request a refund to your original payment method within 7 days by emailing us.</p>
+              <p>• <strong>Completed Sessions:</strong> Astrological consultations are non-refundable once the chat session is successfully completed.</p>
+            </div>
+          </section>
+
+          <section className="space-y-3">
+            <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
+              <ShieldAlert size={18} /> 4. User Responsibilities
             </h2>
             <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              We use advanced AI models (such as Google Gemini) to process your inputs and generate readings. These models do not permanently store your personal identifiers. For payments, we use secure third-party gateways like Razorpay, which comply with PCI-DSS standards.
+              You agree not to upload abusive images, use offensive language with astrologers, or misuse the platform. Accounts violating these rules will be banned without a refund.
             </p>
           </section>
 
           <section className="space-y-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Lock size={18} /> 4. Data Security
+              <Mail size={18} /> 5. Contact & Support
             </h2>
             <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              We implement industry-standard security measures to protect your data. Uploaded images for Face/Palm reading are processed in real-time and are not permanently saved on our servers.
-            </p>
-          </section>
-
-          <section className="space-y-3">
-            <h2 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Mail size={18} /> 5. Contact Us
-            </h2>
-            <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-              If you have any questions regarding this Privacy Policy, please contact us at: <br/>
-              {/* 🔥 YAHAN NAYI EMAIL UPDATE KAR DI HAI 🔥 */}
+              For any payment issues, refund requests, or complaints, please contact us at: <br/>
               <span className="font-bold text-orange-500">gitaaisupport@gmail.com</span>
             </p>
           </section>
