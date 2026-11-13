@@ -134,7 +134,7 @@ const getLabelColor = (label: string) => {
 };
 
 // ============================================================
-// City Input Component
+// City Input Component (Completed)
 // ============================================================
 function CityInput({
   value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
@@ -173,7 +173,7 @@ function CityInput({
       />
       {suggestions.length > 0 && (
         <ul
-          className={`absolute z-20 w-full mt-1 rounded-xl max-h-40 overflow-y-auto shadow-2xl border ${
+          className={`absolute z-20 w-full mt-1 rounded-xl max-h-48 overflow-y-auto shadow-2xl border ${
             isDark ? "bg-[#151d2c] border-slate-700" : "bg-white border-gray-200"
           }`}
         >
@@ -228,7 +228,7 @@ export default function MatchingPage() {
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark
     ? "border-slate-800 bg-[#151d2c] shadow-lg"
-    : "border-amber-100 bg-white shadow-xl";
+    : "border-orange-100 bg-white shadow-xl";
   const inputClass = `w-full rounded-xl border px-4 py-3.5 text-[14px] font-medium outline-none transition-all focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 ${
     isDark ? "border-slate-700 bg-[#0A0F19] text-white" : "border-gray-200 bg-gray-50 text-slate-900"
   }`;
@@ -353,7 +353,9 @@ export default function MatchingPage() {
 
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
-      <div className="w-full px-3 pt-4 space-y-5 flex-1 max-w-2xl mx-auto">
+      {/* 🔥 CHANGED: Container ko max-w-4xl kiya aur padding adjust ki */}
+      <div className="w-full px-4 sm:px-6 pt-4 space-y-5 flex-1 max-w-4xl mx-auto">
+        
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
           <Link
@@ -417,11 +419,11 @@ export default function MatchingPage() {
 
             <form
               onSubmit={handleMatch}
-              className={`space-y-5 rounded-[1.5rem] border p-4 sm:p-5 ${cardClass}`}
+              className={`space-y-5 rounded-[1.5rem] border p-5 sm:p-6 ${cardClass}`}
             >
               {/* BOY */}
               <div
-                className={`space-y-3.5 p-4 rounded-2xl border ${
+                className={`space-y-3.5 p-4 sm:p-5 rounded-2xl border ${
                   isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"
                 }`}
               >
@@ -437,7 +439,7 @@ export default function MatchingPage() {
                   onChange={(e) => setBoy({ ...boy, name: e.target.value })}
                   className={inputClass}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="relative">
                     <Calendar
                       size={16}
@@ -482,7 +484,7 @@ export default function MatchingPage() {
 
               {/* GIRL */}
               <div
-                className={`space-y-3.5 p-4 rounded-2xl border ${
+                className={`space-y-3.5 p-4 sm:p-5 rounded-2xl border ${
                   isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"
                 }`}
               >
@@ -498,7 +500,7 @@ export default function MatchingPage() {
                   onChange={(e) => setGirl({ ...girl, name: e.target.value })}
                   className={inputClass}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="relative">
                     <Calendar
                       size={16}
@@ -551,24 +553,24 @@ export default function MatchingPage() {
         {result && !loading && (
           <div ref={resultRef} className="space-y-4 animate-in fade-in">
             {/* CARD 1 — HERO SCORE */}
-            <div className={`rounded-2xl border p-6 text-center ${cardClass}`}>
-              <div className="flex items-center justify-center gap-3 mb-4">
+            <div className={`rounded-2xl border p-6 sm:p-8 text-center ${cardClass}`}>
+              <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">
+                  <div className="text-[11px] uppercase font-black text-slate-500 tracking-wider">
                     {t("boyPrefix")}
                   </div>
-                  <div className="text-[15px] font-black">{boy.name}</div>
+                  <div className="text-[16px] font-black">{boy.name}</div>
                 </div>
-                <Heart size={20} className="text-[#ff6b00]" fill="currentColor" />
+                <Heart size={24} className="text-[#ff6b00]" fill="currentColor" />
                 <div className="text-center">
-                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">
+                  <div className="text-[11px] uppercase font-black text-slate-500 tracking-wider">
                     {t("girlPrefix")}
                   </div>
-                  <div className="text-[15px] font-black">{girl.name}</div>
+                  <div className="text-[16px] font-black">{girl.name}</div>
                 </div>
               </div>
 
-              <div className="relative w-32 h-32 mx-auto mb-4">
+              <div className="relative w-36 h-36 mx-auto mb-4">
                 <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
                   <circle
                     cx="60"
@@ -591,13 +593,13 @@ export default function MatchingPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-3xl font-black">{displayScore}</div>
-                  <div className="text-[11px] font-bold text-slate-500">/36</div>
+                  <div className="text-4xl font-black">{displayScore}</div>
+                  <div className="text-[12px] font-bold text-slate-500">/36</div>
                 </div>
               </div>
 
               <div
-                className={`inline-block rounded-full px-4 py-1.5 text-[13px] font-black ${
+                className={`inline-block rounded-full px-5 py-2 text-[14px] font-black ${
                   getLabelColor(result.label).text
                 } ${getLabelColor(result.label).bg} border ${getLabelColor(result.label).border}`}
               >
@@ -605,7 +607,7 @@ export default function MatchingPage() {
               </div>
 
               <p
-                className={`mt-4 text-[13px] font-semibold leading-relaxed ${
+                className={`mt-5 text-[14.5px] font-semibold leading-relaxed ${
                   isDark ? "text-slate-300" : "text-slate-700"
                 }`}
               >
@@ -614,12 +616,12 @@ export default function MatchingPage() {
             </div>
 
             {/* CARD 2 — DOSHA */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2">
-                <ShieldAlert size={16} className="text-[#ff6b00]" />
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2">
+                <ShieldAlert size={18} className="text-[#ff6b00]" />
                 {t("doshaTitle")}
               </h3>
-              <div className="space-y-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 {(["manglik", "nadi", "bhakoot"] as const).map((key) => {
                   const dosha = result.doshas?.[key];
                   if (!dosha) return null;
@@ -637,23 +639,23 @@ export default function MatchingPage() {
                   return (
                     <div
                       key={key}
-                      className={`rounded-xl border p-3 ${
+                      className={`rounded-xl border p-4 ${
                         isDark
                           ? "border-slate-800 bg-[#0A0F19]/50"
                           : "border-gray-200 bg-gray-50"
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-[13px] font-black">{doshaName}</span>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1.5">
+                        <span className="text-[13.5px] font-black">{doshaName}</span>
                         <span
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${statusColor}`}
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-full border w-max ${statusColor}`}
                         >
                           {statusLabel}
                         </span>
                       </div>
                       {dosha.reason && (
                         <p
-                          className={`text-[11.5px] font-medium leading-relaxed ${
+                          className={`text-[12px] font-medium leading-relaxed ${
                             isDark ? "text-slate-300" : "text-slate-600"
                           }`}
                         >
@@ -667,17 +669,17 @@ export default function MatchingPage() {
             </div>
 
             {/* CARD 3a — STRENGTHS */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2 text-emerald-600">
-                <Star size={16} /> {t("strengths")}
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-emerald-600">
+                <Star size={18} /> {t("strengths")}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {(result.strengths || []).map((s: string, i: number) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                    className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
-                    <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
                   </li>
                 ))}
@@ -685,15 +687,15 @@ export default function MatchingPage() {
             </div>
 
             {/* CARD 3b — ATTENTION */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2 text-amber-600">
-                <AlertCircle size={16} /> {t("attention")}
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-amber-600">
+                <AlertCircle size={18} /> {t("attention")}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {(result.attentionAreas || []).map((s: string, i: number) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                    className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
                     <span className="text-amber-500 shrink-0 mt-0.5">◆</span>
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
@@ -703,15 +705,15 @@ export default function MatchingPage() {
             </div>
 
             {/* CARD 3c — PRACTICAL ADVICE */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2 text-[#ff6b00]">
-                <Sparkles size={16} /> {t("advice")}
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-[#ff6b00]">
+                <Sparkles size={18} /> {t("advice")}
               </h3>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {(result.practicalAdvice || []).map((s: string, i: number) => (
                   <li
                     key={i}
-                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                    className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
                     <span className="text-[#ff6b00] shrink-0 mt-0.5">🙏</span>
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
@@ -720,37 +722,37 @@ export default function MatchingPage() {
               </ul>
             </div>
 
-            {/* CARD 4 — ACCORDION */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
+            {/* CARD 4 — ACCORDION (Full width, grid on desktop) */}
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
               <button
                 onClick={() => setShowBreakdown(!showBreakdown)}
                 className="w-full flex items-center justify-between"
               >
-                <h3 className="text-[14px] font-black flex items-center gap-2">
-                  <FileText size={16} className="text-[#ff6b00]" />
+                <h3 className="text-[15px] font-black flex items-center gap-2">
+                  <FileText size={18} className="text-[#ff6b00]" />
                   {t("breakdown")}
                 </h3>
                 <ChevronDown
-                  size={18}
-                  className={`transition-transform ${showBreakdown ? "rotate-180" : ""}`}
+                  size={20}
+                  className={`transition-transform text-slate-500 ${showBreakdown ? "rotate-180" : ""}`}
                 />
               </button>
               {showBreakdown && (
-                <div className="mt-3 space-y-2 animate-in fade-in">
+                <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
                   {(result.details || []).map((d: any, i: number) => (
                     <div
                       key={i}
-                      className={`rounded-lg border p-2.5 flex items-center justify-between ${
+                      className={`rounded-xl border p-3 flex items-center justify-between ${
                         isDark
                           ? "border-slate-800 bg-[#0A0F19]/50"
                           : "border-gray-200 bg-gray-50"
                       }`}
                     >
                       <div className="flex-1">
-                        <div className="text-[12px] font-black">{d.name}</div>
+                        <div className="text-[13px] font-black">{d.name}</div>
                         {d.meaning && (
                           <div
-                            className={`text-[10.5px] ${
+                            className={`text-[11px] mt-0.5 ${
                               isDark ? "text-slate-400" : "text-slate-600"
                             }`}
                           >
@@ -758,7 +760,7 @@ export default function MatchingPage() {
                           </div>
                         )}
                       </div>
-                      <div className="text-[12px] font-black text-[#ff6b00] ml-3">
+                      <div className="text-[13px] font-black text-[#ff6b00] ml-4">
                         {d.score}/{d.max}
                       </div>
                     </div>
@@ -768,29 +770,29 @@ export default function MatchingPage() {
             </div>
 
             {/* QUESTION CHIPS */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3">{t("askQ")}</h3>
-              <div className="space-y-2">
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-3">{t("askQ")}</h3>
+              <div className="grid grid-cols-1 gap-3">
                 {questionChips.map((chip, i) => (
                   <Link
                     key={i}
                     href={`/chat?q=${encodeURIComponent(chip.q)}`}
-                    className={`flex items-center gap-2 rounded-xl border p-3 text-[12.5px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 ${
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-[13px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 ${
                       isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
                     }`}
                   >
-                    <span>{chip.icon}</span>
+                    <span className="text-[16px]">{chip.icon}</span>
                     <span className="flex-1 text-left">{chip.q}</span>
-                    <ArrowRight size={14} className="text-[#ff6b00]" />
+                    <ArrowRight size={16} className="text-[#ff6b00]" />
                   </Link>
                 ))}
               </div>
             </div>
 
             {/* NEXT STEPS */}
-            <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3">{t("nextSteps")}</h3>
-              <div className="space-y-2">
+            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-3">{t("nextSteps")}</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(result.nextSteps || []).map((step: any, i: number) => {
                   const href =
                     step.action === "chat"
@@ -809,9 +811,9 @@ export default function MatchingPage() {
                           downloadPdf();
                         }
                       }}
-                      className={`flex items-center justify-between rounded-xl p-3.5 text-[13px] font-black transition-all ${
+                      className={`flex items-center justify-between rounded-xl p-4 text-[13.5px] font-black transition-all ${
                         isPrimary
-                          ? "bg-gradient-to-r from-[#ff6b00] to-amber-600 text-white shadow-lg"
+                          ? "bg-gradient-to-r from-[#ff6b00] to-amber-600 text-white shadow-lg sm:col-span-2"
                           : isDark
                           ? "border border-slate-700 text-slate-200"
                           : "border border-gray-200 text-slate-800"
@@ -828,61 +830,61 @@ export default function MatchingPage() {
             {/* CHAT BANNER */}
             <Link
               href={`/chat?q=${suggestedChatPrompt}`}
-              className="block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-4"
+              className="block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-5"
             >
-              <div className="flex items-center gap-3">
-                <div className="bg-[#ff6b00] rounded-xl p-2.5">
-                  <MessageCircle size={20} className="text-white" />
+              <div className="flex items-center gap-4">
+                <div className="bg-[#ff6b00] rounded-xl p-3 shadow-md">
+                  <MessageCircle size={24} className="text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-[13px] font-black text-[#ff6b00]">{t("bannerTitle")}</div>
+                  <div className="text-[14px] font-black text-[#ff6b00]">{t("bannerTitle")}</div>
                   <div
-                    className={`text-[11px] font-semibold ${
+                    className={`text-[12px] font-semibold mt-0.5 ${
                       isDark ? "text-slate-400" : "text-slate-600"
                     }`}
                   >
                     {t("bannerSub")}
                   </div>
                 </div>
-                <ArrowRight size={16} className="text-[#ff6b00]" />
+                <ArrowRight size={18} className="text-[#ff6b00]" />
               </div>
             </Link>
 
             {/* ACTION BUTTONS */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
                 onClick={handleShare}
-                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 ${
                   isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
                 }`}
               >
-                <Share2 size={18} className="text-emerald-600" />
+                <Share2 size={16} className="text-emerald-600" />
                 {t("share")}
               </button>
               <button
                 onClick={downloadPdf}
                 disabled={isDownloading}
-                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 disabled:opacity-50 ${
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 disabled:opacity-50 ${
                   isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
                 }`}
               >
-                <Download size={18} className="text-[#ff6b00]" />
+                <Download size={16} className="text-[#ff6b00]" />
                 {isDownloading ? "..." : t("pdf")}
               </button>
               <button
                 onClick={resetForm}
-                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 ${
                   isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
                 }`}
               >
-                <RefreshCw size={18} className="text-slate-500" />
+                <RefreshCw size={16} className="text-slate-500" />
                 {t("reset")}
               </button>
             </div>
 
             {/* DISCLAIMER */}
             <p
-              className={`text-[10.5px] leading-relaxed text-center px-2 ${
+              className={`text-[11px] leading-relaxed text-center px-2 ${
                 isDark ? "text-slate-500" : "text-slate-500"
               }`}
             >
@@ -891,48 +893,50 @@ export default function MatchingPage() {
           </div>
         )}
 
-        {/* BOTTOM NAV */}
+        {/* BOTTOM NAV (Sticky, Full Width) */}
         <nav
-          className={`fixed bottom-0 left-0 right-0 z-30 flex justify-around border-t py-2.5 ${
+          className={`fixed bottom-0 left-0 right-0 z-30 border-t backdrop-blur ${
             isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"
-          } backdrop-blur`}
+          }`}
         >
-          <Link
-            href="/"
-            className={`flex flex-col items-center gap-0.5 px-3 ${
-              isDark ? "text-slate-400" : "text-gray-500"
-            }`}
-          >
-            <Home size={18} />
-            <span className="text-[9.5px] font-bold">{t("home")}</span>
-          </Link>
-          <Link
-            href="/chat"
-            className={`flex flex-col items-center gap-0.5 px-3 ${
-              isDark ? "text-slate-400" : "text-gray-500"
-            }`}
-          >
-            <MessageCircle size={18} />
-            <span className="text-[9.5px] font-bold">{t("chatNav")}</span>
-          </Link>
-          <Link
-            href="/daily"
-            className={`flex flex-col items-center gap-0.5 px-3 ${
-              isDark ? "text-slate-400" : "text-gray-500"
-            }`}
-          >
-            <Sun size={18} />
-            <span className="text-[9.5px] font-bold">{t("daily")}</span>
-          </Link>
-          <Link
-            href="/profile"
-            className={`flex flex-col items-center gap-0.5 px-3 ${
-              isDark ? "text-slate-400" : "text-gray-500"
-            }`}
-          >
-            <User size={18} />
-            <span className="text-[9.5px] font-bold">{t("profile")}</span>
-          </Link>
+          <div className="max-w-4xl mx-auto flex justify-around py-2.5">
+            <Link
+              href="/"
+              className={`flex flex-col items-center gap-0.5 px-3 ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              <Home size={18} />
+              <span className="text-[9.5px] font-bold">{t("home")}</span>
+            </Link>
+            <Link
+              href="/chat"
+              className={`flex flex-col items-center gap-0.5 px-3 ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              <MessageCircle size={18} />
+              <span className="text-[9.5px] font-bold">{t("chatNav")}</span>
+            </Link>
+            <Link
+              href="/daily"
+              className={`flex flex-col items-center gap-0.5 px-3 ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              <Sun size={18} />
+              <span className="text-[9.5px] font-bold">{t("daily")}</span>
+            </Link>
+            <Link
+              href="/profile"
+              className={`flex flex-col items-center gap-0.5 px-3 ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
+              <User size={18} />
+              <span className="text-[9.5px] font-bold">{t("profile")}</span>
+            </Link>
+          </div>
         </nav>
       </div>
     </main>
