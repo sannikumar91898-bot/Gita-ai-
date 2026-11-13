@@ -141,10 +141,39 @@ export default function RemediesPage() {
 
   const chatLink = `/chat/gita?prefill=${encodeURIComponent(t("prefill"))}`;
 
+  // 🔥 FAQ SCHEMA (Google Rich Snippets के लिए)
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Which gemstone should I wear according to my Kundli?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You should wear the gemstone of the planet that is beneficial for your ascendant (Lagna) or the one that is weak in your birth chart. For personalized advice, consult our AI astrologer."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I wear a gemstone without consulting an astrologer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It is not recommended. Wearing a wrong gemstone can amplify negative energies. Always get your Kundli analyzed before wearing a Ratna."
+        }
+      }
+    ]
+  };
+
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
       
-      {/* 🔥 CHANGED: max-w-4xl aur responsive padding (Lambai-Chaurai faila di) */}
+      {/* Inject FAQ Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         
         {/* HEADER */}
@@ -153,7 +182,6 @@ export default function RemediesPage() {
             <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            {/* 🔥 SEO FIX: H1 Tag with better keywords */}
             <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">
               {t("title")}
             </h1>
@@ -191,7 +219,6 @@ export default function RemediesPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("planet")}</p>
-                      {/* 🔥 H2 Tag for SEO */}
                       <h2 className="text-[18px] sm:text-[20px] font-black text-[#ff6b00]">{getLocalizedPlanet(item)}</h2>
                     </div>
                     <div className="text-right">
@@ -265,4 +292,59 @@ export default function RemediesPage() {
         <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
           <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
             <Link href="/privacy-policy" className="hover:text-[#ff6b00] transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">Ter
+            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">Terms & Refund Policy</Link>
+            <a href="mailto:gitaaisupport@gmail.com" className="hover:text-[#ff6b00] transition-colors">Contact Us</a>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br/>
+            Astrology is for guidance purposes only. Not a substitute for professional advice.
+          </p>
+        </footer>
+
+      </div>
+
+      {/* STICKY BOTTOM BANNER & NAVIGATION */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
+        
+        {/* Pink Banner */}
+        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
+          <div className="flex items-center gap-3">
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={16} className="text-white" />
+             </div>
+             <div>
+               <p className="text-[11px] font-bold text-white leading-tight">{t("bannerTitle")}</p>
+               <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
+             </div>
+          </div>
+          <Link href="/chat" className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md active:scale-95 transition-transform">
+               <Crown size={16} className="text-[#d81b60]" fill="#d81b60" />
+          </Link>
+        </div>
+
+        {/* Bottom Navigation Bar */}
+        <nav className={`border-t w-full ${navClass}`}>
+          <div className="max-w-4xl mx-auto flex justify-around items-center pt-2.5 pb-5 px-2">
+            <Link href="/" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
+              <Home size={22} />
+              <span className="text-[11px] font-medium">{t("home")}</span>
+            </Link>
+            <Link href="/chat" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
+              <MessageCircle size={22} />
+              <span className="text-[11px] font-medium">{t("chat")}</span>
+            </Link>
+            <Link href="/daily" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
+              <Sun size={22} />
+              <span className="text-[11px] font-medium">{t("daily")}</span>
+            </Link>
+            <Link href="/profile" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
+              <User size={22} />
+              <span className="text-[11px] font-medium">{t("profile")}</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
+
+    </main>
+  );
+}
