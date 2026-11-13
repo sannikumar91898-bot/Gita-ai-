@@ -2,8 +2,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User, ChevronDown, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, Camera, X, CheckCircle2, Home, MessageCircle, Sun, User, ChevronDown, Loader2, Sparkles, Crown } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useApp } from "../../Providers"; 
 
 const AVATARS = [
@@ -35,6 +36,7 @@ const AVATARS = [
 
 export default function ProfileEditPage() {
   const { me, loading, lang, theme } = useApp();
+  const router = useRouter();
   const isDark = theme === "dark";
   
   const [pickerOpen, setPickerOpen] = useState(false);
@@ -51,16 +53,16 @@ export default function ProfileEditPage() {
   // 🔥 10 Language Translation Helper
   const t = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
-      hi: { title: "प्रोफाइल एडिट करें", selectAvatar: "अपना अवतार चुनें", name: "नाम", gender: "लिंग", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", cityPlaceholder: "शहर का नाम", save: "प्रोफाइल सेव करें", male: "पुरुष", female: "महिला", other: "अन्य", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", successMsg: "प्रोफाइल सफलतापूर्वक सेव हो गई!", changePic: "प्रोफाइल पिक्चर बदलें", selectLib: "लाइब्रेरी से चुनें", saving: "सेव हो रहा है...", kundliNote: "सटीक ज्योतिषीय भविष्यवाणी के लिए सही जन्म विवरण भरें।" },
-      hinglish: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions." },
-      en: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions." },
-      te: { title: "ప్రొఫైల్ సవరించండి", selectAvatar: "మీ అవతార్‌ను ఎంచుకోండి", name: "పేరు", gender: "లింగం", dob: "పుట్టిన తేదీ", time: "పుట్టిన సమయం", place: "పుట్టిన స్థలం", cityPlaceholder: "నగరం పేరు", save: "ప్రొఫైల్ సేవ్ చేయండి", male: "పురుషుడు", female: "స్త్రీ", other: "ఇతర", home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", successMsg: "ప్రొఫైల్ విజయవంతంగా సేవ్ చేయబడింది!", changePic: "ప్రొఫైల్ చిత్రాన్ని మార్చండి", selectLib: "లైబ్రరీ నుండి ఎంచుకోండి", saving: "సేవ్ అవుతోంది...", kundliNote: "ఖచ్చితమైన జ్యోతిష్య అంచనాల కోసం సరైన పుట్టిన వివరాలను నమోదు చేయండి." },
-      ta: { title: "சுயவிவரத்தைத் திருத்து", selectAvatar: "உங்கள் அவதாரைத் தேர்ந்தெடுக்கவும்", name: "பெயர்", gender: "பாலினம்", dob: "பிறந்த தேதி", time: "பிறந்த நேரம்", place: "பிறந்த இடம்", cityPlaceholder: "நகரத்தின் பெயர்", save: "சுயவிவரத்தைச் சேமி", male: "ஆண்", female: "பெண்", other: "மற்றவை", home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", successMsg: "சுயவிவரம் வெற்றிகரமாக சேமிக்கப்பட்டது!", changePic: "சுயவிவரப் படத்தை மாற்று", selectLib: "நூலகத்திலிருந்து தேர்ந்தெடுக்கவும்", saving: "சேமிக்கப்படுகிறது...", kundliNote: "துல்லியமான ஜோதிட கணிப்புகளுக்கு சரியான பிறப்பு விவரங்களை உள்ளிடவும்." },
-      kn: { title: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", selectAvatar: "ನಿಮ್ಮ ಅವತಾರವನ್ನು ಆಯ್ಕೆಮಾಡಿ", name: "ಹೆಸರು", gender: "ಲಿಂಗ", dob: "ಹುಟ್ಟಿದ ದಿನಾಂಕ", time: "ಹುಟ್ಟಿದ ಸಮಯ", place: "ಹುಟ್ಟಿದ ಸ್ಥಳ", cityPlaceholder: "ನಗರದ ಹೆಸರು", save: "ಪ್ರೊಫೈಲ್ ಉಳಿಸಿ", male: "ಪುರುಷ", female: "ಮಹಿಳೆ", other: "ಇತರೆ", home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", successMsg: "ಪ್ರೊಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ!", changePic: "ಪ್ರೊಫೈಲ್ ಚಿತ್ರವನ್ನು ಬದಲಾಯಿಸಿ", selectLib: "ಲೈಬ್ರರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ", saving: "ಉಳಿಸಲಾಗುತ್ತಿದೆ...", kundliNote: "ನಿಖರವಾದ ಜ್ಯೋತಿಷ್ಯ ಮುನ್ಸೂಚನೆಗಳಿಗಾಗಿ ಸರಿಯಾದ ಜನ್ಮ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ." },
-      bn: { title: "প্রোফাইল সম্পাদনা করুন", selectAvatar: "আপনার অবতার চয়ন করুন", name: "নাম", gender: "লিঙ্গ", dob: "জন্ম তারিখ", time: "জন্মের সময়", place: "জন্মস্থান", cityPlaceholder: "শহরের নাম", save: "প্রোফাইল সংরক্ষণ করুন", male: "পুরুষ", female: "মহিলা", other: "অন্যান্য", home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", successMsg: "প্রোফাইল সফলভাবে সংরক্ষিত হয়েছে!", changePic: "প্রোফাইল ছবি পরিবর্তন করুন", selectLib: "লাইব্রেরি থেকে চয়ন করুন", saving: "সংরক্ষণ করা হচ্ছে...", kundliNote: "সঠিক জ্যোতিষশাস্ত্রীয় ভবিষ্যদ্বাণীর জন্য সঠিক জন্ম বিবরণ লিখুন।" },
-      mr: { title: "प्रोफाइल संपादित करा", selectAvatar: "तुमचा अवतार निवडा", name: "नाव", gender: "लिंग", dob: "जन्म तारीख", time: "जन्म वेळ", place: "जन्म ठिकाण", cityPlaceholder: "शहराचे नाव", save: "प्रोफाइल जतन करा", male: "पुरुष", female: "स्त्री", other: "इतर", home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", successMsg: "प्रोफाइल यशस्वीरित्या जतन केले!", changePic: "प्रोफाइल चित्र बदला", selectLib: "लायब्ररीमधून निवडा", saving: "जतन करत आहे...", kundliNote: "अचूक ज्योतिष अंदाजासाठी अचूक जन्म तपशील प्रविष्ट करा." },
-      gu: { title: "પ્રોફાઇલ સંપાદિત કરો", selectAvatar: "તમારો અવતાર પસંદ કરો", name: "નામ", gender: "લિંગ", dob: "જન્મ તારીખ", time: "જન્મ સમય", place: "જન્મ સ્થળ", cityPlaceholder: "શહેરનું નામ", save: "પ્રોફાઇલ સાચવો", male: "પુરુષ", female: "સ્ત્રી", other: "અન્ય", home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", successMsg: "પ્રોફાઇલ સફળતાપૂર્વક સાચવવામાં આવી!", changePic: "પ્રોફાઇલ ચિત્ર બદલો", selectLib: "લાઇબ્રેરીમાંથી પસંદ કરો", saving: "સાચવી રહ્યું છે...", kundliNote: "સચોટ જ્યોતિષીય આગાહીઓ માટે સચોટ જન્મ વિગતો દાખલ કરો." },
-      ml: { title: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", selectAvatar: "നിങ്ങളുടെ അവതാർ തിരഞ്ഞെടുക്കുക", name: "പേര്", gender: "ലിംഗഭേദം", dob: "ജനനത്തീയതി", time: "ജനന സമയം", place: "ജനനസ്ഥലം", cityPlaceholder: "നഗരത്തിന്റെ പേര്", save: "പ്രൊഫൈൽ സേവ് ചെയ്യുക", male: "പുരുഷൻ", female: "സ്ത്രീ", other: "മറ്റുള്ളവ", home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", successMsg: "പ്രൊഫൈൽ വിജയകരമായി സേവ് ചെയ്തു!", changePic: "പ്രൊഫൈൽ ചിത്രം മാറ്റുക", selectLib: "ലൈബ്രറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", saving: "സേവ് ചെയ്യുന്നു...", kundliNote: "കൃത്യമായ ജ്യോതിഷ ട്രെൻഡുകൾക്കായി ശരിയായ ജനന വിവരങ്ങൾ നൽകുക." },
+      hi: { title: "प्रोफाइल एडिट करें", selectAvatar: "अपना अवतार चुनें", name: "नाम", gender: "लिंग", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", cityPlaceholder: "शहर का नाम", save: "प्रोफाइल सेव करें", male: "पुरुष", female: "महिला", other: "अन्य", home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", successMsg: "प्रोफाइल सफलतापूर्वक सेव हो गई!", changePic: "प्रोफाइल पिक्चर बदलें", selectLib: "लाइब्रेरी से चुनें", saving: "सेव हो रहा है...", kundliNote: "सटीक ज्योतिषीय भविष्यवाणी के लिए सही जन्म विवरण भरें।", bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "अभी बात करें - पहली चैट FREE", chatBtn: "चैट" },
+      hinglish: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions.", bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat" },
+      en: { title: "Edit Profile", selectAvatar: "Select your avatar", name: "Name", gender: "Gender", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", cityPlaceholder: "City name", save: "Save Profile", male: "Male", female: "Female", other: "Other", home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", successMsg: "Profile saved successfully!", changePic: "Change Profile Pic", selectLib: "Select from Library", saving: "Saving...", kundliNote: "Enter accurate birth details for precise astrological predictions.", bannerTitle: "ASTROLOGER - 24X7 AVAILABLE", bannerSub: "Talk Now -- First Chat FREE", chatBtn: "Chat" },
+      te: { title: "ప్రొఫైల్ సవరించండి", selectAvatar: "మీ అవతార్‌ను ఎంచుకోండి", name: "పేరు", gender: "లింగం", dob: "పుట్టిన తేదీ", time: "పుట్టిన సమయం", place: "పుట్టిన స్థలం", cityPlaceholder: "నగరం పేరు", save: "ప్రొఫైల్ సేవ్ చేయండి", male: "పురుషుడు", female: "స్త్రీ", other: "ఇతర", home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", successMsg: "ప్రొఫైల్ విజయవంతంగా సేవ్ చేయబడింది!", changePic: "ప్రొఫైల్ చిత్రాన్ని మార్చండి", selectLib: "లైబ్రరీ నుండి ఎంచుకోండి", saving: "సేవ్ అవుతోంది...", kundliNote: "ఖచ్చితమైన జ్యోతిష్య అంచనాల కోసం సరైన పుట్టిన వివరాలను నమోదు చేయండి.", bannerTitle: "జ్యోతిష్యుడు - 24x7 అందుబాటులో", bannerSub: "ఇప్పుడే మాట్లాడండి - మొదటి చాట్ ఉచితం", chatBtn: "చాట్" },
+      ta: { title: "சுயவிவரத்தைத் திருத்து", selectAvatar: "உங்கள் அவதாரைத் தேர்ந்தெடுக்கவும்", name: "பெயர்", gender: "பாலினம்", dob: "பிறந்த தேதி", time: "பிறந்த நேரம்", place: "பிறந்த இடம்", cityPlaceholder: "நகரத்தின் பெயர்", save: "சுயவிவரத்தைச் சேமி", male: "ஆண்", female: "பெண்", other: "மற்றவை", home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", successMsg: "சுயவிவரம் வெற்றிகரமாக சேமிக்கப்பட்டது!", changePic: "சுயவிவரப் படத்தை மாற்று", selectLib: "நூலகத்திலிருந்து தேர்ந்தெடுக்கவும்", saving: "சேமிக்கப்படுகிறது...", kundliNote: "துல்லியமான ஜோதிட கணிப்புகளுக்கு சரியான பிறப்பு விவரங்களை உள்ளிடவும்.", bannerTitle: "ஜோதிடர் - 24x7 கிடைக்கும்", bannerSub: "இப்போது பேசுங்கள் - முதல் அரட்டை இலவசம்", chatBtn: "அரட்டை" },
+      kn: { title: "ಪ್ರೊಫೈಲ್ ಸಂಪಾದಿಸಿ", selectAvatar: "ನಿಮ್ಮ ಅವತಾರವನ್ನು ಆಯ್ಕೆಮಾಡಿ", name: "ಹೆಸರು", gender: "ಲಿಂಗ", dob: "ಹುಟ್ಟಿದ ದಿನಾಂಕ", time: "ಹುಟ್ಟಿದ ಸಮಯ", place: "ಹುಟ್ಟಿದ ಸ್ಥಳ", cityPlaceholder: "ನಗರದ ಹೆಸರು", save: "ಪ್ರೊಫೈಲ್ ಉಳಿಸಿ", male: "ಪುರುಷ", female: "ಮಹಿಳೆ", other: "ಇತರೆ", home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", successMsg: "ಪ್ರೊಫೈಲ್ ಯಶಸ್ವಿಯಾಗಿ ಉಳಿಸಲಾಗಿದೆ!", changePic: "ಪ್ರೊಫೈಲ್ ಚಿತ್ರವನ್ನು ಬದಲಾಯಿಸಿ", selectLib: "ಲೈಬ್ರರಿಯಿಂದ ಆಯ್ಕೆಮಾಡಿ", saving: "ಉಳಿಸಲಾಗುತ್ತಿದೆ...", kundliNote: "ನಿಖರವಾದ ಜ್ಯೋತಿಷ್ಯ ಮುನ್ಸೂಚನೆಗಳಿಗಾಗಿ ಸರಿಯಾದ ಜನ್ಮ ವಿವರಗಳನ್ನು ನಮೂದಿಸಿ.", bannerTitle: "ಜ್ಯೋತಿಷಿ - 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಈಗ ಮಾತನಾಡಿ - ಮೊದಲ ಚಾಟ್ ಉಚಿತ", chatBtn: "ಚಾಟ್" },
+      bn: { title: "প্রোফাইল সম্পাদনা করুন", selectAvatar: "আপনার অবতার চয়ন করুন", name: "নাম", gender: "লিঙ্গ", dob: "জন্ম তারিখ", time: "জন্মের সময়", place: "জন্মস্থান", cityPlaceholder: "শহরের নাম", save: "প্রোফাইল সংরক্ষণ করুন", male: "পুরুষ", female: "মহিলা", other: "অন্যান্য", home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", successMsg: "প্রোফাইল সফলভাবে সংরক্ষিত হয়েছে!", changePic: "প্রোফাইল ছবি পরিবর্তন করুন", selectLib: "লাইব্রেরি থেকে চয়ন করুন", saving: "সংরক্ষণ করা হচ্ছে...", kundliNote: "সঠিক জ্যোতিষশাস্ত্রীয় ভবিষ্যদ্বাণীর জন্য সঠিক জন্ম বিবরণ লিখুন।", bannerTitle: "জ্যোতিষী - 24x7 উপলব্ধ", bannerSub: "এখনই কথা বলুন - প্রথম চ্যাট ফ্রি", chatBtn: "চ্যাট" },
+      mr: { title: "प्रोफाइल संपादित करा", selectAvatar: "तुमचा अवतार निवडा", name: "नाव", gender: "लिंग", dob: "जन्म तारीख", time: "जन्म वेळ", place: "जन्म ठिकाण", cityPlaceholder: "शहराचे नाव", save: "प्रोफाइल जतन करा", male: "पुरुष", female: "स्त्री", other: "इतर", home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", successMsg: "प्रोफाइल यशस्वीरित्या जतन केले!", changePic: "प्रोफाइल चित्र बदला", selectLib: "लायब्ररीमधून निवडा", saving: "जतन करत आहे...", kundliNote: "अचूक ज्योतिष अंदाजासाठी अचूक जन्म तपशील प्रविष्ट करा.", bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "आता बोला - पहिली चॅट मोफत", chatBtn: "चॅट" },
+      gu: { title: "પ્રોફાઇલ સંપાદિત કરો", selectAvatar: "તમારો અવતાર પસંદ કરો", name: "નામ", gender: "લિંગ", dob: "જન્મ તારીખ", time: "જન્મ સમય", place: "જન્મ સ્થળ", cityPlaceholder: "શહેરનું નામ", save: "પ્રોફાઇલ સાચવો", male: "પુરુષ", female: "સ્ત્રી", other: "અન્ય", home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", successMsg: "પ્રોફાઇલ સફળતાપૂર્વક સાચવવામાં આવી!", changePic: "પ્રોફાઇલ ચિત્ર બદલો", selectLib: "લાઇબ્રેરીમાંથી પસંદ કરો", saving: "સાચવી રહ્યું છે...", kundliNote: "સચોટ જ્યોતિષીય આગાહીઓ માટે સચોટ જન્મ વિગતો દાખલ કરો.", bannerTitle: "જ્યોતિષી - 24x7 ઉપલબ્ધ", bannerSub: "હમણાં વાત કરો - પ્રથમ ચેટ મફત", chatBtn: "ચેટ" },
+      ml: { title: "പ്രൊഫൈൽ എഡിറ്റ് ചെയ്യുക", selectAvatar: "നിങ്ങളുടെ അവതാർ തിരഞ്ഞെടുക്കുക", name: "പേര്", gender: "ലിംഗഭേദം", dob: "ജനനത്തീയതി", time: "ജനന സമയം", place: "ജനനസ്ഥലം", cityPlaceholder: "നഗരത്തിന്റെ പേര്", save: "പ്രൊഫൈൽ സേവ് ചെയ്യുക", male: "പുരുഷൻ", female: "സ്ത്രീ", other: "മറ്റുള്ളവ", home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", successMsg: "പ്രൊഫൈൽ വിജയകരമായി സേവ് ചെയ്തു!", changePic: "പ്രൊഫൈൽ ചിത്രം മാറ്റുക", selectLib: "ലൈബ്രറിയിൽ നിന്ന് തിരഞ്ഞെടുക്കുക", saving: "സേവ് ചെയ്യുന്നു...", kundliNote: "കൃത്യമായ ജ്യോതിഷ ട്രെൻഡുകൾക്കായി ശരിയായ ജനന വിവരങ്ങൾ നൽകുക.", bannerTitle: "ജ്യോതിഷി - 24x7 ലഭ്യമാണ്", bannerSub: "ഇപ്പോൾ സംസാരിക്കുക - ആദ്യ ചാറ്റ് സൗജന്യം", chatBtn: "ചാറ്റ്" },
     };
     return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
   };
@@ -85,15 +87,11 @@ export default function ProfileEditPage() {
     } catch (e) {}
   }, [me]);
 
-  // 🔥 FIX: Premium Save Logic with Loading State
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     
     try {
-      // Future API Integration Note:
-      // await fetch("/api/user/update", { method: "POST", body: JSON.stringify({ name, gender, dob, tob, place })});
-
       localStorage.setItem("gita_profile_name", name);
       localStorage.setItem("gita_profile_avatar", selectedAvatar);
       localStorage.setItem("gita_profile_dob", dob);
@@ -101,9 +99,7 @@ export default function ProfileEditPage() {
       localStorage.setItem("gita_profile_place", place);
       localStorage.setItem("gita_profile_gender", gender);
 
-      // Fake delay to show loading spinner (Psychology: Makes user feel data is processing securely)
       await new Promise(resolve => setTimeout(resolve, 800));
-
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
@@ -121,9 +117,9 @@ export default function ProfileEditPage() {
   const textHighlightClass = isDark ? "text-white" : "text-gray-900";
 
   return (
-    <main className={`min-h-[100dvh] w-full font-sans pb-28 transition-colors duration-300 ${pageClass}`}>
+    <main className={`min-h-[100dvh] w-full font-sans pb-36 transition-colors duration-300 ${pageClass}`}>
       
-      <div className="w-full max-w-2xl mx-auto px-3 pt-4 space-y-6">
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-6">
         
         {/* HEADER */}
         <header className={`rounded-2xl flex items-center p-4 border shadow-md ${cardClass}`}>
@@ -155,7 +151,7 @@ export default function ProfileEditPage() {
         </section>
 
         {/* FORM SECTION */}
-        <form onSubmit={handleSubmit} className={`rounded-3xl p-5 sm:p-6 space-y-5 border shadow-lg ${cardClass}`}>
+        <form onSubmit={handleSubmit} className={`rounded-3xl p-5 sm:p-7 space-y-5 border shadow-lg ${cardClass}`}>
           
           <div className="space-y-2.5">
             <label className={`text-[12px] font-bold uppercase tracking-wider ${textMutedClass}`}>{t("name")}</label>
@@ -274,20 +270,9 @@ export default function ProfileEditPage() {
                       setSelectedAvatar(avatar.img);
                       setPickerOpen(false);
                     }}
-                    className={`flex flex-col items-center gap-1.5 group p-1.5 rounded-2xl transition border ${
-                      selectedAvatar === avatar.img 
-                        ? "bg-orange-500/10 border-orange-500/50" 
-                        : "border-transparent hover:bg-black/5 dark:hover:bg-white/5"
-                    }`}
+                    className={`relative rounded-full overflow-hidden border-2 transition-all hover:scale-105 ${selectedAvatar === avatar.img ? "border-[#ff6b00] shadow-md shadow-orange-500/30" : "border-transparent opacity-80 hover:opacity-100"}`}
                   >
-                    <div className="h-16 w-16 overflow-hidden rounded-full border-2 border-transparent bg-[#FBBF24] transition group-hover:scale-105 shadow-sm">
-                      <img src={avatar.img} alt={avatar.name} className="h-full w-full object-cover" />
-                    </div>
-                    <span className={`text-[10px] font-semibold truncate w-full text-center ${
-                      selectedAvatar === avatar.img ? "text-[#ff6b00]" : textMutedClass
-                    }`}>
-                      {avatar.name}
-                    </span>
+                    <img src={avatar.img} alt={avatar.name} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -296,28 +281,41 @@ export default function ProfileEditPage() {
         </div>
       )}
 
-      {/* BOTTOM NAVIGATION */}
-      <nav className={`fixed bottom-0 left-0 right-0 z-50 border-t flex justify-around items-center pt-2.5 pb-5 px-2 w-full transition-colors duration-300 ${
-        isDark ? "bg-[#0a0f19] border-slate-800" : "bg-white border-gray-200 shadow-[0_-5px_15px_rgba(0,0,0,0.05)]"
-      }`}>
-        <Link href="/" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
-          <Home size={22} />
-          <span className="text-[11px] font-medium">{t("home")}</span>
-        </Link>
-        <Link href="/chat" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
-          <MessageCircle size={22} />
-          <span className="text-[11px] font-medium">{t("chat")}</span>
-        </Link>
-        <Link href="/daily" className={`flex flex-col items-center gap-1 transition-colors ${textMutedClass} hover:text-orange-500`}>
-          <Sun size={22} />
-          <span className="text-[11px] font-medium">{t("daily")}</span>
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-          <User size={22} strokeWidth={2.5} />
-          <span className="text-[11px] font-bold">{t("profile")}</span>
-        </Link>
-      </nav>
+      {/* 🔥 STICKY BOTTOM BANNER & NAVIGATION (Wapas Joda Gaya Hai) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
+        
+        {/* Pink Banner */}
+        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
+          <div className="flex items-center gap-3">
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={16} className="text-white" />
+             </div>
+             <div>
+               <p className="text-[11px] font-bold text-white leading-tight">{t("bannerTitle")}</p>
+               <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
+             </div>
+          </div>
+          <Link href="/chat/gita" className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
+               <Crown size={16} className="text-[#d81b60]" fill="currentColor" />
+          </Link>
+        </div>
 
+        {/* Bottom Navigation Bar */}
+        <nav className={`flex justify-around border-t py-2.5 ${isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"} backdrop-blur`}>
+          <Link href="/" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <Home size={18} /><span className="text-[9.5px] font-bold">{t("home")}</span>
+          </Link>
+          <Link href="/chat" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <MessageCircle size={18} /><span className="text-[9.5px] font-bold">{t("chatBtn")}</span>
+          </Link>
+          <Link href="/daily" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <Sun size={18} /><span className="text-[9.5px] font-bold">{t("daily")}</span>
+          </Link>
+          <Link href="/profile" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-[#ff6b00]" : "text-[#ff6b00]"}`}>
+            <User size={18} /><span className="text-[9.5px] font-bold">{t("profile")}</span>
+          </Link>
+        </nav>
+      </div>
     </main>
   );
 }
