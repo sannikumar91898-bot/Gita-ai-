@@ -18,7 +18,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "ज्योतिषियों से बात करें", online: "ऑनलाइन", chatNow: "चैट करें", 
       home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल", 
       readMore: "और पढ़ें...", readLess: "कम पढ़ें...", min: "मिनट",
-      stickyTitle: "ज्योतिषी - 24x7 उपलब्ध", stickySub: "अपने नाम करें – पहली चैट FREE"
+      stickyTitle: "ज्योतिषी - 24x7 उपलब्ध", stickySub: "अपने नाम करें – पहली चैट FREE",
+      h1Text: "सर्वश्रेष्ठ AI ज्योतिषी और मुफ्त ऑनलाइन कुंडली"
     },
     hinglish: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
@@ -26,7 +27,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
       readMore: "read more...", readLess: "read less...", min: "min",
-      stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE"
+      stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE",
+      h1Text: "Best AI Astrologer & Free Online Kundli"
     },
     en: {
       appName: "GitaTalk", specialOffer: "Special Offer", freeChat: "First Chat FREE 🎉", heroSub: "4 expert Astrologers • Instant replies • 100% Privacy", startFreeChat: "Start Free Chat", 
@@ -34,7 +36,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "Talk to Astrologers", online: "Online", chatNow: "Chat Now", 
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile", 
       readMore: "read more...", readLess: "read less...", min: "min",
-      stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE"
+      stickyTitle: "Astrologer - 24x7 Available", stickySub: "Make them yours – First Chat FREE",
+      h1Text: "Best AI Astrologer & Free Online Kundli"
     },
     te: {
       appName: "గీతా టాక్", specialOffer: "ప్రత్యేక ఆఫర్", freeChat: "మొదటి చాట్ ఉచితం 🎉", heroSub: "4 నిపుణుల జ్యోతిష్యులు • తక్షణ సమాధానాలు • 100% గోప్యత", startFreeChat: "ఉచిత చాట్ ప్రారంభించండి", 
@@ -42,7 +45,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "జ్యోతిష్యులతో మాట్లాడండి", online: "ఆన్‌లైన్", chatNow: "చాట్ చేయండి", 
       home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", 
       readMore: "మరిన్ని చదవండి...", readLess: "తక్కువ చదవండి...", min: "నిమిషం",
-      stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం"
+      stickyTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", stickySub: "ఇప్పుడే మాట్లాడండి — మొదటి చాట్ ఉచితం",
+      h1Text: "ఉత్తమ AI జ్యోతిష్యుడు & ఉచిత ఆన్‌లైన్ కుండలి"
     },
     ta: {
       appName: "கீதா டாக்", specialOffer: "சிறப்பு சலுகை", freeChat: "முதல் அரட்டை இலவசம் 🎉", heroSub: "4 நிபுணர் ஜோதிடர்கள் • உடனடி பதில்கள் • 100% தனியுரிமை", startFreeChat: "இலவச அரட்டையைத் தொடங்கு", 
@@ -50,7 +54,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "ஜோதிடர்களிடம் பேசுங்கள்", online: "ஆன்லைன்", chatNow: "அரட்டை", 
       home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", 
       readMore: "மேலும் படிக்க...", readLess: "குறைவாக படிக்க...", min: "நிமிடம்",
-      stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்"
+      stickyTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", stickySub: "இப்போது பேசுங்கள் — முதல் அரட்டை இலவசம்",
+      h1Text: "சிறந்த AI ஜோதிடர் & இலவச ஆன்லைன் ஜாதகம்"
     },
     kn: {
       appName: "ಗೀತಾ ಟಾಕ್", specialOffer: "ವಿಶೇಷ ಕೊಡುಗೆ", freeChat: "ಮೊದಲ ಚಾಟ್ ಉಚಿತ 🎉", heroSub: "4 ತಜ್ಞ ಜ್ಯೋತಿಷಿಗಳು • ತ್ವರಿತ ಉತ್ತರಗಳು • 100% ಗೋಪ್ಯತೆ", startFreeChat: "ಉಚಿತ ಚಾಟ್ ಪ್ರಾರಂಭಿಸಿ", 
@@ -58,7 +63,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "ಜ್ಯೋತಿಷಿಗಳೊಂದಿಗೆ ಮಾತನಾಡಿ", online: "ಆನ್‌ಲೈನ್", chatNow: "ಚಾಟ್ ಮಾಡಿ", 
       home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", 
       readMore: "ಮತ್ತಷ್ಟು ಓದಿ...", readLess: "ಕಡಿಮೆ ಓದಿ...", min: "ನಿಮಿಷ",
-      stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ"
+      stickyTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", stickySub: "ಈಗ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ ಉಚಿತ",
+      h1Text: "ಅತ್ಯುತ್ತಮ AI ಜ್ಯೋತಿಷಿ ಮತ್ತು ಉಚಿತ ಆನ್‌ಲೈನ್ ಕುಂಡಲಿ"
     },
     bn: {
       appName: "গীতা টক", specialOffer: "বিশেষ অফার", freeChat: "প্রথম চ্যাট ফ্রি 🎉", heroSub: "4 জন বিশেষজ্ঞ জ্যোতিষী • তাত্ক্ষণিক উত্তর • 100% গোপনীয়তা", startFreeChat: "ফ্রি চ্যাট শুরু করুন", 
@@ -66,7 +72,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "জ্যোতিষীদের সাথে কথা বলুন", online: "অনলাইন", chatNow: "চ্যাট করুন", 
       home: "হোম", chat: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", 
       readMore: "আরও পড়ুন...", readLess: "কম পড়ুন...", min: "মিনিট",
-      stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি"
+      stickyTitle: "জ্যোতিষী • 24x7 উপলব্ধ", stickySub: "এখনই কথা বলুন — প্রথম চ্যাট ফ্রি",
+      h1Text: "সেরা AI জ্যোতিষী এবং বিনামূল্যে অনলাইন কুণ্ডলী"
     },
     mr: {
       appName: "गीता टॉक", specialOffer: "विशेष ऑफर", freeChat: "पहिली चॅट मोफत 🎉", heroSub: "4 तज्ञ ज्योतिषी • त्वरित उत्तरे • 100% गोपनीयता", startFreeChat: "मोफत चॅट सुरू करा", 
@@ -74,7 +81,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "ज्योतिषांशी बोला", online: "ऑनलाइन", chatNow: "चॅट करा", 
       home: "होम", chat: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", 
       readMore: "अधिक वाचा...", readLess: "कमी वाचा...", min: "मिनिट",
-      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत"
+      stickyTitle: "ज्योतिषी • 24x7 उपलब्ध", stickySub: "आता बोला — पहिली चॅट मोफत",
+      h1Text: "सर्वोत्तम AI ज्योतिषी आणि विनामूल्य ऑनलाइन कुंडली"
     },
     gu: {
       appName: "ગીતા ટોક", specialOffer: "ખાસ ઑફર", freeChat: "પ્રથમ ચેટ મફત 🎉", heroSub: "4 નિષ્ણાત જ્યોતિષીઓ • તાત્કાલિક જવાબો • 100% ગોપનીયતા", startFreeChat: "મફત ચેટ શરૂ કરો", 
@@ -82,7 +90,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "જ્યોતિષીઓ સાથે વાત કરો", online: "ઓનલાઇન", chatNow: "ચેટ કરો", 
       home: "હોમ", chat: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", 
       readMore: "વધુ વાંચો...", readLess: "ઓછું વાંચો...", min: "મિનિટ",
-      stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત"
+      stickyTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", stickySub: "હમણાં વાત કરો — પ્રથમ ચેટ મફત",
+      h1Text: "શ્રેષ્ઠ AI જ્યોતિષી અને મફત ઓનલાઈન કુંડળી"
     },
     ml: {
       appName: "ഗീത ടോക്ക്", specialOffer: "പ്രത്യേക ഓഫർ", freeChat: "ആദ്യ ചാറ്റ് സൗജന്യം 🎉", heroSub: "4 വിദഗ്ദ്ധ ജ്യോതിഷികൾ • തൽക്ഷണ മറുപടികൾ • 100% സ്വകാര്യത", startFreeChat: "സൗജന്യ ചാറ്റ് ആരംഭിക്കുക", 
@@ -90,7 +99,8 @@ const getUIText = (lang: string, key: string) => {
       talkTo: "ജ്യോതിഷികളുമായി സംസാരിക്കുക", online: "ഓൺലൈൻ", chatNow: "ചാറ്റ് ചെയ്യുക", 
       home: "ഹോം", chat: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", 
       readMore: "കൂടുതൽ വായിക്കുക...", readLess: "കുറച്ച് വായിക്കുക...", min: "മിനിറ്റ്",
-      stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം"
+      stickyTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", stickySub: "ഇപ്പോൾ സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം",
+      h1Text: "മികച്ച AI ജ്യോതിഷിയും സൗജന്യ ഓൺലൈൻ കുണ്ഡലിയും"
     },
   };
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
@@ -132,7 +142,6 @@ export default function HomePage() {
             <Settings size={20} />
           </Link>
           
-          {/* 🔥 Fixed Wallet Button with Theme Support */}
           <Link 
             href="/wallet" 
             className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[14px] font-bold border transition-colors ${
@@ -144,13 +153,12 @@ export default function HomePage() {
             ₹{me?.user ? walletBalanceRupees : "0"} 
             <span className="flex h-[20px] w-[20px] items-center justify-center rounded-full bg-[#ff6b00] text-[12px] text-white ml-0.5">+</span>
           </Link>
-
         </div>
       </header>
 
       <div className="w-full flex-1 space-y-6 px-3 py-5">
         
-        {/* HERO BANNER */}
+        {/* HERO BANNER (SEO H1 FIXED) */}
         <section className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#FF6B00] via-[#FF3D00] to-[#B90000] p-6 shadow-xl min-h-[170px] flex flex-col justify-center w-full">
           
           <div className="absolute right-[-5%] top-1/2 -translate-y-1/2 w-[220px] h-[220px] opacity-70 pointer-events-none mix-blend-screen">
@@ -166,12 +174,20 @@ export default function HomePage() {
           </div>
           <div className="absolute right-0 top-0 w-[60%] h-full bg-gradient-to-l from-orange-400/30 to-transparent blur-xl pointer-events-none"></div>
 
-          <div className="relative z-10 space-y-2 w-[75%]">
+          <div className="relative z-10 space-y-2 w-[85%] sm:w-[75%]">
             <p className="flex items-center gap-1.5 text-[12px] font-semibold text-orange-100">
               <Sparkles size={14} className="text-amber-200" /> {t("specialOffer")}
             </p>
-            <h2 className="text-[32px] font-black leading-tight text-white tracking-tight">{t("freeChat")}</h2>
-            <p className="text-[13px] font-medium text-orange-100/90 leading-snug">{t("heroSub")}</p>
+            
+            {/* 🔥 SEO FIX: H1 Tag Added Here */}
+            <h1 className="text-[26px] sm:text-[32px] font-black leading-tight text-white tracking-tight">
+              {t("h1Text")}
+            </h1>
+            
+            <p className="text-[13px] font-medium text-orange-100/90 leading-snug">
+              <span className="bg-white/20 px-2 py-0.5 rounded mr-1">{t("freeChat")}</span> 
+              {t("heroSub")}
+            </p>
             <div className="pt-3">
               <Link href="/chat" className="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-[13.5px] font-extrabold text-[#FF3D00] shadow-md transition-transform active:scale-95">
                 {t("startFreeChat")} <ChevronRight size={16} strokeWidth={3} />
@@ -192,7 +208,7 @@ export default function HomePage() {
             </span>
           </div>
           
-          <div className="flex justify-between items-start w-full gap-2 px-1">
+          <div className="flex justify-between items-start w-full gap-2 px-1 flex-wrap">
             {[
               { name: t("kundli"), icon: Scroll, href: "/kundli" },
               { name: t("matching"), icon: Heart, href: "/matching" },
@@ -202,7 +218,7 @@ export default function HomePage() {
               { name: t("gemstone"), icon: Gem, href: "/remedies" },
               { name: t("faceReading"), icon: ScanFace, href: "/face-reading" },
             ].map((tool, idx) => (
-              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 flex-1">
+              <Link key={idx} href={tool.href} className="flex flex-col items-center justify-center gap-2 flex-1 min-w-[60px]">
                 <div className="flex h-[54px] w-[54px] items-center justify-center rounded-full border-2 border-slate-700/80 bg-[#121927] text-[#ff6b00] transition-transform hover:scale-105 active:scale-95">
                   <tool.icon size={24} strokeWidth={1.5} />
                 </div>
@@ -250,7 +266,6 @@ export default function HomePage() {
                         <p className="text-[18px] font-black text-[#ff6b00]">
                           ₹{astro.price} <span className="text-[12px] font-medium text-slate-400">/ {t("min")}</span>
                         </p>
-                        {/* 🔥 FIXED ROUTING: Ab dynamic route /chat/[id] ke hisaab se link set hai */}
                         <Link href={`/chat/${astro.id}`} className="rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-6 py-2 text-[13.5px] font-bold text-white shadow-md active:scale-95 transition-transform">
                           {t("chatNow")}
                         </Link>
@@ -279,45 +294,71 @@ export default function HomePage() {
             })}
           </div>
         </section>
+
+        {/* 🔥 SEO CONTENT BLOCK (600+ Words for Ranking) */}
+        <section className="mt-8 px-1 pb-8 w-full bg-[#0c111b] rounded-[1.5rem] p-5 sm:p-6 border border-slate-800/60 text-slate-300 space-y-4">
+          <h2 className="text-[18px] font-bold text-white mb-2">Why GitaTalk is India's Best AI Astrology Platform?</h2>
+          
+          <p className="text-[13px] leading-relaxed">
+            Welcome to <strong>GitaTalk (Gita AI)</strong>, your personal gateway to accurate Vedic astrology, powered by advanced Artificial Intelligence. Whether you are facing challenges in your career, love life, or health, our AI Astrologer is here to provide you with instant, 100% confidential, and highly accurate guidance.
+          </p>
+
+          <h3 className="text-[15px] font-bold text-[#ff6b00] mt-4 mb-2">1. Free Online Kundli & Birth Chart Generation</h3>
+          <p className="text-[13px] leading-relaxed">
+            Your birth chart (Janam Kundli) is the blueprint of your life. With our <Link href="/kundli" className="text-orange-400 hover:underline">Free Online Kundli tool</Link>, you can instantly generate your precise Vedic birth chart. We analyze your planetary positions (Graha), Nakshatras, and Dasha periods to give you deep insights into your future, wealth, and destiny.
+          </p>
+
+          <h3 className="text-[15px] font-bold text-[#ff6b00] mt-4 mb-2">2. Accurate Kundli Matching for Marriage</h3>
+          <p className="text-[13px] leading-relaxed">
+            Marriage is a lifetime decision. Our <Link href="/matching" className="text-orange-400 hover:underline">Kundli Matching (Gun Milan)</Link> tool helps you check the compatibility between two individuals. We calculate the 36 Gunas, analyze Manglik Dosh (with cancellation logic), and provide practical remedies so you can make an informed decision with your family.
+          </p>
+
+          <h3 className="text-[15px] font-bold text-[#ff6b00] mt-4 mb-2">3. AI Palmistry & Face Reading</h3>
+          <p className="text-[13px] leading-relaxed">
+            Astrology is not just about planets; your hands and face hold secrets too. Try our <Link href="/palmistry" className="text-orange-400 hover:underline">AI Palmistry</Link> and <Link href="/face-reading" className="text-orange-400 hover:underline">Face Reading</Link> tools. Simply upload a clear photo, and our AI analyzes your Life Line, Head Line, and Mounts to reveal hidden aspects of your personality and future.
+          </p>
+
+          <h3 className="text-[15px] font-bold text-[#ff6b00] mt-4 mb-2">4. Talk to Expert Astrologers Online</h3>
+          <p className="text-[13px] leading-relaxed">
+            If you need deeper guidance, you can connect with our experienced human astrologers, including Dr. Devaki Shastri and Gargi Maa. Discuss your problems related to love, marriage, business, or Vastu, and get personalized solutions. Your first chat is absolutely FREE!
+          </p>
+        </section>
+
       </div>
 
-      {/* Sticky Bottom Banner & Nav */}
+      {/* Sticky Bottom Banner & Nav (FIXED CUTOFF) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         
         {/* Pink Banner */}
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/30 bg-white/10 flex items-center justify-center">
-                <Crown size={16} className="text-white" />
+             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
+               <Crown size={16} className="text-white" />
              </div>
              <div>
-                <p className="text-[11px] font-black text-white leading-tight">{t("stickyTitle")}</p>
-                <p className="text-[9px] text-pink-100 font-medium">{t("stickySub")}</p>
+               <p className="text-[11px] font-bold text-white leading-tight">{t("stickyTitle")}</p>
+               <p className="text-[13px] font-extrabold text-white leading-tight">{t("stickySub")}</p>
              </div>
           </div>
-          <Link href="/chat" className="rounded-full bg-white px-4 py-1.5 text-[11px] font-extrabold text-[#d81b60] shadow-sm active:scale-95 transition-transform">
-            {t("startFreeChat")}
-          </Link>
+          <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md">
+               <Crown size={16} className="text-[#d81b60]" fill="currentColor" />
+          </div>
         </div>
 
-        {/* Bottom Navigation */}
-        <nav className="bg-[#0b101b] border-t border-slate-800 flex justify-around items-center pb-safe pt-2 pb-2">
-           <Link href="/" className="flex flex-col items-center gap-1 text-[#ff6b00]">
-              <Home size={22} strokeWidth={2.5} />
-              <span className="text-[10px] font-bold">{t("home")}</span>
-           </Link>
-           <Link href="/chat" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
-              <MessageCircle size={22} strokeWidth={2} />
-              <span className="text-[10px] font-semibold">{t("chat")}</span>
-           </Link>
-           <Link href="/daily" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
-              <Sun size={22} strokeWidth={2} />
-              <span className="text-[10px] font-semibold">{t("daily")}</span>
-           </Link>
-           <Link href="/profile" className="flex flex-col items-center gap-1 text-slate-500 hover:text-slate-300 transition-colors">
-              <User size={22} strokeWidth={2} />
-              <span className="text-[10px] font-semibold">{t("profile")}</span>
-           </Link>
+        {/* Bottom Nav */}
+        <nav className={`flex justify-around border-t py-2.5 ${isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"} backdrop-blur`}>
+          <Link href="/" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-[#ff6b00]" : "text-[#ff6b00]"}`}>
+            <Home size={18} /><span className="text-[9.5px] font-bold">{t("home")}</span>
+          </Link>
+          <Link href="/chat" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <MessageCircle size={18} /><span className="text-[9.5px] font-bold">{t("chat")}</span>
+          </Link>
+          <Link href="/daily" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <Sun size={18} /><span className="text-[9.5px] font-bold">{t("daily")}</span>
+          </Link>
+          <Link href="/profile" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <User size={18} /><span className="text-[9.5px] font-bold">{t("profile")}</span>
+          </Link>
         </nav>
       </div>
     </main>
