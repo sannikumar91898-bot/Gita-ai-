@@ -8,6 +8,7 @@ import type { Metadata, Viewport } from "next";
 export const metadata: Metadata = {
   // 🔥 1. Custom Domain Set
   metadataBase: new URL("https://gitatalk.in"), 
+  
   title: {
     default: "GitaTalk – Best AI Astrologer & Free Online Kundli",
     template: "%s | GitaTalk",
@@ -17,11 +18,13 @@ export const metadata: Metadata = {
   keywords: [
     "AI Astrologer", "Online Kundli", "Free Kundli Milan", "Vedic Astrology", 
     "Daily Horoscope", "Palmistry AI", "Face Reading", "GitaTalk", "Astrology Chat",
-    "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India"
+    "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India",
+    "Free AI Palmistry", "Online Kundli Matching", "Talk to Astrologer Free"
   ],
   authors: [{ name: "GitaTalk Team" }],
   creator: "GitaTalk",
   publisher: "GitaTalk",
+  category: "Astrology",
   
   // 🔥 2. Canonical & Hreflang (10 Languages) Fix
   alternates: { 
@@ -56,7 +59,8 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  // 🔥 3. OpenGraph Fix (Custom Domain)
+  
+  // 🔥 3. OpenGraph Fix (WhatsApp/Facebook Share)
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -66,7 +70,7 @@ export const metadata: Metadata = {
     description: "Talk to GitaTalk AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
     images: [
       {
-        url: "/gita-portrait.jpg", 
+        url: "/gita-portrait.jpg", // Make sure this image exists in your public folder
         width: 1200,
         height: 630,
         alt: "GitaTalk - Your Favorite AI Astrologer",
@@ -102,7 +106,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔥 ULTIMATE JSON-LD (Custom Domain ke sath Fix)
+  // 🔥 ULTIMATE JSON-LD (100% Fixed for Google Merchant Error & SEO)
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -121,10 +125,10 @@ export default function RootLayout({
       "@type": "Organization",
       "name": "GitaTalk",
       "url": "https://gitatalk.in",
-      "logo": "https://gitatalk.in/icon-512.png",
+      "logo": "https://gitatalk.in/icon-512.png", // Ensure you have an icon-512.png in public folder
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91-XXXXXXXXXX", // Apna number dalein
+        "telephone": "+91-XXXXXXXXXX", // Add your real number here later
         "contactType": "customer service",
         "email": "gitaaisupport@gmail.com"
       }
@@ -133,6 +137,8 @@ export default function RootLayout({
       "@context": "https://schema.org",
       "@type": "Product",
       "name": "GitaTalk Premium",
+      // 🔥 FIX: Added Image
+      "image": "https://gitatalk.in/gita-portrait.jpg", 
       "description": "Unlimited AI Astrologer Chat & Premium Reports",
       "brand": {
         "@type": "Brand",
@@ -140,8 +146,12 @@ export default function RootLayout({
       },
       "offers": {
         "@type": "Offer",
+        // 🔥 FIX: Added URL where they can buy it
+        "url": "https://gitatalk.in/wallet", 
         "price": "199",
         "priceCurrency": "INR",
+        // 🔥 FIX: Added Valid Until Date (Google requires this)
+        "priceValidUntil": "2027-12-31", 
         "availability": "https://schema.org/InStock"
       }
     }
@@ -151,6 +161,7 @@ export default function RootLayout({
     <html lang="hi" suppressHydrationWarning> 
       <body className="antialiased overflow-x-hidden">
         
+        {/* Inject Structured Data */}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
