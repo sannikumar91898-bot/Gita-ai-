@@ -6,9 +6,10 @@ import {
   ArrowLeft, Heart, Sparkles, MessageCircle, Download,
   ShieldAlert, MapPin, Calendar, Clock, ChevronDown,
   Home, User, Share2, FileText, Star, AlertCircle,
-  CheckCircle2, ArrowRight, RefreshCw, Sun
+  CheckCircle2, ArrowRight, RefreshCw, Sun, Lock, Wallet, X, HelpCircle
 } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useApp } from "../Providers";
 
 // ============================================================
@@ -54,6 +55,7 @@ const getUIText = (lang: string, key: string) => {
       q3: "करियर और धन पर इस रिश्ते का क्या असर होगा?",
       labelUtkrisht: "उत्कृष्ट मिलान", labelBahutAcha: "बहुत अच्छा मिलान", labelAcha: "अच्छा मिलान", labelAusat: "औसत मिलान", labelSudhar: "सुधार की गुंजाइश",
       boyPrefix: "वर", girlPrefix: "वधू",
+      limitTitle: "आपकी फ्री लिमिट खत्म हो गई है!", limitSub: "अधिक मिलान और सटीक सलाह के लिए ज्योतिषी से बात करें या वॉलेट रिचार्ज करें।", chatFree: "ज्योतिषी से फ्री बात करें", recharge: "वॉलेट रिचार्ज करें", close: "बंद करें"
     },
     hinglish: {
       title: "Kundli Milan", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
@@ -74,6 +76,7 @@ const getUIText = (lang: string, key: string) => {
       q3: "Career aur dhan par is rishte ka kya asar hoga?",
       labelUtkrisht: "Utkrisht Milan", labelBahutAcha: "Bahut Acha Milan", labelAcha: "Acha Milan", labelAusat: "Ausat Milan", labelSudhar: "Sudhar ki Gunjayish",
       boyPrefix: "Var", girlPrefix: "Vadhu",
+      limitTitle: "Aapki Free Limit Khatam Ho Gayi Hai!", limitSub: "Aage ki jankari ke liye jyotishi se baat karein ya wallet recharge karein.", chatFree: "Jyotishi se Free baat karein", recharge: "Wallet Recharge", close: "Band karein"
     },
     en: {
       title: "Kundli Matching", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
@@ -94,14 +97,15 @@ const getUIText = (lang: string, key: string) => {
       q3: "How will this relationship affect career and wealth?",
       labelUtkrisht: "Excellent Match", labelBahutAcha: "Very Good Match", labelAcha: "Good Match", labelAusat: "Average Match", labelSudhar: "Needs Improvement",
       boyPrefix: "Groom", girlPrefix: "Bride",
+      limitTitle: "Your Free Limit is Exhausted!", limitSub: "Talk to an astrologer for deeper insights or recharge your wallet.", chatFree: "Chat with Astrologer FREE", recharge: "Recharge Wallet", close: "Close"
     },
-    te: { title: "కుండలి మిలన్", subtitle: "ఖచ్చితమైన వివాహ మ్యాచింగ్", boy: "అబ్బాయి వివరాలు", girl: "అమ్మాయి వివరాలు", name: "పూర్తి పేరు", city: "పుట్టిన నగరం", matchBtn: "మ్యాచ్ చేయండి", alertCity: "దయచేసి జాబితా నుండి నగరాన్ని ఎంచుకోండి!", result: "మ్యాచింగ్ ఫలితం", total: "/ 36 మొత్తం అష్టకూట్", breakdown: "అన్ని 8 కూటాలు చూడండి", chat: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ FREE", pdf: "PDF", reset: "రీసెట్", share: "WhatsApp లో పంపండి", bannerTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", bannerSub: "మ్యాచ్‌ను లోతుగా అర్థం చేసుకోవడానికి చాట్ చేయండి — FREE", warning: "సరైన మ్యాచ్ అర్థం చేసుకోవడం సంబంధాన్ని బలపరుస్తుంది.", home: "హోమ్", chatNav: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", doshaTitle: "దోషాలు & నివారణ", strengths: "మీ 3 గొప్ప బలాలు", attention: "శ్రద్ధ వహించవలసిన అంశాలు", advice: "ఆచరణాత్మక సలహా", nextSteps: "తదుపరి అడుగు", soulLabel: "సంబంధ సారాంశం", doshaPresent: "ఉంది", doshaCancelled: "నివారించబడింది", doshaAbsent: "దోషం లేదు", manglik: "మంగళ దోషం", nadi: "నాడి దోషం", bhakoot: "భకూట్ దోషం", disclaimer: "ఈ నివేదిక సాంప్రదాయ వేద జ్యోతిష్యంపై ఆధారపడి ఉంది.", askQ: "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?", q1: "మా పెళ్లికి కుటుంబం సులభంగా అంగీకరిస్తుందా?", q2: "మా జాతకాల ప్రకారం పెళ్లికి శుభ సమయం ఎప్పుడు?", q3: "ఈ సంబంధం కెరీర్ మరియు ధనంపై ఎలా ప్రభావితం చేస్తుంది?", labelUtkrisht: "అద్భుతమైన మ్యాచ్", labelBahutAcha: "చాలా మంచి మ్యాచ్", labelAcha: "మంచి మ్యాచ్", labelAusat: "సగటు మ్యాచ్", labelSudhar: "మెరుగుపరచాల్సిన అవసరం", boyPrefix: "వరుడు", girlPrefix: "వధువు" },
-    ta: { title: "ஜாதக பொருத்தம்", subtitle: "துல்லியமான திருமண பொருத்தம்", boy: "ஆண் விவரங்கள்", girl: "பெண் விவரங்கள்", name: "முழு பெயர்", city: "பிறந்த நகரம்", matchBtn: "பொருத்தம் பார்க்க", alertCity: "பட்டியலில் இருந்து நகரத்தை தேர்ந்தெடுக்கவும்!", result: "பொருத்தம் முடிவு", total: "/ 36 மொத்த அஷ்டகூடம்", breakdown: "அனைத்து 8 கூடங்களையும் பார்க்க", chat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE", pdf: "PDF", reset: "மீட்டமை", share: "WhatsApp இல் பகிரவும்", bannerTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", bannerSub: "பொருத்தத்தை ஆழமாக புரிந்துகொள்ள அரட்டை செய்யுங்கள் — FREE", warning: "சரியான பொருத்தத்தை புரிந்துகொள்வது உறவை வலுப்படுத்தும்.", home: "முகப்பு", chatNav: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", doshaTitle: "தோஷங்கள் & நிவாரணம்", strengths: "உங்கள் 3 சிறந்த பலங்கள்", attention: "கவனிக்க வேண்டிய பகுதிகள்", advice: "நடைமுறை ஆலோசனை", nextSteps: "அடுத்த படி", soulLabel: "உறவு சாராம்சம்", doshaPresent: "உள்ளது", doshaCancelled: "நிவாரணம்", doshaAbsent: "தோஷம் இல்லை", manglik: "மாங்கலிக் தோஷம்", nadi: "நாடி தோஷம்", bhakoot: "பகூட் தோஷம்", disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடத்தை அடிப்படையாகக் கொண்டது.", askQ: "மேலும் அறிய விரும்புகிறீர்களா?", q1: "எங்கள் திருமணத்திற்கு குடும்பம் எளிதில் ஒப்புக்கொள்ளுமா?", q2: "எங்கள் ஜாதகங்களின்படி திருமணத்திற்கு மிக நல்ல நேரம் எப்போது?", q3: "இந்த உறவு தொழில் மற்றும் செல்வத்தை எவ்வாறு பாதிக்கும்?", labelUtkrisht: "சிறந்த பொருத்தம்", labelBahutAcha: "மிக நல்ல பொருத்தம்", labelAcha: "நல்ல பொருத்தம்", labelAusat: "சராசரி பொருத்தம்", labelSudhar: "மேம்பாடு தேவை", boyPrefix: "மணமகன்", girlPrefix: "மணமகள்" },
-    kn: { title: "ಕುಂಡಲಿ ಹೊಂದಾಣಿಕೆ", subtitle: "ನಿಖರವಾದ ವಿವಾಹ ಹೊಂದಾಣಿಕೆ", boy: "ಹುಡುಗನ ವಿವರಗಳು", girl: "ಹುಡುಗಿಯ ವಿವರಗಳು", name: "ಪೂರ್ಣ ಹೆಸರು", city: "ಹುಟ್ಟಿದ ನಗರ", matchBtn: "ಹೊಂದಿಸಿ", alertCity: "ದಯವಿಟ್ಟು ಪಟ್ಟಿಯಿಂದ ನಗರವನ್ನು ಆಯ್ಕೆಮಾಡಿ!", result: "ಹೊಂದಾಣಿಕೆಯ ಫಲಿತಾಂಶ", total: "/ 36 ಒಟ್ಟು ಅಷ್ಟಕೂಟ", breakdown: "ಎಲ್ಲಾ 8 ಕೂಟಗಳನ್ನು ನೋಡಿ", chat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE", pdf: "PDF", reset: "ಮರುಹೊಂದಿಸಿ", share: "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಳವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಚಾಟ್ ಮಾಡಿ — FREE", warning: "ಸರಿಯಾದ ಹೊಂದಾಣಿಕೆ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.", home: "ಮುಖಪುಟ", chatNav: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", doshaTitle: "ದೋಷಗಳು & ನಿವಾರಣೆ", strengths: "ನಿಮ್ಮ 3 ಶ್ರೇಷ್ಠ ಶಕ್ತಿಗಳು", attention: "ಗಮನಿಸಬೇಕಾದ ಅಂಶಗಳು", advice: "ಪ್ರಾಯೋಗಿಕ ಸಲಹೆ", nextSteps: "ಮುಂದಿನ ಹೆಜ್ಜೆ", soulLabel: "ಸಂಬಂಧದ ಸಾರಾಂಶ", doshaPresent: "ಇದೆ", doshaCancelled: "ನಿವಾರಣೆ", doshaAbsent: "ದೋಷ ಇಲ್ಲ", manglik: "ಮಾಂಗ್ಲಿಕ್ ದೋಷ", nadi: "ನಾಡಿ ದೋಷ", bhakoot: "ಭಕೂಟ್ ದೋಷ", disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯವನ್ನು ಆಧರಿಸಿದೆ.", askQ: "ಇನ್ನಷ್ಟು ತಿಳಿಯಲು ಬಯಸುವಿರಾ?", q1: "ನಮ್ಮ ಮದುವೆಗೆ ಕುಟುಂಬ ಸುಲಭವಾಗಿ ಒಪ್ಪುತ್ತದೆಯೇ?", q2: "ನಮ್ಮ ಜಾತಕದ ಪ್ರಕಾರ ಮದುವೆಗೆ ಶುಭ ಸಮಯ ಯಾವುದು?", q3: "ಈ ಸಂಬಂಧ ವೃತ್ತಿ ಮತ್ತು ಸಂಪತ್ತಿನ ಮೇಲೆ ಹೇಗೆ ಪರಿಣಾಮ ಬೀರುತ್ತದೆ?", labelUtkrisht: "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelBahutAcha: "ಬಹಳ ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAcha: "ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAusat: "ಸರಾಸರಿ ಹೊಂದಾಣಿಕೆ", labelSudhar: "ಸುಧಾರಣೆ ಅಗತ್ಯ", boyPrefix: "ವರ", girlPrefix: "ವಧು" },
-    bn: { title: "কুণ্ডলী মিলন", subtitle: "সঠিক বিবাহ ম্যাচিং", boy: "ছেলের বিবরণ", girl: "মেয়ের বিবরণ", name: "পুরো নাম", city: "জন্ম শহর", matchBtn: "মিলন করুন", alertCity: "অনুগ্রহ করে তালিকা থেকে শহর নির্বাচন করুন!", result: "মিলন ফলাফল", total: "/ 36 মোট অষ্টকূট", breakdown: "সব ৮টি কূট দেখুন", chat: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট FREE", pdf: "PDF", reset: "রিসেট", share: "WhatsApp এ শেয়ার করুন", bannerTitle: "জ্যোতিষী • 24x7 উপলব্ধ", bannerSub: "মিলন গভীরভাবে বুঝতে চ্যাট করুন — FREE", warning: "সঠিক মিলন বুঝলে সম্পর্ক আরও মজবুত হয়।", home: "হোম", chatNav: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", doshaTitle: "দোষ ও তাদের নিবারণ", strengths: "আপনার ৩টি সেরা শক্তি", attention: "মনোযোগ দেওয়ার বিষয়", advice: "ব্যবহারিক পরামর্শ", nextSteps: "পরবর্তী পদক্ষেপ", soulLabel: "সম্পর্কের সারাংশ", doshaPresent: "উপস্থিত", doshaCancelled: "নিবারিত", doshaAbsent: "কোনো দোষ নেই", manglik: "মাঙ্গলিক দোষ", nadi: "নাড়ি দোষ", bhakoot: "ভকূট দোষ", disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষের উপর ভিত্তি করে।", askQ: "আরও জানতে চান?", q1: "আমাদের বিয়েতে পরিবার সহজে রাজি হবে?", q2: "আমাদের কুণ্ডলী অনুযায়ী বিয়ের শুভ সময় কখন?", q3: "এই সম্পর্ক ক্যারিয়ার ও ধনে কী প্রভাব ফেলবে?", labelUtkrisht: "চমৎকার মিলন", labelBahutAcha: "খুব ভালো মিলন", labelAcha: "ভালো মিলন", labelAusat: "গড় মিলন", labelSudhar: "উন্নতি প্রয়োজন", boyPrefix: "বর", girlPrefix: "কনে" },
-    mr: { title: "कुंडली मिलन", subtitle: "अचूक विवाह जुळणी", boy: "मुलाचे तपशील", girl: "मुलीचे तपशील", name: "पूर्ण नाव", city: "जन्म शहर", matchBtn: "जुळवा", alertCity: "कृपया यादीतून शहर निवडा!", result: "जुळणी निकाल", total: "/ 36 एकूण अष्टकूट", breakdown: "सर्व 8 कूट पहा", chat: "ज्योतिषाशी बोला — पहिली चॅट FREE", pdf: "PDF", reset: "रीसेट", share: "WhatsApp वर शेअर करा", bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "जुळणी सखोल समजून घेण्यासाठी चॅट करा — FREE", warning: "योग्य जुळणी समजल्यास नातं अधिक मजबूत होतं.", home: "होम", chatNav: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", doshaTitle: "दोष आणि त्यांचे निवारण", strengths: "तुमच्या 3 सर्वात मोठ्या ताकदी", attention: "लक्ष देण्याच्या गोष्टी", advice: "व्यवहारिक सल्ला", nextSteps: "पुढील पाऊल", soulLabel: "नात्याचा निचरा", doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "दोष नाही", manglik: "मांगलिक दोष", nadi: "नाडी दोष", bhakoot: "भकूट दोष", disclaimer: "हा अहवाल पारंपारिक वैदिक ज्योतिषावर आधारित आहे.", askQ: "अजून जाणून घ्यायचंय?", q1: "आमच्या लग्नाला कुटुंब सहज मान्य करेल का?", q2: "आमच्या कुंडलीनुसार लग्नाची सर्वात शुभ वेळ कधी?", q3: "या नात्याचा करिअर आणि पैशावर काय परिणाम होईल?", labelUtkrisht: "उत्कृष्ट जुळणी", labelBahutAcha: "खूप चांगली जुळणी", labelAcha: "चांगली जुळणी", labelAusat: "सरासरी जुळणी", labelSudhar: "सुधारणा आवश्यक", boyPrefix: "वर", girlPrefix: "वधू" },
-    gu: { title: "કુંડળી મેળાપ", subtitle: "સચોટ લગ્ન મેચિંગ", boy: "છોકરાની વિગતો", girl: "છોકરીની વિગતો", name: "પૂરું નામ", city: "જન્મ શહેર", matchBtn: "મેળવો", alertCity: "કૃપા કરીને સૂચિમાંથી શહેર પસંદ કરો!", result: "મેચિંગ પરિણામ", total: "/ 36 કુલ અષ્ટકૂટ", breakdown: "બધા 8 કૂટ જુઓ", chat: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ FREE", pdf: "PDF", reset: "રીસેટ", share: "WhatsApp પર શેર કરો", bannerTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", bannerSub: "મેચિંગ ઊંડાણપૂર્વક સમજવા ચેટ કરો — FREE", warning: "યોગ્ય મેચિંગ સમજવાથી સંબંધ વધુ મજબૂત બને છે.", home: "હોમ", chatNav: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", doshaTitle: "દોષ અને તેમનું નિવારણ", strengths: "તમારી 3 સૌથી મોટી તાકાત", attention: "ધ્યાન આપવાની બાબતો", advice: "વ્યવહારુ સલાહ", nextSteps: "આગળનું પગલું", soulLabel: "સંબંધનો નિચોડ", doshaPresent: "હાજર", doshaCancelled: "નિવારિત", doshaAbsent: "કોઈ દોષ નથી", manglik: "માંગલિક દોષ", nadi: "નાડી દોષ", bhakoot: "ભકૂટ દોષ", disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ પર આધારિત છે.", askQ: "વધુ જાણવા માંગો છો?", q1: "અમારા લગ્નમાં પરિવાર સહેલાઈથી માની જશે?", q2: "અમારી કુંડળી મુજબ લગ્નનો સૌથી શુભ સમય ક્યારે?", q3: "આ સંબંધ કરિયર અને ધન પર કેવી અસર કરશે?", labelUtkrisht: "ઉત્કૃષ્ટ મેચિંગ", labelBahutAcha: "ખૂબ સારું મેચિંગ", labelAcha: "સારું મેચિંગ", labelAusat: "સરેરાશ મેચિંગ", labelSudhar: "સુધારાની જરૂર", boyPrefix: "વર", girlPrefix: "વધૂ" },
-    ml: { title: "കുണ്ഡലി മാച്ചിംഗ്", subtitle: "കൃത്യമായ വിവാഹ മാച്ചിംഗ്", boy: "ആൺകുട്ടിയുടെ വിവരങ്ങൾ", girl: "പെൺകുട്ടിയുടെ വിവരങ്ങൾ", name: "പൂർണ്ണ നാമം", city: "ജനന നഗരം", matchBtn: "മാച്ച് ചെയ്യുക", alertCity: "ലിസ്റ്റിൽ നിന്ന് ഒരു നഗരം തിരഞ്ഞെടുക്കുക!", result: "മാച്ചിംഗ് ഫലം", total: "/ 36 മൊത്തം അഷ്ടകൂട്ടം", breakdown: "എല്ലാ 8 കൂട്ടങ്ങളും കാണുക", chat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE", pdf: "PDF", reset: "പുനഃസജ്ജമാക്കുക", share: "WhatsApp ൽ പങ്കിടുക", bannerTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", bannerSub: "മാച്ചിംഗ് ആഴത്തിൽ മനസ്സിലാക്കാൻ ചാറ്റ് ചെയ്യുക — FREE", warning: "ശരിയായ മാച്ചിംഗ് മനസ്സിലാക്കുന്നത് ബന്ധം ശക്തമാക്കുന്നു.", home: "ഹോം", chatNav: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", doshaTitle: "ദോഷങ്ങളും പരിഹാരവും", strengths: "നിങ്ങളുടെ 3 മികച്ച ശക്തികൾ", attention: "ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ", advice: "പ്രായോഗിക ഉപദേശം", nextSteps: "അടുത്ത ഘട്ടം", soulLabel: "ബന്ധത്തിന്റെ സാരാംശം", doshaPresent: "ഉണ്ട്", doshaCancelled: "പരിഹരിച്ചു", doshaAbsent: "ദോഷമില്ല", manglik: "മാംഗ്ലിക് ദോഷം", nadi: "നാഡി ദോഷം", bhakoot: "ഭകൂട്ട് ദോഷം", disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷത്തെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.", askQ: "കൂടുതൽ അറിയാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?", q1: "ഞങ്ങളുടെ വിവാഹത്തിന് കുടുംബം എളുപ്പത്തിൽ സമ്മതിക്കുമോ?", q2: "ഞങ്ങളുടെ ജാതകം അനുസരിച്ച് വിവാഹത്തിന് ഏറ്റവും ശുഭമായ സമയം എപ്പോൾ?", q3: "ഈ ബന്ധം കരിയറിലും ധനത്തിലും എന്ത് സ്വാധീനം ചെലുത്തും?", labelUtkrisht: "മികച്ച മാച്ചിംഗ്", labelBahutAcha: "വളരെ നല്ല മാച്ചിംഗ്", labelAcha: "നല്ല മാച്ചിംഗ്", labelAusat: "ശരാശരി മാച്ചിംഗ്", labelSudhar: "മെച്ചപ്പെടുത്തൽ ആവശ്യം", boyPrefix: "വരൻ", girlPrefix: "വധു" },
+    te: { title: "కుండలి మిలన్", subtitle: "ఖచ్చితమైన వివాహ మ్యాచింగ్", boy: "అబ్బాయి వివరాలు", girl: "అమ్మాయి వివరాలు", name: "పూర్తి పేరు", city: "పుట్టిన నగరం", matchBtn: "మ్యాచ్ చేయండి", alertCity: "దయచేసి జాబితా నుండి నగరాన్ని ఎంచుకోండి!", result: "మ్యాచింగ్ ఫలితం", total: "/ 36 మొత్తం అష్టకూట్", breakdown: "అన్ని 8 కూటాలు చూడండి", chat: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ FREE", pdf: "PDF", reset: "రీసెట్", share: "WhatsApp లో పంపండి", bannerTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", bannerSub: "మ్యాచ్‌ను లోతుగా అర్థం చేసుకోవడానికి చాట్ చేయండి — FREE", warning: "సరైన మ్యాచ్ అర్థం చేసుకోవడం సంబంధాన్ని బలపరుస్తుంది.", home: "హోమ్", chatNav: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", doshaTitle: "దోషాలు & నివారణ", strengths: "మీ 3 గొప్ప బలాలు", attention: "శ్రద్ధ వహించవలసిన అంశాలు", advice: "ఆచరణాత్మక సలహా", nextSteps: "తదుపరి అడుగు", soulLabel: "సంబంధ సారాంశం", doshaPresent: "ఉంది", doshaCancelled: "నివారించబడింది", doshaAbsent: "దోషం లేదు", manglik: "మంగళ దోషం", nadi: "నాడి దోషం", bhakoot: "భకూట్ దోషం", disclaimer: "ఈ నివేదిక సాంప్రదాయ వేద జ్యోతిష్యంపై ఆధారపడి ఉంది.", askQ: "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?", q1: "మా పెళ్లికి కుటుంబం సులభంగా అంగీకరిస్తుందా?", q2: "మా జాతకాల ప్రకారం పెళ్లికి శుభ సమయం ఎప్పుడు?", q3: "ఈ సంబంధం కెరీర్ మరియు ధనంపై ఎలా ప్రభావితం చేస్తుంది?", labelUtkrisht: "అద్భుతమైన మ్యాచ్", labelBahutAcha: "చాలా మంచి మ్యాచ్", labelAcha: "మంచి మ్యాచ్", labelAusat: "సగటు మ్యాచ్", labelSudhar: "మెరుగుపరచాల్సిన అవసరం", boyPrefix: "వరుడు", girlPrefix: "వధువు", limitTitle: "మీ ఉచిత పరిమితి ముగిసింది!", limitSub: "మరింత సమాచారం కోసం జ్యోతిష్యుడిని సంప్రదించండి.", chatFree: "ఉచితంగా మాట్లాడండి", recharge: "వాలెట్ రీఛార్జ్", close: "మూసివేయి" },
+    ta: { title: "ஜாதக பொருத்தம்", subtitle: "துல்லியமான திருமண பொருத்தம்", boy: "ஆண் விவரங்கள்", girl: "பெண் விவரங்கள்", name: "முழு பெயர்", city: "பிறந்த நகரம்", matchBtn: "பொருத்தம் பார்க்க", alertCity: "பட்டியலில் இருந்து நகரத்தை தேர்ந்தெடுக்கவும்!", result: "பொருத்தம் முடிவு", total: "/ 36 மொத்த அஷ்டகூடம்", breakdown: "அனைத்து 8 கூடங்களையும் பார்க்க", chat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE", pdf: "PDF", reset: "மீட்டமை", share: "WhatsApp இல் பகிரவும்", bannerTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", bannerSub: "பொருத்தத்தை ஆழமாக புரிந்துகொள்ள அரட்டை செய்யுங்கள் — FREE", warning: "சரியான பொருத்தத்தை புரிந்துகொள்வது உறவை வலுப்படுத்தும்.", home: "முகப்பு", chatNav: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", doshaTitle: "தோஷங்கள் & நிவாரணம்", strengths: "உங்கள் 3 சிறந்த பலங்கள்", attention: "கவனிக்க வேண்டிய பகுதிகள்", advice: "நடைமுறை ஆலோசனை", nextSteps: "அடுத்த படி", soulLabel: "உறவு சாராம்சம்", doshaPresent: "உள்ளது", doshaCancelled: "நிவாரணம்", doshaAbsent: "தோஷம் இல்லை", manglik: "மாங்கலிக் தோஷம்", nadi: "நாடி தோஷம்", bhakoot: "பகூட் தோஷம்", disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடத்தை அடிப்படையாகக் கொண்டது.", askQ: "மேலும் அறிய விரும்புகிறீர்களா?", q1: "எங்கள் திருமணத்திற்கு குடும்பம் எளிதில் ஒப்புக்கொள்ளுமா?", q2: "எங்கள் ஜாதகங்களின்படி திருமணத்திற்கு மிக நல்ல நேரம் எப்போது?", q3: "இந்த உறவு தொழில் மற்றும் செல்வத்தை எவ்வாறு பாதிக்கும்?", labelUtkrisht: "சிறந்த பொருத்தம்", labelBahutAcha: "மிக நல்ல பொருத்தம்", labelAcha: "நல்ல பொருத்தம்", labelAusat: "சராசரி பொருத்தம்", labelSudhar: "மேம்பாடு தேவை", boyPrefix: "மணமகன்", girlPrefix: "மணமகள்", limitTitle: "உங்கள் இலவச வரம்பு முடிந்தது!", limitSub: "மேலும் அறிய ஜோதிடரை அணுகவும்.", chatFree: "இலவசமாக பேசுங்கள்", recharge: "வாலெட் ரீசார்ஜ்", close: "மூடு" },
+    kn: { title: "ಕುಂಡಲಿ ಹೊಂದಾಣಿಕೆ", subtitle: "ನಿಖರವಾದ ವಿವಾಹ ಹೊಂದಾಣಿಕೆ", boy: "ಹುಡುಗನ ವಿವರಗಳು", girl: "ಹುಡುಗಿಯ ವಿವರಗಳು", name: "ಪೂರ್ಣ ಹೆಸರು", city: "ಹುಟ್ಟಿದ ನಗರ", matchBtn: "ಹೊಂದಿಸಿ", alertCity: "ದಯವಿಟ್ಟು ಪಟ್ಟಿಯಿಂದ ನಗರವನ್ನು ಆಯ್ಕೆಮಾಡಿ!", result: "ಹೊಂದಾಣಿಕೆಯ ಫಲಿತಾಂಶ", total: "/ 36 ಒಟ್ಟು ಅಷ್ಟಕೂಟ", breakdown: "ಎಲ್ಲಾ 8 ಕೂಟಗಳನ್ನು ನೋಡಿ", chat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE", pdf: "PDF", reset: "ಮರುಹೊಂದಿಸಿ", share: "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಳವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಚಾಟ್ ಮಾಡಿ — FREE", warning: "ಸರಿಯಾದ ಹೊಂದಾಣಿಕೆ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.", home: "ಮುಖಪುಟ", chatNav: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", doshaTitle: "ದೋಷಗಳು & ನಿವಾರಣೆ", strengths: "ನಿಮ್ಮ 3 ಶ್ರೇಷ್ಠ ಶಕ್ತಿಗಳು", attention: "ಗಮನಿಸಬೇಕಾದ ಅಂಶಗಳು", advice: "ಪ್ರಾಯೋಗಿಕ ಸಲಹೆ", nextSteps: "ಮುಂದಿನ ಹೆಜ್ಜೆ", soulLabel: "ಸಂಬಂಧದ ಸಾರಾಂಶ", doshaPresent: "ಇದೆ", doshaCancelled: "ನಿವಾರಣೆ", doshaAbsent: "ದೋಷ ಇಲ್ಲ", manglik: "ಮಾಂಗ್ಲಿಕ್ ದೋಷ", nadi: "ನಾಡಿ ದೋಷ", bhakoot: "ಭಕೂಟ್ ದೋಷ", disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯವನ್ನು ಆಧರಿಸಿದೆ.", askQ: "ಇನ್ನಷ್ಟು ತಿಳಿಯಲು ಬಯಸುವಿರಾ?", q1: "ನಮ್ಮ ಮದುವೆಗೆ ಕುಟುಂಬ ಸುಲಭವಾಗಿ ಒಪ್ಪುತ್ತದೆಯೇ?", q2: "ನಮ್ಮ ಜಾತಕದ ಪ್ರಕಾರ ಮದುವೆಗೆ ಶುಭ ಸಮಯ ಯಾವುದು?", q3: "ಈ ಸಂಬಂಧ ವೃತ್ತಿ ಮತ್ತು ಸಂಪತ್ತಿನ ಮೇಲೆ ಹೇಗೆ ಪರಿಣಾಮ ಬೀರುತ್ತದೆ?", labelUtkrisht: "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelBahutAcha: "ಬಹಳ ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAcha: "ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAusat: "ಸರಾಸರಿ ಹೊಂದಾಣಿಕೆ", labelSudhar: "ಸುಧಾರಣೆ ಅಗತ್ಯ", boyPrefix: "ವರ", girlPrefix: "ವಧು", limitTitle: "ನಿಮ್ಮ ಉಚಿತ ಮಿತಿ ಮುಗಿದಿದೆ!", limitSub: "ಹೆಚ್ಚಿನ ಮಾಹಿತಿಗಾಗಿ ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ.", chatFree: "ಉಚಿತವಾಗಿ ಮಾತನಾಡಿ", recharge: "ವಾಲೆಟ್ ರೀಚಾರ್ಜ್", close: "ಮುಚ್ಚಿ" },
+    bn: { title: "কুণ্ডলী মিলন", subtitle: "সঠিক বিবাহ ম্যাচিং", boy: "ছেলের বিবরণ", girl: "মেয়ের বিবরণ", name: "পুরো নাম", city: "জন্ম শহর", matchBtn: "মিলন করুন", alertCity: "অনুগ্রহ করে তালিকা থেকে শহর নির্বাচন করুন!", result: "মিলন ফলাফল", total: "/ 36 মোট অষ্টকূট", breakdown: "সব ৮টি কূট দেখুন", chat: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট FREE", pdf: "PDF", reset: "রিসেট", share: "WhatsApp এ শেয়ার করুন", bannerTitle: "জ্যোতিষী • 24x7 উপলব্ধ", bannerSub: "মিলন গভীরভাবে বুঝতে চ্যাট করুন — FREE", warning: "সঠিক মিলন বুঝলে সম্পর্ক আরও মজবুত হয়।", home: "হোম", chatNav: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", doshaTitle: "দোষ ও তাদের নিবারণ", strengths: "আপনার ৩টি সেরা শক্তি", attention: "মনোযোগ দেওয়ার বিষয়", advice: "ব্যবহারিক পরামর্শ", nextSteps: "পরবর্তী পদক্ষেপ", soulLabel: "সম্পর্কের সারাংশ", doshaPresent: "উপস্থিত", doshaCancelled: "নিবারিত", doshaAbsent: "কোনো দোষ নেই", manglik: "মাঙ্গলিক দোষ", nadi: "নাড়ি দোষ", bhakoot: "ভকূট দোষ", disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষের উপর ভিত্তি করে।", askQ: "আরও জানতে চান?", q1: "আমাদের বিয়েতে পরিবার সহজে রাজি হবে?", q2: "আমাদের কুণ্ডলী অনুযায়ী বিয়ের শুভ সময় কখন?", q3: "এই সম্পর্ক ক্যারিয়ার ও ধনে কী প্রভাব ফেলবে?", labelUtkrisht: "চমৎকার মিলন", labelBahutAcha: "খুব ভালো মিলন", labelAcha: "ভালো মিলন", labelAusat: "গড় মিলন", labelSudhar: "উন্নতি প্রয়োজন", boyPrefix: "বর", girlPrefix: "কনে", limitTitle: "আপনার ফ্রি সীমা শেষ!", limitSub: "আরও জানতে জ্যোতিষীর সাথে কথা বলুন।", chatFree: "ফ্রি চ্যাট করুন", recharge: "ওয়ালেট রিচার্জ", close: "বন্ধ করুন" },
+    mr: { title: "कुंडली मिलन", subtitle: "अचूक विवाह जुळणी", boy: "मुलाचे तपशील", girl: "मुलीचे तपशील", name: "पूर्ण नाव", city: "जन्म शहर", matchBtn: "जुळवा", alertCity: "कृपया यादीतून शहर निवडा!", result: "जुळणी निकाल", total: "/ 36 एकूण अष्टकूट", breakdown: "सर्व 8 कूट पहा", chat: "ज्योतिषाशी बोला — पहिली चॅट FREE", pdf: "PDF", reset: "रीसेट", share: "WhatsApp वर शेअर करा", bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "जुळणी सखोल समजून घेण्यासाठी चॅट करा — FREE", warning: "योग्य जुळणी समजल्यास नातं अधिक मजबूत होतं.", home: "होम", chatNav: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", doshaTitle: "दोष आणि त्यांचे निवारण", strengths: "तुमच्या 3 सर्वात मोठ्या ताकदी", attention: "लक्ष देण्याच्या गोष्टी", advice: "व्यवहारिक सल्ला", nextSteps: "पुढील पाऊल", soulLabel: "नात्याचा निचरा", doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "दोष नाही", manglik: "मांगलिक दोष", nadi: "नाडी दोष", bhakoot: "भकूट दोष", disclaimer: "हा अहवाल पारंपारिक वैदिक ज्योतिषावर आधारित आहे.", askQ: "अजून जाणून घ्यायचंय?", q1: "आमच्या लग्नाला कुटुंब सहज मान्य करेल का?", q2: "आमच्या कुंडलीनुसार लग्नाची सर्वात शुभ वेळ कधी?", q3: "या नात्याचा करिअर आणि पैशावर काय परिणाम होईल?", labelUtkrisht: "उत्कृष्ट जुळणी", labelBahutAcha: "खूप चांगली जुळणी", labelAcha: "चांगली जुळणी", labelAusat: "सरासरी जुळणी", labelSudhar: "सुधारणा आवश्यक", boyPrefix: "वर", girlPrefix: "वधू", limitTitle: "तुमची मोफत मर्यादा संपली आहे!", limitSub: "अधिक माहितीसाठी ज्योतिषाशी बोला.", chatFree: "मोफत बोला", recharge: "वॉलेट रिचार्ज", close: "बंद करा" },
+    gu: { title: "કુંડળી મેળાપ", subtitle: "સચોટ લગ્ન મેચિંગ", boy: "છોકરાની વિગતો", girl: "છોકરીની વિગતો", name: "પૂરું નામ", city: "જન્મ શહેર", matchBtn: "મેળવો", alertCity: "કૃપા કરીને સૂચિમાંથી શહેર પસંદ કરો!", result: "મેચિંગ પરિણામ", total: "/ 36 કુલ અષ્ટકૂટ", breakdown: "બધા 8 કૂટ જુઓ", chat: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ FREE", pdf: "PDF", reset: "રીસેટ", share: "WhatsApp પર શેર કરો", bannerTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", bannerSub: "મેચિંગ ઊંડાણપૂર્વક સમજવા ચેટ કરો — FREE", warning: "યોગ્ય મેચિંગ સમજવાથી સંબંધ વધુ મજબૂત બને છે.", home: "હોમ", chatNav: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", doshaTitle: "દોષ અને તેમનું નિવારણ", strengths: "તમારી 3 સૌથી મોટી તાકાત", attention: "ધ્યાન આપવાની બાબતો", advice: "વ્યવહારુ સલાહ", nextSteps: "આગળનું પગલું", soulLabel: "સંબંધનો નિચોડ", doshaPresent: "હાજર", doshaCancelled: "નિવારિત", doshaAbsent: "કોઈ દોષ નથી", manglik: "માંગલિક દોષ", nadi: "નાડી દોષ", bhakoot: "ભકૂટ દોષ", disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ પર આધારિત છે.", askQ: "વધુ જાણવા માંગો છો?", q1: "અમારા લગ્નમાં પરિવાર સહેલાઈથી માની જશે?", q2: "અમારી કુંડળી મુજબ લગ્નનો સૌથી શુભ સમય ક્યારે?", q3: "આ સંબંધ કરિયર અને ધન પર કેવી અસર કરશે?", labelUtkrisht: "ઉત્કૃષ્ટ મેચિંગ", labelBahutAcha: "ખૂબ સારું મેચિંગ", labelAcha: "સારું મેચિંગ", labelAusat: "સરેરાશ મેચિંગ", labelSudhar: "સુધારાની જરૂર", boyPrefix: "વર", girlPrefix: "વધૂ", limitTitle: "તમારી મફત મર્યાદા સમાપ્ત થઈ ગઈ છે!", limitSub: "વધુ માહિતી માટે જ્યોતિષી સાથે વાત કરો.", chatFree: "મફત વાત કરો", recharge: "વોલેટ રિચાર્જ", close: "બંધ કરો" },
+    ml: { title: "കുണ്ഡലി മാച്ചിംഗ്", subtitle: "കൃത്യമായ വിവാഹ മാച്ചിംഗ്", boy: "ആൺകുട്ടിയുടെ വിവരങ്ങൾ", girl: "പെൺകുട്ടിയുടെ വിവരങ്ങൾ", name: "പൂർണ്ണ നാമം", city: "ജനന നഗരം", matchBtn: "മാച്ച് ചെയ്യുക", alertCity: "ലിസ്റ്റിൽ നിന്ന് ഒരു നഗരം തിരഞ്ഞെടുക്കുക!", result: "മാച്ചിംഗ് ഫലം", total: "/ 36 മൊത്തം അഷ്ടകൂട്ടം", breakdown: "എല്ലാ 8 കൂട്ടങ്ങളും കാണുക", chat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE", pdf: "PDF", reset: "പുനഃസജ്ജമാക്കുക", share: "WhatsApp ൽ പങ്കിടുക", bannerTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", bannerSub: "മാച്ചിംഗ് ആഴത്തിൽ മനസ്സിലാക്കാൻ ചാറ്റ് ചെയ്യുക — FREE", warning: "ശരിയായ മാച്ചിംഗ് മനസ്സിലാക്കുന്നത് ബന്ധം ശക്തമാക്കുന്നു.", home: "ഹോം", chatNav: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", doshaTitle: "ദോഷങ്ങളും പരിഹാരവും", strengths: "നിങ്ങളുടെ 3 മികച്ച ശക്തികൾ", attention: "ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ", advice: "പ്രായോഗിക ഉപദേശം", nextSteps: "അടുത്ത ഘട്ടം", soulLabel: "ബന്ധത്തിന്റെ സാരാംശം", doshaPresent: "ഉണ്ട്", doshaCancelled: "പരിഹരിച്ചു", doshaAbsent: "ദോഷമില്ല", manglik: "മാംഗ്ലിക് ദോഷം", nadi: "നാഡി ദോഷം", bhakoot: "ഭകൂട്ട് ദോഷം", disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷത്തെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.", askQ: "കൂടുതൽ അറിയാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?", q1: "ഞങ്ങളുടെ വിവാഹത്തിന് കുടുംബം എളുപ്പത്തിൽ സമ്മതിക്കുമോ?", q2: "ഞങ്ങളുടെ ജാതകം അനുസരിച്ച് വിവാഹത്തിന് ഏറ്റവും ശുഭമായ സമയം എപ്പോൾ?", q3: "ഈ ബന്ധം കരിയറിലും ധനത്തിലും എന്ത് സ്വാധീനം ചെലുത്തും?", labelUtkrisht: "മികച്ച മാച്ചിംഗ്", labelBahutAcha: "വളരെ നല്ല മാച്ചിംഗ്", labelAcha: "നല്ല മാച്ചിംഗ്", labelAusat: "ശരാശരി മാച്ചിംഗ്", labelSudhar: "മെച്ചപ്പെടുത്തൽ ആവശ്യം", boyPrefix: "വരൻ", girlPrefix: "വധു", limitTitle: "നിങ്ങളുടെ സൗജന്യ പരിധി തീർന്നു!", limitSub: "കൂടുതൽ അറിയാൻ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", chatFree: "സൗജന്യമായി സംസാരിക്കുക", recharge: "വാലറ്റ് റീചാർജ്", close: "അടയ്ക്കുക" },
   };
   return ui[lang]?.[key] || ui["en"][key];
 };
@@ -134,7 +138,7 @@ const getLabelColor = (label: string) => {
 };
 
 // ============================================================
-// City Input Component (Completed)
+// City Input Component
 // ============================================================
 function CityInput({
   value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
@@ -206,7 +210,8 @@ function CityInput({
 // Main Page
 // ============================================================
 export default function MatchingPage() {
-  const { lang, theme } = useApp();
+  const { lang, theme, me } = useApp();
+  const router = useRouter();
   const isDark = theme === "dark";
 
   const [boy, setBoy] = useState({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
@@ -222,16 +227,32 @@ export default function MatchingPage() {
   const [displayScore, setDisplayScore] = useState(0);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  // 🔥 Limit & Popup State
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [scanCount, setScanCount] = useState(0);
+
   const resultRef = useRef<HTMLDivElement>(null);
   const t = (key: string) => getUIText(lang, key);
 
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark
-    ? "border-slate-800 bg-[#151d2c] shadow-lg"
-    : "border-orange-100 bg-white shadow-xl";
+  const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
   const inputClass = `w-full rounded-xl border px-4 py-3.5 text-[14px] font-medium outline-none transition-all focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 ${
     isDark ? "border-slate-700 bg-[#0A0F19] text-white" : "border-gray-200 bg-gray-50 text-slate-900"
   }`;
+
+  // Check Limit
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const savedDate = localStorage.getItem('matching_scan_date');
+    let savedCount = parseInt(localStorage.getItem('matching_scan_count') || "0");
+
+    if (savedDate !== today) {
+      localStorage.setItem('matching_scan_date', today);
+      savedCount = 0;
+      localStorage.setItem('matching_scan_count', "0");
+    }
+    setScanCount(savedCount);
+  }, [me?.user]);
 
   // Loading text rotation
   useEffect(() => {
@@ -266,6 +287,14 @@ export default function MatchingPage() {
 
   const handleMatch = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // 🔥 Limit Check
+    const maxLimit = me?.user ? 2 : 1; 
+    if (scanCount >= maxLimit) {
+      setShowLimitModal(true);
+      return;
+    }
+
     if (!boy.lat || !girl.lat) {
       alert(t("alertCity"));
       return;
@@ -280,7 +309,14 @@ export default function MatchingPage() {
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
+      
       setResult(data);
+      
+      // Update Limit Count
+      const newCount = scanCount + 1;
+      setScanCount(newCount);
+      localStorage.setItem('matching_scan_count', newCount.toString());
+
       setTimeout(
         () => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
         100
@@ -292,16 +328,18 @@ export default function MatchingPage() {
     }
   };
 
+  // 🔥 PDF Fix (White background applied)
   const downloadPdf = async () => {
     if (!resultRef.current) return;
     setIsDownloading(true);
     try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
       const html2pdf = (await import("html2pdf.js")).default;
       const opt = {
         margin: 0.4,
         filename: `${boy.name}_${girl.name}_Milan.pdf`,
         image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: isDark ? "#0f172a" : "#ffffff" },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff", logging: false },
         jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
       };
       await html2pdf().set(opt).from(resultRef.current).save();
@@ -334,6 +372,27 @@ export default function MatchingPage() {
     }
   };
 
+  // 🔥 NEW LOGIC: Chat Pre-fill
+  const handleChatNow = () => {
+    if (!result) return;
+
+    const manglik = result.doshas?.manglik?.present ? `Manglik Dosh (${result.doshas.manglik.cancelled ? 'Cancelled' : 'Present'})` : "No Manglik Dosh";
+    const nadi = result.doshas?.nadi?.present ? `Nadi Dosh (${result.doshas.nadi.cancelled ? 'Cancelled' : 'Present'})` : "No Nadi Dosh";
+    const bhakoot = result.doshas?.bhakoot?.present ? `Bhakoot Dosh (${result.doshas.bhakoot.cancelled ? 'Cancelled' : 'Present'})` : "No Bhakoot Dosh";
+
+    const summaryText = `Namaste, mera aur ${girl.name} ka kundli milan ${result.score}/36 aaya hai.
+    
+Boy: ${boy.name}
+Girl: ${girl.name}
+Score: ${result.score}/36 (${getLabelText(lang, result.label)})
+Doshas: ${manglik}, ${nadi}, ${bhakoot}
+
+Kya aap is rishte ke baare mein aur margdarshan de sakte hain?`;
+
+    const encodedPrompt = encodeURIComponent(summaryText);
+    router.push(`/chat/gita?prefill=${encodedPrompt}`);
+  };
+
   const resetForm = () => {
     setBoy({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
     setGirl({ name: "", dob: "", time: "", city: "", lat: "", lon: "" });
@@ -341,23 +400,49 @@ export default function MatchingPage() {
     setShowBreakdown(false);
   };
 
-  const suggestedChatPrompt = encodeURIComponent(
-    `Namaste, mera (${boy.name}) aur (${girl.name}) ka kundli milan ${result?.score || 0}/36 aaya hai. Kya aap iski gehrai aur upay bata sakti hain?`
-  );
-
   const questionChips = [
     { q: t("q1"), icon: "👨‍👩‍👧" },
     { q: t("q2"), icon: "📅" },
     { q: t("q3"), icon: "💼" },
   ];
 
+  // FAQ Schema for SEO
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How many gunas are required for marriage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Astrologically, a score of 18 or above out of 36 is considered good for marriage. However, a lower score doesn't mean rejection, as D9 charts and planetary strength matter."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can Manglik Dosha be cancelled?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, in many cases, Manglik Dosha is cancelled (Manglik Dosh Bhang) due to the aspect of Jupiter or Saturn, or if both partners are Manglik."
+        }
+      }
+    ]
+  };
+
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
-      {/* 🔥 CHANGED: Container ko max-w-4xl kiya aur padding adjust ki */}
+      
+      {/* Inject FAQ Schema */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
       <div className="w-full px-4 sm:px-6 pt-4 space-y-5 flex-1 max-w-4xl mx-auto">
         
         {/* HEADER */}
-        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link
             href="/"
             className={`rounded-xl p-2.5 transition-colors ${
@@ -367,14 +452,52 @@ export default function MatchingPage() {
             <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">
+            <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">
               {t("title")}
             </h1>
-            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
               {t("subtitle")}
             </p>
           </div>
+          <Heart className="text-[#ff6b00]" size={26} />
         </header>
+
+        {/* 🔥 POPUP MODAL (Limit Reached) */}
+        {showLimitModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in">
+            <div className={`w-full max-w-sm rounded-3xl p-6 shadow-2xl relative ${isDark ? "bg-[#151d2c] border border-slate-700" : "bg-white border border-gray-100"}`}>
+              <button 
+                onClick={() => setShowLimitModal(false)} 
+                className={`absolute top-4 right-4 p-2 rounded-full ${isDark ? "bg-slate-800 text-slate-400" : "bg-gray-100 text-gray-500"}`}
+              >
+                <X size={18} />
+              </button>
+              
+              <div className="flex flex-col items-center text-center mt-2">
+                <div className="h-16 w-16 rounded-full bg-rose-500/10 flex items-center justify-center mb-4">
+                  <Lock size={30} className="text-rose-500" />
+                </div>
+                <h2 className={`text-[19px] font-black leading-tight ${isDark ? "text-white" : "text-gray-900"}`}>{t("limitTitle")}</h2>
+                <p className={`text-[13px] font-medium mt-2 mb-6 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("limitSub")}</p>
+
+                <div className="w-full space-y-3">
+                  <button 
+                    onClick={() => router.push("/chat/gita")}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 py-3.5 text-[14px] font-black text-white shadow-lg shadow-emerald-500/20 active:scale-95 transition-transform"
+                  >
+                    <MessageCircle size={18} /> {t("chatFree")}
+                  </button>
+                  <button 
+                    onClick={() => router.push("/wallet")}
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3.5 text-[14px] font-black text-white shadow-lg shadow-orange-500/20 active:scale-95 transition-transform"
+                  >
+                    <Wallet size={18} /> {t("recharge")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* LOADING */}
         {loading && (
@@ -551,22 +674,26 @@ export default function MatchingPage() {
 
         {/* RESULT */}
         {result && !loading && (
-          <div ref={resultRef} className="space-y-4 animate-in fade-in">
+          <div 
+            ref={resultRef} 
+            className="space-y-4 animate-in fade-in rounded-[1.5rem] p-4 sm:p-6 bg-white text-slate-900 border border-gray-200"
+            style={{ backgroundColor: '#ffffff', color: '#0f172a' }} // Force white background for PDF
+          >
             {/* CARD 1 — HERO SCORE */}
-            <div className={`rounded-2xl border p-6 sm:p-8 text-center ${cardClass}`}>
+            <div className={`rounded-2xl border p-6 sm:p-8 text-center bg-gray-50 border-gray-200`}>
               <div className="flex items-center justify-center gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-[11px] uppercase font-black text-slate-500 tracking-wider">
+                  <div className="text-[11px] uppercase font-black text-gray-500 tracking-wider">
                     {t("boyPrefix")}
                   </div>
-                  <div className="text-[16px] font-black">{boy.name}</div>
+                  <div className="text-[16px] font-black text-gray-900">{boy.name}</div>
                 </div>
                 <Heart size={24} className="text-[#ff6b00]" fill="currentColor" />
                 <div className="text-center">
-                  <div className="text-[11px] uppercase font-black text-slate-500 tracking-wider">
+                  <div className="text-[11px] uppercase font-black text-gray-500 tracking-wider">
                     {t("girlPrefix")}
                   </div>
-                  <div className="text-[16px] font-black">{girl.name}</div>
+                  <div className="text-[16px] font-black text-gray-900">{girl.name}</div>
                 </div>
               </div>
 
@@ -576,7 +703,7 @@ export default function MatchingPage() {
                     cx="60"
                     cy="60"
                     r="52"
-                    stroke={isDark ? "#1e293b" : "#f1f5f9"}
+                    stroke="#f1f5f9"
                     strokeWidth="8"
                     fill="none"
                   />
@@ -593,8 +720,8 @@ export default function MatchingPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <div className="text-4xl font-black">{displayScore}</div>
-                  <div className="text-[12px] font-bold text-slate-500">/36</div>
+                  <div className="text-4xl font-black text-gray-900">{displayScore}</div>
+                  <div className="text-[12px] font-bold text-gray-500">/36</div>
                 </div>
               </div>
 
@@ -606,18 +733,14 @@ export default function MatchingPage() {
                 {getLabelText(lang, result.label)}
               </div>
 
-              <p
-                className={`mt-5 text-[14.5px] font-semibold leading-relaxed ${
-                  isDark ? "text-slate-300" : "text-slate-700"
-                }`}
-              >
+              <p className={`mt-5 text-[14.5px] font-semibold leading-relaxed text-gray-700`}>
                 {result.soulSummary}
               </p>
             </div>
 
             {/* CARD 2 — DOSHA */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
-              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2">
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200`}>
+              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2 text-gray-900">
                 <ShieldAlert size={18} className="text-[#ff6b00]" />
                 {t("doshaTitle")}
               </h3>
@@ -639,14 +762,10 @@ export default function MatchingPage() {
                   return (
                     <div
                       key={key}
-                      className={`rounded-xl border p-4 ${
-                        isDark
-                          ? "border-slate-800 bg-[#0A0F19]/50"
-                          : "border-gray-200 bg-gray-50"
-                      }`}
+                      className={`rounded-xl border p-4 bg-gray-50 border-gray-200`}
                     >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1.5">
-                        <span className="text-[13.5px] font-black">{doshaName}</span>
+                        <span className="text-[13.5px] font-black text-gray-900">{doshaName}</span>
                         <span
                           className={`text-[10px] font-black px-2 py-0.5 rounded-full border w-max ${statusColor}`}
                         >
@@ -654,11 +773,7 @@ export default function MatchingPage() {
                         </span>
                       </div>
                       {dosha.reason && (
-                        <p
-                          className={`text-[12px] font-medium leading-relaxed ${
-                            isDark ? "text-slate-300" : "text-slate-600"
-                          }`}
-                        >
+                        <p className={`text-[12px] font-medium leading-relaxed text-gray-600`}>
                           {dosha.reason}
                         </p>
                       )}
@@ -669,7 +784,7 @@ export default function MatchingPage() {
             </div>
 
             {/* CARD 3a — STRENGTHS */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200`}>
               <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-emerald-600">
                 <Star size={18} /> {t("strengths")}
               </h3>
@@ -680,14 +795,14 @@ export default function MatchingPage() {
                     className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
                     <CheckCircle2 size={18} className="text-emerald-500 shrink-0 mt-0.5" />
-                    <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
+                    <span className="text-gray-700">{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* CARD 3b — ATTENTION */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200`}>
               <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-amber-600">
                 <AlertCircle size={18} /> {t("attention")}
               </h3>
@@ -698,14 +813,14 @@ export default function MatchingPage() {
                     className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
                     <span className="text-amber-500 shrink-0 mt-0.5">◆</span>
-                    <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
+                    <span className="text-gray-700">{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* CARD 3c — PRACTICAL ADVICE */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200`}>
               <h3 className="text-[15px] font-black mb-3 flex items-center gap-2 text-[#ff6b00]">
                 <Sparkles size={18} /> {t("advice")}
               </h3>
@@ -716,25 +831,25 @@ export default function MatchingPage() {
                     className="flex items-start gap-2.5 text-[13.5px] font-medium leading-relaxed"
                   >
                     <span className="text-[#ff6b00] shrink-0 mt-0.5">🙏</span>
-                    <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
+                    <span className="text-gray-700">{s}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* CARD 4 — ACCORDION (Full width, grid on desktop) */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+            {/* CARD 4 — ACCORDION */}
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200 print:hidden`}>
               <button
                 onClick={() => setShowBreakdown(!showBreakdown)}
                 className="w-full flex items-center justify-between"
               >
-                <h3 className="text-[15px] font-black flex items-center gap-2">
+                <h3 className="text-[15px] font-black flex items-center gap-2 text-gray-900">
                   <FileText size={18} className="text-[#ff6b00]" />
                   {t("breakdown")}
                 </h3>
                 <ChevronDown
                   size={20}
-                  className={`transition-transform text-slate-500 ${showBreakdown ? "rotate-180" : ""}`}
+                  className={`transition-transform text-gray-500 ${showBreakdown ? "rotate-180" : ""}`}
                 />
               </button>
               {showBreakdown && (
@@ -742,20 +857,12 @@ export default function MatchingPage() {
                   {(result.details || []).map((d: any, i: number) => (
                     <div
                       key={i}
-                      className={`rounded-xl border p-3 flex items-center justify-between ${
-                        isDark
-                          ? "border-slate-800 bg-[#0A0F19]/50"
-                          : "border-gray-200 bg-gray-50"
-                      }`}
+                      className={`rounded-xl border p-3 flex items-center justify-between bg-gray-50 border-gray-200`}
                     >
                       <div className="flex-1">
-                        <div className="text-[13px] font-black">{d.name}</div>
+                        <div className="text-[13px] font-black text-gray-900">{d.name}</div>
                         {d.meaning && (
-                          <div
-                            className={`text-[11px] mt-0.5 ${
-                              isDark ? "text-slate-400" : "text-slate-600"
-                            }`}
-                          >
+                          <div className={`text-[11px] mt-0.5 text-gray-600`}>
                             {d.meaning}
                           </div>
                         )}
@@ -769,68 +876,67 @@ export default function MatchingPage() {
               )}
             </div>
 
-            {/* QUESTION CHIPS */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
-              <h3 className="text-[15px] font-black mb-3">{t("askQ")}</h3>
+            {/* QUESTION CHIPS (Hidden in PDF) */}
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200 print:hidden`}>
+              <h3 className="text-[15px] font-black mb-3 text-gray-900">{t("askQ")}</h3>
               <div className="grid grid-cols-1 gap-3">
                 {questionChips.map((chip, i) => (
-                  <Link
+                  <button
                     key={i}
-                    href={`/chat?q=${encodeURIComponent(chip.q)}`}
-                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-[13px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 ${
-                      isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
-                    }`}
+                    onClick={() => router.push(`/chat/gita?prefill=${encodeURIComponent(chip.q)}`)}
+                    className={`flex items-center gap-3 rounded-xl border p-3.5 text-[13px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 border-gray-200 text-gray-800 text-left`}
                   >
                     <span className="text-[16px]">{chip.icon}</span>
-                    <span className="flex-1 text-left">{chip.q}</span>
+                    <span className="flex-1">{chip.q}</span>
                     <ArrowRight size={16} className="text-[#ff6b00]" />
-                  </Link>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* NEXT STEPS */}
-            <div className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
-              <h3 className="text-[15px] font-black mb-3">{t("nextSteps")}</h3>
+            {/* NEXT STEPS (Hidden in PDF) */}
+            <div className={`rounded-2xl border p-5 sm:p-6 bg-white border-gray-200 print:hidden`}>
+              <h3 className="text-[15px] font-black mb-3 text-gray-900">{t("nextSteps")}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(result.nextSteps || []).map((step: any, i: number) => {
                   const href =
                     step.action === "chat"
-                      ? `/chat?q=${suggestedChatPrompt}`
+                      ? `/chat?q=${encodeURIComponent(t("q1"))}`
                       : step.action === "pdf"
                       ? "#"
                       : `/matching?focus=${step.action}`;
                   const isPrimary = step.primary;
                   return (
-                    <Link
+                    <button
                       key={i}
-                      href={href}
                       onClick={(e) => {
                         if (step.action === "pdf") {
                           e.preventDefault();
                           downloadPdf();
+                        } else if (step.action === "chat") {
+                          handleChatNow();
+                        } else {
+                          router.push(href);
                         }
                       }}
                       className={`flex items-center justify-between rounded-xl p-4 text-[13.5px] font-black transition-all ${
                         isPrimary
                           ? "bg-gradient-to-r from-[#ff6b00] to-amber-600 text-white shadow-lg sm:col-span-2"
-                          : isDark
-                          ? "border border-slate-700 text-slate-200"
-                          : "border border-gray-200 text-slate-800"
+                          : "border border-gray-200 text-gray-800 hover:bg-gray-50"
                       }`}
                     >
                       <span>{step.label}</span>
                       <ArrowRight size={16} />
-                    </Link>
+                    </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* CHAT BANNER */}
-            <Link
-              href={`/chat?q=${suggestedChatPrompt}`}
-              className="block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-5"
+            {/* CHAT BANNER (Hidden in PDF) */}
+            <button
+              onClick={handleChatNow}
+              className="w-full block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-5 print:hidden text-left"
             >
               <div className="flex items-center gap-4">
                 <div className="bg-[#ff6b00] rounded-xl p-3 shadow-md">
@@ -838,25 +944,19 @@ export default function MatchingPage() {
                 </div>
                 <div className="flex-1">
                   <div className="text-[14px] font-black text-[#ff6b00]">{t("bannerTitle")}</div>
-                  <div
-                    className={`text-[12px] font-semibold mt-0.5 ${
-                      isDark ? "text-slate-400" : "text-slate-600"
-                    }`}
-                  >
+                  <div className={`text-[12px] font-semibold mt-0.5 text-gray-600`}>
                     {t("bannerSub")}
                   </div>
                 </div>
                 <ArrowRight size={18} className="text-[#ff6b00]" />
               </div>
-            </Link>
+            </button>
 
-            {/* ACTION BUTTONS */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* ACTION BUTTONS (Hidden in PDF) */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 print:hidden">
               <button
                 onClick={handleShare}
-                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 ${
-                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
-                }`}
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 border-gray-200 text-gray-800 hover:bg-gray-50`}
               >
                 <Share2 size={16} className="text-emerald-600" />
                 {t("share")}
@@ -864,18 +964,14 @@ export default function MatchingPage() {
               <button
                 onClick={downloadPdf}
                 disabled={isDownloading}
-                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 disabled:opacity-50 ${
-                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
-                }`}
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 disabled:opacity-50 border-gray-200 text-gray-800 hover:bg-gray-50`}
               >
                 <Download size={16} className="text-[#ff6b00]" />
                 {isDownloading ? "..." : t("pdf")}
               </button>
               <button
                 onClick={resetForm}
-                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 ${
-                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
-                }`}
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex flex-row items-center justify-center gap-2 border-gray-200 text-gray-800 hover:bg-gray-50`}
               >
                 <RefreshCw size={16} className="text-slate-500" />
                 {t("reset")}
@@ -883,17 +979,48 @@ export default function MatchingPage() {
             </div>
 
             {/* DISCLAIMER */}
-            <p
-              className={`text-[11px] leading-relaxed text-center px-2 ${
-                isDark ? "text-slate-500" : "text-slate-500"
-              }`}
-            >
+            <p className={`text-[11px] leading-relaxed text-center px-2 text-gray-500`}>
               {result.disclaimer || t("disclaimer")}
             </p>
           </div>
         )}
 
-        {/* BOTTOM NAV (Sticky, Full Width) */}
+        {/* 🔥 SEO CONTENT BLOCK */}
+        <section className={`mt-8 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
+          <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            Free Kundli Matching for Marriage
+          </h2>
+          <p className={`text-[13px] sm:text-[14px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+            विवाह जीवन का सबसे महत्वपूर्ण निर्णय है। कुंडली मिलान (Gun Milan) में 36 गुणों का मिलान किया जाता है जिसमें वर्ण, वश्य, तारा, योनि, ग्रह मैत्री, गण, भकूट और नाड़ी शामिल हैं। GitaTalk के AI ज्योतिषी से मुफ्त कुंडली मिलान करें और जानें कि आपका और आपके पार्टनर का मिलान कैसा है।
+          </p>
+          
+          <h3 className={`text-[15px] font-bold mt-4 ${isDark ? "text-white" : "text-gray-900"}`}>Frequently Asked Questions (FAQs)</h3>
+          <div className="space-y-3 mt-2">
+            <div>
+              <p className={`text-[13.5px] font-bold ${isDark ? "text-slate-200" : "text-gray-800"}`}>Q: कितने गुणों का मिलान शादी के लिए अच्छा माना जाता है?</p>
+              <p className={`text-[13px] leading-relaxed mt-1 ${isDark ? "text-slate-400" : "text-gray-600"}`}>A: 36 में से 18 या उससे अधिक गुणों का मिलान शादी के लिए अच्छा माना जाता है। लेकिन कम गुण होने पर भी कुंडली में दोष कटने (Cancellation) से रिश्ता मजबूत हो सकता है।</p>
+            </div>
+            <div>
+              <p className={`text-[13.5px] font-bold ${isDark ? "text-slate-200" : "text-gray-800"}`}>Q: क्या मांगलिक दोष कट सकता है?</p>
+              <p className={`text-[13px] leading-relaxed mt-1 ${isDark ? "text-slate-400" : "text-gray-600"}`}>A: हाँ, अगर दोनों पार्टनर मांगलिक हैं या कुंडली में गुरु/शनि की दृष्टि है, तो मांगलिक दोष का प्रभाव कट जाता है।</p>
+            </div>
+          </div>
+        </section>
+
+        {/* 🔥 LEGAL FOOTER */}
+        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
+            <Link href="/privacy-policy" className="hover:text-[#ff6b00] transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">Terms & Refund Policy</Link>
+            <a href="mailto:gitaaisupport@gmail.com" className="hover:text-[#ff6b00] transition-colors">Contact Us</a>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br/>
+            Astrology is for guidance purposes only. Not a substitute for professional advice.
+          </p>
+        </footer>
+
+        {/* BOTTOM NAV */}
         <nav
           className={`fixed bottom-0 left-0 right-0 z-30 border-t backdrop-blur ${
             isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"
