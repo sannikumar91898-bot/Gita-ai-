@@ -2,10 +2,9 @@
 import { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  // 🔥 Apna real domain yahan dalein (Future me custom domain lagayein toh yahan update karein)
-  const baseUrl = "https://gita-ai-1.onrender.com"; 
+  // 🔥 100% Custom Domain (onrender.com हटा दिया गया है)
+  const baseUrl = "https://gitatalk.in"; 
   
-  // Aaj ki date (Google ko batata hai ki content recent hai)
   const currentDate = new Date();
 
   return [
@@ -13,12 +12,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: baseUrl,
       lastModified: currentDate,
       changeFrequency: 'daily',
-      priority: 1.0, // Homepage sabse important
+      priority: 1.0,
     },
     {
       url: `${baseUrl}/chat`,
       lastModified: currentDate,
-      changeFrequency: 'always', // Chat page hamesha update hota rehta hai
+      changeFrequency: 'always',
       priority: 0.9,
     },
     {
@@ -36,7 +35,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/daily`,
       lastModified: currentDate,
-      changeFrequency: 'daily', // Daily horoscope roz update hota hai
+      changeFrequency: 'daily',
       priority: 0.8,
     },
     {
@@ -54,7 +53,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       url: `${baseUrl}/panchang`,
       lastModified: currentDate,
-      changeFrequency: 'daily', // Panchang roz badalta hai
+      changeFrequency: 'daily',
       priority: 0.7,
     },
   ];
