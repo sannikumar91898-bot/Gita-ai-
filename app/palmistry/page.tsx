@@ -41,7 +41,7 @@ const getLoadingSteps = (lang: string) => {
 };
 
 // ============================================================
-// UI Text — 10 Languages (new keys in hi/hinglish/en; others fallback to en)
+// UI Text — 10 Languages
 // ============================================================
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
@@ -196,10 +196,10 @@ function ScoreBar({ label, value, color, isDark }: { label: string; value: numbe
   return (
     <div>
       <div className="flex justify-between mb-1">
-        <span className="text-[12px] font-bold">{label}</span>
-        <span className="text-[12px] font-black" style={{ color }}>{value}%</span>
+        <span className="text-[13px] font-bold">{label}</span>
+        <span className="text-[13px] font-black" style={{ color }}>{value}%</span>
       </div>
-      <div className={`h-2 rounded-full overflow-hidden ${isDark ? "bg-slate-800" : "bg-slate-200"}`}>
+      <div className={`h-2.5 rounded-full overflow-hidden ${isDark ? "bg-slate-800" : "bg-slate-200"}`}>
         <div
           className="h-full rounded-full transition-all duration-700"
           style={{ width: `${value}%`, backgroundColor: color }}
@@ -232,7 +232,6 @@ export default function PalmistryPage() {
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
 
-  // Loading steps rotation
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const steps = getLoadingSteps(lang);
@@ -299,14 +298,12 @@ export default function PalmistryPage() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok) {
-          // 422 → AI ne image reject ki
           if (res.status === 422 || data?.error === "INVALID_IMAGE") {
             setPhoto(null);
             setErrorMsg(data?.message || t("errNotPalm"));
             if (fileInputRef.current) fileInputRef.current.value = "";
             return;
           }
-          // 401 (LOGIN_REQUIRED) / 402 (WALLET_RECHARGE) / 500 (AI_ERROR)
           throw new Error(data?.message || data?.error || "Analysis failed");
         }
 
@@ -348,9 +345,7 @@ export default function PalmistryPage() {
       } else {
         window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + window.location.href)}`, "_blank");
       }
-    } catch {
-      /* user cancelled */
-    }
+    } catch {}
   };
 
   const reset = () => {
@@ -373,7 +368,8 @@ export default function PalmistryPage() {
 
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
-      <div className="w-full px-3 pt-4 space-y-5 max-w-2xl mx-auto">
+      {/* 🔥 CHANGED: max-w-2xl se max-w-4xl kiya, padding adjust ki */}
+      <div className="w-full px-4 sm:px-6 pt-4 space-y-5 max-w-4xl mx-auto">
 
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
@@ -407,9 +403,8 @@ export default function PalmistryPage() {
 
         {/* UPLOAD SECTION */}
         {!photo && !loading && (
-          <section className={`space-y-5 rounded-[1.5rem] border p-6 ${cardClass}`}>
+          <section className={`space-y-5 rounded-[1.5rem] border p-6 sm:p-8 ${cardClass}`}>
 
-            {/* Gender + Hand selection */}
             <div className="space-y-3">
               <div>
                 <label className={`text-[11px] font-black uppercase tracking-wide ${isDark ? "text-slate-400" : "text-slate-600"}`}>
@@ -421,7 +416,7 @@ export default function PalmistryPage() {
                       key={g}
                       type="button"
                       onClick={() => setGender(g)}
-                      className={`py-2.5 rounded-lg text-[12px] font-black transition-all ${
+                      className={`py-3 rounded-lg text-[13px] font-black transition-all ${
                         gender === g
                           ? "bg-[#ff6b00] text-white shadow"
                           : isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-slate-700"
@@ -442,7 +437,7 @@ export default function PalmistryPage() {
                       key={h}
                       type="button"
                       onClick={() => setHand(h)}
-                      className={`py-2.5 rounded-lg text-[12px] font-black transition-all ${
+                      className={`py-3 rounded-lg text-[13px] font-black transition-all ${
                         hand === h
                           ? "bg-[#ff6b00] text-white shadow"
                           : isDark ? "bg-slate-800 text-slate-300" : "bg-gray-100 text-slate-700"
@@ -458,8 +453,7 @@ export default function PalmistryPage() {
               </p>
             </div>
 
-            {/* Hand icon */}
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-3 pt-2">
               <div className={`mx-auto flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#FF8A00] to-[#FF3D00] text-white shadow-lg shadow-orange-500/20`}>
                 <Hand size={48} className="opacity-90" />
               </div>
@@ -495,10 +489,11 @@ export default function PalmistryPage() {
           <section className={`space-y-4 rounded-[1.5rem] border p-6 ${cardClass}`}>
             <div className="flex flex-col items-center gap-5">
               <div className="relative">
+                {/* 🔥 CHANGED: Image size badi ki hai (w-full max-w-[280px] aspect-square) */}
                 <img
                   src={photo}
                   alt="preview"
-                  className={`h-44 w-44 rounded-2xl border-4 object-cover shadow-lg ${loading ? "border-[#ff6b00] animate-pulse" : "border-emerald-500"}`}
+                  className={`w-full max-w-[280px] aspect-square rounded-2xl border-4 object-cover shadow-lg ${loading ? "border-[#ff6b00] animate-pulse" : "border-emerald-500"}`}
                 />
                 {loading && (
                   <div className="absolute inset-0 rounded-2xl border-4 border-t-transparent border-[#ff6b00] animate-spin"></div>
@@ -517,30 +512,30 @@ export default function PalmistryPage() {
         {result && !loading && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-            {/* 1. HERO — Barnum + Title */}
-            <section className={`rounded-2xl border p-5 ${cardClass}`}>
+            {/* 1. HERO */}
+            <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
               <div className="flex items-center gap-2 mb-3">
                 <Star className="text-amber-500" size={20} fill="currentColor" />
-                <h2 className="text-[15px] font-black text-[#ff6b00] uppercase tracking-wide">{t("reportTitle")}</h2>
+                <h2 className="text-[16px] font-black text-[#ff6b00] uppercase tracking-wide">{t("reportTitle")}</h2>
               </div>
               {result.barnumLines?.[0] && (
-                <p className={`text-[14px] font-semibold leading-relaxed mb-2 ${isDark ? "text-slate-100" : "text-slate-800"}`}>
+                <p className={`text-[14.5px] font-semibold leading-relaxed mb-2 ${isDark ? "text-slate-100" : "text-slate-800"}`}>
                   {result.barnumLines[0]}
                 </p>
               )}
               {result.barnumLines?.[1] && (
-                <p className={`text-[13px] font-medium leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                <p className={`text-[13.5px] font-medium leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                   {result.barnumLines[1]}
                 </p>
               )}
             </section>
 
             {/* 2. SCORES */}
-            <section className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2">
-                <TrendingUp size={16} className="text-[#ff6b00]" /> {t("scoresTitle")}
+            <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2">
+                <TrendingUp size={18} className="text-[#ff6b00]" /> {t("scoresTitle")}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <ScoreBar label={t("career")} value={result.scores.career} color="#ff6b00" isDark={isDark} />
                 <ScoreBar label={t("love")} value={result.scores.love} color="#e11d48" isDark={isDark} />
                 <ScoreBar label={t("health")} value={result.scores.health} color="#10b981" isDark={isDark} />
@@ -549,11 +544,11 @@ export default function PalmistryPage() {
             </section>
 
             {/* 3. LINES */}
-            <section className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2">
-                <Heart size={16} className="text-[#ff6b00]" /> {t("linesTitle")}
+            <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2">
+                <Heart size={18} className="text-[#ff6b00]" /> {t("linesTitle")}
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {[
                   { label: t("lifeLine"), val: result.lines.life },
                   { label: t("headLine"), val: result.lines.head },
@@ -562,8 +557,8 @@ export default function PalmistryPage() {
                 ].map((l, i) =>
                   l.val ? (
                     <div key={i}>
-                      <div className="text-[12px] font-black mb-1 text-[#ff6b00]">{l.label}</div>
-                      <p className={`text-[12.5px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{l.val}</p>
+                      <div className="text-[13px] font-black mb-1 text-[#ff6b00]">{l.label}</div>
+                      <p className={`text-[13px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{l.val}</p>
                     </div>
                   ) : null
                 )}
@@ -571,44 +566,44 @@ export default function PalmistryPage() {
             </section>
 
             {/* 4. MOUNTS */}
-            <section className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-3 flex items-center gap-2">
-                <Star size={16} className="text-[#ff6b00]" /> {t("mountsTitle")}
+            <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-4 flex items-center gap-2">
+                <Star size={18} className="text-[#ff6b00]" /> {t("mountsTitle")}
               </h3>
               {result.mounts.guru && (
-                <div className="mb-2">
-                  <div className="text-[12px] font-black mb-1 text-[#ff6b00]">{t("guruMount")}</div>
-                  <p className={`text-[12.5px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.mounts.guru}</p>
+                <div className="mb-3">
+                  <div className="text-[13px] font-black mb-1 text-[#ff6b00]">{t("guruMount")}</div>
+                  <p className={`text-[13px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.mounts.guru}</p>
                 </div>
               )}
               {result.mounts.venus && (
                 <div>
-                  <div className="text-[12px] font-black mb-1 text-[#ff6b00]">{t("venusMount")}</div>
-                  <p className={`text-[12.5px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.mounts.venus}</p>
+                  <div className="text-[13px] font-black mb-1 text-[#ff6b00]">{t("venusMount")}</div>
+                  <p className={`text-[13px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.mounts.venus}</p>
                 </div>
               )}
             </section>
 
             {/* 5. PHYSICAL */}
             {result.physical && (
-              <section className={`rounded-2xl border p-4 ${cardClass}`}>
-                <h3 className="text-[14px] font-black mb-2 flex items-center gap-2">
-                  <CheckCircle2 size={16} className="text-[#ff6b00]" /> {t("physicalTitle")}
+              <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+                <h3 className="text-[15px] font-black mb-2 flex items-center gap-2">
+                  <CheckCircle2 size={18} className="text-[#ff6b00]" /> {t("physicalTitle")}
                 </h3>
-                <p className={`text-[12.5px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.physical}</p>
+                <p className={`text-[13px] leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>{result.physical}</p>
               </section>
             )}
 
-            {/* 6. FREE UPAY + MANTRA */}
+            {/* 6. FREE UPAY */}
             {result.freeUpay && (
-              <section className={`rounded-2xl border p-4 ${isDark ? "border-emerald-500/30 bg-emerald-900/10" : "border-emerald-200 bg-emerald-50"}`}>
-                <h3 className={`text-[13px] font-black mb-1 flex items-center gap-2 ${isDark ? "text-emerald-300" : "text-emerald-700"}`}>
-                  <Sparkles size={16} /> {t("upayTitle")}
+              <section className={`rounded-2xl border p-5 sm:p-6 ${isDark ? "border-emerald-500/30 bg-emerald-900/10" : "border-emerald-200 bg-emerald-50"}`}>
+                <h3 className={`text-[14px] font-black mb-1 flex items-center gap-2 ${isDark ? "text-emerald-300" : "text-emerald-700"}`}>
+                  <Sparkles size={18} /> {t("upayTitle")}
                 </h3>
-                <p className={`text-[10.5px] font-bold mb-2 ${isDark ? "text-emerald-400/80" : "text-emerald-600"}`}>{t("upaySub")}</p>
-                <p className={`text-[12.5px] leading-relaxed ${isDark ? "text-emerald-100" : "text-emerald-900"}`}>{result.freeUpay}</p>
+                <p className={`text-[11px] font-bold mb-3 ${isDark ? "text-emerald-400/80" : "text-emerald-600"}`}>{t("upaySub")}</p>
+                <p className={`text-[13px] leading-relaxed ${isDark ? "text-emerald-100" : "text-emerald-900"}`}>{result.freeUpay}</p>
                 {result.mantra && (
-                  <p className={`mt-3 text-center text-[13px] font-black ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                  <p className={`mt-4 text-center text-[14px] font-black ${isDark ? "text-amber-300" : "text-amber-700"}`}>
                     {result.mantra}
                   </p>
                 )}
@@ -617,11 +612,11 @@ export default function PalmistryPage() {
 
             {/* 7. SUSPENSE + CHAT CTA */}
             {result.suspenseHook && (
-              <section className={`rounded-2xl border p-4 ${isDark ? "border-amber-500/30 bg-amber-900/10" : "border-amber-200 bg-amber-50"}`}>
-                <h3 className={`text-[13px] font-black mb-2 flex items-center gap-2 ${isDark ? "text-amber-300" : "text-amber-700"}`}>
-                  <Sparkles size={16} /> {t("suspenseTitle")}
+              <section className={`rounded-2xl border p-5 sm:p-6 ${isDark ? "border-amber-500/30 bg-amber-900/10" : "border-amber-200 bg-amber-50"}`}>
+                <h3 className={`text-[14px] font-black mb-2 flex items-center gap-2 ${isDark ? "text-amber-300" : "text-amber-700"}`}>
+                  <Sparkles size={18} /> {t("suspenseTitle")}
                 </h3>
-                <p className={`text-[12.5px] leading-relaxed mb-3 ${isDark ? "text-amber-100" : "text-amber-900"}`}>
+                <p className={`text-[13px] leading-relaxed mb-4 ${isDark ? "text-amber-100" : "text-amber-900"}`}>
                   {result.suspenseHook}
                 </p>
                 <Link
@@ -634,16 +629,16 @@ export default function PalmistryPage() {
             )}
 
             {/* 8. TRACKER */}
-            <section className={`rounded-2xl border p-4 ${cardClass}`}>
-              <h3 className="text-[14px] font-black mb-2 flex items-center gap-2">
-                <RefreshCw size={16} className="text-[#ff6b00]" /> {t("trackerTitle")}
+            <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
+              <h3 className="text-[15px] font-black mb-2 flex items-center gap-2">
+                <RefreshCw size={18} className="text-[#ff6b00]" /> {t("trackerTitle")}
               </h3>
-              <p className={`text-[12px] leading-relaxed mb-3 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+              <p className={`text-[12.5px] leading-relaxed mb-4 ${isDark ? "text-slate-300" : "text-slate-600"}`}>
                 {t("trackerBody")}
               </p>
               <Link
                 href="/profile?reminder=palmistry"
-                className={`block w-full rounded-xl border py-2.5 text-center text-[12px] font-black ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
+                className={`block w-full rounded-xl border py-3 text-center text-[13px] font-black ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
               >
                 {t("setReminder")}
               </Link>
@@ -653,20 +648,20 @@ export default function PalmistryPage() {
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={handleShare}
-                className={`rounded-xl border py-3 text-[11.5px] font-black flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
               >
                 <Share2 size={16} className="text-emerald-600" /> {t("share")}
               </button>
               <button
                 onClick={reset}
-                className={`rounded-xl border py-3 text-[11.5px] font-black flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
+                className={`rounded-xl border py-3.5 text-[12px] font-black flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
               >
                 <RefreshCw size={16} className="text-slate-500" /> {t("tryAnother")}
               </button>
             </div>
 
             {/* 10. DISCLAIMER */}
-            <p className={`text-[10.5px] leading-relaxed text-center px-2 ${isDark ? "text-slate-500" : "text-slate-500"}`}>
+            <p className={`text-[11px] leading-relaxed text-center px-2 ${isDark ? "text-slate-500" : "text-slate-500"}`}>
               {t("disclaimer")}
             </p>
           </div>
@@ -675,8 +670,6 @@ export default function PalmistryPage() {
 
       {/* STICKY BOTTOM BANNER + NAV */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
-
-        {/* Pink Banner */}
         <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
           <div className="flex items-center gap-3">
             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
@@ -692,7 +685,6 @@ export default function PalmistryPage() {
           </Link>
         </div>
 
-        {/* Bottom Nav */}
         <nav className={`flex justify-around border-t py-2.5 ${isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"} backdrop-blur`}>
           <Link href="/" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
             <Home size={18} /><span className="text-[9.5px] font-bold">{t("home")}</span>
