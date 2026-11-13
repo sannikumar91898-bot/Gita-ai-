@@ -2,12 +2,13 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = "https://gita-ai-1.onrender.com"; // Yahan apna real domain dalein (jaise https://gita-ai.com)
+  // 🔥 आपका नया कस्टम डोमेन यहाँ सेट कर दिया गया है
+  const baseUrl = "https://gitatalk.in"; 
 
   return {
     rules: [
       {
-        userAgent: '*', // Sabhi search engine bots (Google, Bing, etc.) ke liye
+        userAgent: '*', // सभी सर्च इंजन बॉट्स (Google, Bing, etc.) के लिए
         allow: [
           '/',           // Homepage
           '/chat',       // Chat page
@@ -19,20 +20,20 @@ export default function robots(): MetadataRoute.Robots {
           '/panchang',   // Panchang
         ],
         disallow: [
-          '/api/',       // Backend API routes ko scan mat karo (Server cost bachegi aur security rahegi)
-          '/settings/',  // User ke private settings page
-          '/wallet/',    // User ka private wallet page
-          '/admin/',     // Agar future me admin panel ho
+          '/api/',       // बैकएंड API को स्कैन न करे (सर्वर कॉस्ट बचाने और सिक्योरिटी के लिए)
+          '/settings/',  // यूजर के प्राइवेट सेटिंग्स
+          '/wallet/',    // यूजर का प्राइवेट वॉलेट
+          '/admin/',     // एडमिन पैनल (अगर भविष्य में हो)
         ],
       },
       {
-        // Google ka special bot (Optional, but good for high-quality SEO)
+        // Googlebot के लिए स्पेशल रूल्स (SEO के लिए अच्छा है)
         userAgent: 'Googlebot',
         allow: '/',
         disallow: ['/api/', '/settings/', '/wallet/'],
       }
     ],
-    sitemap: `${baseUrl}/sitemap.xml`, // Google ko batayein ki sitemap kahan hai
-    host: baseUrl, // Preferred domain
+    sitemap: `${baseUrl}/sitemap.xml`, // Google को बताएगा कि Sitemap कहाँ है
+    host: baseUrl, // आपका प्रेफर्ड डोमेन
   };
 }
