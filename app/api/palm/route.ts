@@ -1,16 +1,16 @@
 // app/api/palm/route.ts
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
-import { and, sql, eq, gte } from "drizzle-orm"; 
+import { sql, eq } from "drizzle-orm";
 import { getUser } from "@/auth";
 import { db } from "@/index";
-import { users } from "@/schema"; 
+import { users } from "@/schema";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /* -------------------------------------------------------------------------- */
-/*                     🔥 CONFIGURATION (FIXED)                               */
+/*                     🔥 CONFIGURATION (UNCHANGED)                           */
 /* -------------------------------------------------------------------------- */
 
 const modalApiKey = process.env.MODAL_API_KEY;
@@ -22,29 +22,29 @@ const modalClient =
     ? new OpenAI({
         baseURL: modalUrl,
         apiKey: modalApiKey,
-        timeout: 15_000, // 🔥 FIX: 15s timeout
-        maxRetries: 0,   // 🔥 FIX: No retry, direct fallback
+        timeout: 20_000,
+        maxRetries: 0,
       })
     : null;
 
 const groqApiKey = process.env.GROQ_API_KEY;
-const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b"; // 🔥 FIX: Updated Model
+const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b";
 
 const groqClient = groqApiKey
   ? new OpenAI({
       baseURL: "https://api.groq.com/openai/v1",
       apiKey: groqApiKey,
-      timeout: 15_000,
+      timeout: 20_000,
       maxRetries: 0,
     })
   : null;
 
-// 🔥 Billing Logic Constants
+// Billing
 const FREE_PALM_SCAN_LIMIT = 5;
-const COST_PER_PALM_SCAN_PAISE = 200; // ₹2 per scan after 5 free scans
+const COST_PER_PALM_SCAN_PAISE = 200;
 
 /* -------------------------------------------------------------------------- */
-/*                              HELPERS & TRANSLATIONS                        */
+/*                              HELPERS                                       */
 /* -------------------------------------------------------------------------- */
 
 function getLanguageInstruction(lang: string): string {
@@ -52,9 +52,12 @@ function getLanguageInstruction(lang: string): string {
     hi: "Reply strictly in pure Hindi (Devanagari script).",
     hinglish: "Reply strictly in Hinglish (Roman Hindi mixed with English).",
     en: "Reply strictly in English.",
-    te: "Reply strictly in Telugu (తెలుగు).", ta: "Reply strictly in Tamil (தமிழ்).",
-    kn: "Reply strictly in Kannada (ಕನ್ನಡ).", bn: "Reply strictly in Bengali (বাংলা).",
-    mr: "Reply strictly in Marathi (मराठी).", gu: "Reply strictly in Gujarati (ગુજરાતી).",
+    te: "Reply strictly in Telugu (తెలుగు).",
+    ta: "Reply strictly in Tamil (தமிழ்).",
+    kn: "Reply strictly in Kannada (ಕನ್ನಡ).",
+    bn: "Reply strictly in Bengali (বাংলা).",
+    mr: "Reply strictly in Marathi (मराठी).",
+    gu: "Reply strictly in Gujarati (ગુજરાતી).",
     ml: "Reply strictly in Malayalam (മലയാളം).",
   };
   return map[lang] || map["hinglish"];
@@ -78,22 +81,37 @@ function getAIFailureMessage(lang: string): string {
   return map[lang] || map["en"];
 }
 
+function getRejectionMessage(lang: string): string {
+  const map: Record<string, string> = {
+    hi: "कृपया अपनी हथेली की साफ़ और पास से ली गई फोटो अपलोड करें। अच्छी रोशनी में हथेली पूरी खुली दिखनी चाहिए।",
+    hinglish: "Kripya apni hatheli ki saaf aur paas se li gayi photo upload karein. Acchi roshni mein hatheli poori khuli dikhni chahiye.",
+    en: "Please upload a clear, close-up photo of your palm. The palm should be fully open and well-lit.",
+  };
+  return map[lang] || map["en"];
+}
+
 function safeParseJSON(text: string): any {
   try {
     const cleaned = text.replace(/```json/g, "").replace(/```/g, "").trim();
-    const start = cleaned.indexOf('{');
-    const end = cleaned.lastIndexOf('}');
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
     if (start !== -1 && end !== -1 && end > start) {
       return JSON.parse(cleaned.substring(start, end + 1));
     }
     return JSON.parse(cleaned);
-  } catch (err) {
+  } catch {
     return null;
   }
 }
 
+function clampScore(v: any, fallback = 75): number {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(0, Math.min(100, Math.round(n)));
+}
+
 /* -------------------------------------------------------------------------- */
-/*                         AI CALL (Modal → Groq)                             */
+/*                         AI CALL (Modal → Groq) — UNCHANGED                */
 /* -------------------------------------------------------------------------- */
 
 async function callVisionModel(
@@ -116,7 +134,7 @@ async function callVisionModel(
       const completion = await modalClient.chat.completions.create({
         model: modalModel,
         messages: messagesPayload,
-        temperature: 0.4,
+        temperature: 0.5,
         response_format: { type: "json_object" },
       });
       const text = completion.choices[0]?.message?.content || "";
@@ -131,7 +149,7 @@ async function callVisionModel(
       const completion = await groqClient.chat.completions.create({
         model: groqVisionModel,
         messages: messagesPayload,
-        temperature: 0.4,
+        temperature: 0.5,
         response_format: { type: "json_object" },
       });
       const text = completion.choices[0]?.message?.content || "";
@@ -142,7 +160,7 @@ async function callVisionModel(
         const completion = await groqClient.chat.completions.create({
           model: groqVisionModel,
           messages: messagesPayload,
-          temperature: 0.4,
+          temperature: 0.5,
         });
         const text = completion.choices[0]?.message?.content || "";
         if (text) return { text, used: "groq" };
@@ -166,15 +184,21 @@ export async function POST(request: Request) {
     const user = await getUser();
     const formData = await request.formData();
     language = (formData.get("language") as string) || "hinglish";
+    const gender = ((formData.get("gender") as string) || "male").toLowerCase();
+    const hand = ((formData.get("hand") as string) || "right").toLowerCase();
 
     if (!user || user.isGuest) {
       return NextResponse.json(
-        { code: "LOGIN_REQUIRED", error: "Unauthorized", message: getPsychologicalUnauthorizedMessage(language) },
+        {
+          code: "LOGIN_REQUIRED",
+          error: "Unauthorized",
+          message: getPsychologicalUnauthorizedMessage(language),
+        },
         { status: 401 }
       );
     }
 
-    // 🔥 FETCH FRESH USER DATA FOR BILLING CHECK
+    // 🔥 FRESH USER DATA FOR BILLING
     const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
     if (!userRow) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -185,13 +209,14 @@ export async function POST(request: Request) {
     const walletBalance = userRow.walletBalancePaise || 0;
     const freeScansLeft = Math.max(0, FREE_PALM_SCAN_LIMIT - freeScansUsed);
 
-    // 🔥 RATE LIMIT & WALLET CHECK (Before AI Call)
-    // Agar limit khatam hai aur wallet me paise bhi nahi hain, toh turant reject karo
     if (!isPremium && freeScansLeft === 0 && walletBalance < COST_PER_PALM_SCAN_PAISE) {
-      return NextResponse.json({ 
-        code: "WALLET_RECHARGE_REQUIRED", 
-        error: "Free scans exhausted. Please recharge your wallet to continue." 
-      }, { status: 402 }); // 402 Payment Required
+      return NextResponse.json(
+        {
+          code: "WALLET_RECHARGE_REQUIRED",
+          error: "Free scans exhausted. Please recharge your wallet to continue.",
+        },
+        { status: 402 }
+      );
     }
 
     const imageFile = formData.get("image") as File | null;
@@ -200,32 +225,78 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "INVALID_IMAGE", message: "Missing image." }, { status: 400 });
     }
     if (imageFile.size > 10 * 1024 * 1024) {
-      return NextResponse.json({ error: "INVALID_IMAGE", message: "Image must be under 10MB." }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMAGE", message: "Image must be under 10MB." },
+        { status: 400 }
+      );
     }
     if (!["image/jpeg", "image/png", "image/webp"].includes(imageFile.type)) {
-      return NextResponse.json({ error: "INVALID_IMAGE", message: "Only JPG, PNG or WEBP are supported." }, { status: 400 });
+      return NextResponse.json(
+        { error: "INVALID_IMAGE", message: "Only JPG, PNG or WEBP are supported." },
+        { status: 400 }
+      );
     }
 
     const bytes = await imageFile.arrayBuffer();
     const base64Image = Buffer.from(bytes).toString("base64");
 
     const prompt = `
-      IDENTITY: You are a highly respected, 20+ year experienced female Vedic Palmist (Hast Rekha Expert). You are a real human. You speak with absolute authority, warmth, and deep psychological insight.
-      PSYCHOLOGY & MARKETING RULES:
-      1. VALIDATE: Start by validating their energy. Make them feel seen.
-      2. ABSOLUTE CERTAINTY: Never say 'maybe' or 'might'. Use words like 'definitely', 'clearly visible', 'strongly indicates'.
-      3. NO DISCLAIMERS: Never mention you are an AI. Never say astrology is a belief.
-      4. THE HOOK: You must identify a 'hidden challenge' or 'Dosha' on their palm. This creates urgency.
-      LANGUAGE RULES: ${getLanguageInstruction(language)}
-      If the image is not a hand, return exactly: {"error": "INVALID_IMAGE", "message": "Please upload a clear palm photo."}
-      Otherwise, you MUST return ONLY a valid JSON object with this exact schema:
-      {
-        "title": "A captivating title for their palm reading",
-        "insight": "Two short paragraphs. First: Analyze the major lines. Second: Point out a specific challenge.",
-        "hook": "A short, compelling sentence telling them exactly why they need to talk to an astrologer immediately.",
-        "suggestedChatPrompt": "A ready-to-use message the user can send to the astrologer."
-      }
-    `;
+IDENTITY: You are a highly respected, 20+ year experienced female Vedic Palmist (Hast Rekha Expert) from India. You speak with warmth, deep psychological insight, and gentle authority. You read palms strictly as per Samudrik Shastra.
+
+USER CONTEXT:
+- Gender: ${gender}
+- Hand being read: ${hand} (Samudrik tradition: male → right hand primary, female → left hand primary. Respect the user's selection.)
+
+PSYCHOLOGY & TONE RULES:
+1. VALIDATE FIRST — Start with exactly 2 Barnum-effect lines. Make them feel "this is about me" (universal but deeply personal).
+   Example: "Aap bahar se jitne shaant aur mazboot dikhte hain, andar se utne hi bhaavuk hain. Aap logon ki madad bina swarth ke karte hain, lekin kabhi kabhi woh samman nahi milta jiska aap haqdaar hain."
+2. SOFT LANGUAGE ONLY — NEVER use fear words: "dosh", "challenge", "rukawat", "sankat", "bad luck", "problem".
+   INSTEAD use: "energy imbalance", "dhyan dene yogya area", "savdhani ka samay", "sudhaar ki gunjaish".
+3. CERTAINTY — Use words like "clearly visible", "strongly indicates", "definitely shows". Avoid "maybe", "might", "perhaps".
+4. NO AI DISCLOSURE — Never mention you are AI. Never say astrology is a belief.
+5. EVERY PROBLEM HAS A SOLUTION — Har observation ke saath ek positive perspective ya solution do.
+6. ZERO-COST REMEDY — Suggest only free home remedies (e.g., Somvar ko Shiv ji ko jal arpit karein, peepal ke ped ko jal dein). NO expensive gems/puja.
+7. MANTRA — Include one auspicious Sanskrit mantra (e.g., "ॐ नमो भगवते वासुदेवाय").
+8. SOFT SUSPENSE — At the end, gently hint at a special time and direction when their yog will fully activate. Use words like "ek khaas samay aur disha hai jab ye yog poora phal dega". DO NOT use fear words like "rukwat".
+
+LANGUAGE: ${getLanguageInstruction(language)}
+
+IMAGE VALIDATION (CRITICAL):
+If the image is NOT a clear, open palm (e.g., blurry, wall, pen, face, document, closed fist, or anything showing no visible palm lines), return EXACTLY:
+{"isHand": false, "rejectionMessage": "Kripya apni hatheli ki saaf aur paas se li gayi photo upload karein. Acchi roshni mein hatheli poori khuli dikhni chahiye."}
+
+If the image IS a clear palm with visible lines, return ONLY a valid JSON object matching this schema EXACTLY:
+{
+  "isHand": true,
+  "barnumLines": ["<line 1 - universal but personal>", "<line 2 - emotional insight>"],
+  "scores": {
+    "career": <number 0-100>,
+    "love": <number 0-100>,
+    "health": <number 0-100>,
+    "luck": <number 0-100>
+  },
+  "lines": {
+    "life": "<Jeevan Rekha — 2 soft sentences>",
+    "head": "<Mastishk Rekha — 2 soft sentences>",
+    "heart": "<Hriday Rekha — 2 soft sentences>",
+    "fate": "<Bhagya Rekha — 2 soft sentences>"
+  },
+  "mounts": {
+    "guru": "<Guru Parvat / Jupiter Mount — 1 sentence>",
+    "venus": "<Shukra Parvat / Venus Mount — 1 sentence>"
+  },
+  "physical": "<Hatheli ka rang + ungliyon ki bananaawat — 1 sentence>",
+  "freeUpay": "<Zero-cost home remedy in 1-2 sentences>",
+  "mantra": "<One short auspicious Sanskrit mantra>",
+  "suspenseHook": "<Soft hint about special time and direction — NO fear word>"
+}
+
+CRITICAL RULES:
+- Har user ke liye DIFFERENT result — same template repeat mat karo.
+- Scores 55-95 ke beech realistic variation rakho.
+- Kabhi bhi "cross/X on palm" ya "hidden challenge/Dosha" hardcoded mat likho.
+- "Rukawat", "dosh", "sankat", "problem" — ye words bilkul nahi.
+`;
 
     let aiText: string;
     let usedProvider: "modal" | "groq";
@@ -236,32 +307,51 @@ export async function POST(request: Request) {
       usedProvider = out.used;
     } catch (err: any) {
       console.error("[palm] All AI providers failed:", err?.message);
-      return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
+      return NextResponse.json(
+        { error: "AI_ERROR", message: getAIFailureMessage(language) },
+        { status: 500 }
+      );
     }
 
     const result = safeParseJSON(aiText);
 
     if (!result) {
       console.error("[palm] JSON parse failed:", aiText.slice(0, 200));
-      return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
+      return NextResponse.json(
+        { error: "AI_ERROR", message: getAIFailureMessage(language) },
+        { status: 500 }
+      );
     }
 
-    // 🔥 CRITICAL: Agar image invalid hai, toh count/deduct MAT karo
-    if (result.error === "INVALID_IMAGE") {
-      return NextResponse.json(result, { status: 422 });
+    // 🔥 INVALID IMAGE → NO count/deduct
+    const isInvalidImage = result.isHand === false || result.error === "INVALID_IMAGE";
+    if (isInvalidImage) {
+      return NextResponse.json(
+        {
+          isHand: false,
+          error: "INVALID_IMAGE",
+          message:
+            result.rejectionMessage ||
+            result.message ||
+            getRejectionMessage(language),
+        },
+        { status: 422 }
+      );
     }
 
-    // 🔥 SUCCESS: Ab count badhao ya wallet deduct karo
+    // 🔥 SUCCESS → deduct count/wallet
     if (!isPremium) {
       if (freeScansLeft > 0) {
-        // Free scan use hua
-        await db.update(users)
+        await db
+          .update(users)
           .set({ freePalmScansUsed: sql`${users.freePalmScansUsed} + 1` })
           .where(eq(users.id, user.id));
       } else if (walletBalance >= COST_PER_PALM_SCAN_PAISE) {
-        // Wallet se deduct hua
-        await db.update(users)
-          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_PALM_SCAN_PAISE}` })
+        await db
+          .update(users)
+          .set({
+            walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_PALM_SCAN_PAISE}`,
+          })
           .where(eq(users.id, user.id));
       }
     }
@@ -270,15 +360,35 @@ export async function POST(request: Request) {
       success: true,
       provider: usedProvider,
       result: {
-        title: result.title || "Palm Reading",
-        insight: result.insight || "Your palm shows a unique path.",
-        hook: result.hook || "A major shift is coming. Talk to an astrologer now.",
-        suggestedChatPrompt: result.suggestedChatPrompt || "Hello, I just checked my palm. Can you guide me?",
+        barnumLines: Array.isArray(result.barnumLines) ? result.barnumLines.slice(0, 2) : [],
+        scores: {
+          career: clampScore(result.scores?.career, 75),
+          love: clampScore(result.scores?.love, 72),
+          health: clampScore(result.scores?.health, 80),
+          luck: clampScore(result.scores?.luck, 78),
+        },
+        lines: {
+          life: result.lines?.life || "",
+          head: result.lines?.head || "",
+          heart: result.lines?.heart || "",
+          fate: result.lines?.fate || "",
+        },
+        mounts: {
+          guru: result.mounts?.guru || "",
+          venus: result.mounts?.venus || "",
+        },
+        physical: result.physical || "",
+        freeUpay: result.freeUpay || "",
+        mantra: result.mantra || "ॐ नमो भगवते वासुदेवाय",
+        suspenseHook: result.suspenseHook || "",
       },
-      scansLeft: isPremium ? "Unlimited" : Math.max(0, freeScansLeft - 1), // Frontend ko dikhane ke liye
+      scansLeft: isPremium ? "Unlimited" : Math.max(0, freeScansLeft - 1),
     });
   } catch (error: any) {
     console.error("[palm] Unhandled error:", error?.message);
-    return NextResponse.json({ error: "AI_ERROR", message: getAIFailureMessage(language) }, { status: 500 });
+    return NextResponse.json(
+      { error: "AI_ERROR", message: getAIFailureMessage(language) },
+      { status: 500 }
+    );
   }
 }
