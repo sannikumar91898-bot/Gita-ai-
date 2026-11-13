@@ -6,7 +6,7 @@ import {
   ArrowLeft, Heart, Sparkles, MessageCircle, Download,
   ShieldAlert, MapPin, Calendar, Clock, ChevronDown,
   Home, User, Share2, FileText, Star, AlertCircle,
-  CheckCircle2, ArrowRight
+  CheckCircle2, ArrowRight, RefreshCw, Sun
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -107,7 +107,7 @@ const getUIText = (lang: string, key: string) => {
 };
 
 // ============================================================
-// Label mapping (5-band)
+// Label helpers (5-band)
 // ============================================================
 const getLabelText = (lang: string, label: string) => {
   const keyMap: Record<string, string> = {
@@ -121,25 +121,38 @@ const getLabelText = (lang: string, label: string) => {
 };
 
 const getLabelColor = (label: string) => {
-  if (label === "utkrisht" || label === "bahut-acha") return { text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", ring: "#10b981" };
-  if (label === "acha") return { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", ring: "#f59e0b" };
-  if (label === "ausat") return { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", ring: "#d97706" };
+  if (label === "utkrisht" || label === "bahut-acha") {
+    return { text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", ring: "#10b981" };
+  }
+  if (label === "acha") {
+    return { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", ring: "#f59e0b" };
+  }
+  if (label === "ausat") {
+    return { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", ring: "#d97706" };
+  }
   return { text: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200", ring: "#64748b" };
 };
 
 // ============================================================
-// City Input Component (reusable)
+// City Input Component
 // ============================================================
 function CityInput({
-  label, value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder, name
+  value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
 }: any) {
   const searchCity = async (query: string) => {
-    if (query.length < 3) { setSuggestions([]); return; }
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
     try {
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`);
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${query}&limit=5`
+      );
       const data = await res.json();
       setSuggestions(data);
-    } catch (e) { console.error(e); }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   useEffect(() => {
@@ -159,13 +172,24 @@ function CityInput({
         className={`${inputClass} pl-10`}
       />
       {suggestions.length > 0 && (
-        <ul className={`absolute z-20 w-full mt-1 rounded-xl max-h-40 overflow-y-auto shadow-2xl border ${isDark ? "bg-[#151d2c] border-slate-700" : "bg-white border-gray-200"}`}>
+        <ul
+          className={`absolute z-20 w-full mt-1 rounded-xl max-h-40 overflow-y-auto shadow-2xl border ${
+            isDark ? "bg-[#151d2c] border-slate-700" : "bg-white border-gray-200"
+          }`}
+        >
           {suggestions.map((item: any) => (
             <li
               key={item.place_id}
-              className={`px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:bg-[#ff6b00]/10 ${isDark ? "text-slate-200" : "text-slate-800"}`}
+              className={`px-4 py-2.5 text-[12px] font-medium cursor-pointer hover:bg-[#ff6b00]/10 ${
+                isDark ? "text-slate-200" : "text-slate-800"
+              }`}
               onClick={() => {
-                setValue({ ...value, city: item.display_name.split(",")[0], lat: item.lat, lon: item.lon });
+                setValue({
+                  ...value,
+                  city: item.display_name.split(",")[0],
+                  lat: item.lat,
+                  lon: item.lon,
+                });
                 setSuggestions([]);
               }}
             >
@@ -179,7 +203,7 @@ function CityInput({
 }
 
 // ============================================================
-// Main Page Component
+// Main Page
 // ============================================================
 export default function MatchingPage() {
   const { lang, theme } = useApp();
@@ -202,8 +226,12 @@ export default function MatchingPage() {
   const t = (key: string) => getUIText(lang, key);
 
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-amber-100 bg-white shadow-xl";
-  const inputClass = `w-full rounded-xl border px-4 py-3.5 text-[14px] font-medium outline-none transition-all focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 ${isDark ? "border-slate-700 bg-[#0A0F19] text-white" : "border-gray-200 bg-gray-50 text-slate-900"}`;
+  const cardClass = isDark
+    ? "border-slate-800 bg-[#151d2c] shadow-lg"
+    : "border-amber-100 bg-white shadow-xl";
+  const inputClass = `w-full rounded-xl border px-4 py-3.5 text-[14px] font-medium outline-none transition-all focus:border-[#ff6b00] focus:ring-2 focus:ring-[#ff6b00]/20 ${
+    isDark ? "border-slate-700 bg-[#0A0F19] text-white" : "border-gray-200 bg-gray-50 text-slate-900"
+  }`;
 
   // Loading text rotation
   useEffect(() => {
@@ -253,7 +281,10 @@ export default function MatchingPage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error);
       setResult(data);
-      setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+      setTimeout(
+        () => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
+        100
+      );
     } catch (error: any) {
       alert(error.message);
     } finally {
@@ -287,11 +318,20 @@ export default function MatchingPage() {
     const text = `${boy.name} ❤️ ${girl.name} — ${result.score}/36 ${labelText}\n\n${result.soulSummary}\n\nMilaap aur upay dekhein.`;
     try {
       if (typeof navigator !== "undefined" && (navigator as any).share) {
-        await (navigator as any).share({ title: "Kundli Milan", text, url: window.location.href });
+        await (navigator as any).share({
+          title: "Kundli Milan",
+          text,
+          url: window.location.href,
+        });
       } else {
-        window.open(`https://wa.me/?text=${encodeURIComponent(text + " " + window.location.href)}`, "_blank");
+        window.open(
+          `https://wa.me/?text=${encodeURIComponent(text + " " + window.location.href)}`,
+          "_blank"
+        );
       }
-    } catch (e) { /* user cancelled */ }
+    } catch (e) {
+      /* user cancelled */
+    }
   };
 
   const resetForm = () => {
@@ -311,72 +351,128 @@ export default function MatchingPage() {
     { q: t("q3"), icon: "💼" },
   ];
 
-  // ============================================================
-  // RENDER
-  // ============================================================
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
       <div className="w-full px-3 pt-4 space-y-5 flex-1 max-w-2xl mx-auto">
-
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
-          <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-amber-50 text-orange-600"}`}>
+          <Link
+            href="/"
+            className={`rounded-xl p-2.5 transition-colors ${
+              isDark ? "bg-[#0A0F19] text-slate-300" : "bg-amber-50 text-orange-600"
+            }`}
+          >
             <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
-            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
+            <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">
+              {t("title")}
+            </h1>
+            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+              {t("subtitle")}
+            </p>
           </div>
         </header>
 
-        {/* ==================== LOADING ==================== */}
+        {/* LOADING */}
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 animate-in fade-in">
             <div className="relative w-28 h-28 mb-8">
               <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00]/20"></div>
               <div className="absolute inset-0 rounded-full border-4 border-[#ff6b00] border-t-transparent animate-spin"></div>
-              <Heart className="absolute inset-0 m-auto text-[#ff6b00] animate-pulse" size={36} fill="currentColor" />
+              <Heart
+                className="absolute inset-0 m-auto text-[#ff6b00] animate-pulse"
+                size={36}
+                fill="currentColor"
+              />
             </div>
             <h2 className="text-xl font-black text-[#ff6b00] mb-2">{t("title")}</h2>
-            <p className={`text-[13px] font-medium text-center px-4 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+            <p
+              className={`text-[13px] font-medium text-center px-4 ${
+                isDark ? "text-slate-400" : "text-gray-500"
+              }`}
+            >
               {loadingText}
             </p>
           </div>
         )}
 
-        {/* ==================== FORM ==================== */}
+        {/* FORM */}
         {!result && !loading && (
           <>
-            {/* Amber warning (was red) */}
-            <div className={`rounded-xl border p-4 ${isDark ? "border-amber-500/30 bg-amber-900/10" : "border-amber-200 bg-amber-50"}`}>
-              <p className={`flex items-start gap-2 text-[12.5px] font-bold leading-relaxed ${isDark ? "text-amber-200" : "text-amber-800"}`}>
+            <div
+              className={`rounded-xl border p-4 ${
+                isDark ? "border-amber-500/30 bg-amber-900/10" : "border-amber-200 bg-amber-50"
+              }`}
+            >
+              <p
+                className={`flex items-start gap-2 text-[12.5px] font-bold leading-relaxed ${
+                  isDark ? "text-amber-200" : "text-amber-800"
+                }`}
+              >
                 <Sparkles size={18} className="shrink-0 mt-0.5" />
                 {t("warning")}
               </p>
             </div>
 
-            <form onSubmit={handleMatch} className={`space-y-5 rounded-[1.5rem] border p-4 sm:p-5 ${cardClass}`}>
-
+            <form
+              onSubmit={handleMatch}
+              className={`space-y-5 rounded-[1.5rem] border p-4 sm:p-5 ${cardClass}`}
+            >
               {/* BOY */}
-              <div className={`space-y-3.5 p-4 rounded-2xl border ${isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"}`}>
+              <div
+                className={`space-y-3.5 p-4 rounded-2xl border ${
+                  isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"
+                }`}
+              >
                 <h3 className="text-[14px] font-bold text-[#ff6b00] flex items-center gap-2">
-                  <span className="bg-[#ff6b00]/10 p-1.5 rounded-lg text-[16px]">👦</span> {t("boy")}
+                  <span className="bg-[#ff6b00]/10 p-1.5 rounded-lg text-[16px]">👦</span>
+                  {t("boy")}
                 </h3>
-                <input type="text" required placeholder={t("name")} value={boy.name} onChange={e => setBoy({ ...boy, name: e.target.value })} className={inputClass} />
+                <input
+                  type="text"
+                  required
+                  placeholder={t("name")}
+                  value={boy.name}
+                  onChange={(e) => setBoy({ ...boy, name: e.target.value })}
+                  className={inputClass}
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
-                    <input type="date" required value={boy.dob} onChange={e => setBoy({ ...boy, dob: e.target.value })} className={`${inputClass} pl-10`} />
+                    <Calendar
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"
+                    />
+                    <input
+                      type="date"
+                      required
+                      value={boy.dob}
+                      onChange={(e) => setBoy({ ...boy, dob: e.target.value })}
+                      className={`${inputClass} pl-10`}
+                    />
                   </div>
                   <div className="relative">
-                    <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
-                    <input type="time" required value={boy.time} onChange={e => setBoy({ ...boy, time: e.target.value })} className={`${inputClass} pl-10`} />
+                    <Clock
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"
+                    />
+                    <input
+                      type="time"
+                      required
+                      value={boy.time}
+                      onChange={(e) => setBoy({ ...boy, time: e.target.value })}
+                      className={`${inputClass} pl-10`}
+                    />
                   </div>
                 </div>
                 <CityInput
-                  label={t("boy")} value={boy} setValue={setBoy}
-                  suggestions={boySuggestions} setSuggestions={setBoySuggestions}
-                  isDark={isDark} inputClass={inputClass} placeholder={t("city")} name="boy"
+                  value={boy}
+                  setValue={setBoy}
+                  suggestions={boySuggestions}
+                  setSuggestions={setBoySuggestions}
+                  isDark={isDark}
+                  inputClass={inputClass}
+                  placeholder={t("city")}
                 />
               </div>
 
@@ -385,60 +481,111 @@ export default function MatchingPage() {
               </div>
 
               {/* GIRL */}
-              <div className={`space-y-3.5 p-4 rounded-2xl border ${isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"}`}>
+              <div
+                className={`space-y-3.5 p-4 rounded-2xl border ${
+                  isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"
+                }`}
+              >
                 <h3 className="text-[14px] font-bold text-pink-600 flex items-center gap-2">
-                  <span className="bg-pink-500/10 p-1.5 rounded-lg text-[16px]">👧</span> {t("girl")}
+                  <span className="bg-pink-500/10 p-1.5 rounded-lg text-[16px]">👧</span>
+                  {t("girl")}
                 </h3>
-                <input type="text" required placeholder={t("name")} value={girl.name} onChange={e => setGirl({ ...girl, name: e.target.value })} className={inputClass} />
+                <input
+                  type="text"
+                  required
+                  placeholder={t("name")}
+                  value={girl.name}
+                  onChange={(e) => setGirl({ ...girl, name: e.target.value })}
+                  className={inputClass}
+                />
                 <div className="grid grid-cols-2 gap-3">
                   <div className="relative">
-                    <Calendar size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
-                    <input type="date" required value={girl.dob} onChange={e => setGirl({ ...girl, dob: e.target.value })} className={`${inputClass} pl-10`} />
+                    <Calendar
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"
+                    />
+                    <input
+                      type="date"
+                      required
+                      value={girl.dob}
+                      onChange={(e) => setGirl({ ...girl, dob: e.target.value })}
+                      className={`${inputClass} pl-10`}
+                    />
                   </div>
                   <div className="relative">
-                    <Clock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10" />
-                    <input type="time" required value={girl.time} onChange={e => setGirl({ ...girl, time: e.target.value })} className={`${inputClass} pl-10`} />
+                    <Clock
+                      size={16}
+                      className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 z-10"
+                    />
+                    <input
+                      type="time"
+                      required
+                      value={girl.time}
+                      onChange={(e) => setGirl({ ...girl, time: e.target.value })}
+                      className={`${inputClass} pl-10`}
+                    />
                   </div>
                 </div>
                 <CityInput
-                  label={t("girl")} value={girl} setValue={setGirl}
-                  suggestions={girlSuggestions} setSuggestions={setGirlSuggestions}
-                  isDark={isDark} inputClass={inputClass} placeholder={t("city")} name="girl"
+                  value={girl}
+                  setValue={setGirl}
+                  suggestions={girlSuggestions}
+                  setSuggestions={setGirlSuggestions}
+                  isDark={isDark}
+                  inputClass={inputClass}
+                  placeholder={t("city")}
                 />
               </div>
 
-              <button type="submit" className="w-full rounded-xl bg-gradient-to-r from-[#ff6b00] to-amber-600 py-4 text-[15px] font-black text-white shadow-lg hover:shadow-xl transition-all active:scale-[0.98]">
+              <button
+                type="submit"
+                className="w-full rounded-xl bg-gradient-to-r from-[#ff6b00] to-amber-600 py-4 text-[15px] font-black text-white shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
+              >
                 {t("matchBtn")} ✨
               </button>
             </form>
           </>
         )}
 
-        {/* ==================== RESULT ==================== */}
+        {/* RESULT */}
         {result && !loading && (
           <div ref={resultRef} className="space-y-4 animate-in fade-in">
-
             {/* CARD 1 — HERO SCORE */}
             <div className={`rounded-2xl border p-6 text-center ${cardClass}`}>
               <div className="flex items-center justify-center gap-3 mb-4">
                 <div className="text-center">
-                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">{t("boyPrefix")}</div>
+                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">
+                    {t("boyPrefix")}
+                  </div>
                   <div className="text-[15px] font-black">{boy.name}</div>
                 </div>
                 <Heart size={20} className="text-[#ff6b00]" fill="currentColor" />
                 <div className="text-center">
-                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">{t("girlPrefix")}</div>
+                  <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">
+                    {t("girlPrefix")}
+                  </div>
                   <div className="text-[15px] font-black">{girl.name}</div>
                 </div>
               </div>
 
               <div className="relative w-32 h-32 mx-auto mb-4">
                 <svg viewBox="0 0 120 120" className="w-full h-full -rotate-90">
-                  <circle cx="60" cy="60" r="52" stroke={isDark ? "#1e293b" : "#f1f5f9"} strokeWidth="8" fill="none" />
                   <circle
-                    cx="60" cy="60" r="52"
+                    cx="60"
+                    cy="60"
+                    r="52"
+                    stroke={isDark ? "#1e293b" : "#f1f5f9"}
+                    strokeWidth="8"
+                    fill="none"
+                  />
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="52"
                     stroke={getLabelColor(result.label).ring}
-                    strokeWidth="8" fill="none" strokeLinecap="round"
+                    strokeWidth="8"
+                    fill="none"
+                    strokeLinecap="round"
                     strokeDasharray={`${(displayScore / 36) * 327} 327`}
                     className="transition-all duration-300"
                   />
@@ -449,19 +596,28 @@ export default function MatchingPage() {
                 </div>
               </div>
 
-              <div className={`inline-block rounded-full px-4 py-1.5 text-[13px] font-black ${getLabelColor(result.label).text} ${getLabelColor(result.label).bg} border ${getLabelColor(result.label).border}`}>
+              <div
+                className={`inline-block rounded-full px-4 py-1.5 text-[13px] font-black ${
+                  getLabelColor(result.label).text
+                } ${getLabelColor(result.label).bg} border ${getLabelColor(result.label).border}`}
+              >
                 {getLabelText(lang, result.label)}
               </div>
 
-              <p className={`mt-4 text-[13px] font-semibold leading-relaxed ${isDark ? "text-slate-300" : "text-slate-700"}`}>
+              <p
+                className={`mt-4 text-[13px] font-semibold leading-relaxed ${
+                  isDark ? "text-slate-300" : "text-slate-700"
+                }`}
+              >
                 {result.soulSummary}
               </p>
             </div>
 
-            {/* CARD 2 — DOSHA + CANCELLATION */}
+            {/* CARD 2 — DOSHA */}
             <div className={`rounded-2xl border p-4 ${cardClass}`}>
               <h3 className="text-[14px] font-black mb-3 flex items-center gap-2">
-                <ShieldAlert size={16} className="text-[#ff6b00]" /> {t("doshaTitle")}
+                <ShieldAlert size={16} className="text-[#ff6b00]" />
+                {t("doshaTitle")}
               </h3>
               <div className="space-y-2.5">
                 {(["manglik", "nadi", "bhakoot"] as const).map((key) => {
@@ -470,22 +626,37 @@ export default function MatchingPage() {
                   const statusLabel = !dosha.present
                     ? t("doshaAbsent")
                     : dosha.cancelled
-                      ? t("doshaCancelled")
-                      : t("doshaPresent");
+                    ? t("doshaCancelled")
+                    : t("doshaPresent");
                   const statusColor = !dosha.present
                     ? "bg-slate-100 text-slate-600 border-slate-200"
                     : dosha.cancelled
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-amber-50 text-amber-700 border-amber-200";
+                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                    : "bg-amber-50 text-amber-700 border-amber-200";
                   const doshaName = t(key as any);
                   return (
-                    <div key={key} className={`rounded-xl border p-3 ${isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"}`}>
+                    <div
+                      key={key}
+                      className={`rounded-xl border p-3 ${
+                        isDark
+                          ? "border-slate-800 bg-[#0A0F19]/50"
+                          : "border-gray-200 bg-gray-50"
+                      }`}
+                    >
                       <div className="flex items-center justify-between mb-1.5">
                         <span className="text-[13px] font-black">{doshaName}</span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${statusColor}`}>{statusLabel}</span>
+                        <span
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-full border ${statusColor}`}
+                        >
+                          {statusLabel}
+                        </span>
                       </div>
                       {dosha.reason && (
-                        <p className={`text-[11.5px] font-medium leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                        <p
+                          className={`text-[11.5px] font-medium leading-relaxed ${
+                            isDark ? "text-slate-300" : "text-slate-600"
+                          }`}
+                        >
                           {dosha.reason}
                         </p>
                       )}
@@ -502,7 +673,10 @@ export default function MatchingPage() {
               </h3>
               <ul className="space-y-2">
                 {(result.strengths || []).map((s: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                  >
                     <CheckCircle2 size={16} className="text-emerald-500 shrink-0 mt-0.5" />
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
                   </li>
@@ -517,7 +691,10 @@ export default function MatchingPage() {
               </h3>
               <ul className="space-y-2">
                 {(result.attentionAreas || []).map((s: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                  >
                     <span className="text-amber-500 shrink-0 mt-0.5">◆</span>
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
                   </li>
@@ -532,7 +709,10 @@ export default function MatchingPage() {
               </h3>
               <ul className="space-y-2">
                 {(result.practicalAdvice || []).map((s: string, i: number) => (
-                  <li key={i} className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed">
+                  <li
+                    key={i}
+                    className="flex items-start gap-2 text-[12.5px] font-medium leading-relaxed"
+                  >
                     <span className="text-[#ff6b00] shrink-0 mt-0.5">🙏</span>
                     <span className={isDark ? "text-slate-300" : "text-slate-700"}>{s}</span>
                   </li>
@@ -540,23 +720,47 @@ export default function MatchingPage() {
               </ul>
             </div>
 
-            {/* CARD 4 — ASHTAKOOT ACCORDION */}
+            {/* CARD 4 — ACCORDION */}
             <div className={`rounded-2xl border p-4 ${cardClass}`}>
-              <button onClick={() => setShowBreakdown(!showBreakdown)} className="w-full flex items-center justify-between">
+              <button
+                onClick={() => setShowBreakdown(!showBreakdown)}
+                className="w-full flex items-center justify-between"
+              >
                 <h3 className="text-[14px] font-black flex items-center gap-2">
-                  <FileText size={16} className="text-[#ff6b00]" /> {t("breakdown")}
+                  <FileText size={16} className="text-[#ff6b00]" />
+                  {t("breakdown")}
                 </h3>
-                <ChevronDown size={18} className={`transition-transform ${showBreakdown ? "rotate-180" : ""}`} />
+                <ChevronDown
+                  size={18}
+                  className={`transition-transform ${showBreakdown ? "rotate-180" : ""}`}
+                />
               </button>
               {showBreakdown && (
                 <div className="mt-3 space-y-2 animate-in fade-in">
                   {(result.details || []).map((d: any, i: number) => (
-                    <div key={i} className={`rounded-lg border p-2.5 flex items-center justify-between ${isDark ? "border-slate-800 bg-[#0A0F19]/50" : "border-gray-200 bg-gray-50"}`}>
+                    <div
+                      key={i}
+                      className={`rounded-lg border p-2.5 flex items-center justify-between ${
+                        isDark
+                          ? "border-slate-800 bg-[#0A0F19]/50"
+                          : "border-gray-200 bg-gray-50"
+                      }`}
+                    >
                       <div className="flex-1">
                         <div className="text-[12px] font-black">{d.name}</div>
-                        {d.meaning && <div className={`text-[10.5px] ${isDark ? "text-slate-400" : "text-slate-600"}`}>{d.meaning}</div>}
+                        {d.meaning && (
+                          <div
+                            className={`text-[10.5px] ${
+                              isDark ? "text-slate-400" : "text-slate-600"
+                            }`}
+                          >
+                            {d.meaning}
+                          </div>
+                        )}
                       </div>
-                      <div className="text-[12px] font-black text-[#ff6b00] ml-3">{d.score}/{d.max}</div>
+                      <div className="text-[12px] font-black text-[#ff6b00] ml-3">
+                        {d.score}/{d.max}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -571,7 +775,9 @@ export default function MatchingPage() {
                   <Link
                     key={i}
                     href={`/chat?q=${encodeURIComponent(chip.q)}`}
-                    className={`flex items-center gap-2 rounded-xl border p-3 text-[12.5px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}
+                    className={`flex items-center gap-2 rounded-xl border p-3 text-[12.5px] font-semibold transition-all hover:border-[#ff6b00] hover:bg-[#ff6b00]/5 ${
+                      isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
+                    }`}
                   >
                     <span>{chip.icon}</span>
                     <span className="flex-1 text-left">{chip.q}</span>
@@ -586,17 +792,29 @@ export default function MatchingPage() {
               <h3 className="text-[14px] font-black mb-3">{t("nextSteps")}</h3>
               <div className="space-y-2">
                 {(result.nextSteps || []).map((step: any, i: number) => {
-                  const href = step.action === "chat" ? `/chat?q=${suggestedChatPrompt}` : step.action === "pdf" ? "#" : `/matching?focus=${step.action}`;
+                  const href =
+                    step.action === "chat"
+                      ? `/chat?q=${suggestedChatPrompt}`
+                      : step.action === "pdf"
+                      ? "#"
+                      : `/matching?focus=${step.action}`;
                   const isPrimary = step.primary;
                   return (
                     <Link
                       key={i}
                       href={href}
-                      onClick={(e) => { if (step.action === "pdf") { e.preventDefault(); downloadPdf(); } }}
+                      onClick={(e) => {
+                        if (step.action === "pdf") {
+                          e.preventDefault();
+                          downloadPdf();
+                        }
+                      }}
                       className={`flex items-center justify-between rounded-xl p-3.5 text-[13px] font-black transition-all ${
                         isPrimary
                           ? "bg-gradient-to-r from-[#ff6b00] to-amber-600 text-white shadow-lg"
-                          : isDark ? "border border-slate-700 text-slate-200" : "border border-gray-200 text-slate-800"
+                          : isDark
+                          ? "border border-slate-700 text-slate-200"
+                          : "border border-gray-200 text-slate-800"
                       }`}
                     >
                       <span>{step.label}</span>
@@ -608,14 +826,23 @@ export default function MatchingPage() {
             </div>
 
             {/* CHAT BANNER */}
-            <Link href={`/chat?q=${suggestedChatPrompt}`} className="block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-4">
+            <Link
+              href={`/chat?q=${suggestedChatPrompt}`}
+              className="block rounded-2xl border border-[#ff6b00]/30 bg-gradient-to-r from-[#ff6b00]/10 to-amber-100/10 p-4"
+            >
               <div className="flex items-center gap-3">
                 <div className="bg-[#ff6b00] rounded-xl p-2.5">
                   <MessageCircle size={20} className="text-white" />
                 </div>
                 <div className="flex-1">
                   <div className="text-[13px] font-black text-[#ff6b00]">{t("bannerTitle")}</div>
-                  <div className={`text-[11px] font-semibold ${isDark ? "text-slate-400" : "text-slate-600"}`}>{t("bannerSub")}</div>
+                  <div
+                    className={`text-[11px] font-semibold ${
+                      isDark ? "text-slate-400" : "text-slate-600"
+                    }`}
+                  >
+                    {t("bannerSub")}
+                  </div>
                 </div>
                 <ArrowRight size={16} className="text-[#ff6b00]" />
               </div>
@@ -623,42 +850,86 @@ export default function MatchingPage() {
 
             {/* ACTION BUTTONS */}
             <div className="grid grid-cols-3 gap-2">
-              <button onClick={handleShare} className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}>
+              <button
+                onClick={handleShare}
+                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${
+                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
+                }`}
+              >
                 <Share2 size={18} className="text-emerald-600" />
                 {t("share")}
               </button>
-              <button onClick={downloadPdf} disabled={isDownloading} className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 disabled:opacity-50 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}>
+              <button
+                onClick={downloadPdf}
+                disabled={isDownloading}
+                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 disabled:opacity-50 ${
+                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
+                }`}
+              >
                 <Download size={18} className="text-[#ff6b00]" />
                 {isDownloading ? "..." : t("pdf")}
               </button>
-              <button onClick={resetForm} className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"}`}>
+              <button
+                onClick={resetForm}
+                className={`rounded-xl border py-3 text-[11px] font-black flex flex-col items-center gap-1 ${
+                  isDark ? "border-slate-700 text-slate-200" : "border-gray-200 text-slate-800"
+                }`}
+              >
                 <RefreshCw size={18} className="text-slate-500" />
                 {t("reset")}
               </button>
             </div>
 
             {/* DISCLAIMER */}
-            <p className={`text-[10.5px] leading-relaxed text-center px-2 ${isDark ? "text-slate-500" : "text-slate-500"}`}>
+            <p
+              className={`text-[10.5px] leading-relaxed text-center px-2 ${
+                isDark ? "text-slate-500" : "text-slate-500"
+              }`}
+            >
               {result.disclaimer || t("disclaimer")}
             </p>
           </div>
         )}
 
-        {/* BOTTOM NAV (kept minimal — same as before) */}
-        <nav className={`fixed bottom-0 left-0 right-0 z-30 flex justify-around border-t py-2.5 ${isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"} backdrop-blur`}>
-          <Link href="/" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+        {/* BOTTOM NAV */}
+        <nav
+          className={`fixed bottom-0 left-0 right-0 z-30 flex justify-around border-t py-2.5 ${
+            isDark ? "border-slate-800 bg-[#0A0F19]/95" : "border-amber-100 bg-white/95"
+          } backdrop-blur`}
+        >
+          <Link
+            href="/"
+            className={`flex flex-col items-center gap-0.5 px-3 ${
+              isDark ? "text-slate-400" : "text-gray-500"
+            }`}
+          >
             <Home size={18} />
             <span className="text-[9.5px] font-bold">{t("home")}</span>
           </Link>
-          <Link href="/chat" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+          <Link
+            href="/chat"
+            className={`flex flex-col items-center gap-0.5 px-3 ${
+              isDark ? "text-slate-400" : "text-gray-500"
+            }`}
+          >
             <MessageCircle size={18} />
             <span className="text-[9.5px] font-bold">{t("chatNav")}</span>
           </Link>
-          <Link href="/daily" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+          <Link
+            href="/daily"
+            className={`flex flex-col items-center gap-0.5 px-3 ${
+              isDark ? "text-slate-400" : "text-gray-500"
+            }`}
+          >
             <Sun size={18} />
             <span className="text-[9.5px] font-bold">{t("daily")}</span>
           </Link>
-          <Link href="/profile" className={`flex flex-col items-center gap-0.5 px-3 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+          <Link
+            href="/profile"
+            className={`flex flex-col items-center gap-0.5 px-3 ${
+              isDark ? "text-slate-400" : "text-gray-500"
+            }`}
+          >
             <User size={18} />
             <span className="text-[9.5px] font-bold">{t("profile")}</span>
           </Link>
