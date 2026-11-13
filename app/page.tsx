@@ -179,7 +179,6 @@ export default function HomePage() {
               <Sparkles size={14} className="text-amber-200" /> {t("specialOffer")}
             </p>
             
-            {/* 🔥 SEO FIX: H1 Tag Added Here */}
             <h1 className="text-[26px] sm:text-[32px] font-black leading-tight text-white tracking-tight">
               {t("h1Text")}
             </h1>
@@ -324,9 +323,22 @@ export default function HomePage() {
           </p>
         </section>
 
+        {/* 🔥 LEGAL FOOTER (For Trust & DPDP Act Compliance) */}
+        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
+            <Link href="/privacy-policy" className="hover:text-[#ff6b00] transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">Terms & Refund Policy</Link>
+            <a href="mailto:gitaaisupport@gmail.com" className="hover:text-[#ff6b00] transition-colors">Contact Us</a>
+          </div>
+          <p className="text-[11px] text-slate-500">
+            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br/>
+            Astrology is for guidance purposes only. Not a substitute for professional advice.
+          </p>
+        </footer>
+
       </div>
 
-      {/* Sticky Bottom Banner & Nav (FIXED CUTOFF) */}
+      {/* Sticky Bottom Banner & Nav (FULLY FIXED) */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         
         {/* Pink Banner */}
