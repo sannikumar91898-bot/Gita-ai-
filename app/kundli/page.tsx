@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { 
   ArrowLeft, Sparkles, Download, RefreshCcw, Star, 
   ShieldCheck, CheckCircle2, Home, MessageCircle, 
-  Sun, User, Loader2, FileText, Lock, Wallet, X, HelpCircle
+  Sun, User, Loader2, FileText, Lock, Wallet, X
 } from "lucide-react";
 import { useApp } from "../Providers";
 
@@ -36,7 +36,7 @@ const getUIText = (lang: string, key: string) => {
     gu: { title: "જન્મ કુંડળી", subtitle: "ગીતા જ્યોતિષી દ્વારા તૈયાર", name: "પૂરું નામ", dob: "જન્મ તારીખ", time: "જન્મ સમય", place: "જન્મ સ્થળ", calc: "ગણતરી થઈ રહી છે...", generate: "કુંડળી બનાવો", chart: "જન્મ ચાર્ટ", by: "ગીતા જ્યોતિષી દ્વારા", lagna: "લગ્ન", rashi: "રાશિ", nakshatra: "નક્ષત્ર", dasha: "વર્તમાન દશા", planetsTitle: "ગ્રહોની સ્થિતિ", planet: "ગ્રહ", sign: "રાશિ", house: "ઘર", noPlanets: "ગ્રહોની વિગતો ઉપલબ્ધ નથી", generated: "તૈયાર કરેલ", notice: "ખાસ સલાહ:", scareText: "તમારી કુંડળીના ગ્રહો અને સચોટ કરિયર/લગ્ન સમય સમજવા માટે અમારા જ્યોતિષી સાથે વાત કરો.", chatCTA: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ મફત", wait: "રાહ જુઓ...", download: "PDF ડાઉનલોડ", again: "ફરી ગણતરી કરો", consentText: "હું મારી જન્મ વિગતો સુરક્ષિત રીતે સંગ્રહિત કરવા માટે સંમતિ આપું છું.", unknownTime: "મને મારો સચોટ જન્મ સમય ખબર નથી", aiReport: "જ્યોતિષ વિશ્લેષણ", loadingHistory: "તમારી જૂની કુંડળી લોડ થઈ રહી છે...", moonDegree: "ચંદ્ર અંશ", limitTitle: "તમારી મફત મર્યાદા સમાપ્ત થઈ ગઈ છે!", limitSub: "તમે બધી મફત કુંડળી જોઈ લીધી છે.", chatFree: "મફત વાત કરો", recharge: "વોલેટ રિચાર્જ", close: "બંધ કરો" },
     ml: { title: "ജന്മ കുണ്ഡലി", subtitle: "ഗീത ജ്യോതിഷി തയ്യാറാക്കിയത്", name: "മുഴുവൻ പേര്", dob: "ജനന തീയതി", time: "ജനന സമയം", place: "ജനന സ്ഥലം", calc: "കണക്കാക്കുന്നു...", generate: "കുണ്ഡലി സൃഷ്ടിക്കുക", chart: "ജനന ചാർട്ട്", by: "ഗീത ജ്യോതിഷി വഴി", lagna: "ലഗ്നം", rashi: "രാശി", nakshatra: "നക്ഷത്രം", dasha: "നിലവിലെ ദശ", planetsTitle: "ഗ്രഹ സ്ഥാനങ്ങൾ", planet: "ഗ്രഹം", sign: "രാശി", house: "ഭാവം", noPlanets: "ഗ്രഹ വിവരങ്ങൾ ലഭ്യമല്ല", generated: "സൃഷ്ടിച്ചത്", notice: "പ്രത്യേക ഉപദേശം:", scareText: "നിങ്ങളുടെ ജാതകത്തിലെ ഗ്രഹങ്ങളും കൃത്യമായ കരിയർ/വിവാഹ സമയവും മനസ്സിലാക്കാൻ ഞങ്ങളുടെ ജ്യോതിഷിയുമായി സംസാരിക്കുക.", chatCTA: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് സൗജന്യം", wait: "കാത്തിരിക്കുക...", download: "PDF ഡൗൺലോഡ്", again: "വീണ്ടും കണക്കാക്കുക", consentText: "എന്റെ ജനന വിവരങ്ങൾ സുരക്ഷിതമായി സൂക്ഷിക്കാൻ ഞാൻ സമ്മതിക്കുന്നു.", unknownTime: "എനിക്ക് കൃത്യമായ ജനന സമയം അറിയില്ല", aiReport: "ജ്യോതിഷ വിശകലനം", loadingHistory: "നിങ്ങളുടെ മുൻ കുണ്ഡലി ലോഡ് ചെയ്യുന്നു...", moonDegree: "ചന്ദ്ര ഡിഗ്രി", limitTitle: "നിങ്ങളുടെ സൗജന്യ പരിധി തീർന്നു!", limitSub: "നിങ്ങൾ എല്ലാ സൗജന്യ കുണ്ഡലികളും കണ്ടു.", chatFree: "സൗജന്യമായി സംസാരിക്കുക", recharge: "വാലറ്റ് റീചാർജ്", close: "അടയ്ക്കുക" },
   };
-  return ui[lang]?.[key] || ui["en"][key];
+  return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key] || "";
 };
 
 export default function KundliPage() {
@@ -68,33 +68,37 @@ export default function KundliPage() {
   const t = (key: string) => getUIText(lang, key);
 
   useEffect(() => {
-    // Check LocalStorage Limit
-    const today = new Date().toDateString();
-    const savedDate = localStorage.getItem('kundli_scan_date');
-    let savedCount = parseInt(localStorage.getItem('kundli_scan_count') || "0");
+    // Check LocalStorage Limit safely
+    try {
+      const today = new Date().toDateString();
+      const savedDate = localStorage.getItem('kundli_scan_date');
+      let savedCount = parseInt(localStorage.getItem('kundli_scan_count') || "0");
 
-    if (savedDate !== today) {
-      localStorage.setItem('kundli_scan_date', today);
-      savedCount = 0;
-      localStorage.setItem('kundli_scan_count', "0");
+      if (savedDate !== today) {
+        localStorage.setItem('kundli_scan_date', today);
+        savedCount = 0;
+        localStorage.setItem('kundli_scan_count', "0");
+      }
+      setScanCount(savedCount);
+    } catch (e) {
+      console.error("LocalStorage error:", e);
     }
-    setScanCount(savedCount);
 
     let cancelled = false;
     async function fetchExisting() {
       try {
         const res = await fetch("/api/kundli", { cache: "no-store" });
-        const data = await res.json();
-        if (cancelled) return;
+        const data = await res.json().catch(() => null);
+        if (cancelled || !data) return;
         
         if (data.chart) {
           setChart(data.chart);
-          if (data.interpretation && typeof data.interpretation === "string") {
-            setInterpretation(data.interpretation);
-          }
-          if (data.suggestedChatPrompt) {
-            setSuggestedChatPrompt(data.suggestedChatPrompt);
-          }
+        }
+        if (data.interpretation && typeof data.interpretation === "string") {
+          setInterpretation(data.interpretation);
+        }
+        if (data.suggestedChatPrompt && typeof data.suggestedChatPrompt === "string") {
+          setSuggestedChatPrompt(data.suggestedChatPrompt);
         }
         if (data.birth) {
           setName(data.birth.name || "");
@@ -152,27 +156,29 @@ export default function KundliPage() {
           consent: true
         }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
       
       if (!res.ok) {
         if (res.status === 422) {
-          throw new Error(data.error || "Janm sthan nahi mila. Kripya sahi sheher likhein.");
+          throw new Error(data?.error || "Janm sthan nahi mila. Kripya sahi sheher likhein.");
         }
-        throw new Error(data.error || t("generate") + " Failed");
+        throw new Error(data?.error || t("generate") + " Failed");
       }
       
-      setChart(data.chart);
-      if (data.interpretation && typeof data.interpretation === "string") {
+      if (data?.chart) setChart(data.chart);
+      if (data?.interpretation && typeof data.interpretation === "string") {
         setInterpretation(data.interpretation);
       }
-      if (data.suggestedChatPrompt) {
+      if (data?.suggestedChatPrompt && typeof data.suggestedChatPrompt === "string") {
         setSuggestedChatPrompt(data.suggestedChatPrompt);
       }
 
-      // Update Limit Count
-      const newCount = scanCount + 1;
-      setScanCount(newCount);
-      localStorage.setItem('kundli_scan_count', newCount.toString());
+      // Update Limit Count safely
+      try {
+        const newCount = scanCount + 1;
+        setScanCount(newCount);
+        localStorage.setItem('kundli_scan_count', newCount.toString());
+      } catch (err) {}
 
     } catch (err: any) {
       setError(err.message);
@@ -211,17 +217,17 @@ export default function KundliPage() {
   const handleChatNow = () => {
     let planetsText = "";
     if (chart?.planets && Array.isArray(chart.planets)) {
-      planetsText = chart.planets.map((p: any) => `${p.name} (${p.sign}, House ${p.house})`).join(", ");
+      planetsText = chart.planets.map((p: any) => `${String(p.name)} (${String(p.sign)}, House ${String(p.house)})`).join(", ");
     }
 
     const summaryText = `Namaste, maine apni kundli banayi hai. Kripya iska vishleshan karein:
       
 Name: ${name}
 DOB: ${dob} ${time ? `| Time: ${time}` : ""} ${place ? `| Place: ${place}` : ""}
-Lagna: ${chart?.lagna || "N/A"}
-Rashi: ${chart?.rashi || "N/A"}
-Nakshatra: ${chart?.nakshatra || "N/A"}
-Dasha: ${chart?.dasha || "N/A"}
+Lagna: ${String(chart?.lagna || "N/A")}
+Rashi: ${String(chart?.rashi || "N/A")}
+Nakshatra: ${String(chart?.nakshatra || "N/A")}
+Dasha: ${String(chart?.dasha || "N/A")}
 ${planetsText ? `Planets: ${planetsText}` : ""}
 
 Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
@@ -233,6 +239,7 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
   const resetForm = () => {
     setChart(null);
     setInterpretation(null);
+    setSuggestedChatPrompt(null);
   };
 
   // FAQ Schema for SEO
@@ -285,8 +292,8 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
             <ArrowLeft size={20} />
           </Link>
           <div>
-            <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
-            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
+            <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
+            <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
           </div>
         </header>
 
@@ -391,19 +398,19 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
             <div className="grid grid-cols-2 gap-3 mb-5">
               <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">{t("lagna")}</p>
-                <p className="text-[15px] font-bold mt-1 text-gray-900">{chart?.lagna || "N/A"}</p>
+                <p className="text-[15px] font-bold mt-1 text-gray-900">{String(chart?.lagna || "N/A")}</p>
               </div>
               <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">{t("rashi")}</p>
-                <p className="text-[15px] font-bold mt-1 text-gray-900">{chart?.rashi || "N/A"}</p>
+                <p className="text-[15px] font-bold mt-1 text-gray-900">{String(chart?.rashi || "N/A")}</p>
               </div>
               <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">{t("nakshatra")}</p>
-                <p className="text-[15px] font-bold mt-1 text-gray-900">{chart?.nakshatra || "N/A"}</p>
+                <p className="text-[15px] font-bold mt-1 text-gray-900">{String(chart?.nakshatra || "N/A")}</p>
               </div>
               <div className="p-3 rounded-xl border border-gray-200 bg-gray-50">
                 <p className="text-[10px] font-black uppercase tracking-wider text-gray-500">{t("dasha")}</p>
-                <p className="text-[15px] font-bold mt-1 text-gray-900">{chart?.dasha || "N/A"}</p>
+                <p className="text-[15px] font-bold mt-1 text-gray-900">{String(chart?.dasha || "N/A")}</p>
               </div>
             </div>
 
@@ -423,10 +430,10 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
                 {chart?.planets && Array.isArray(chart.planets) && chart.planets.length > 0 ? (
                   chart.planets.map((p: any, i: number) => (
                     <div key={i} className="grid grid-cols-4 px-4 py-2.5 text-[12.5px] font-medium items-center text-gray-800">
-                      <div className="font-bold">{p.name}</div>
-                      <div>{p.sign}</div>
-                      <div>{p.house}</div>
-                      <div className="text-right">{p.degree}</div>
+                      <div className="font-bold">{String(p.name || "")}</div>
+                      <div>{String(p.sign || "")}</div>
+                      <div>{String(p.house || "")}</div>
+                      <div className="text-right">{String(p.degree || "")}</div>
                     </div>
                   ))
                 ) : (
@@ -436,7 +443,7 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
             </div>
 
             {/* AI Interpretation */}
-            {interpretation && (
+            {interpretation && typeof interpretation === "string" && (
               <div className="rounded-xl border border-indigo-100 bg-indigo-50 p-5 mb-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Sparkles size={18} className="text-indigo-500" />
