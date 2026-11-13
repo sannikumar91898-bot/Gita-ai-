@@ -1,7 +1,7 @@
 // app/remedies/page.tsx
 "use client";
 
-import { ArrowLeft, Gem, Info, MessageCircle, Sparkles, Star, Home, Sun, User, Crown } from "lucide-react";
+import { ArrowLeft, Gem, Info, MessageCircle, Sparkles, Star, Home, Sun, User, Crown, HelpCircle } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
 
@@ -136,7 +136,6 @@ export default function RemediesPage() {
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
   
-  // 🔥 FIX: Divider aur Nav ke liye dynamic classes
   const dividerClass = isDark ? "border-slate-800/50" : "border-gray-100";
   const navClass = isDark ? "bg-[#0b101b] border-slate-800 text-slate-400" : "bg-white border-gray-200 text-gray-500";
 
@@ -145,16 +144,20 @@ export default function RemediesPage() {
   return (
     <main className={`min-h-[100dvh] w-full pb-36 ${pageClass} font-sans`}>
       
-      <div className="w-full max-w-2xl mx-auto px-3 pt-4 space-y-5">
+      {/* 🔥 CHANGED: max-w-4xl aur responsive padding (Lambai-Chaurai faila di) */}
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         
         {/* HEADER */}
-        <header className={`flex items-center gap-3 rounded-2xl border p-4 ${cardClass}`}>
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300 hover:bg-slate-800" : "bg-orange-50 text-orange-600 hover:bg-orange-100"}`}>
             <ArrowLeft size={20} />
           </Link>
           <div className="flex-1">
-            <h1 className="text-[17px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
-            <p className={`text-[11px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("sub")}</p>
+            {/* 🔥 SEO FIX: H1 Tag with better keywords */}
+            <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">
+              {t("title")}
+            </h1>
+            <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("sub")}</p>
           </div>
           <Gem className="text-[#ff6b00]" size={26} />
         </header>
@@ -170,17 +173,17 @@ export default function RemediesPage() {
           </div>
         </div>
 
-        {/* GEMSTONES GRID */}
-        <div className="grid grid-cols-1 gap-4">
+        {/* 🔥 GEMSTONES GRID: 2 Columns on Desktop, 1 on Mobile */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
           {GEMSTONES.map((item, idx) => (
-            <div key={idx} className={`group relative overflow-hidden rounded-[1.5rem] border p-5 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}>
+            <div key={idx} className={`group relative overflow-hidden rounded-[1.5rem] border p-5 sm:p-6 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl ${cardClass}`}>
               
               <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-20 blur-3xl transition-opacity group-hover:opacity-40 pointer-events-none" style={{ backgroundColor: item.color }} />
 
               <div className="relative z-10 flex gap-4">
                 <div className="shrink-0">
-                  <div className="flex h-16 w-16 items-center justify-center rounded-2xl shadow-inner border border-white/20" style={{ backgroundColor: item.color }}>
-                    <Gem size={28} className="text-black/40 drop-shadow-md" />
+                  <div className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl shadow-inner border border-white/20" style={{ backgroundColor: item.color }}>
+                    <Gem size={32} className="text-black/40 drop-shadow-md" />
                   </div>
                 </div>
 
@@ -188,11 +191,12 @@ export default function RemediesPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("planet")}</p>
-                      <h3 className="text-[18px] font-black text-[#ff6b00]">{getLocalizedPlanet(item)}</h3>
+                      {/* 🔥 H2 Tag for SEO */}
+                      <h2 className="text-[18px] sm:text-[20px] font-black text-[#ff6b00]">{getLocalizedPlanet(item)}</h2>
                     </div>
                     <div className="text-right">
                       <p className={`text-[10px] font-black uppercase tracking-widest ${isDark ? "text-slate-500" : "text-gray-400"}`}>{t("stone")}</p>
-                      <p className={`text-[15px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{getLocalizedStone(item)}</p>
+                      <p className={`text-[15px] sm:text-[16px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>{getLocalizedStone(item)}</p>
                     </div>
                   </div>
                   
@@ -219,53 +223,46 @@ export default function RemediesPage() {
         {/* CTA BUTTON (Frictionless Chat) */}
         <Link 
           href={chatLink} 
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-orange-500/20 transition-transform hover:scale-[1.02] active:scale-95 mt-2"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-4 py-4 text-[15px] sm:text-[16px] font-bold text-white shadow-lg shadow-orange-500/20 transition-transform hover:scale-[1.02] active:scale-95 mt-2"
         >
           <Sparkles size={20} /> {t("cta")}
         </Link>
 
-      </div>
+        {/* 🔥 SEO CONTENT BLOCK (For Ranking) */}
+        <section className={`mt-8 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
+          <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            What are Planetary Remedies & Gemstones?
+          </h2>
+          
+          <p className={`text-[13px] sm:text-[14px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+            In Vedic Astrology, every planet emits a specific vibration that influences our lives. Sometimes, certain planets in our birth chart (Kundli) are weak or placed in unfavorable houses, causing obstacles in career, marriage, or health. Wearing a specific gemstone (Ratna) acts as a cosmic filter to strengthen the positive energies of that planet.
+          </p>
 
-      {/* STICKY BOTTOM BANNER & NAVIGATION */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
-        
-        {/* Pink Banner */}
-        <div className="bg-gradient-to-r from-[#d81b60] via-[#e91e63] to-[#c2185b] px-4 py-2.5 flex items-center justify-between shadow-[0_-4px_20px_rgba(233,30,99,0.3)]">
-          <div className="flex items-center gap-3">
-             <div className="h-8 w-8 rounded-full border border-white/50 flex items-center justify-center shrink-0 bg-white/10">
-               <Crown size={16} className="text-white" />
-             </div>
-             <div>
-               <p className="text-[11px] font-bold text-white leading-tight">{t("bannerTitle")}</p>
-               <p className="text-[13px] font-extrabold text-white leading-tight">{t("bannerSub")}</p>
-             </div>
+          <div className={`p-4 rounded-xl border ${isDark ? "border-amber-500/20 bg-amber-500/5" : "border-amber-200 bg-amber-50"}`}>
+            <h3 className={`text-[15px] font-bold mb-2 flex items-center gap-2 ${isDark ? "text-amber-400" : "text-amber-700"}`}>
+              <HelpCircle size={18} /> Why should you consult an astrologer before wearing a gemstone?
+            </h3>
+            <p className={`text-[13px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+              Every individual has a unique birth chart. A gemstone that brings immense wealth to one person can bring severe misfortunes to another if it activates a malefic (negative) planet. Therefore, it is highly recommended to analyze your Kundli (especially the Ascendant and Dasha periods) before wearing any Ratna.
+            </p>
           </div>
-          <Link href="/chat" className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 shadow-md active:scale-95 transition-transform">
-               <Crown size={16} className="text-[#d81b60]" fill="#d81b60" />
-          </Link>
-        </div>
 
-        {/* Bottom Navigation Bar - FIXED THEME */}
-        <nav className={`border-t flex justify-around items-center pt-2.5 pb-5 px-2 w-full ${navClass}`}>
-          <Link href="/" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
-            <Home size={22} />
-            <span className="text-[11px] font-medium">{t("home")}</span>
-          </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
-            <MessageCircle size={22} />
-            <span className="text-[11px] font-medium">{t("chat")}</span>
-          </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
-            <Sun size={22} />
-            <span className="text-[11px] font-medium">{t("daily")}</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 hover:text-orange-500 transition-colors">
-            <User size={22} />
-            <span className="text-[11px] font-medium">{t("profile")}</span>
-          </Link>
-        </nav>
-      </div>
+          <h3 className={`text-[15px] font-bold mt-4 ${isDark ? "text-white" : "text-gray-900"}`}>Frequently Asked Questions (FAQs)</h3>
+          
+          <div className="space-y-3 mt-2">
+            <div>
+              <p className={`text-[13.5px] font-bold ${isDark ? "text-slate-200" : "text-gray-800"}`}>Q: Can I wear an artificial gemstone?</p>
+              <p className={`text-[13px] leading-relaxed mt-1 ${isDark ? "text-slate-400" : "text-gray-600"}`}>A: Astrologically, natural and untreated gemstones are recommended because they have the required crystalline structure to absorb and transmit planetary energies.</p>
+            </div>
+            <div>
+              <p className={`text-[13.5px] font-bold ${isDark ? "text-slate-200" : "text-gray-800"}`}>Q: How do I know which stone suits me?</p>
+              <p className={`text-[13px] leading-relaxed mt-1 ${isDark ? "text-slate-400" : "text-gray-600"}`}>A: The gemstone is usually recommended based on the Lord of your Ascendant (Lagna) and the weakest benefic planet in your chart. Tap on "Get Personal Recommendation" to chat with our AI astrologer.</p>
+            </div>
+          </div>
+        </section>
 
-    </main>
-  );
-}
+        {/* 🔥 LEGAL FOOTER (For Trust & DPDP Act Compliance) */}
+        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
+            <Link href="/privacy-policy" className="hover:text-[#ff6b00] transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-[#ff6b00] transition-colors">Ter
