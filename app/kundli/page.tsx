@@ -101,10 +101,11 @@ export default function KundliPage() {
           setSuggestedChatPrompt(data.suggestedChatPrompt);
         }
         if (data.birth) {
-          setName(data.birth.name || "");
-          setDob(data.birth.dob || "");
-          setTime(data.birth.birthTime || "");
-          setPlace(data.birth.birthPlace || "");
+          // 🔥 FIX: Using String() to prevent object rendering errors
+          setName(String(data.birth.name || ""));
+          setDob(String(data.birth.dob || ""));
+          setTime(String(data.birth.birthTime || ""));
+          setPlace(String(data.birth.birthPlace || ""));
           if (data.birth.isBirthTimeUnknown) setNotSureTime(true);
         }
       } catch (e) {
@@ -222,8 +223,8 @@ export default function KundliPage() {
 
     const summaryText = `Namaste, maine apni kundli banayi hai. Kripya iska vishleshan karein:
       
-Name: ${name}
-DOB: ${dob} ${time ? `| Time: ${time}` : ""} ${place ? `| Place: ${place}` : ""}
+Name: ${String(name)}
+DOB: ${String(dob)} ${time ? `| Time: ${String(time)}` : ""} ${place ? `| Place: ${String(place)}` : ""}
 Lagna: ${String(chart?.lagna || "N/A")}
 Rashi: ${String(chart?.rashi || "N/A")}
 Nakshatra: ${String(chart?.nakshatra || "N/A")}
@@ -387,9 +388,9 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
             style={{ backgroundColor: '#ffffff', color: '#0f172a' }}
           >
             <div className="text-center border-b border-gray-200 pb-4 mb-4">
-              <h2 className="text-[22px] font-black text-[#ff6b00]">{name || "User"}</h2>
+              <h2 className="text-[22px] font-black text-[#ff6b00]">{String(name || "User")}</h2>
               <p className="text-[12px] font-medium text-gray-500">
-                {dob} {time && `• ${time}`} {place && `• ${place}`}
+                {String(dob)} {time ? `• ${String(time)}` : ""} {place ? `• ${String(place)}` : ""}
               </p>
               <p className="text-[10px] uppercase font-black mt-2 text-emerald-600">{t("by")}</p>
             </div>
