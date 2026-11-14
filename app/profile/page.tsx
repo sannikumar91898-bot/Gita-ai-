@@ -234,7 +234,8 @@ export default function ProfileDashboardPage() {
               </div>
               <select
                 value={lang}
-                onChange={(e) => setLanguage(e.target.value)}
+                // 🔥 FIXED: e.target.value as any to solve Vercel TypeScript Error
+                onChange={(e) => setLanguage(e.target.value as any)}
                 className={`bg-transparent text-[13px] font-bold text-[#ff6b00] outline-none cursor-pointer`}
               >
                 {Object.entries(LANGUAGES || {}).map(([code, name]) => (
@@ -262,7 +263,7 @@ export default function ProfileDashboardPage() {
 
       </div>
 
-      {/* 🔥 STICKY BOTTOM BANNER & NAVIGATION (Wapas Joda Gaya Hai) */}
+      {/* 🔥 STICKY BOTTOM BANNER & NAVIGATION */}
       <div className="fixed bottom-0 left-0 right-0 z-50 flex flex-col w-full">
         
         {/* Pink Banner */}
