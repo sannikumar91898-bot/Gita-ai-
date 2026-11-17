@@ -24,17 +24,17 @@ export const users = pgTable("users", {
   isGuest: boolean("is_guest").notNull().default(true),
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
   premiumUntil: timestamp("premium_until", { withTimezone: true }),
-  
+
   // Free limits
   freeMessagesUsed: integer("free_messages_used").notNull().default(0),
   freePalmScansUsed: integer("free_palm_scans_used").notNull().default(0),
   freeFaceScansUsed: integer("free_face_scans_used").notNull().default(0),
-  freeKundliUsed: integer("free_kundli_used").notNull().default(0),      // ← NEW
-  matchingCount: integer("matching_count").notNull().default(0),         // ← NEW (for matching)
-  
+  freeKundliUsed: integer("free_kundli_used").notNull().default(0),
+  matchingCount: integer("matching_count").notNull().default(0),
+
   // Wallet
   walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
-  
+
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   walletBalanceCheck: check(
@@ -53,7 +53,7 @@ export const sessions = pgTable("sessions", {
 export const birthDetails = pgTable("birth_details", {
   userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
-  gender: text("gender").default("Not specified"), 
+  gender: text("gender").default("Not specified"),
   isBirthTimeUnknown: boolean("is_birth_time_unknown").notNull().default(false),
   dob: date("dob").notNull(),
   birthTime: text("birth_time").notNull(),
