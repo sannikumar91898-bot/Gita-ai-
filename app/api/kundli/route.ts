@@ -364,38 +364,25 @@ export async function POST(req: Request) {
   if (name.length > 100 || placeOfBirth.length > 200 || !validDate(dateOfBirth) || !validTime(timeOfBirth)) return jsonError(getKundliError(language, "bad_details"), 400);
   if (dateOfBirth > new Date().toISOString().slice(0, 10)) return jsonError(getKundliError(language, "future_date"), 400);
 
-  // 🔥 1. BILLING CHECK LOGIC START
+  // ---------- 1. Check balance / free limit (read only) ----------
   const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
   if (!userRow) return jsonError(getKundliError(language, "guest_blocked"), 404);
 
   const freeUsed = userRow.freeKundliUsed || 0;
   const walletBalance = userRow.walletBalancePaise || 0;
 
-  if (freeUsed >= FREE_KUNDLI_LIMIT) {
-    if (walletBalance < COST_PER_KUNDLI_PAISE) {
-      // Return 402 for Frontend to redirect to wallet
-      return NextResponse.json(
-        { 
-          code: "WALLET_RECHARGE_REQUIRED", 
-          error: "Limit exhausted", 
-          message: getKundliError(language, "wallet_recharge") 
-        }, 
-        { status: 402, headers: { "Cache-Control": "no-store" } }
-      );
-    } else {
-      // Deduct ₹2
-      await db.update(users)
-        .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}` })
-        .where(eq(users.id, user.id));
-    }
-  } else {
-    // Increment free usage
-    await db.update(users)
-      .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
-      .where(eq(users.id, user.id));
+  if (freeUsed >= FREE_KUNDLI_LIMIT && walletBalance < COST_PER_KUNDLI_PAISE) {
+    return NextResponse.json(
+      { 
+        code: "WALLET_RECHARGE_REQUIRED", 
+        error: "Limit exhausted", 
+        message: getKundliError(language, "wallet_recharge") 
+      }, 
+      { status: 402, headers: { "Cache-Control": "no-store" } }
+    );
   }
-  // 🔥 1. BILLING CHECK LOGIC END
 
+  // ---------- 2. Place + Chart calculation (before charging) ----------
   const place = await resolvePlace(placeOfBirth);
   if (!place) return jsonError(getKundliError(language, "place_not_found"), 422);
 
@@ -406,9 +393,27 @@ export async function POST(req: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 422);
   }
 
+  // ---------- 3. Only now charge / increment free count (after success) ----------
+  try {
+    if (freeUsed >= FREE_KUNDLI_LIMIT) {
+      // Paid
+      await db.update(users)
+        .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}` })
+        .where(eq(users.id, user.id));
+    } else {
+      // Free
+      await db.update(users)
+        .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
+        .where(eq(users.id, user.id));
+    }
+  } catch (billingError) {
+    console.error("Billing update failed:", billingError);
+    // Calculation already succeeded, so we still return the chart
+  }
+
+  // ---------- 4. Save to DB ----------
   let saved = false;
   try {
-    // 🔥 2. DATABASE INSERT LOGIC
     await db.insert(birthDetails).values({
       userId: user.id, 
       name, 
@@ -431,13 +436,12 @@ export async function POST(req: Request) {
     saved = true;
   } catch (error) {
     console.error("Failed to save kundli to DB:", error);
-    // We don't block the user if save fails, but we log it.
   }
 
-  // 🔥 3. AI INTERPRETATION
+  // ---------- 5. AI Interpretation ----------
   const aiResult = await writeInterpretation({ name, dateOfBirth, timeOfBirth, placeOfBirth, chart, language });
 
-  // 🔥 4. RETURN RESPONSE
+  // ---------- 6. Response ----------
   return NextResponse.json({
     success: true,
     chart: publicChart(chart),
