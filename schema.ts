@@ -24,14 +24,18 @@ export const users = pgTable("users", {
   isGuest: boolean("is_guest").notNull().default(true),
   trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
   premiumUntil: timestamp("premium_until", { withTimezone: true }),
-  freeMessagesUsed: integer("free_messages_used").notNull().default(0),
-  walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   
-  // 🔥 NAYE COLUMNS: Palm aur Face Reading ke free scans track karne ke liye
+  // Free limits
+  freeMessagesUsed: integer("free_messages_used").notNull().default(0),
   freePalmScansUsed: integer("free_palm_scans_used").notNull().default(0),
   freeFaceScansUsed: integer("free_face_scans_used").notNull().default(0),
+  freeKundliUsed: integer("free_kundli_used").notNull().default(0),      // ← NEW
+  matchingCount: integer("matching_count").notNull().default(0),         // ← NEW (for matching)
   
+  // Wallet
+  walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
+  
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   walletBalanceCheck: check(
     "wallet_balance_check",
@@ -132,7 +136,7 @@ export const aiResponseCache = pgTable("ai_response_cache", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   questionKeyIdx: index("question_key_idx").on(table.questionKey),
-}));
+});
 
 export const astrologyKnowledgeBase = pgTable("astrology_knowledge_base", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -143,7 +147,7 @@ export const astrologyKnowledgeBase = pgTable("astrology_knowledge_base", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => ({
   searchKeyIdx: index("search_key_idx").on(table.searchKey),
-}));
+});
 
 export const supportTickets = pgTable("support_tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -168,4 +172,4 @@ export const astrologerReviews = pgTable("astrologer_reviews", {
 }, (table) => ({
   personaIdx: index("persona_idx").on(table.persona),
   isApprovedIdx: index("is_approved_idx").on(table.isApproved),
-}));
+});
