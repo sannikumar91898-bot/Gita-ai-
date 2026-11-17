@@ -1,5 +1,13 @@
 // app/api/matching/route.ts
 import { NextResponse } from "next/server";
+import { eq, sql } from "drizzle-orm"; // 🔥 Added for Billing
+import { getUser } from "@/auth"; // 🔥 Added for Billing
+import { db } from "@/index"; // 🔥 Added for Billing
+import { users } from "@/schema"; // 🔥 Added for Billing
+
+// 🔥 Billing Constants
+const FREE_MATCHING_LIMIT = 2;
+const COST_PER_MATCHING_PAISE = 200; // ₹2
 
 // ============================================================
 // 1. LABEL RANGES (5-band, honest — Master Doc)
@@ -264,31 +272,67 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Deterministic seed
+    // 🔥 2. BILLING CHECK LOGIC START
+    const user = await getUser();
+    if (!user || user.isGuest) {
+      return NextResponse.json({ code: "LOGIN_REQUIRED", error: "Please login to check matching." }, { status: 401 });
+    }
+    
+    const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
+    if (!userRow) return NextResponse.json({ error: "User not found" }, { status: 404 });
+
+    const freeUsed = userRow.freeMatchingUsed || 0;
+    const walletBalance = userRow.walletBalancePaise || 0;
+
+    if (freeUsed >= FREE_MATCHING_LIMIT) {
+      if (walletBalance < COST_PER_MATCHING_PAISE) {
+        // Return 402 for Frontend to redirect to wallet
+        return NextResponse.json(
+          { 
+            code: "WALLET_RECHARGE_REQUIRED", 
+            message: "Aapki 2 free matching ki limit khatam ho gayi hai. Kripya wallet recharge karein." 
+          }, 
+          { status: 402 }
+        );
+      } else {
+        // Deduct ₹2
+        await db.update(users)
+          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MATCHING_PAISE}` })
+          .where(eq(users.id, user.id));
+      }
+    } else {
+      // Increment free usage
+      await db.update(users)
+        .set({ freeMatchingUsed: sql`${users.freeMatchingUsed} + 1` })
+        .where(eq(users.id, user.id));
+    }
+    // 🔥 BILLING CHECK LOGIC END
+
+    // 3. Deterministic seed
     const seed = `${boy.name}_${boy.dob}_${girl.name}_${girl.dob}`
       .toLowerCase()
       .replace(/\s+/g, "");
 
-    // 3. Raw scores
+    // 4. Raw scores
     const totalScore = 16 + getHashScore(seed, 20); // 16-36
     const nadiRaw = getHashScore(seed + "_nadi", 8); // 0-8
     const bhakootRaw = getHashScore(seed + "_bhakoot", 7); // 0-7
     const grahaMaitri = 3 + getHashScore(seed + "_graha", 2); // 3-5
 
-    // 4. Dosha presence + cancellation logic (Option A — simplified)
+    // 5. Dosha presence + cancellation logic (Option A — simplified)
     const manglikPresent = getHashScore(seed + "_manglik", 10) < 4;
     const manglikCancelled = manglikPresent && getHashScore(seed + "_manglik_cancel", 10) < 4;
-
+    
     const nadiPresent = nadiRaw === 0;
     const nadiCancelled = nadiPresent && getHashScore(seed + "_nadi_cancel", 10) < 4;
-
+    
     const bhakootPresent = bhakootRaw === 0;
     const bhakootCancelled = bhakootPresent && grahaMaitri >= 4;
 
-    // 5. Label
+    // 6. Label
     const label = getScoreLabel(totalScore);
 
-    // 6. Ashtakoot breakdown
+    // 7. Ashtakoot breakdown
     const details = [
       { name: "Varna", score: 1, max: 1, meaning: "वर्ण मिलान — सामाजिक सामंजस्य" },
       { name: "Vashya", score: 2, max: 2, meaning: "वश्य मिलान — नियंत्रण संतुलन" },
@@ -300,11 +344,11 @@ export async function POST(request: Request) {
       { name: "Nadi", score: nadiRaw, max: 8, meaning: "नाड़ी — संतान व स्वास्थ्य" },
     ];
 
-    // 7. Messages
+    // 8. Messages
     const DOSHA = DOSHA_MSGS[lang] || DOSHA_MSGS.hinglish;
     const GEN = getGeneral(lang);
 
-    // 8. Primary message (worst non-cancelled issue, else safe)
+    // 9. Primary message
     let primaryMessage: string;
     if (manglikPresent && !manglikCancelled) primaryMessage = DOSHA.manglikPresent;
     else if (nadiPresent && !nadiCancelled) primaryMessage = DOSHA.nadiPresent;
@@ -312,7 +356,7 @@ export async function POST(request: Request) {
     else if (totalScore < 18) primaryMessage = DOSHA.lowScore;
     else primaryMessage = DOSHA.safe;
 
-    // 9. Doshas object
+    // 10. Doshas object
     const doshas = {
       manglik: {
         present: manglikPresent,
@@ -331,7 +375,7 @@ export async function POST(request: Request) {
       },
     };
 
-    // 10. Strengths (3 from pool)
+    // 11. Strengths (3 from pool)
     const sStart = getHashScore(seed + "_sStart", GEN.strengths.length - 1);
     const strengths = [
       GEN.strengths[sStart % GEN.strengths.length],
@@ -339,7 +383,7 @@ export async function POST(request: Request) {
       GEN.strengths[(sStart + 2) % GEN.strengths.length],
     ];
 
-    // 11. Attention areas (3 from pool)
+    // 12. Attention areas (3 from pool)
     const aStart = getHashScore(seed + "_aStart", GEN.attentionAreas.length - 1);
     const attentionAreas = [
       GEN.attentionAreas[aStart % GEN.attentionAreas.length],
@@ -347,19 +391,19 @@ export async function POST(request: Request) {
       GEN.attentionAreas[(aStart + 2) % GEN.attentionAreas.length],
     ];
 
-    // 12. Practical advice (2 from pool)
+    // 13. Practical advice (2 from pool)
     const pStart = getHashScore(seed + "_pStart", GEN.practicalAdvice.length - 1);
     const practicalAdvice = [
       GEN.practicalAdvice[pStart % GEN.practicalAdvice.length],
       GEN.practicalAdvice[(pStart + 1) % GEN.practicalAdvice.length],
     ];
 
-    // 13. Soul summary (with names)
+    // 14. Soul summary (with names)
     const soulSummary = GEN.soulSummary
       .replace("{boy}", boy.name)
       .replace("{girl}", girl.name);
 
-    // 14. Contextual next steps
+    // 15. Contextual next steps
     const lowScore = totalScore < 25;
     const nextSteps = lowScore
       ? [
@@ -375,7 +419,7 @@ export async function POST(request: Request) {
           { label: GEN.nextChat, action: "chat" as const, primary: false },
         ];
 
-    // 15. Backward-compat derived
+    // 16. Backward-compat derived
     const dangerLevel =
       (manglikPresent && !manglikCancelled) ||
       (nadiPresent && !nadiCancelled) ||
@@ -384,7 +428,7 @@ export async function POST(request: Request) {
         ? "warning"
         : "safe";
 
-    // 16. Simulate processing delay (smooth loading)
+    // 17. Simulate processing delay (smooth loading)
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     return NextResponse.json({
