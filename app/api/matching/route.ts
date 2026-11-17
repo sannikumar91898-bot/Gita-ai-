@@ -1,463 +1,440 @@
-// app/api/matching/route.ts
-import { NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm"; // 🔥 Added for Billing
-import { getUser } from "@/auth"; // 🔥 Added for Billing
-import { db } from "@/index"; // 🔥 Added for Billing
-import { users } from "@/schema"; // 🔥 Added for Billing
+// lib/vedic-matching.ts
+import {
+  AstroTime, Body, GeoVector, RotateVector, Rotation_EQD_ECT, SiderealTime,
+} from "astronomy-engine";
 
-// 🔥 Billing Constants
-const FREE_MATCHING_LIMIT = 2;
-const COST_PER_MATCHING_PAISE = 200; // ₹2
+// ==========================================
+// 1. CONSTANTS & TABLES (unchanged — पिछली file जैसे)
+// ==========================================
+const RASHIS = ["Mesha", "Vrishabha", "Mithuna", "Karka", "Simha", "Kanya", "Tula", "Vrishchika", "Dhanu", "Makara", "Kumbha", "Meena"];
+const RASHIS_HI = ["मेष", "वृषभ", "मिथुन", "कर्क", "सिंह", "कन्या", "तुला", "वृश्चिक", "धनु", "मकर", "कुंभ", "मीन"];
+const RASHI_LORDS = ["Mars", "Venus", "Mercury", "Moon", "Sun", "Mercury", "Venus", "Mars", "Jupiter", "Saturn", "Saturn", "Jupiter"];
 
-// ============================================================
-// 1. LABEL RANGES (5-band, honest — Master Doc)
-// ============================================================
-function getScoreLabel(score: number): "utkrisht" | "bahut-acha" | "acha" | "ausat" | "sudhar" {
-  if (score >= 32) return "utkrisht";
-  if (score >= 29) return "bahut-acha";
-  if (score >= 25) return "acha";
-  if (score >= 18) return "ausat";
-  return "sudhar";
+const NAKSHATRAS = [
+  "Ashwini", "Bharani", "Krittika", "Rohini", "Mrigashira", "Ardra", "Punarvasu", "Pushya", "Ashlesha",
+  "Magha", "Purva Phalguni", "Uttara Phalguni", "Hasta", "Chitra", "Swati", "Vishakha", "Anuradha", "Jyeshtha",
+  "Mula", "Purva Ashadha", "Uttara Ashadha", "Shravana", "Dhanishta", "Shatabhisha", "Purva Bhadrapada", "Uttara Bhadrapada", "Revati",
+];
+const NAKSHATRAS_HI = [
+  "अश्विनी", "भरणी", "कृत्तिका", "रोहिणी", "मृगशिरा", "आर्द्रा", "पुनर्वसु", "पुष्य", "आश्लेषा",
+  "मघा", "पूर्वा फाल्गुनी", "उत्तरा फाल्गुनी", "हस्त", "चित्रा", "स्वाति", "विशाखा", "अनुराधा", "ज्येष्ठा",
+  "मूल", "पूर्वाषाढ़ा", "उत्तराषाढ़ा", "श्रवण", "धनिष्ठा", "शतभिषा", "पूर्वा भाद्रपद", "उत्तरा भाद्रपद", "रेवती",
+];
+
+const VARNA_TABLE: Record<string, number> = {
+  Karka: 1, Vrishchika: 1, Meena: 1,
+  Mesha: 2, Simha: 2, Dhanu: 2,
+  Vrishabha: 3, Kanya: 3, Makara: 3,
+  Mithuna: 4, Tula: 4, Kumbha: 4,
+};
+
+const VASHYA_GROUPS: Record<string, string> = {
+  Mesha: "Chatushpada", Vrishabha: "Chatushpada", Dhanu: "Chatushpada", Makara: "Chatushpada",
+  Mithuna: "Manava", Kanya: "Manava", Tula: "Manava", Kumbha: "Manava",
+  Karka: "Jalachara", Meena: "Jalachara",
+  Simha: "Vanachara",
+  Vrishchika: "Keeta",
+};
+const VASHYA_MATRIX: Record<string, Record<string, number>> = {
+  Chatushpada: { Chatushpada: 2, Manava: 1, Jalachara: 1, Vanachara: 0, Keeta: 0.5 },
+  Manava:      { Chatushpada: 1, Manava: 2, Jalachara: 2, Vanachara: 0, Keeta: 1 },
+  Jalachara:   { Chatushpada: 1, Manava: 2, Jalachara: 2, Vanachara: 1, Keeta: 0.5 },
+  Vanachara:   { Chatushpada: 0, Manava: 0, Jalachara: 1, Vanachara: 2, Keeta: 0.5 },
+  Keeta:       { Chatushpada: 0.5, Manava: 1, Jalachara: 0.5, Vanachara: 0.5, Keeta: 2 },
+};
+
+const YONI_TABLE = [
+  "Horse", "Elephant", "Sheep", "Serpent", "Serpent", "Dog", "Cat", "Sheep", "Cat",
+  "Rat", "Rat", "Cow", "Buffalo", "Tiger", "Buffalo", "Tiger", "Deer", "Deer",
+  "Dog", "Monkey", "Mongoose", "Monkey", "Lion", "Horse", "Lion", "Cow", "Elephant",
+];
+const YONI_ENEMIES: Record<string, string> = {
+  Horse: "Buffalo", Buffalo: "Horse", Elephant: "Lion", Lion: "Elephant",
+  Sheep: "Monkey", Monkey: "Sheep", Serpent: "Mongoose", Mongoose: "Serpent",
+  Dog: "Deer", Deer: "Dog", Cat: "Rat", Rat: "Cat", Cow: "Tiger", Tiger: "Cow",
+};
+
+const GANA_TABLE = [
+  "Deva", "Manushya", "Rakshasa", "Manushya", "Deva", "Manushya", "Deva", "Deva", "Rakshasa",
+  "Rakshasa", "Manushya", "Manushya", "Deva", "Rakshasa", "Deva", "Rakshasa", "Deva", "Rakshasa",
+  "Rakshasa", "Manushya", "Manushya", "Deva", "Rakshasa", "Rakshasa", "Manushya", "Manushya", "Deva",
+];
+
+const NADI_TABLE = [
+  1, 2, 3, 3, 2, 1, 1, 2, 3,
+  3, 2, 1, 1, 2, 3, 3, 2, 1,
+  1, 2, 3, 3, 2, 1, 1, 2, 3,
+];
+
+const FRIENDS: Record<string, string[]> = {
+  Sun: ["Moon", "Mars", "Jupiter"],
+  Moon: ["Sun", "Mercury"],
+  Mars: ["Sun", "Moon", "Jupiter"],
+  Mercury: ["Sun", "Venus"],
+  Jupiter: ["Sun", "Moon", "Mars"],
+  Venus: ["Mercury", "Saturn"],
+  Saturn: ["Mercury", "Venus"],
+};
+const PLANET_ENEMIES: Record<string, string[]> = {
+  Sun: ["Venus", "Saturn"], Moon: [], Mars: ["Mercury"], Mercury: ["Moon"],
+  Jupiter: ["Mercury", "Venus"], Venus: ["Sun", "Moon"], Saturn: ["Sun", "Moon", "Mars"],
+};
+
+const MARS_OWN_SIGNS = ["Mesha", "Vrishchika", "Makara"]; // Aries, Scorpio, Capricorn(exalt)
+const MANGLIK_HOUSES = [1, 4, 7, 8, 12];
+
+// ==========================================
+// 2. ASTRONOMY
+// ==========================================
+
+function getJulianDay(date: Date): number {
+  return date.getTime() / 86400000 + 2440587.5;
 }
 
-// ============================================================
-// 2. DETERMINISTIC HASH (same input = same score)
-// ============================================================
-function getHashScore(str: string, max: number): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
+function getAyanamsa(date: Date): number {
+  const jd = getJulianDay(date);
+  const years = (jd - 2451545.0) / 365.25;
+  return 23.85305 + years * 0.013969;
+}
+
+function getObliquityRad(date: Date): number {
+  const jd = getJulianDay(date);
+  const T = (jd - 2451545.0) / 36525;
+  const epsDeg =
+    23.4392911111 - (46.815 * T + 0.00059 * T * T - 0.001813 * T * T * T) / 3600;
+  return epsDeg * Math.PI / 180;
+}
+
+function getTropicalLongitude(planet: Body, date: Date): number {
+  const time = AstroTime.FromDate(date);
+  const vec = GeoVector(planet, time, true);
+  const rot = Rotation_EQD_ECT(time);
+  const ecl = RotateVector(rot, vec);
+  return ((Math.atan2(ecl.y, ecl.x) * 180) / Math.PI + 360) % 360;
+}
+
+function getSiderealLongitude(planet: Body, date: Date): number {
+  return (getTropicalLongitude(planet, date) - getAyanamsa(date) + 360) % 360;
+}
+
+/**
+ * Sidereal Ascendant (Lagna) longitude in degrees (0..360).
+ * Formula: ASC_tropical = atan2( cos(RAMC),
+ *                              -( sin(RAMC)*cos(ε) + tan(φ)*sin(ε) ) )
+ * then subtract Lahiri ayanamsa.
+ */
+function getAscendant(date: Date, lat: number, lon: number): number {
+  const time = AstroTime.FromDate(date);
+  const gastHours = SiderealTime(time);          // Greenwich Apparent Sidereal Time
+  let lstHours = gastHours + lon / 15;           // local sidereal time (lon +ve = east)
+  lstHours = ((lstHours % 24) + 24) % 24;
+  const ramc = (lstHours * 15) * Math.PI / 180;  // RAMC in radians
+  const eps = getObliquityRad(date);
+  const phi = lat * Math.PI / 180;
+
+  const y = Math.cos(ramc);
+  const x = -(Math.sin(ramc) * Math.cos(eps) + Math.tan(phi) * Math.sin(eps));
+  let ascTrop = (Math.atan2(y, x) * 180) / Math.PI;
+  ascTrop = (ascTrop + 360) % 360;
+
+  return (ascTrop - getAyanamsa(date) + 360) % 360;
+}
+
+function isRetrograde(planet: Body, date: Date): boolean {
+  const lon1 = getTropicalLongitude(planet, date);
+  const lon2 = getTropicalLongitude(planet, new Date(date.getTime() + 86400000));
+  let diff = lon2 - lon1;
+  if (diff > 180) diff -= 360;
+  if (diff < -180) diff += 360;
+  return diff < 0;
+}
+
+const getRashiIndex = (lon: number) => Math.floor(lon / 30);
+const getNakshatraIndex = (lon: number) => Math.floor(lon / (360 / 27));
+const getPada = (lon: number) => Math.floor((lon % (360 / 27)) / (360 / 108)) + 1;
+const getDegreeInRashi = (lon: number) => lon % 30;
+
+// ==========================================
+// 3. MANGLIK ANALYSIS (helper)
+// ==========================================
+
+interface ManglikAnalysis {
+  present: boolean;
+  cancelled: boolean;
+  reason: string;
+  fromLagna: boolean;
+  fromMoon: boolean;
+  lagnaHouse: number;
+  moonHouse: number;
+  marsSign: string;
+}
+
+function analyzeManglik(
+  marsLon: number,
+  moonLon: number,
+  jupLon: number,
+  marsRetro: boolean,
+  lagnaLon: number | null,
+): ManglikAnalysis {
+  const marsRashi = getRashiIndex(marsLon);
+  const marsSign = RASHIS[marsRashi];
+
+  // 1) From Lagna (primary)
+  let lagnaHouse = 0;
+  let fromLagna = false;
+  if (lagnaLon !== null) {
+    lagnaHouse = ((marsRashi - getRashiIndex(lagnaLon) + 12) % 12) + 1;
+    fromLagna = MANGLIK_HOUSES.includes(lagnaHouse);
   }
-  return Math.abs(hash) % (max + 1);
-}
 
-// ============================================================
-// 3. TYPES
-// ============================================================
-type LangKey = "hi" | "hinglish" | "en" | "te" | "ta" | "kn" | "bn" | "mr" | "gu" | "ml";
+  // 2) From Moon (secondary — Chandra Kundli)
+  const moonHouse = ((marsRashi - getRashiIndex(moonLon) + 12) % 12) + 1;
+  const fromMoon = MANGLIK_HOUSES.includes(moonHouse);
 
-interface DoshaMessages {
-  manglikPresent: string;
-  manglikCancelled: string;
-  nadiPresent: string;
-  nadiCancelled: string;
-  bhakootPresent: string;
-  bhakootCancelled: string;
-  safe: string;
-  lowScore: string;
-}
+  const present = fromLagna || fromMoon;
 
-interface GeneralMessages {
-  soulSummary: string; // supports {boy} and {girl} placeholders
-  strengths: string[];
-  attentionAreas: string[];
-  practicalAdvice: string[];
-  nextMuhurat: string;
-  nextDasha: string;
-  nextChat: string;
-  nextPdf: string;
-  disclaimer: string;
-}
-
-// ============================================================
-// 4. DOSHA MESSAGES — 10 languages, SOFT + REASSURANCE
-// ============================================================
-const DOSHA_MSGS: Record<LangKey, DoshaMessages> = {
-  hi: {
-    manglikPresent: "मांगलिक स्थिति है, पर यह अकेला फैसला नहीं है। चंद्रमा और सप्तम भाव मिलकर रिश्ते को सहज बना रहे हैं। सरल उपाय: साथ में हनुमान चालीसा पढ़ें, मंगलवार का व्रत रखें।",
-    manglikCancelled: "मांगलिक स्थिति है, पर गुरु की दृष्टि से इसका प्रभाव शांत हो रहा है। ✅ कुंडली इस दोष से काफी सुरक्षित है।",
-    nadiPresent: "नाड़ी में थोड़ा अंतर है, लेकिन कई मामलों में यह उपाय और सही दशा से संतुलित हो जाता है। सरल उपाय: हर सोमवार मिलकर शिव जी को जल अर्पित करें।",
-    nadiCancelled: "नाड़ी में थोड़ा अंतर है, पर ग्रहों की मित्रता से यह कट रहा है। ✅ शुभ संकेत।",
-    bhakootPresent: "भकूट में थोड़ी असामंजस्य है — आर्थिक मामलों में पारदर्शिता और आपसी समझ रखें। एक छोटी आदत: महीने में एक बार खुलकर बजट चर्चा रिश्ते को और मजबूत करेगी।",
-    bhakootCancelled: "भकूट में थोड़ी असामंजस्य है, पर ग्रह मैत्री मजबूत होने से यह कट रहा है। ✅ स्थिति सुरक्षित है।",
-    safe: "मिलान अच्छा है। कुछ सूक्ष्म बातें हैं जिन्हें समझकर रिश्ते को और सहज बनाया जा सकता है — कोई बड़ी रुकावट नहीं है।",
-    lowScore: "गुण कम हैं, पर सिर्फ 36 गुण से विवाह का फैसला नहीं होता। चंद्रमा (मन), सप्तम भाव और दशा भी देखना जरूरी है — इनकी गहरी जांच के लिए वरिष्ठ ज्योतिषी से बात करें। पहली चैट FREE है।",
-  },
-  hinglish: {
-    manglikPresent: "Manglik sthiti hai, par yeh akela faisla nahi hai. Chandra aur Saptam bhav milkar rishte ko sahaj bana rahe hain. Saral upay: saath mein Hanuman Chalisa padhein, Mangalvar ka vrat rakhein.",
-    manglikCancelled: "Manglik sthiti hai, par Guru ki drishti se iska asar shaant ho raha hai. ✅ Kundli is dosh se kaafi surakshit hai.",
-    nadiPresent: "Nadi mein thoda antar hai, lekin kai maamlon mein yeh upay aur sahi dasha se santulit ho jata hai. Saral upay: har Somvar milkar Shiv ji ko jal arpit karein.",
-    nadiCancelled: "Nadi mein thoda antar hai, par grahon ki mitrata se yeh kat raha hai. ✅ Shubh sanket.",
-    bhakootPresent: "Bhakoot mein thodi asamanjasya hai — aarthik maamlon mein pardarshita aur aapas ki samajh rakhein. Ek chhoti aadat: mahine mein ek baar khulkar budget charcha rishte ko aur mazboot karegi.",
-    bhakootCancelled: "Bhakoot mein thodi asamanjasya hai, par graha maitri mazboot hone se yeh kat raha hai. ✅ Sthiti surakshit hai.",
-    safe: "Milan acha hai. Kuch sookshma baatein hain jinhe samajhkar rishte ko aur sahaj banaya ja sakta hai — koi badi rukawat nahi hai.",
-    lowScore: "Gun kam hain, par sirf 36 gun se vivah ka faisla nahi hota. Chandra (man), Saptam bhav aur dasha bhi dekhna zaroori hai — inki gehri jaanch ke liye senior astrologer se baat karein. Pehli chat FREE hai.",
-  },
-  en: {
-    manglikPresent: "A Manglik placement is present, but it is not the only factor. Moon and the 7th house together keep the relationship balanced. Simple remedy: recite Hanuman Chalisa together, observe Tuesday fast.",
-    manglikCancelled: "A Manglik placement is present, but Jupiter's aspect is calming its effect. ✅ The chart is largely protected from this dosha.",
-    nadiPresent: "There is a slight Nadi difference, but in many cases it balances out with remedies and the right dasha. Simple remedy: offer water to Shiv ji together every Monday.",
-    nadiCancelled: "There is a slight Nadi difference, but planetary friendship is cancelling it. ✅ Auspicious sign.",
-    bhakootPresent: "There is some Bhakoot disharmony — keep financial matters transparent and communicate openly. A small habit: a monthly budget discussion will strengthen the relationship.",
-    bhakootCancelled: "There is some Bhakoot disharmony, but strong Graha Maitri is cancelling it. ✅ Position is safe.",
-    safe: "The match is good. There are some subtle points to understand which can make the relationship even smoother — no major blockage.",
-    lowScore: "The score is low, but 36 guna alone does not decide marriage. Moon (mind), 7th house, and dasha must also be seen — talk to a senior astrologer for a deeper analysis. First chat is FREE.",
-  },
-  te: {
-    manglikPresent: "మాంగ్లిక్ స్థితి ఉంది, కానీ ఇది ఒక్కటే నిర్ణయం కాదు. చంద్రుడు మరియు సప్తమ భావం కలిసి సంబంధాన్ని సమతుల్యం చేస్తున్నాయి. సులభ పరిహారం: కలిసి హనుమాన్ చాలీసా చదవండి, మంగళవారం ఉపవాసం ఉండండి.",
-    manglikCancelled: "మాంగ్లిక్ స్థితి ఉంది, కానీ గురు దృష్టి వల్ల దాని ప్రభావం శాంతించింది. ✅ జాతకం ఈ దోషం నుండి రక్షించబడింది.",
-    nadiPresent: "నాడిలో కొద్దిగా భేదం ఉంది, కానీ చాలా సందర్భాలలో ఇది పరిహారాలు మరియు సరైన దశతో సమతుల్యమవుతుంది. సులభ పరిహారం: ప్రతి సోమవారం కలిసి శివుడికి నీరు సమర్పించండి.",
-    nadiCancelled: "నాడిలో కొద్దిగా భేదం ఉంది, కానీ గ్రహ స్నేహం వల్ల ఇది తొలగిపోతోంది. ✅ శుభ సంకేతం.",
-    bhakootPresent: "భకూట్లో కొంత అసమన్వయం ఉంది — ఆర్థిక విషయాల్లో పారదర్శకత మరియు పరస్పర అవగాహన ఉంచండి. చిన్న అలవాటు: నెలకోసారి బడ్జెట్ చర్చ సంబంధాన్ని బలపరుస్తుంది.",
-    bhakootCancelled: "భకూట్లో కొంత అసమన్వయం ఉంది, కానీ గ్రహ మైత్రి బలంగా ఉండటం వల్ల ఇది తొలగిపోతోంది. ✅ స్థితి సురక్షితం.",
-    safe: "మ్యాచ్ బాగుంది. కొన్ని సూక్ష్మ విషయాలు అర్థం చేసుకుంటే సంబంధం మరింత సులభమవుతుంది — పెద్ద అడ్డంకి ఏదీ లేదు.",
-    lowScore: "స్కోరు తక్కువగా ఉంది, కానీ 36 గుణాలు మాత్రమే వివాహాన్ని నిర్ణయించవు. చంద్రుడు, సప్తమ భావం మరియు దశ కూడా చూడాలి — లోతైన విశ్లేషణ కోసం సీనియర్ జ్యోతిష్యుడిని సంప్రదించండి. మొదటి చాట్ FREE.",
-  },
-  ta: {
-    manglikPresent: "மாங்கலிக் நிலை உள்ளது, ஆனால் இது ஒரே முடிவு அல்ல. சந்திரன் மற்றும் சப்தம பாவம் சேர்ந்து உறவை சமநிலைப்படுத்துகின்றன. எளிய பரிகாரம்: ஒன்றாக ஹனுமான் சாலிசா படியுங்கள், செவ்வாய்க்கிழமை விரதம் இருங்கள்.",
-    manglikCancelled: "மாங்கலிக் நிலை உள்ளது, ஆனால் குரு பார்வையால் அதன் தாக்கம் அமைதியடைந்துள்ளது. ✅ ஜாதகம் இந்த தோஷத்திலிருந்து பாதுகாக்கப்பட்டுள்ளது.",
-    nadiPresent: "நாடியில் சிறிது வேறுபாடு உள்ளது, ஆனால் பல சந்தர்ப்பங்களில் பரிகாரங்கள் மற்றும் சரியான தசையால் சமநிலைப்படும். எளிய பரிகாரம்: திங்கட்கிழமை ஒன்றாக சிவனுக்கு நீர் சமர்ப்பியுங்கள்.",
-    nadiCancelled: "நாடியில் சிறிது வேறுபாடு உள்ளது, ஆனால் கிரக நட்பால் இது நீங்குகிறது. ✅ சுப அறிகுறி.",
-    bhakootPresent: "பகூட்டில் சிறிது ஒற்றுமையின்மை உள்ளது — நிதி விஷயங்களில் வெளிப்படைத்தன்மை மற்றும் பரஸ்பர புரிதல் வையுங்கள். சிறிய பழக்கம்: மாதம் ஒருமுறை பட்ஜெட் கலந்துரையாடல் உறவை வலுப்படுத்தும்.",
-    bhakootCancelled: "பகூட்டில் சிறிது ஒற்றுமையின்மை உள்ளது, ஆனால் வலுவான கிரக மைத்ரியால் இது நீங்குகிறது. ✅ நிலை பாதுகாப்பானது.",
-    safe: "பொருத்தம் நல்லது. சில நுட்பமான விஷயங்களை புரிந்துகொண்டால் உறவு இன்னும் எளிதாகும் — பெரிய தடை எதுவும் இல்லை.",
-    lowScore: "மதிப்பெண் குறைவாக உள்ளது, ஆனால் 36 குணங்கள் மட்டும் திருமணத்தை தீர்மானிக்காது. சந்திரன், சப்தம பாவம் மற்றும் தசையும் பார்க்க வேண்டும் — ஆழமான பகுப்பாய்வுக்கு மூத்த ஜோதிடரை அணுகவும். முதல் அரட்டை FREE.",
-  },
-  kn: {
-    manglikPresent: "ಮಾಂಗ್ಲಿಕ್ ಸ್ಥಿತಿ ಇದೆ, ಆದರೆ ಇದು ಒಂದೇ ನಿರ್ಧಾರವಲ್ಲ. ಚಂದ್ರ ಮತ್ತು ಸಪ್ತಮ ಭಾವ ಸೇರಿ ಸಂಬಂಧವನ್ನು ಸಮತೋಲನಗೊಳಿಸುತ್ತವೆ. ಸರಳ ಪರಿಹಾರ: ಒಟ್ಟಿಗೆ ಹನುಮಾನ್ ಚಾಲೀಸಾ ಪಠಿಸಿ, ಮಂಗಳವಾರ ಉಪವಾಸ ಮಾಡಿ.",
-    manglikCancelled: "ಮಾಂಗ್ಲಿಕ್ ಸ್ಥಿತಿ ಇದೆ, ಆದರೆ ಗುರು ದೃಷ್ಟಿಯಿಂದ ಅದರ ಪ್ರಭಾವ ಶಾಂತವಾಗಿದೆ. ✅ ಜಾತಕ ಈ ದೋಷದಿಂದ ರಕ್ಷಿಸಲ್ಪಟ್ಟಿದೆ.",
-    nadiPresent: "ನಾಡಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ವ್ಯತ್ಯಾಸವಿದೆ, ಆದರೆ ಅನೇಕ ಸಂದರ್ಭಗಳಲ್ಲಿ ಪರಿಹಾರಗಳು ಮತ್ತು ಸರಿಯಾದ ದಶೆಯಿಂದ ಸಮತೋಲನಗೊಳ್ಳುತ್ತದೆ. ಸರಳ ಪರಿಹಾರ: ಪ್ರತಿ ಸೋಮವಾರ ಒಟ್ಟಿಗೆ ಶಿವನಿಗೆ ನೀರು ಅರ್ಪಿಸಿ.",
-    nadiCancelled: "ನಾಡಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ವ್ಯತ್ಯಾಸವಿದೆ, ಆದರೆ ಗ್ರಹ ಸ್ನೇಹದಿಂದ ಇದು ತೊಲಗುತ್ತಿದೆ. ✅ ಶುಭ ಸೂಚನೆ.",
-    bhakootPresent: "ಭಕೂಟ್‌ನಲ್ಲಿ ಸ್ವಲ್ಪ ಅಸಾಮರಸ್ಯವಿದೆ — ಆರ್ಥಿಕ ವಿಷಯಗಳಲ್ಲಿ ಪಾರದರ್ಶಕತೆ ಮತ್ತು ಪರಸ್ಪರ ತಿಳುವಳಿಕೆ ಇಟ್ಟುಕೊಳ್ಳಿ. ಸಣ್ಣ ಅಭ್ಯಾಸ: ತಿಂಗಳಿಗೊಮ್ಮೆ ಬಜೆಟ್ ಚರ್ಚೆ ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.",
-    bhakootCancelled: "ಭಕೂಟ್‌ನಲ್ಲಿ ಸ್ವಲ್ಪ ಅಸಾಮರಸ್ಯವಿದೆ, ಆದರೆ ಬಲವಾದ ಗ್ರಹ ಮೈತ್ರಿಯಿಂದ ಇದು ತೊಲಗುತ್ತಿದೆ. ✅ ಸ್ಥಿತಿ ಸುರಕ್ಷಿತ.",
-    safe: "ಹೊಂದಾಣಿಕೆ ಚೆನ್ನಾಗಿದೆ. ಕೆಲವು ಸೂಕ್ಷ್ಮ ಅಂಶಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಂಡರೆ ಸಂಬಂಧ ಇನ್ನಷ್ಟು ಸುಲಭವಾಗುತ್ತದೆ — ದೊಡ್ಡ ತಡೆ ಯಾವುದೂ ಇಲ್ಲ.",
-    lowScore: "ಸ್ಕೋರ್ ಕಡಿಮೆಯಿದೆ, ಆದರೆ 36 ಗುಣಗಳು ಮಾತ್ರ ವಿವಾಹವನ್ನು ನಿರ್ಧರಿಸುವುದಿಲ್ಲ. ಚಂದ್ರ, ಸಪ್ತಮ ಭಾವ ಮತ್ತು ದಶೆಯನ್ನೂ ನೋಡಬೇಕು — ಆಳವಾದ ವಿಶ್ಲೇಷಣೆಗಾಗಿ ಹಿರಿಯ ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ. ಮೊದಲ ಚಾಟ್ FREE.",
-  },
-  bn: {
-    manglikPresent: "মাঙ্গলিক অবস্থা আছে, তবে এটি একমাত্র সিদ্ধান্ত নয়। চন্দ্র ও সপ্তম ভাব মিলে সম্পর্ককে ভারসাম্যপূর্ণ রাখছে। সহজ প্রতিকার: একসাথে হনুমান চালিশা পড়ুন, মঙ্গলবার উপবাস রাখুন।",
-    manglikCancelled: "মাঙ্গলিক অবস্থা আছে, তবে গুরু দৃষ্টিতে এর প্রভাব শান্ত হচ্ছে। ✅ কুণ্ডলী এই দোষ থেকে সুরক্ষিত।",
-    nadiPresent: "নাড়িতে সামান্য পার্থক্য আছে, তবে অনেক ক্ষেত্রে প্রতিকার ও সঠিক দশায় এটি ভারসাম্যপূর্ণ হয়। সহজ প্রতিকার: প্রতি সোমবার একসাথে শিবকে জল অর্পণ করুন।",
-    nadiCancelled: "নাড়িতে সামান্য পার্থক্য আছে, তবে গ্রহ বন্ধুত্বে এটি কেটে যাচ্ছে। ✅ শুভ সংকেত।",
-    bhakootPresent: "ভকূটে সামান্য অসামঞ্জস্য আছে — আর্থিক বিষয়ে স্বচ্ছতা ও পারস্পরিক বোঝাপড়া রাখুন। ছোট অভ্যাস: মাসে একবার বাজেট আলোচনা সম্পর্ক আরও মজবুত করবে।",
-    bhakootCancelled: "ভকূটে সামান্য অসামঞ্জস্য আছে, তবে শক্তিশালী গ্রহ মৈত্রীর কারণে এটি কেটে যাচ্ছে। ✅ অবস্থা সুরক্ষিত।",
-    safe: "মিলন ভালো। কিছু সূক্ষ্ম বিষয় বুঝে নিলে সম্পর্ক আরও সহজ হবে — বড় কোনো বাধা নেই।",
-    lowScore: "স্কোর কম, তবে শুধু ৩৬ গুণে বিবাহ নির্ধারিত হয় না। চন্দ্র, সপ্তম ভাব ও দশাও দেখতে হবে — গভীর বিশ্লেষণের জন্য সিনিয়র জ্যোতিষীর সাথে কথা বলুন। প্রথম চ্যাট FREE।",
-  },
-  mr: {
-    manglikPresent: "मांगलिक स्थिती आहे, पण हा एकमेव निर्णय नाही. चंद्र आणि सप्तम भाव मिळून नातं संतुलित ठेवत आहेत. सोपा उपाय: एकत्र हनुमान चालीसा वाचा, मंगळवारी उपवास करा.",
-    manglikCancelled: "मांगलिक स्थिती आहे, पण गुरू दृष्टीने तिचा प्रभाव शांत होत आहे. ✅ कुंडली या दोषापासून संरक्षित आहे.",
-    nadiPresent: "नाडीत थोडा फरक आहे, पण बऱ्याच प्रसंगी उपाय आणि योग्य दशेने तो संतुलित होतो. सोपा उपाय: दर सोमवारी एकत्र शिवाला जल अर्पण करा.",
-    nadiCancelled: "नाडीत थोडा फरक आहे, पण ग्रह मैत्रीमुळे तो कटत आहे. ✅ शुभ संकेत.",
-    bhakootPresent: "भकूटमध्ये थोडी असामंजस्यता आहे — आर्थिक बाबतीत पारदर्शकता आणि परस्पर समज ठेवा. छोटी सवय: महिन्यातून एकदा बजेट चर्चा नातं अधिक मजबूत करेल.",
-    bhakootCancelled: "भकूटमध्ये थोडी असामंजस्यता आहे, पण मजबूत ग्रह मैत्रीमुळे ती कटत आहे. ✅ स्थिती सुरक्षित.",
-    safe: "मिलन चांगले आहे. काही सूक्ष्म गोष्टी समजून घेतल्यास नातं अधिक सोपं होईल — मोठा अडथळा नाही.",
-    lowScore: "गुण कमी आहेत, पण फक्त ३६ गुणांवरून विवाह ठरत नाही. चंद्र, सप्तम भाव आणि दशाही पाहणे आवश्यक आहे — सखोल विश्लेषणासाठी वरिष्ठ ज्योतिषांशी बोला. पहिली चॅट FREE.",
-  },
-  gu: {
-    manglikPresent: "માંગલિક સ્થિતિ છે, પણ આ એકમાત્ર નિર્ણય નથી. ચંદ્ર અને સપ્તમ ભાવ મળીને સંબંધ સંતુલિત રાખે છે. સરળ ઉપાય: સાથે હનુમાન ચાલીસા પઢો, મંગળવારે ઉપવાસ રાખો.",
-    manglikCancelled: "માંગલિક સ્થિતિ છે, પણ ગુરુ દૃષ્ટિથી તેની અસર શાંત થઈ રહી છે. ✅ કુંડળી આ દોષથી સુરક્ષિત છે.",
-    nadiPresent: "નાડીમાં થોડો ફરક છે, પણ ઘણા કિસ્સાઓમાં ઉપાય અને યોગ્ય દશાથી તે સંતુલિત થાય છે. સરળ ઉપાય: દર સોમવારે સાથે શિવજીને જળ અર્પણ કરો.",
-    nadiCancelled: "નાડીમાં થોડો ફરક છે, પણ ગ્રહ મૈત્રીથી તે કપાઈ રહ્યો છે. ✅ શુભ સંકેત.",
-    bhakootPresent: "ભકૂટમાં થોડી અસામંજસ્ય છે — આર્થિક બાબતોમાં પારદર્શિતા અને પરસ્પર સમજ રાખો. નાની આદત: મહિનામાં એક વાર બજેટ ચર્ચા સંબંધ વધુ મજબૂત કરશે.",
-    bhakootCancelled: "ભકૂટમાં થોડી અસામંજસ્ય છે, પણ મજબૂત ગ્રહ મૈત્રીથી તે કપાઈ રહી છે. ✅ સ્થિતિ સુરક્ષિત.",
-    safe: "મેળાપ સારો છે. થોડી સૂક્ષ્મ બાબતો સમજી લેવાથી સંબંધ વધુ સરળ બનશે — કોઈ મોટો અવરોધ નથી.",
-    lowScore: "સ્કોર ઓછો છે, પણ ફક્ત 36 ગુણથી લગ્ન નક્કી થતા નથી. ચંદ્ર, સપ્તમ ભાવ અને દશા પણ જોવી જરૂરી છે — ઊંડાણપૂર્વક વિશ્લેષણ માટે વરિષ્ઠ જ્યોતિષી સાથે વાત કરો. પ્રથમ ચેટ FREE.",
-  },
-  ml: {
-    manglikPresent: "മാംഗ്ലിക് സ്ഥിതി ഉണ്ട്, പക്ഷേ ഇത് ഒരേയൊരു തീരുമാനമല്ല. ചന്ദ്രനും സപ്തമ ഭാവവും ചേർന്ന് ബന്ധം സന്തുലിതമായി നിലനിർത്തുന്നു. ലളിത പരിഹാരം: ഒരുമിച്ച് ഹനുമാൻ ചാലീസ പാരായണം ചെയ്യുക, ചൊവ്വാഴ്ച ഉപവാസം ആചരിക്കുക.",
-    manglikCancelled: "മാംഗ്ലിക് സ്ഥിതി ഉണ്ട്, പക്ഷേ ഗുരു ദൃഷ്ടിയാൽ അതിന്റെ സ്വാധീനം ശാന്തമാകുന്നു. ✅ ജാതകം ഈ ദോഷത്തിൽ നിന്ന് സംരക്ഷിതമാണ്.",
-    nadiPresent: "നാഡിയിൽ ചെറിയ വ്യത്യാസമുണ്ട്, പക്ഷേ പലപ്പോഴും പരിഹാരങ്ങളും ശരിയായ ദശയും കൊണ്ട് ഇത് സന്തുലിതമാകും. ലളിത പരിഹാരം: എല്ലാ തിങ്കളാഴ്ചയും ഒരുമിച്ച് ശിവന് ജലം സമർപ്പിക്കുക.",
-    nadiCancelled: "നാഡിയിൽ ചെറിയ വ്യത്യാസമുണ്ട്, പക്ഷേ ഗ്രഹ സൗഹൃദം കൊണ്ട് ഇത് മാറുന്നു. ✅ ശുഭ സൂചന.",
-    bhakootPresent: "ഭകൂട്ടിൽ കുറച്ച് അസംവാദമുണ്ട് — സാമ്പത്തിക കാര്യങ്ങളിൽ സുതാര്യതയും പരസ്പര ധാരണയും പാലിക്കുക. ചെറിയ ശീലം: മാസത്തിൽ ഒരിക്കൽ ബജറ്റ് ചർച്ച ബന്ധം ശക്തമാക്കും.",
-    bhakootCancelled: "ഭകൂട്ടിൽ കുറച്ച് അസംവാദമുണ്ട്, പക്ഷേ ശക്തമായ ഗ്രഹ മൈത്രി കൊണ്ട് ഇത് മാറുന്നു. ✅ സ്ഥിതി സുരക്ഷിതം.",
-    safe: "മാച്ചിംഗ് നല്ലതാണ്. ചില സൂക്ഷ്മ കാര്യങ്ങൾ മനസ്സിലാക്കിയാൽ ബന്ധം കൂടുതൽ എളുപ്പമാകും — വലിയ തടസ്സമില്ല.",
-    lowScore: "സ്കോർ കുറവാണ്, പക്ഷേ 36 ഗുണങ്ങൾ മാത്രം വിവാഹം തീരുമാനിക്കുന്നില്ല. ചന്ദ്രൻ, സപ്തമ ഭാവം, ദശ എന്നിവയും നോക്കണം — ആഴത്തിലുള്ള വിശകലനത്തിന് മുതിർന്ന ജ്യോതിഷിയെ സമീപിക്കുക. ആദ്യ ചാറ്റ് FREE.",
-  },
-};
-
-// ============================================================
-// 5. GENERAL MESSAGES — hi / hinglish / en (others fallback to en)
-// ============================================================
-const GENERAL_MSGS: Record<"hi" | "hinglish" | "en", GeneralMessages> = {
-  hi: {
-    soulSummary: "{boy} और {girl} — मन की समझ अच्छी है, भावनाएं मिलती हैं। थोड़ा संवाद सुधारें तो यह रिश्ता दीर्घकाल तक बना रहेगा।",
-    strengths: [
-      "चंद्रमा की स्थिति से मन की समझ अच्छी है — सुख-दुख बांटने में आसानी।",
-      "ग्रह मैत्री मजबूत है — सोच और मूल्यों में सामंजस्य।",
-      "गण मिलान शुभ है — स्वभाव में तालमेल।",
-      "योनि मिलान सहज है — शारीरिक और मानसिक लय बनी रहती है।",
-      "वश्य और तारा मिलान संतुलित — एक-दूसरे को सहजता से समझ पाते हैं।",
-    ],
-    attentionAreas: [
-      "स्वभाव स्वतंत्र है → थोड़ा स्पेस दें, रिश्ता और मजबूत रहेगा।",
-      "बहस के समय थोड़ा धैर्य — प्रेम बना रहेगा।",
-      "आर्थिक निर्णय साथ लें — विश्वास बढ़ेगा।",
-    ],
-    practicalAdvice: [
-      "हर सोमवार साथ शिव जी को जल अर्पित करें।",
-      "महीने में एक बार आमने-सामने खुलकर बात करें।",
-    ],
-    nextMuhurat: "शुभ विवाह तिथि देखें",
-    nextDasha: "दोनों की वर्तमान दशा जानें",
-    nextChat: "ज्योतिषी से बात करें — पहली चैट FREE",
-    nextPdf: "PDF डाउनलोड करें",
-    disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष सिद्धांतों पर आधारित है। यह व्यक्तिगत मार्गदर्शन है, चिकित्सीय/कानूनी/व्यावसायिक सलाह नहीं। अंतिम निर्णय अपनी समझ और परिवार के साथ लें।",
-  },
-  hinglish: {
-    soulSummary: "{boy} aur {girl} — man ki samajh achi hai, bhavnayein milti hain. Thoda samvad sudharein toh yeh rishta deerghkal tak bana rahega.",
-    strengths: [
-      "Chandra ki sthiti se man ki samajh achi hai — sukh-dukh baantne mein aasani.",
-      "Graha maitri mazboot hai — soch aur values mein samanjasya.",
-      "Gana milan shubh hai — swabhav mein taalmel.",
-      "Yoni milan sahaj hai — sharirik aur manasik lay bani rehti hai.",
-      "Vashya aur Tara milan santulit — ek-doosre ko sahajta se samajh paate hain.",
-    ],
-    attentionAreas: [
-      "Swabhav swatantra hai → thoda space dein, rishta aur mazboot rahega.",
-      "Behes ke samay thoda dhairya — prem bana rahega.",
-      "Aarthik nirnay saath lein — vishwas badhega.",
-    ],
-    practicalAdvice: [
-      "Har Somvar saath Shiv ji ko jal arpit karein.",
-      "Mahine mein ek baar aamne-saamne khulkar baat karein.",
-    ],
-    nextMuhurat: "Shubh Vivah Tithi dekhein",
-    nextDasha: "Dono ki vartaman dasha jaanein",
-    nextChat: "Jyotishi se baat karein — pehli chat FREE",
-    nextPdf: "PDF Download karein",
-    disclaimer: "Yeh report traditional Vedic astrology siddhanton par aadharit hai. Yeh personal guidance hai, medical/legal/professional advice nahi. Final decision apni samajh aur family ke saath lein.",
-  },
-  en: {
-    soulSummary: "{boy} and {girl} — emotional understanding is good, feelings align. With slightly better communication, this bond will last long-term.",
-    strengths: [
-      "Moon placement gives strong emotional understanding — easy to share joys and sorrows.",
-      "Graha Maitri is strong — alignment in thoughts and values.",
-      "Gana match is auspicious — natural temperament harmony.",
-      "Yoni match is smooth — physical and mental rhythm stays aligned.",
-      "Vashya and Tara matches are balanced — you understand each other naturally.",
-    ],
-    attentionAreas: [
-      "Both have independent natures → giving each other space will strengthen the bond.",
-      "A little patience during arguments — love will stay intact.",
-      "Take financial decisions together — trust will grow.",
-    ],
-    practicalAdvice: [
-      "Offer water to Shiv ji together every Monday.",
-      "Have an open face-to-face conversation once a month.",
-    ],
-    nextMuhurat: "Check auspicious wedding date",
-    nextDasha: "Check current dasha for both",
-    nextChat: "Talk to astrologer — first chat FREE",
-    nextPdf: "Download PDF",
-    disclaimer: "This report is based on traditional Vedic astrology principles. It is personal guidance, not medical/legal/professional advice. Take final decisions with your own understanding and family.",
-  },
-};
-
-function getGeneral(lang: LangKey): GeneralMessages {
-  if (lang === "hi" || lang === "hinglish" || lang === "en") return GENERAL_MSGS[lang];
-  return GENERAL_MSGS.en; // fallback for te/ta/kn/bn/mr/gu/ml
-}
-
-// ============================================================
-// 6. POST HANDLER
-// ============================================================
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { boy, girl, language = "hinglish" } = body;
-
-    const lang: LangKey = (["hi","hinglish","en","te","ta","kn","bn","mr","gu","ml"].includes(language)
-      ? language
-      : "hinglish") as LangKey;
-
-    // 1. Validation
-    if (
-      !boy?.name || !boy?.dob || !boy?.time || !boy?.lat ||
-      !girl?.name || !girl?.dob || !girl?.time || !girl?.lat
-    ) {
-      return NextResponse.json(
-        { error: "Kripya dono ki saari janm vivaran (DOB, Time, Place) bharein." },
-        { status: 400 }
-      );
+  // Cancellation checks
+  const cancelReasons: string[] = [];
+  if (present) {
+    if (MARS_OWN_SIGNS.includes(marsSign)) {
+      cancelReasons.push(`मंगल ${marsSign} राशि (स्वराशि/उच्च) में है`);
     }
-
-    // 🔥 2. BILLING CHECK LOGIC START
-    const user = await getUser();
-    if (!user || user.isGuest) {
-      return NextResponse.json({ code: "LOGIN_REQUIRED", error: "Please login to check matching." }, { status: 401 });
+    // Jupiter's drishti: Mars in 1, 5, 7, 9 from Jupiter  (== Jupiter aspects Mars)
+    const jupFromMars = ((getRashiIndex(jupLon) - marsRashi + 12) % 12) + 1;
+    if ([1, 5, 7, 9].includes(jupFromMars)) {
+      cancelReasons.push("गुरु की शुभ दृष्टि मंगल पर है");
     }
-    
-    const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-    if (!userRow) return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (marsRetro) {
+      cancelReasons.push("मंगल वक्री होने से दोष में कमी");
+    }
+  }
 
-    const freeUsed = userRow.freeMatchingUsed || 0;
-    const walletBalance = userRow.walletBalancePaise || 0;
+  const cancelled = present && cancelReasons.length > 0;
 
-    if (freeUsed >= FREE_MATCHING_LIMIT) {
-      if (walletBalance < COST_PER_MATCHING_PAISE) {
-        // Return 402 for Frontend to redirect to wallet
-        return NextResponse.json(
-          { 
-            code: "WALLET_RECHARGE_REQUIRED", 
-            message: "Aapki 2 free matching ki limit khatam ho gayi hai. Kripya wallet recharge karein." 
-          }, 
-          { status: 402 }
-        );
-      } else {
-        // Deduct ₹2
-        await db.update(users)
-          .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_MATCHING_PAISE}` })
-          .where(eq(users.id, user.id));
-      }
+  let reason = "";
+  if (present) {
+    if (cancelled) {
+      reason = `दोष भंग — ${cancelReasons.join(", ")}`;
     } else {
-      // Increment free usage
-      await db.update(users)
-        .set({ freeMatchingUsed: sql`${users.freeMatchingUsed} + 1` })
-        .where(eq(users.id, user.id));
+      const parts: string[] = [];
+      if (fromLagna) parts.push(`लग्न से ${lagnaHouse}वें भाव में`);
+      if (fromMoon) parts.push(`चंद्र से ${moonHouse}वें भाव में`);
+      reason = `मंगल ${parts.join(" व ")}`;
     }
-    // 🔥 BILLING CHECK LOGIC END
+  }
 
-    // 3. Deterministic seed
-    const seed = `${boy.name}_${boy.dob}_${girl.name}_${girl.dob}`
-      .toLowerCase()
-      .replace(/\s+/g, "");
+  return { present, cancelled, reason, fromLagna, fromMoon, lagnaHouse, moonHouse, marsSign };
+}
 
-    // 4. Raw scores
-    const totalScore = 16 + getHashScore(seed, 20); // 16-36
-    const nadiRaw = getHashScore(seed + "_nadi", 8); // 0-8
-    const bhakootRaw = getHashScore(seed + "_bhakoot", 7); // 0-7
-    const grahaMaitri = 3 + getHashScore(seed + "_graha", 2); // 3-5
+// ==========================================
+// 4. MAIN ENGINE
+// ==========================================
 
-    // 5. Dosha presence + cancellation logic (Option A — simplified)
-    const manglikPresent = getHashScore(seed + "_manglik", 10) < 4;
-    const manglikCancelled = manglikPresent && getHashScore(seed + "_manglik_cancel", 10) < 4;
-    
-    const nadiPresent = nadiRaw === 0;
-    const nadiCancelled = nadiPresent && getHashScore(seed + "_nadi_cancel", 10) < 4;
-    
-    const bhakootPresent = bhakootRaw === 0;
-    const bhakootCancelled = bhakootPresent && grahaMaitri >= 4;
+export interface BirthPlace {
+  latitude: number;   // degrees, +ve = North
+  longitude: number;  // degrees, +ve = East
+}
 
-    // 6. Label
-    const label = getScoreLabel(totalScore);
+export function calculateVedicMatching(
+  boyDate: Date,
+  girlDate: Date,
+  boyPlace?: BirthPlace,
+  girlPlace?: BirthPlace,
+) {
+  // -------- A. Planetary positions --------
+  const boyMoonLon = getSiderealLongitude(Body.Moon, boyDate);
+  const girlMoonLon = getSiderealLongitude(Body.Moon, girlDate);
+  const boyMarsLon = getSiderealLongitude(Body.Mars, boyDate);
+  const girlMarsLon = getSiderealLongitude(Body.Mars, girlDate);
+  const boyJupLon  = getSiderealLongitude(Body.Jupiter, boyDate);
+  const girlJupLon = getSiderealLongitude(Body.Jupiter, girlDate);
 
-    // 7. Ashtakoot breakdown
-    const details = [
-      { name: "Varna", score: 1, max: 1, meaning: "वर्ण मिलान — सामाजिक सामंजस्य" },
-      { name: "Vashya", score: 2, max: 2, meaning: "वश्य मिलान — नियंत्रण संतुलन" },
-      { name: "Tara", score: 1 + getHashScore(seed + "_tara", 2), max: 3, meaning: "तारा मिलान — भाग्य सामंजस्य" },
-      { name: "Yoni", score: 2 + getHashScore(seed + "_yoni", 2), max: 4, meaning: "योनि मिलान — शारीरिक लय" },
-      { name: "Graha Maitri", score: grahaMaitri, max: 5, meaning: "ग्रह मैत्री — मानसिक सामंजस्य" },
-      { name: "Gana", score: 4 + getHashScore(seed + "_gana", 2), max: 6, meaning: "गण मिलान — स्वभाव तालमेल" },
-      { name: "Bhakoot", score: bhakootRaw, max: 7, meaning: "भकूट — भावनात्मक स्थिरता" },
-      { name: "Nadi", score: nadiRaw, max: 8, meaning: "नाड़ी — संतान व स्वास्थ्य" },
-    ];
+  const boyMarsRetro = isRetrograde(Body.Mars, boyDate);
+  const girlMarsRetro = isRetrograde(Body.Mars, girlDate);
 
-    // 8. Messages
-    const DOSHA = DOSHA_MSGS[lang] || DOSHA_MSGS.hinglish;
-    const GEN = getGeneral(lang);
+  // Ascendants (only if place provided)
+  const boyLagnaLon =
+    boyPlace ? getAscendant(boyDate, boyPlace.latitude, boyPlace.longitude) : null;
+  const girlLagnaLon =
+    girlPlace ? getAscendant(girlDate, girlPlace.latitude, girlPlace.longitude) : null;
 
-    // 9. Primary message
-    let primaryMessage: string;
-    if (manglikPresent && !manglikCancelled) primaryMessage = DOSHA.manglikPresent;
-    else if (nadiPresent && !nadiCancelled) primaryMessage = DOSHA.nadiPresent;
-    else if (bhakootPresent && !bhakootCancelled) primaryMessage = DOSHA.bhakootPresent;
-    else if (totalScore < 18) primaryMessage = DOSHA.lowScore;
-    else primaryMessage = DOSHA.safe;
+  // -------- B. Rashis & Nakshatras --------
+  const boyRashi = getRashiIndex(boyMoonLon);
+  const girlRashi = getRashiIndex(girlMoonLon);
+  const boyNak = getNakshatraIndex(boyMoonLon);
+  const girlNak = getNakshatraIndex(girlMoonLon);
 
-    // 10. Doshas object
-    const doshas = {
+  // -------- C. 8 Kootas --------
+
+  // 1. Varna
+  const varna = VARNA_TABLE[RASHIS[boyRashi]] <= VARNA_TABLE[RASHIS[girlRashi]] ? 1 : 0;
+
+  // 2. Vashya
+  const bV = VASHYA_GROUPS[RASHIS[boyRashi]];
+  const gV = VASHYA_GROUPS[RASHIS[girlRashi]];
+  const vashya = VASHYA_MATRIX[bV]?.[gV] ?? 1;
+
+  // 3. Tara (diff must be 1..27, then tara = ((diff-1)%9)+1)
+  const taraDiffB2G = ((girlNak - boyNak + 27) % 27) + 1;
+  const taraDiffG2B = ((boyNak - girlNak + 27) % 27) + 1;
+  const isTaraAuspicious = (diff: number) => ![3, 5, 7].includes(((diff - 1) % 9) + 1);
+  const tara =
+    isTaraAuspicious(taraDiffB2G) && isTaraAuspicious(taraDiffG2B) ? 3 : 1.5;
+
+  // 4. Yoni
+  const boyYoni = YONI_TABLE[boyNak];
+  const girlYoni = YONI_TABLE[girlNak];
+  let yoni = 2;
+  if (boyYoni === girlYoni) yoni = 4;
+  else if (YONI_ENEMIES[boyYoni] === girlYoni) yoni = 0;
+
+  // 5. Graha Maitri (uses planetary friendships correctly)
+  const boyLord = RASHI_LORDS[boyRashi];
+  const girlLord = RASHI_LORDS[girlRashi];
+  const bothFriends =
+    FRIENDS[boyLord]?.includes(girlLord) && FRIENDS[girlLord]?.includes(boyLord);
+  const oneFriend =
+    FRIENDS[boyLord]?.includes(girlLord) || FRIENDS[girlLord]?.includes(boyLord);
+  const isEnemy =
+    PLANET_ENEMIES[boyLord]?.includes(girlLord) ||
+    PLANET_ENEMIES[girlLord]?.includes(boyLord);
+
+  let grahaMaitri = 3;
+  if (boyLord === girlLord) grahaMaitri = 5;
+  else if (isEnemy) grahaMaitri = 0;
+  else if (bothFriends) grahaMaitri = 5;
+  else if (oneFriend) grahaMaitri = 4;
+
+  // 6. Gana
+  const boyGana = GANA_TABLE[boyNak];
+  const girlGana = GANA_TABLE[girlNak];
+  let gana = 3;
+  if (boyGana === girlGana) gana = 6;
+  else if (
+    (boyGana === "Deva" && girlGana === "Manushya") ||
+    (boyGana === "Manushya" && girlGana === "Deva")
+  ) gana = 5;
+  else if (
+    (boyGana === "Deva" && girlGana === "Rakshasa") ||
+    (boyGana === "Rakshasa" && girlGana === "Deva")
+  ) gana = 0;
+
+  // 7. Bhakoot — with cancellation rules
+  const bhakootPos = ((girlRashi - boyRashi + 12) % 12) + 1;   // 1..12
+  const isBhakootDoshRaw = [2, 5, 6, 8, 9, 12].includes(bhakootPos);
+  let isBhakootCancelled = false;
+  let bhakootReason = "";
+
+  if (isBhakootDoshRaw) {
+    if (boyLord === girlLord) {
+      isBhakootCancelled = true;
+      bhakootReason = `दोनों राशि स्वामी ${boyLord} हैं — भकूट दोष भंग`;
+    } else if (bothFriends) {
+      isBhakootCancelled = true;
+      bhakootReason = `${boyLord} व ${girlLord} परस्पर मित्र — भकूट दोष भंग`;
+    } else {
+      bhakootReason = `राशि स्थिति ${bhakootPos}-${14 - bhakootPos} — भकूट दोष सक्रिय`;
+    }
+  }
+  const bhakoot = !isBhakootDoshRaw || isBhakootCancelled ? 7 : 0;
+
+  // 8. Nadi
+  const boyNadi = NADI_TABLE[boyNak];
+  const girlNadi = NADI_TABLE[girlNak];
+  let nadi = boyNadi !== girlNadi ? 8 : 0;
+  let isNadiCancelled = false;
+  if (nadi === 0 && boyRashi !== girlRashi) {
+    nadi = 8;
+    isNadiCancelled = true;
+  }
+
+  const totalScore =
+    varna + vashya + tara + yoni + grahaMaitri + gana + bhakoot + nadi;
+
+  // -------- D. Manglik (Lagna + Moon) --------
+  const boyManglik = analyzeManglik(
+    boyMarsLon, boyMoonLon, boyJupLon, boyMarsRetro, boyLagnaLon,
+  );
+  const girlManglik = analyzeManglik(
+    girlMarsLon, girlMoonLon, girlJupLon, girlMarsRetro, girlLagnaLon,
+  );
+
+  const manglikPresent = boyManglik.present || girlManglik.present;
+  let manglikCancelled = false;
+  let manglikReason = "";
+
+  if (boyManglik.present && girlManglik.present) {
+    manglikCancelled = true;
+    manglikReason = "दोनों मांगलिक हैं — परस्पर दोष भंग (शास्त्र सम्मत)";
+  } else if (boyManglik.present) {
+    manglikCancelled = boyManglik.cancelled;
+    manglikReason = `वर — ${boyManglik.reason}`;
+  } else if (girlManglik.present) {
+    manglikCancelled = girlManglik.cancelled;
+    manglikReason = `वधू — ${girlManglik.reason}`;
+  }
+
+  // -------- E. Return --------
+  return {
+    totalScore: Math.round(totalScore * 10) / 10,
+    details: [
+      { name: "Varna",         score: varna,       max: 1, meaning: "वर्ण मिलान — सामाजिक सामंजस्य" },
+      { name: "Vashya",        score: vashya,      max: 2, meaning: "वश्य मिलान — नियंत्रण संतुलन" },
+      { name: "Tara",          score: tara,        max: 3, meaning: "तारा मिलान — भाग्य सामंजस्य" },
+      { name: "Yoni",          score: yoni,        max: 4, meaning: "योनि मिलान — शारीरिक लय" },
+      { name: "Graha Maitri",  score: grahaMaitri, max: 5, meaning: "ग्रह मैत्री — मानसिक सामंजस्य" },
+      { name: "Gana",          score: gana,        max: 6, meaning: "गण मिलान — स्वभाव तालमेल" },
+      { name: "Bhakoot",       score: bhakoot,     max: 7, meaning: "भकूट — भावनात्मक स्थिरता" },
+      { name: "Nadi",          score: nadi,        max: 8, meaning: "नाड़ी — संतान व स्वास्थ्य" },
+    ],
+    doshas: {
       manglik: {
         present: manglikPresent,
         cancelled: manglikCancelled,
-        reason: !manglikPresent ? "" : manglikCancelled ? DOSHA.manglikCancelled : DOSHA.manglikPresent,
+        reason: manglikReason,
       },
       nadi: {
-        present: nadiPresent,
-        cancelled: nadiCancelled,
-        reason: !nadiPresent ? "" : nadiCancelled ? DOSHA.nadiCancelled : DOSHA.nadiPresent,
+        present: boyNadi === girlNadi,
+        cancelled: isNadiCancelled,
+        reason: boyNadi === girlNadi
+          ? isNadiCancelled
+            ? "Nadi समान लेकिन भिन्न राशि के कारण दोष भंग"
+            : "Nadi दोष — दोनों की नाड़ी समान"
+          : "",
       },
       bhakoot: {
-        present: bhakootPresent,
-        cancelled: bhakootCancelled,
-        reason: !bhakootPresent ? "" : bhakootCancelled ? DOSHA.bhakootCancelled : DOSHA.bhakootPresent,
+        present: isBhakootDoshRaw,
+        cancelled: isBhakootCancelled,
+        reason: bhakootReason,
       },
-    };
-
-    // 11. Strengths (3 from pool)
-    const sStart = getHashScore(seed + "_sStart", GEN.strengths.length - 1);
-    const strengths = [
-      GEN.strengths[sStart % GEN.strengths.length],
-      GEN.strengths[(sStart + 1) % GEN.strengths.length],
-      GEN.strengths[(sStart + 2) % GEN.strengths.length],
-    ];
-
-    // 12. Attention areas (3 from pool)
-    const aStart = getHashScore(seed + "_aStart", GEN.attentionAreas.length - 1);
-    const attentionAreas = [
-      GEN.attentionAreas[aStart % GEN.attentionAreas.length],
-      GEN.attentionAreas[(aStart + 1) % GEN.attentionAreas.length],
-      GEN.attentionAreas[(aStart + 2) % GEN.attentionAreas.length],
-    ];
-
-    // 13. Practical advice (2 from pool)
-    const pStart = getHashScore(seed + "_pStart", GEN.practicalAdvice.length - 1);
-    const practicalAdvice = [
-      GEN.practicalAdvice[pStart % GEN.practicalAdvice.length],
-      GEN.practicalAdvice[(pStart + 1) % GEN.practicalAdvice.length],
-    ];
-
-    // 14. Soul summary (with names)
-    const soulSummary = GEN.soulSummary
-      .replace("{boy}", boy.name)
-      .replace("{girl}", girl.name);
-
-    // 15. Contextual next steps
-    const lowScore = totalScore < 25;
-    const nextSteps = lowScore
-      ? [
-          { label: GEN.nextChat, action: "chat" as const, primary: true },
-          { label: GEN.nextMuhurat, action: "muhurat" as const, primary: false },
-          { label: GEN.nextDasha, action: "dasha" as const, primary: false },
-          { label: GEN.nextPdf, action: "pdf" as const, primary: false },
-        ]
-      : [
-          { label: GEN.nextMuhurat, action: "muhurat" as const, primary: true },
-          { label: GEN.nextDasha, action: "dasha" as const, primary: false },
-          { label: GEN.nextPdf, action: "pdf" as const, primary: false },
-          { label: GEN.nextChat, action: "chat" as const, primary: false },
-        ];
-
-    // 16. Backward-compat derived
-    const dangerLevel =
-      (manglikPresent && !manglikCancelled) ||
-      (nadiPresent && !nadiCancelled) ||
-      (bhakootPresent && !bhakootCancelled) ||
-      totalScore < 18
-        ? "warning"
-        : "safe";
-
-    // 17. Simulate processing delay (smooth loading)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    return NextResponse.json({
-      // ✅ NEW SCHEMA
-      score: totalScore,
-      maxScore: 36,
-      label,
-      details,
-      doshas,
-      soulSummary,
-      strengths,
-      attentionAreas,
-      practicalAdvice,
-      nextSteps,
-      disclaimer: GEN.disclaimer,
-      primaryMessage,
-
-      // 🔁 BACKWARD COMPAT (purana frontend turant na toote)
-      totalScore,
-      dangerLevel,
-      fearMessage: primaryMessage, // deprecated: repurposed as soft primary message
-      // Note: `details` array still has `name` field (not renamed to `koot`)
-      // so old frontend works without change.
-    });
-  } catch (error) {
-    console.error("Matching API Error:", error);
-    return NextResponse.json(
-      { error: "Cosmic calculation failed. Please try again." },
-      { status: 500 }
-    );
-  }
+    },
+    boy: {
+      rashi: RASHIS[boyRashi],
+      rashiHi: RASHIS_HI[boyRashi],
+      nakshatra: NAKSHATRAS[boyNak],
+      nakshatraHi: NAKSHATRAS_HI[boyNak],
+      pada: getPada(boyMoonLon),
+      degreeInRashi: Math.round(getDegreeInRashi(boyMoonLon) * 100) / 100,
+      lagna: boyLagnaLon !== null ? RASHIS[getRashiIndex(boyLagnaLon)] : null,
+      lagnaHi: boyLagnaLon !== null ? RASHIS_HI[getRashiIndex(boyLagnaLon)] : null,
+      marsHouse: boyManglik.fromLagna ? boyManglik.lagnaHouse : boyManglik.moonHouse,
+      marsSign: boyManglik.marsSign,
+      isManglik: boyManglik.present,
+      marsRetrograde: boyMarsRetro,
+    },
+    girl: {
+      rashi: RASHIS[girlRashi],
+      rashiHi: RASHIS_HI[girlRashi],
+      nakshatra: NAKSHATRAS[girlNak],
+      nakshatraHi: NAKSHATRAS_HI[girlNak],
+      pada: getPada(girlMoonLon),
+      degreeInRashi: Math.round(getDegreeInRashi(girlMoonLon) * 100) / 100,
+      lagna: girlLagnaLon !== null ? RASHIS[getRashiIndex(girlLagnaLon)] : null,
+      lagnaHi: girlLagnaLon !== null ? RASHIS_HI[getRashiIndex(girlLagnaLon)] : null,
+      marsHouse: girlManglik.fromLagna ? girlManglik.lagnaHouse : girlManglik.moonHouse,
+      marsSign: girlManglik.marsSign,
+      isManglik: girlManglik.present,
+      marsRetrograde: girlMarsRetro,
+    },
+  };
 }
