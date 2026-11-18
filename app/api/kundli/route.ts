@@ -515,7 +515,6 @@ export async function POST(request: Request) {
   }
 
   // ─── Free limit + wallet check ───────────────────────────────────────────
-  // 🔥 FIX: Yahan `as any` laga diya gaya hai taaki Vercel ka TypeScript build fail na ho.
   const freeUsed = (userRow as any).freeKundliUsed || 0;
   const walletBalance = (userRow as any).walletBalancePaise || 0;
 
@@ -533,7 +532,6 @@ export async function POST(request: Request) {
   }
 
   // ─── Compute chart ───────────────────────────────────────────────────────
-  // 🔥 FIX: Yahan `name` aur `date` hata kar `dob` kar diya gaya hai
   let chart: KundliChart;
   try {
     chart = computeChart({
