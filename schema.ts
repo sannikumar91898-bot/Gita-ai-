@@ -1,4 +1,3 @@
-// schema.ts
 import {
   pgTable,
   uuid,
@@ -14,44 +13,52 @@ import {
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  googleId: text("google_id").unique(),
-  email: text("email").unique(),
-  name: text("name"),
-  password: text("password"),
-  language: text("language").notNull().default("en"),
-  isGuest: boolean("is_guest").notNull().default(true),
-  trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
-  premiumUntil: timestamp("premium_until", { withTimezone: true }),
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    googleId: text("google_id").unique(),
+    email: text("email").unique(),
+    name: text("name"),
+    password: text("password"),
+    language: text("language").notNull().default("en"),
+    isGuest: boolean("is_guest").notNull().default(true),
+    trialStartedAt: timestamp("trial_started_at", { withTimezone: true }),
+    premiumUntil: timestamp("premium_until", { withTimezone: true }),
 
-  // Free limits
-  freeMessagesUsed: integer("free_messages_used").notNull().default(0),
-  freePalmScansUsed: integer("free_palm_scans_used").notNull().default(0),
-  freeFaceScansUsed: integer("free_face_scans_used").notNull().default(0),
-  freeKundliUsed: integer("free_kundli_used").notNull().default(0),
-  matchingCount: integer("matching_count").notNull().default(0),
+    // Free limits
+    freeMessagesUsed: integer("free_messages_used").notNull().default(0),
+    freePalmScansUsed: integer("free_palm_scans_used").notNull().default(0),
+    freeFaceScansUsed: integer("free_face_scans_used").notNull().default(0),
+    freeKundliUsed: integer("free_kundli_used").notNull().default(0),
+    matchingCount: integer("matching_count").notNull().default(0),
 
-  // Wallet
-  walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
+    // Wallet
+    walletBalancePaise: integer("wallet_balance_paise").notNull().default(0),
 
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
-  walletBalanceCheck: check(
-    "wallet_balance_check",
-    sql`${table.walletBalancePaise} >= 0`
-  ),
-}));
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    walletBalanceCheck: check(
+      "wallet_balance_check",
+      sql`${table.walletBalancePaise} >= 0`
+    ),
+  })
+);
 
 export const sessions = pgTable("sessions", {
   token: text("token").primaryKey(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const birthDetails = pgTable("birth_details", {
-  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   gender: text("gender").default("Not specified"),
   isBirthTimeUnknown: boolean("is_birth_time_unknown").notNull().default(false),
@@ -67,14 +74,18 @@ export const birthDetails = pgTable("birth_details", {
 
 export const charts = pgTable("charts", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   data: jsonb("data").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const conversations = pgTable("conversations", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("New conversation"),
   topic: text("topic").notNull().default("general"),
   persona: text("persona"),
@@ -84,27 +95,40 @@ export const conversations = pgTable("conversations", {
 
 export const messages = pgTable("messages", {
   id: uuid("id").primaryKey().defaultRandom(),
-  conversationId: uuid("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  conversationId: uuid("conversation_id")
+    .notNull()
+    .references(() => conversations.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
   content: text("content").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const payments = pgTable("payments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  orderId: text("order_id").notNull().unique(),
-  paymentId: text("payment_id").unique(),
-  amountPaise: integer("amount_paise").notNull(),
-  currency: text("currency").notNull().default("INR"),
-  status: text("status").notNull().default("created"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  paidAt: timestamp("paid_at", { withTimezone: true }),
-}, (table) => ({
-  amountCheck: check("amount_check", sql`${table.amountPaise} > 0`),
-  statusCheck: check("status_check", sql`${table.status} IN ('created', 'paid', 'failed')`),
-}));
+export const payments = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    orderId: text("order_id").notNull().unique(),
+    paymentId: text("payment_id").unique(),
+    amountPaise: integer("amount_paise").notNull(),
+    currency: text("currency").notNull().default("INR"),
+    status: text("status").notNull().default("created"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+  },
+  (table) => ({
+    amountCheck: check("amount_check", sql`${table.amountPaise} > 0`),
+    statusCheck: check(
+      "status_check",
+      sql`${table.status} IN ('created', 'paid', 'failed')`
+    ),
+  })
+);
 
 export const webhookEvents = pgTable("webhook_events", {
   eventId: text("event_id").primaryKey(),
@@ -113,7 +137,9 @@ export const webhookEvents = pgTable("webhook_events", {
 
 export const remedies = pgTable("remedies", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description").notNull().default(""),
   category: text("category").notNull().default("general"),
@@ -123,31 +149,41 @@ export const remedies = pgTable("remedies", {
 
 export const palmReadings = pgTable("palm_readings", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   interpretation: text("interpretation").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const aiResponseCache = pgTable("ai_response_cache", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  questionKey: text("question_key").notNull().unique(),
-  originalQuestion: text("original_question").notNull(),
-  aiAnswer: text("ai_answer").notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
-  questionKeyIdx: index("question_key_idx").on(table.questionKey),
-});
+export const aiResponseCache = pgTable(
+  "ai_response_cache",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    questionKey: text("question_key").notNull().unique(),
+    originalQuestion: text("original_question").notNull(),
+    aiAnswer: text("ai_answer").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    questionKeyIdx: index("question_key_idx").on(table.questionKey),
+  })
+);
 
-export const astrologyKnowledgeBase = pgTable("astrology_knowledge_base", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  category: text("category").notNull(),
-  searchKey: text("search_key").notNull().unique(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
-  searchKeyIdx: index("search_key_idx").on(table.searchKey),
-});
+export const astrologyKnowledgeBase = pgTable(
+  "astrology_knowledge_base",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    category: text("category").notNull(),
+    searchKey: text("search_key").notNull().unique(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    searchKeyIdx: index("search_key_idx").on(table.searchKey),
+  })
+);
 
 export const supportTickets = pgTable("support_tickets", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -160,16 +196,20 @@ export const supportTickets = pgTable("support_tickets", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
-export const astrologerReviews = pgTable("astrologer_reviews", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  persona: text("persona").notNull(),
-  reviewerName: text("reviewer_name").notNull(),
-  stars: integer("stars").notNull().default(5),
-  comment: text("comment").notNull(),
-  helpfulCount: integer("helpful_count").notNull().default(0),
-  isApproved: boolean("is_approved").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => ({
-  personaIdx: index("persona_idx").on(table.persona),
-  isApprovedIdx: index("is_approved_idx").on(table.isApproved),
-});
+export const astrologerReviews = pgTable(
+  "astrologer_reviews",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    persona: text("persona").notNull(),
+    reviewerName: text("reviewer_name").notNull(),
+    stars: integer("stars").notNull().default(5),
+    comment: text("comment").notNull(),
+    helpfulCount: integer("helpful_count").notNull().default(0),
+    isApproved: boolean("is_approved").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => ({
+    personaIdx: index("persona_idx").on(table.persona),
+    isApprovedIdx: index("is_approved_idx").on(table.isApproved),
+  })
+);
