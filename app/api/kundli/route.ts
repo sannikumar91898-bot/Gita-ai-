@@ -104,7 +104,7 @@ function getKundliError(
       bad_details: "உங்கள் பிறப்பு விவரங்களைச் சரிபார்க்கவும்.",
       future_date: "பிறந்த தேதி எதிர்காலத்தில் இருக்க முடியாது.",
       place_not_found:
-        "இந்த பிறந்த இடத்தின் இருப்பிடம் கிடைக்கவில்லை. நகரம் மற்றும் மாநிலத்தை தெளிவாக எழுதுங்கள்.",
+        "இந்த பிறந்த இடത്തിന്റെ இருப்பிடம் கிடைக்கவில்லை. நகரம் மற்றும் மாநிலத்தை தெளிவாக எழுதுங்கள்.",
       calc_failed:
         "இந்த பிறப்பு விவரங்களிலிருந்து ஜாதகத்தை கணக்கிட முடியவில்லை.",
       guest_blocked: "ஜாதகத்தை உருவாக்க உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
@@ -582,4 +582,4 @@ export async function POST(request: Request) {
   }
 
   const gender = typeof body.gender === "string" ? body.gender : "other";
-  const isBirthTimeUnk
+  const isBirthTimeU
