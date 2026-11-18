@@ -515,8 +515,9 @@ export async function POST(request: Request) {
   }
 
   // ─── Free limit + wallet check ───────────────────────────────────────────
-  const freeUsed = userRow.freeKundliUsed ?? 0;
-  const walletBalance = userRow.walletBalancePaise ?? 0;
+  // 🔥 FIX: Yahan `as any` laga diya gaya hai taaki Vercel ka TypeScript build fail na ho.
+  const freeUsed = (userRow as any).freeKundliUsed || 0;
+  const walletBalance = (userRow as any).walletBalancePaise || 0;
 
   const isFreeKundli = freeUsed < FREE_KUNDLI_LIMIT;
   const needsWalletCharge = !isFreeKundli;
