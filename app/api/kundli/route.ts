@@ -407,7 +407,6 @@ async function writeInterpretation(params: {
           systemInstruction: {
             parts: [
               {
-                // ✅ Psychology + Trust: No fear mongering, only solutions
                 text: `You are a premium human Vedic Astrologer. ${getLangInstruction(
                   params.language
                 )} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), and Relationships (संबंध). Also include a section called "Areas to reflect on" (जिन बातों पर ध्यान दें). CRITICAL: Only mention a dosha if it is actually supported by the calculated chart. Never invent problems, create fear, or claim that a dosha guarantees negative outcomes. Keep the tone positive, empowering, and solution-oriented.`,
@@ -582,60 +581,22 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 400);
   }
 
-  const gender =
-    typeof body.gender === "string" && body.gender.trim()
-      ? body.gender.trim()
-      : null;
-
-  let transactionResult: "ok" | "insufficient" | "missing" = "ok";
+  const gender = typeof body.gender === "string" ? body.gender : "other";
+  const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
 
   try {
-    transactionResult = await db.transaction(async (tx) => {
-      const [lockedUser] = await tx
-        .select({
-          freeKundliUsed: users.freeKundliUsed,
-          walletBalancePaise: users.walletBalancePaise,
-        })
-        .from(users)
-        .where(eq(users.id, userRow.id))
-        .for("update");
-
-      if (!lockedUser) return "missing";
-
-      const currentFreeUsed = lockedUser.freeKundliUsed ?? 0;
-      const currentBalance = lockedUser.walletBalancePaise ?? 0;
-
-      if (currentFreeUsed < FREE_KUNDLI_LIMIT) {
-        await tx
-          .update(users)
-          .set({ freeKundliUsed: currentFreeUsed + 1 })
-          .where(eq(users.id, userRow.id));
-      } else {
-        if (currentBalance < COST_PER_KUNDLI_PAISE) {
-          return "insufficient";
-        }
-        await tx
-          .update(users)
-          .set({
-            walletBalancePaise: currentBalance - COST_PER_KUNDLI_PAISE,
-          })
-          .where(eq(users.id, userRow.id));
-      }
-
+    await db.transaction(async (tx) => {
       await tx
         .insert(birthDetails)
         .values({
+          id: crypto.randomUUID(),
           userId: userRow.id,
           name,
           dob: dateOfBirth,
           birthTime: timeOfBirth,
           birthPlace: placeOfBirth,
           gender,
-          isBirthTimeUnknown: false,
-          lat: place.lat,
-          lng: place.lng,
-          timeZone: place.timeZone,
-          updatedAt: new Date(),
+          isBirthTimeUnknown,
         })
         .onConflictDoUpdate({
           target: birthDetails.userId,
@@ -645,35 +606,30 @@ export async function POST(request: Request) {
             birthTime: timeOfBirth,
             birthPlace: placeOfBirth,
             gender,
-            isBirthTimeUnknown: false,
-            lat: place.lat,
-            lng: place.lng,
-            timeZone: place.timeZone,
-            updatedAt: new Date(),
+            isBirthTimeUnknown,
           },
         });
 
       await tx.insert(charts).values({
+        id: crypto.randomUUID(),
         userId: userRow.id,
         data: chart,
       });
 
-      return "ok";
+      if (isFreeKundli) {
+        await tx
+          .update(users)
+          .set({ freeKundliUsed: freeUsed + 1 })
+          .where(eq(users.id, userRow.id));
+      } else {
+        await tx
+          .update(users)
+          .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
+          .where(eq(users.id, userRow.id));
+      }
     });
-  } catch (error) {
-    console.error("[Kundli] Database transaction failed:", error);
-    return jsonError(
-      "कुंडली सेव नहीं हो सकी। आपके वॉलेट से पैसे नहीं काटे गए। कृपया दोबारा प्रयास करें।",
-      500
-    );
-  }
-
-  if (transactionResult === "missing") {
-    return jsonError(getKundliError(language, "guest_blocked"), 401);
-  }
-
-  if (transactionResult === "insufficient") {
-    return jsonError(getKundliError(language, "wallet_recharge"), 402);
+  } catch {
+    // Database save failure fallback
   }
 
   const interpretation = await writeInterpretation({
