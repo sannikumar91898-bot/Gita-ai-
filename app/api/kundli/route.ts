@@ -287,7 +287,7 @@ async function resolvePlace(place: string): Promise<PlaceHit | null> {
 function extractText(data: unknown): string {
   if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
   const candidate = data.candidates[0];
-  if (!isRecord(candidate) || !isRecord(candidate.content)) return "";
+  if (!isRecord(candidate) || !IsRecord(candidate.content)) return "";
   const parts = candidate.content.parts;
   if (!Array.isArray(parts)) return "";
   return parts
@@ -430,7 +430,7 @@ function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart):
     kn: `ನಮಸ್ಕಾರ, ನನ್ನ ಹೆಸರು ${name}. ನಾನು ಈಗಷ್ಟೇ ನನ್ನ ಕುಂಡಲಿ ನೋಡಿದೆ ಮತ್ತು ನನ್ನ ${moon} ರಾಶಿ ಮತ್ತು ಪ್ರಸ್ತುತ ${dasha} ಮಹಾದಶೆಯಲ್ಲಿ ಕೆಲವು ಅಡೆತಡೆಗಳು ಕಂಡುಬರುತ್ತಿವೆ ಎಂದು ಚಿಂತೆಗೊಳಗಾಗಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ಈ ದೋಷಗಳ ನಿಖರವಾದ ಕಾರಣ ಮತ್ತು ಪರಿಹಾರವನ್ನು ಹೇಳಬಹುದೇ?`,
     bn: `নমস্কার, আমার নাম ${name}। আমি এইমাত্র আমার কুণ্ডলী দেখেছি এবং আমার ${moon} রাশি এবং বর্তমান ${dasha} মহাদশায় কিছু বাধা দেখতে পাচ্ছি। আপনি কি এই দোষগুলির সঠিক কারণ এবং প্রতিকার বলতে পারেন?`,
     mr: `नमस्कार, माझे नाव ${name} आहे. मी नुकतीच माझी कुंडली पाहिली आणि माझ्या ${moon} राशी आणि सध्याच्या ${dasha} महादशेत काही अडथळे दिसत आहेत. कृपया या दोषांचे नेमके कारण आणि उपाय सांगू शकाल का?`,
-    gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાદશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકશો?`,
+    gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાડશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકશો?`,
     ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദോഷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`,
   };
   return dict[lang] || dict["hinglish"];
@@ -445,6 +445,10 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } }
     );
   }
+
+  // Safe type-casting access for user row properties
+  const freeUsed = (user as any).freeKundliUsed || 0;
+  const walletBalance = (user as any).walletBalancePaise || 0;
 
   const [birthRows, chartRows] = await Promise.all([
     db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
@@ -476,191 +480,6 @@ export async function GET() {
       chart: stored && stored.lagna ? publicChart(stored) : null,
       calculatedReport:
         stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
-    },
-    { headers: { "Cache-Control": "no-store" } }
-  );
-}
-
-export async function POST(req: Request) {
-  let body: unknown;
-  let language = "hinglish";
-
-  try {
-    body = await req.json();
-    if (isRecord(body) && typeof body.language === "string") {
-      language = body.language;
-    }
-  } catch {
-    return jsonError(getKundliError(language, "invalid_req"), 400);
-  }
-
-  if (!isRecord(body)) {
-    return jsonError(getKundliError(language, "invalid_req"), 400);
-  }
-
-  const user = await getUser();
-  if (!user || user.isGuest) {
-    return jsonError(getKundliError(language, "guest_blocked"), 401);
-  }
-
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const gender = typeof body.gender === "string" ? body.gender.trim() : "Not specified";
-  const dateOfBirth =
-    typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
-  const rawTimeOfBirth =
-    typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
-  const placeOfBirth =
-    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
-  const isTimeUnknown = body.isTimeUnknown === true;
-  const consent = body.consent === true;
-  const timeOfBirth = isTimeUnknown ? "12:00" : rawTimeOfBirth;
-
-  if (!consent) {
-    return jsonError(getKundliError(language, "consent"), 400);
-  }
-  if (!name || !dateOfBirth || !placeOfBirth || (!isTimeUnknown && !rawTimeOfBirth)) {
-    return jsonError(getKundliError(language, "missing_fields"), 400);
-  }
-  if (!validDate(dateOfBirth) || (!isTimeUnknown && !validTime(rawTimeOfBirth))) {
-    return jsonError(getKundliError(language, "bad_details"), 400);
-  }
-
-  const today = new Date();
-  const dobDate = new Date(dateOfBirth + "T00:00:00Z");
-  if (dobDate > today) {
-    return jsonError(getKundliError(language, "future_date"), 400);
-  }
-
-  // ---------- FREE LIMIT + WALLET CHECK (FIXED) ----------
-  const [userRow] = await db
-    .select({
-      id: users.id,
-      freeKundliUsed: users.freeKundliUsed,
-      walletBalancePaise: users.walletBalancePaise,
-    })
-    .from(users)
-    .where(eq(users.id, user.id))
-    .limit(1);
-
-  if (!userRow) {
-    return jsonError(getKundliError(language, "guest_blocked"), 404);
-  }
-
-  const freeUsed = userRow.freeKundliUsed ?? 0;
-  const walletBalance = userRow.walletBalancePaise ?? 0;
-
-  if (freeUsed >= FREE_KUNDLI_LIMIT) {
-    if (walletBalance < COST_PER_KUNDLI_PAISE) {
-      return jsonError(getKundliError(language, "wallet_recharge"), 402);
-    }
-  }
-  // ---------- END FREE LIMIT CHECK ----------
-
-  // Resolve place
-  const place = await resolvePlace(placeOfBirth);
-  if (!place) {
-    return jsonError(getKundliError(language, "place_not_found"), 400);
-  }
-
-  // Compute chart
-  let chart: KundliChart;
-  try {
-    chart = computeChart({
-      name,
-      dateOfBirth,
-      timeOfBirth,
-      latitude: place.lat,
-      longitude: place.lng,
-      timeZone: place.timeZone,
-    });
-  } catch (err) {
-    console.error("Chart calculation failed:", err);
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  // Save birth details + chart
-  await db
-    .insert(birthDetails)
-    .values({
-      userId: user.id,
-      name,
-      gender,
-      isBirthTimeUnknown: isTimeUnknown,
-      dob: dateOfBirth,
-      birthTime: timeOfBirth,
-      birthPlace: placeOfBirth,
-      lat: place.lat,
-      lng: place.lng,
-      timeZone: place.timeZone,
-      consent: true,
-      updatedAt: new Date(),
-    })
-    .onConflictDoUpdate({
-      target: birthDetails.userId,
-      set: {
-        name,
-        gender,
-        isBirthTimeUnknown: isTimeUnknown,
-        dob: dateOfBirth,
-        birthTime: timeOfBirth,
-        birthPlace: placeOfBirth,
-        lat: place.lat,
-        lng: place.lng,
-        timeZone: place.timeZone,
-        consent: true,
-        updatedAt: new Date(),
-      },
-    });
-
-  await db.insert(charts).values({
-    id: crypto.randomUUID(),
-    userId: user.id,
-    data: chart,
-  });
-
-  // Increment free usage OR deduct from wallet
-  if (freeUsed < FREE_KUNDLI_LIMIT) {
-    await db
-      .update(users)
-      .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
-      .where(eq(users.id, user.id));
-  } else {
-    await db
-      .update(users)
-      .set({
-        walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
-      })
-      .where(eq(users.id, user.id));
-  }
-
-  // Generate interpretation
-  const interpretation = await writeInterpretation({
-    name,
-    dateOfBirth,
-    timeOfBirth,
-    placeOfBirth,
-    chart,
-    language,
-  });
-
-  const suggestedPrompt = getSuggestedChatPrompt(language, name, chart);
-
-  const newFreeUsed = freeUsed < FREE_KUNDLI_LIMIT ? freeUsed + 1 : freeUsed;
-  const newWallet =
-    freeUsed >= FREE_KUNDLI_LIMIT
-      ? walletBalance - COST_PER_KUNDLI_PAISE
-      : walletBalance;
-
-  return NextResponse.json(
-    {
-      success: true,
-      chart: publicChart(chart),
-      calculatedReport: calculatedReport(name, chart),
-      interpretation: interpretation.text,
-      interpretationStatus: interpretation.status,
-      suggestedChatPrompt: suggestedPrompt,
-      freeKundliLeft: Math.max(0, FREE_KUNDLI_LIMIT - newFreeUsed),
-      walletBalancePaise: newWallet,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
