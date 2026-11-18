@@ -407,9 +407,10 @@ async function writeInterpretation(params: {
           systemInstruction: {
             parts: [
               {
+                // ✅ Psychology + Responsibility upgrade: No fear mongering
                 text: `You are a premium human Vedic Astrologer. ${getLangInstruction(
                   params.language
-                )} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), Relationships (संबंध), and a specific "Problem/Dosh" (दोष) section. This Problem section will be used to prompt a chat consultation, so make it sound like a serious but solvable issue (e.g., "Mangal Dosh is creating marriage delays").`,
+                )} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), and Relationships (संबंध). Also include a section called "Areas to reflect on" (जिन बातों पर ध्यान दें). CRITICAL: Only mention a dosha if it is actually supported by the calculated chart. Never invent problems, create fear, or claim that a dosha guarantees negative outcomes. Keep the tone positive, empowering, and solution-oriented.`,
               },
             ],
           },
@@ -553,8 +554,9 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "guest_blocked"), 401);
   }
 
-  const freeUsed = (userRow as any).freeKundliUsed || 0;
-  const walletBalance = (userRow as any).walletBalancePaise || 0;
+  // ✅ Fix: as any removed, using proper nullish coalescing
+  const freeUsed = userRow.freeKundliUsed ?? 0;
+  const walletBalance = userRow.walletBalancePaise ?? 0;
 
   const isFreeKundli = freeUsed < FREE_KUNDLI_LIMIT;
   const needsWalletCharge = !isFreeKundli;
@@ -570,6 +572,7 @@ export async function POST(request: Request) {
 
   let chart: KundliChart;
   try {
+    // ✅ Fix: dob used instead of name/date
     chart = computeChart({
       dob: dateOfBirth,
       time: timeOfBirth,
@@ -581,39 +584,106 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 400);
   }
 
-  if (needsWalletCharge) {
-    await db
-      .update(users)
-      .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
-      .where(eq(users.id, userRow.id));
-  } else {
-    await db
-      .update(users)
-      .set({ freeKundliUsed: freeUsed + 1 })
-      .where(eq(users.id, userRow.id));
-  }
-
   const gender =
     typeof body.gender === "string" && body.gender.trim()
       ? body.gender.trim()
       : null;
 
-  await db.insert(birthDetails).values({
-    userId: userRow.id,
-    name,
-    dob: dateOfBirth,
-    birthTime: timeOfBirth,
-    birthPlace: placeOfBirth,
-    gender,
-    isBirthTimeUnknown: false,
-  });
+  // ✅ Fix: Database Transaction ensures atomic operations
+  let transactionResult: "ok" | "insufficient" | "missing" = "ok";
 
-  // ✅ नया जोड़ा गया — कुंडली charts टेबल में सेव करें
-  await db.insert(charts).values({
-    userId: userRow.id,
-    data: chart,
-  });
+  try {
+    transactionResult = await db.transaction(async (tx) => {
+      // 1. Lock user row to prevent simultaneous updates
+      const [lockedUser] = await tx
+        .select({
+          freeKundliUsed: users.freeKundliUsed,
+          walletBalancePaise: users.walletBalancePaise,
+        })
+        .from(users)
+        .where(eq(users.id, userRow.id))
+        .for("update");
 
+      if (!lockedUser) return "missing";
+
+      const currentFreeUsed = lockedUser.freeKundliUsed ?? 0;
+      const currentBalance = lockedUser.walletBalancePaise ?? 0;
+
+      // 2. Free limit ya Wallet check karo
+      if (currentFreeUsed < FREE_KUNDLI_LIMIT) {
+        await tx
+          .update(users)
+          .set({ freeKundliUsed: currentFreeUsed + 1 })
+          .where(eq(users.id, userRow.id));
+      } else {
+        if (currentBalance < COST_PER_KUNDLI_PAISE) {
+          return "insufficient";
+        }
+        await tx
+          .update(users)
+          .set({
+            walletBalancePaise: currentBalance - COST_PER_KUNDLI_PAISE,
+          })
+          .where(eq(users.id, userRow.id));
+      }
+
+      // 3. Birth details Update karo (Duplicate key error se bachne ke liye)
+      await tx
+        .insert(birthDetails)
+        .values({
+          userId: userRow.id,
+          name,
+          dob: dateOfBirth,
+          birthTime: timeOfBirth,
+          birthPlace: placeOfBirth,
+          gender,
+          isBirthTimeUnknown: false,
+          lat: place.lat,
+          lng: place.lng,
+          timeZone: place.timeZone,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: birthDetails.userId,
+          set: {
+            name,
+            dob: dateOfBirth,
+            birthTime: timeOfBirth,
+            birthPlace: placeOfBirth,
+            gender,
+            isBirthTimeUnknown: false,
+            lat: place.lat,
+            lng: place.lng,
+            timeZone: place.timeZone,
+            updatedAt: new Date(),
+          },
+        });
+
+      // 4. Chart history save karo
+      await tx.insert(charts).values({
+        userId: userRow.id,
+        data: chart,
+      });
+
+      return "ok";
+    });
+  } catch (error) {
+    console.error("[Kundli] Database transaction failed:", error);
+    return jsonError(
+      "कुंडली सेव नहीं हो सकी। आपके वॉलेट से पैसे नहीं काटे गए। कृपया दोबारा प्रयास करें।",
+      500
+    );
+  }
+
+  if (transactionResult === "missing") {
+    return jsonError(getKundliError(language, "guest_blocked"), 401);
+  }
+
+  if (transactionResult === "insufficient") {
+    return jsonError(getKundliError(language, "wallet_recharge"), 402);
+  }
+
+  // 5. AI Interpretation generate karo (using upgraded safe prompt)
   const interpretation = await writeInterpretation({
     name,
     dateOfBirth,
