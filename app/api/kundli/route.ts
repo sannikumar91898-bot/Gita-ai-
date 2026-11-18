@@ -1,6 +1,5 @@
-// app/api/kundli/route.ts
 import { NextResponse } from "next/server";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
@@ -20,14 +19,26 @@ const DEFAULT_MODEL = "gemini-1.5-flash";
 const FREE_KUNDLI_LIMIT = 2;
 const COST_PER_KUNDLI_PAISE = 200; // ₹2
 
-type PlaceHit = { lat: number; lng: number; timeZone: string; };
+type PlaceHit = { lat: number; lng: number; timeZone: string };
 type InterpretationStatus = "ready" | "quota" | "unavailable" | "not_configured" | "empty";
 
 /* -------------------------------------------------------------------------- */
 /*               🔥 PREMIUM 10-LANGUAGE ERROR TRANSLATIONS                    */
 /* -------------------------------------------------------------------------- */
 
-function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing_fields" | "bad_details" | "future_date" | "place_not_found" | "calc_failed" | "guest_blocked" | "wallet_recharge"): string {
+function getKundliError(
+  lang: string,
+  type:
+    | "invalid_req"
+    | "consent"
+    | "missing_fields"
+    | "bad_details"
+    | "future_date"
+    | "place_not_found"
+    | "calc_failed"
+    | "guest_blocked"
+    | "wallet_recharge"
+): string {
   const dict: Record<string, Record<string, string>> = {
     hi: {
       invalid_req: "अमान्य अनुरोध। कृपया पुनः प्रयास करें।",
@@ -38,7 +49,8 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "इस जन्म स्थान की लोकेशन नहीं मिली। शहर और राज्य साफ लिखें।",
       calc_failed: "इन जन्म विवरणों से कुंडली गणना नहीं हो सकी।",
       guest_blocked: "कुंडली बनाने के लिए कृपया लॉगिन या रजिस्टर करें।",
-      wallet_recharge: "आपकी 2 फ्री कुंडली की लिमिट खत्म हो गई है। तीसरी कुंडली बनाने के लिए कृपया वॉलेट रिचार्ज करें।"
+      wallet_recharge:
+        "आपकी 2 मुफ्त कुंडली समाप्त हो गई हैं। तीसरी कुंडली सिर्फ ₹2 में बन सकती है — अभी वॉलेट रिचार्ज करें और गहराई से जानें।",
     },
     hinglish: {
       invalid_req: "Invalid request. Kripya phir se try karein.",
@@ -49,7 +61,8 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "Is birth place ki location nahi mili. Sheher aur state saaf likhein.",
       calc_failed: "In birth details se kundli calculate nahi ho saki.",
       guest_blocked: "Kundli banane ke liye kripya login ya register karein.",
-      wallet_recharge: "Aapki 2 free kundli ki limit khatam ho gayi hai. Teesri kundli banane ke liye kripya wallet recharge karein."
+      wallet_recharge:
+        "Aapki 2 free kundli khatam ho gayi hain. Teesri kundli sirf ₹2 mein ban sakti hai — abhi wallet recharge karein aur depth se jaanein.",
     },
     en: {
       invalid_req: "Invalid request. Please try again.",
@@ -60,7 +73,8 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "Location for this birth place not found. Please write city and state clearly.",
       calc_failed: "Could not calculate kundli from these birth details.",
       guest_blocked: "Registration required to generate Kundli. Please login or register.",
-      wallet_recharge: "Your 2 free Kundli limit is exhausted. Please recharge your wallet to generate a third Kundli."
+      wallet_recharge:
+        "Your 2 free Kundli are over. The next one costs only ₹2 — recharge your wallet now and go deeper.",
     },
     te: {
       invalid_req: "చెల్లని అభ్యర్థన. దయచేసి మళ్లీ ప్రయత్నించండి.",
@@ -71,7 +85,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "ఈ పుట్టిన స్థలం స్థానం కనుగొనబడలేదు. నగరం మరియు రాష్ట్రాన్ని స్పష్టంగా రాయండి.",
       calc_failed: "ఈ పుట్టిన వివరాల నుండి కుండలి లెక్కించబడలేదు.",
       guest_blocked: "కుండలి రూపొందించడానికి దయచేసి లాగిన్ లేదా నమోదు చేసుకోండి.",
-      wallet_recharge: "మీ 2 ఉచిత కుండలి పరిమితి ముగిసింది. దయచేసి వాలెట్ రీఛార్జ్ చేయండి."
+      wallet_recharge: "మీ 2 ఉచిత కుండలి ముగిసింది. తదుపరి కుండలి కేవలం ₹2కి — వాలెట్ రీఛార్జ్ చేయండి.",
     },
     ta: {
       invalid_req: "தவறான கோரிக்கை. மீண்டும் முயற்சிக்கவும்.",
@@ -82,7 +96,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "இந்த பிறந்த இடத்தின் இருப்பிடம் கிடைக்கவில்லை. நகரம் மற்றும் மாநிலத்தை தெளிவாக எழுதுங்கள்.",
       calc_failed: "இந்த பிறப்பு விவரங்களிலிருந்து ஜாதகத்தை கணக்கிட முடியவில்லை.",
       guest_blocked: "ஜாதகத்தை உருவாக்க உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
-      wallet_recharge: "உங்கள் 2 இலவச ஜாதக வரம்பு முடிந்தது. வாலெட் ரீசார்ஜ் செய்யவும்."
+      wallet_recharge: "உங்கள் 2 இலவச ஜாதகம் முடிந்தது. அடுத்தது வெறும் ₹2 — வாலெட் ரீசார்ஜ் செய்யவும்.",
     },
     kn: {
       invalid_req: "ಅಮಾನ್ಯ ವಿನಂತಿ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
@@ -93,7 +107,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "ಈ ಜನ್ಮ ಸ್ಥಳದ ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ. ನಗರ ಮತ್ತು ರಾಜ್ಯವನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಬರೆಯಿರಿ.",
       calc_failed: "ಈ ಜನ್ಮ ವಿವರಗಳಿಂದ ಕುಂಡಲಿ ಲೆಕ್ಕಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
       guest_blocked: "ಕುಂಡಲಿ ರಚಿಸಲು ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
-      wallet_recharge: "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿ ಮಿತಿ ಮುಗಿದಿದೆ. ದಯವಿಟ್ಟು ವಾಲೆಟ್ ರೀಚಾರ್ಜ್ ಮಾಡಿ."
+      wallet_recharge: "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿ ಮುಗಿದಿದೆ. ಮುಂದಿನದು ಕೇವಲ ₹2 — ವಾಲೆಟ್ ರೀಚಾರ್ಜ್ ಮಾಡಿ.",
     },
     bn: {
       invalid_req: "অবৈধ অনুরোধ। আবার চেষ্টা করুন।",
@@ -104,7 +118,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "এই জন্মস্থানের অবস্থান পাওয়া যায়নি। শহর এবং রাজ্য স্পষ্টভাবে লিখুন।",
       calc_failed: "এই জন্ম বিবরণ থেকে কুণ্ডলী গণনা করা যায়নি।",
       guest_blocked: "কুণ্ডলী তৈরি করতে লগইন বা নিবন্ধন করুন।",
-      wallet_recharge: "আপনার 2টি ফ্রি কুণ্ডলীর সীমা শেষ। ওয়ালেট রিচার্জ করুন।"
+      wallet_recharge: "আপনার 2টি ফ্রি কুণ্ডলী শেষ। পরেরটি মাত্র ₹2 — ওয়ালেট রিচার্জ করুন।",
     },
     mr: {
       invalid_req: "अवैध विनंती. कृपया पुन्हा प्रयत्न करा.",
@@ -115,7 +129,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "या जन्मस्थानाचे स्थान सापडले नाही. शहर आणि राज्य स्पष्टपणे लिहा.",
       calc_failed: "या जन्म तपशीलांवरून कुंडलीची गणना करता आली नाही.",
       guest_blocked: "कुंडली तयार करण्यासाठी कृपया लॉग इन किंवा नोंदणी करा.",
-      wallet_recharge: "तुमची 2 मोफत कुंडलीची मर्यादा संपली आहे. कृपया वॉलेट रिचार्ज करा."
+      wallet_recharge: "तुमची 2 मोफत कुंडली संपली आहेत. पुढची फक्त ₹2 — वॉलेट रिचार्ज करा.",
     },
     gu: {
       invalid_req: "અમાન્ય વિનંતી. ફરી પ્રયાસ કરો.",
@@ -126,7 +140,7 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "આ જન્મ સ્થળનું સ્થાન મળ્યું નથી. શહેર અને રાજ્ય સ્પષ્ટ લખો.",
       calc_failed: "આ જન્મ વિગતોમાંથી કુંડળીની ગણતરી કરી શકાઈ નથી.",
       guest_blocked: "કુંડળી બનાવવા માટે લોગિન અથવા નોંધણી કરો.",
-      wallet_recharge: "તમારી 2 મફત કુંડળીની મર્યાદા પૂરી થઈ ગઈ છે. કૃપા કરીને વોલેટ રિચાર્જ કરો."
+      wallet_recharge: "તમારી 2 મફત કુંડળી પૂરી થઈ. આગળની માત્ર ₹2 — વોલેટ રિચાર્જ કરો.",
     },
     ml: {
       invalid_req: "അസാധുവായ അഭ്യർത്ഥന. വീണ്ടും ശ്രമിക്കുക.",
@@ -137,14 +151,18 @@ function getKundliError(lang: string, type: "invalid_req" | "consent" | "missing
       place_not_found: "ഈ ജനനസ്ഥലത്തിന്റെ സ്ഥാനം കണ്ടെത്തിയില്ല. നഗരവും സംസ്ഥാനവും വ്യക്തമായി എഴുതുക.",
       calc_failed: "ഈ ജനന വിവരങ്ങളിൽ നിന്ന് കുണ്ഡലി കണക്കാക്കാൻ കഴിഞ്ഞില്ല.",
       guest_blocked: "കുണ്ഡലി സൃഷ്ടിക്കാൻ ദയവായി ലോഗിൻ ചെയ്യുക അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക.",
-      wallet_recharge: "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലി പരിധി തീർന്നു. വാലറ്റ് റീചാർജ് ചെയ്യുക."
-    }
+      wallet_recharge: "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലി തീർന്നു. അടുത്തത് വെറും ₹2 — വാലറ്റ് റീചാർജ് ചെയ്യുക.",
+    },
   };
+
   return dict[lang || "hi"]?.[type] || dict["en"][type];
 }
 
 function jsonError(message: string, status: number) {
-  return NextResponse.json({ error: message }, { status, headers: { "Cache-Control": "no-store" } });
+  return NextResponse.json(
+    { error: message },
+    { status, headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -171,11 +189,30 @@ function validTime(value: string): boolean {
 
 function publicChart(chart: KundliChart) {
   return {
-    lagna: { rashiName: chart.lagna.rashiName, rashiNameHi: RASHIS_HI[chart.lagna.rashi], degreeInSign: chart.lagna.degreeInSign },
-    moonSign: { rashiName: chart.moonSign.rashiName, rashiNameHi: RASHIS_HI[chart.moonSign.rashi] },
+    lagna: {
+      rashiName: chart.lagna.rashiName,
+      rashiNameHi: RASHIS_HI[chart.lagna.rashi],
+      degreeInSign: chart.lagna.degreeInSign,
+    },
+    moonSign: {
+      rashiName: chart.moonSign.rashiName,
+      rashiNameHi: RASHIS_HI[chart.moonSign.rashi],
+    },
     nakshatra: { name: chart.nakshatra.name, pada: chart.nakshatra.pada },
-    currentDasha: chart.currentDasha ? { maha: chart.currentDasha.maha.lord, mahaUntil: chart.currentDasha.maha.end.slice(0, 10), antar: chart.currentDasha.antar.lord, antarUntil: chart.currentDasha.antar.end.slice(0, 10) } : null,
-    planets: chart.planets.map((planet) => ({ planet: planet.planet, rashiName: planet.rashiName, house: planet.house, retrograde: planet.retrograde })),
+    currentDasha: chart.currentDasha
+      ? {
+          maha: chart.currentDasha.maha.lord,
+          mahaUntil: chart.currentDasha.maha.end.slice(0, 10),
+          antar: chart.currentDasha.antar.lord,
+          antarUntil: chart.currentDasha.antar.end.slice(0, 10),
+        }
+      : null,
+    planets: chart.planets.map((planet) => ({
+      planet: planet.planet,
+      rashiName: planet.rashiName,
+      house: planet.house,
+      retrograde: planet.retrograde,
+    })),
   };
 }
 
@@ -188,11 +225,25 @@ function calculatedReport(name: string, chart: KundliChart): string {
     "जन्म नक्षत्र: " + view.nakshatra.name + ", पद " + view.nakshatra.pada,
   ];
   if (view.currentDasha) {
-    lines.push("वर्तमान महादशा: " + view.currentDasha.maha + " (" + view.currentDasha.mahaUntil + " तक), अंतरदशा: " + view.currentDasha.antar);
+    lines.push(
+      "वर्तमान महादशा: " +
+        view.currentDasha.maha +
+        " (" +
+        view.currentDasha.mahaUntil +
+        " तक), अंतरदशा: " +
+        view.currentDasha.antar
+    );
   }
   lines.push("ग्रह स्थिति:");
   for (const planet of view.planets) {
-    lines.push(planet.planet + " — " + planet.rashiName + ", भाव " + planet.house + (planet.retrograde ? " (वक्री)" : ""));
+    lines.push(
+      planet.planet +
+        " — " +
+        planet.rashiName +
+        ", भाव " +
+        planet.house +
+        (planet.retrograde ? " (वक्री)" : "")
+    );
   }
   lines.push("ये स्थितियाँ गणना से बनी हैं। ये भविष्य की गारंटी नहीं हैं।");
   return lines.join("\n");
@@ -203,7 +254,8 @@ async function resolvePlace(place: string): Promise<PlaceHit | null> {
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
     const response = await fetch(
-      "https://geocoding-api.open-meteo.com/v1/search?count=5&format=json&name=" + encodeURIComponent(place),
+      "https://geocoding-api.open-meteo.com/v1/search?count=5&format=json&name=" +
+        encodeURIComponent(place),
       { cache: "no-store", signal: controller.signal }
     );
     if (!response.ok) return null;
@@ -211,12 +263,21 @@ async function resolvePlace(place: string): Promise<PlaceHit | null> {
     if (!isRecord(data) || !Array.isArray(data.results)) return null;
     for (const item of data.results) {
       if (!isRecord(item)) continue;
-      if (typeof item.latitude === "number" && typeof item.longitude === "number" && typeof item.timezone === "string" && item.timezone) {
-        return { lat: item.latitude, lng: item.longitude, timeZone: item.timezone };
+      if (
+        typeof item.latitude === "number" &&
+        typeof item.longitude === "number" &&
+        typeof item.timezone === "string" &&
+        item.timezone
+      ) {
+        return {
+          lat: item.latitude,
+          lng: item.longitude,
+          timeZone: item.timezone,
+        };
       }
     }
     return null;
-  } catch (error) {
+  } catch {
     return null;
   } finally {
     clearTimeout(timeout);
@@ -229,26 +290,58 @@ function extractText(data: unknown): string {
   if (!isRecord(candidate) || !isRecord(candidate.content)) return "";
   const parts = candidate.content.parts;
   if (!Array.isArray(parts)) return "";
-  return parts.filter((part): part is Record<string, unknown> => isRecord(part) && typeof part.text === "string" && part.thought !== true).map((part) => part.text as string).join("").trim();
+  return parts
+    .filter(
+      (part): part is Record<string, unknown> =>
+        isRecord(part) && typeof part.text === "string" && part.thought !== true
+    )
+    .map((part) => part.text as string)
+    .join("")
+    .trim();
 }
 
 function getLangInstruction(lang: string): string {
   const map: Record<string, string> = {
-    hi: "Write strictly in Hindi (Devanagari script).", hinglish: "Write strictly in Hinglish (Roman Hindi mixed with English).",
-    en: "Write strictly in English.", te: "Write strictly in Telugu (తెలుగు).", ta: "Write strictly in Tamil (தமிழ்).",
-    kn: "Write strictly in Kannada (ಕನ್ನಡ).", bn: "Write strictly in Bengali (বাংলা).", mr: "Write strictly in Marathi (मराठी).",
-    gu: "Write strictly in Gujarati (ગુજરાતી).", ml: "Write strictly in Malayalam (മലയാളം).",
+    hi: "Write strictly in Hindi (Devanagari script).",
+    hinglish: "Write strictly in Hinglish (Roman Hindi mixed with English).",
+    en: "Write strictly in English.",
+    te: "Write strictly in Telugu (తెలుగు).",
+    ta: "Write strictly in Tamil (தமிழ்).",
+    kn: "Write strictly in Kannada (ಕನ್ನಡ).",
+    bn: "Write strictly in Bengali (বাংলা).",
+    mr: "Write strictly in Marathi (मराठी).",
+    gu: "Write strictly in Gujarati (ગુજરાતી).",
+    ml: "Write strictly in Malayalam (മലയാളം).",
   };
   return map[lang] || map["hinglish"];
 }
 
-async function writeInterpretation(params: { name: string; dateOfBirth: string; timeOfBirth: string; placeOfBirth: string; chart: KundliChart; language: string; }): Promise<{ text: string | null; status: InterpretationStatus }> {
-  const cacheKey = ["kundli", params.dateOfBirth, params.timeOfBirth, params.placeOfBirth.toLowerCase().replace(/\s+/g, ""), params.language].join("_");
+async function writeInterpretation(params: {
+  name: string;
+  dateOfBirth: string;
+  timeOfBirth: string;
+  placeOfBirth: string;
+  chart: KundliChart;
+  language: string;
+}): Promise<{ text: string | null; status: InterpretationStatus }> {
+  const cacheKey = [
+    "kundli",
+    params.dateOfBirth,
+    params.timeOfBirth,
+    params.placeOfBirth.toLowerCase().replace(/\s+/g, ""),
+    params.language,
+  ].join("_");
 
   try {
-    const cached = await db.select().from(aiResponseCache).where(eq(aiResponseCache.questionKey, cacheKey)).limit(1);
-    if (cached[0]?.aiAnswer?.trim()) return { text: cached[0].aiAnswer, status: "ready" };
-  } catch (error) {}
+    const cached = await db
+      .select()
+      .from(aiResponseCache)
+      .where(eq(aiResponseCache.questionKey, cacheKey))
+      .limit(1);
+    if (cached[0]?.aiAnswer?.trim()) {
+      return { text: cached[0].aiAnswer, status: "ready" };
+    }
+  } catch {}
 
   const apiKey = process.env.GEMINI_API_KEY?.trim();
   const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
@@ -256,20 +349,47 @@ async function writeInterpretation(params: { name: string; dateOfBirth: string; 
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   try {
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      cache: "no-store",
-      signal: controller.signal,
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: `You are a premium human Vedic Astrologer. ${getLangInstruction(params.language)} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), Relationships (संबंध), and a specific "Problem/Dosh" (दोष) section. This Problem section will be used to prompt a chat consultation, so make it sound like a serious but solvable issue (e.g., "Mangal Dosh is creating marriage delays").` }],
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/" +
+        encodeURIComponent(model) +
+        ":generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey,
         },
-        contents: [{ role: "user", parts: [{ text: `Write the reflection.\n\n${chartSummary(params.chart, params.name)}\nPlace: ${params.placeOfBirth}` }] }],
-        generationConfig: { maxOutputTokens: 900, temperature: 0.7 },
-      }),
-    });
+        cache: "no-store",
+        signal: controller.signal,
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [
+              {
+                text: `You are a premium human Vedic Astrologer. ${getLangInstruction(
+                  params.language
+                )} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), Relationships (संबंध), and a specific "Problem/Dosh" (दोष) section. This Problem section will be used to prompt a chat consultation, so make it sound like a serious but solvable issue (e.g., "Mangal Dosh is creating marriage delays").`,
+              },
+            ],
+          },
+          contents: [
+            {
+              role: "user",
+              parts: [
+                {
+                  text: `Write the reflection.\n\n${chartSummary(
+                    params.chart,
+                    params.name
+                  )}\nPlace: ${params.placeOfBirth}`,
+                },
+              ],
+            },
+          ],
+          generationConfig: { maxOutputTokens: 900, temperature: 0.7 },
+        }),
+      }
+    );
 
     if (response.status === 429) return { text: null, status: "quota" };
     if (!response.ok) return { text: null, status: "unavailable" };
@@ -278,11 +398,19 @@ async function writeInterpretation(params: { name: string; dateOfBirth: string; 
     if (!text) return { text: null, status: "empty" };
 
     try {
-      await db.insert(aiResponseCache).values({ id: crypto.randomUUID(), questionKey: cacheKey, originalQuestion: "Kundli interpretation for " + params.name, aiAnswer: text }).onConflictDoNothing();
-    } catch (error) {}
-    
+      await db
+        .insert(aiResponseCache)
+        .values({
+          id: crypto.randomUUID(),
+          questionKey: cacheKey,
+          originalQuestion: "Kundli interpretation for " + params.name,
+          aiAnswer: text,
+        })
+        .onConflictDoNothing();
+    } catch {}
+
     return { text, status: "ready" };
-  } catch (error) {
+  } catch {
     return { text: null, status: "unavailable" };
   } finally {
     clearTimeout(timeout);
@@ -292,7 +420,7 @@ async function writeInterpretation(params: { name: string; dateOfBirth: string; 
 function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart): string {
   const moon = RASHIS_HI[chart.moonSign.rashi];
   const dasha = chart.currentDasha ? chart.currentDasha.maha.lord : "Shani";
-  
+
   const dict: Record<string, string> = {
     hi: `नमस्ते, मेरा नाम ${name} है। मैंने अभी अपनी कुंडली देखी और मुझे चिंता है कि मेरी ${moon} राशि और वर्तमान ${dasha} महादशा में कुछ रुकावटें दिख रही हैं। क्या आप मेरी कुंडली के दोषों का सटीक कारण और उसका उपाय बता सकती हैं?`,
     hinglish: `Namaste, mera naam ${name} hai. Maine abhi apni kundli dekhi aur mujhe chinta hai ki meri ${moon} rashi aur current ${dasha} mahadasha me kuch rukawatein dikh rahi hain. Kya aap meri kundli ke doshon ka exact reason aur upay bata sakti hain?`,
@@ -303,47 +431,72 @@ function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart):
     bn: `নমস্কার, আমার নাম ${name}। আমি এইমাত্র আমার কুণ্ডলী দেখেছি এবং আমার ${moon} রাশি এবং বর্তমান ${dasha} মহাদশায় কিছু বাধা দেখতে পাচ্ছি। আপনি কি এই দোষগুলির সঠিক কারণ এবং প্রতিকার বলতে পারেন?`,
     mr: `नमस्कार, माझे नाव ${name} आहे. मी नुकतीच माझी कुंडली पाहिली आणि माझ्या ${moon} राशी आणि सध्याच्या ${dasha} महादशेत काही अडथळे दिसत आहेत. कृपया या दोषांचे नेमके कारण आणि उपाय सांगू शकाल का?`,
     gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાદશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકશો?`,
-    ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദോഷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`
+    ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദോഷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`,
   };
   return dict[lang] || dict["hinglish"];
 }
 
 export async function GET() {
   const user = await getUser();
-  
+
   if (!user || user.isGuest) {
-    return NextResponse.json({ birth: null, chart: null }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json(
+      { birth: null, chart: null },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   }
 
   const [birthRows, chartRows] = await Promise.all([
     db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
-    db.select().from(charts).where(eq(charts.userId, user.id)).orderBy(desc(charts.createdAt)).limit(1),
+    db
+      .select()
+      .from(charts)
+      .where(eq(charts.userId, user.id))
+      .orderBy(desc(charts.createdAt))
+      .limit(1),
   ]);
 
-  const birth = birthRows[0] ? {
-    name: birthRows[0].name, dob: birthRows[0].dob, birthTime: birthRows[0].birthTime, birthPlace: birthRows[0].birthPlace, gender: birthRows[0].gender, isBirthTimeUnknown: birthRows[0].isBirthTimeUnknown,
-  } : null;
+  const birth = birthRows[0]
+    ? {
+        name: birthRows[0].name,
+        dob: birthRows[0].dob,
+        birthTime: birthRows[0].birthTime,
+        birthPlace: birthRows[0].birthPlace,
+        gender: birthRows[0].gender,
+        isBirthTimeUnknown: birthRows[0].isBirthTimeUnknown,
+      }
+    : null;
 
-  const stored = birthRows[0] && chartRows[0] ? (chartRows[0].data as KundliChart) : null;
-  return NextResponse.json({
-    birth,
-    chart: stored && stored.lagna ? publicChart(stored) : null,
-    calculatedReport: stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
-  }, { headers: { "Cache-Control": "no-store" } });
+  const stored =
+    birthRows[0] && chartRows[0] ? (chartRows[0].data as KundliChart) : null;
+
+  return NextResponse.json(
+    {
+      birth,
+      chart: stored && stored.lagna ? publicChart(stored) : null,
+      calculatedReport:
+        stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
 
 export async function POST(req: Request) {
   let body: unknown;
   let language = "hinglish";
-  
-  try { 
-    body = await req.json(); 
-    if (isRecord(body) && typeof body.language === "string") language = body.language;
-  } catch { 
-    return jsonError(getKundliError(language, "invalid_req"), 400); 
+
+  try {
+    body = await req.json();
+    if (isRecord(body) && typeof body.language === "string") {
+      language = body.language;
+    }
+  } catch {
+    return jsonError(getKundliError(language, "invalid_req"), 400);
   }
-  
-  if (!isRecord(body)) return jsonError(getKundliError(language, "invalid_req"), 400);
+
+  if (!isRecord(body)) {
+    return jsonError(getKundliError(language, "invalid_req"), 400);
+  }
 
   const user = await getUser();
   if (!user || user.isGuest) {
@@ -352,103 +505,163 @@ export async function POST(req: Request) {
 
   const name = typeof body.name === "string" ? body.name.trim() : "";
   const gender = typeof body.gender === "string" ? body.gender.trim() : "Not specified";
-  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
-  const rawTimeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
-  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+  const dateOfBirth =
+    typeof body.dateOfBirth === "string" ? body.dateOfBirth.trim() : "";
+  const rawTimeOfBirth =
+    typeof body.timeOfBirth === "string" ? body.timeOfBirth.trim() : "";
+  const placeOfBirth =
+    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
   const isTimeUnknown = body.isTimeUnknown === true;
   const consent = body.consent === true;
   const timeOfBirth = isTimeUnknown ? "12:00" : rawTimeOfBirth;
 
-  if (!consent) return jsonError(getKundliError(language, "consent"), 400);
-  if (!name || !dateOfBirth || !timeOfBirth || !placeOfBirth) return jsonError(getKundliError(language, "missing_fields"), 400);
-  if (name.length > 100 || placeOfBirth.length > 200 || !validDate(dateOfBirth) || !validTime(timeOfBirth)) return jsonError(getKundliError(language, "bad_details"), 400);
-  if (dateOfBirth > new Date().toISOString().slice(0, 10)) return jsonError(getKundliError(language, "future_date"), 400);
-
-  // ---------- 1. Check balance / free limit (read only) ----------
-  const [userRow] = await db.select().from(users).where(eq(users.id, user.id)).limit(1);
-  if (!userRow) return jsonError(getKundliError(language, "guest_blocked"), 404);
-
-  const freeUsed = userRow.freeKundliUsed || 0;
-  const walletBalance = userRow.walletBalancePaise || 0;
-
-  if (freeUsed >= FREE_KUNDLI_LIMIT && walletBalance < COST_PER_KUNDLI_PAISE) {
-    return NextResponse.json(
-      { 
-        code: "WALLET_RECHARGE_REQUIRED", 
-        error: "Limit exhausted", 
-        message: getKundliError(language, "wallet_recharge") 
-      }, 
-      { status: 402, headers: { "Cache-Control": "no-store" } }
-    );
+  if (!consent) {
+    return jsonError(getKundliError(language, "consent"), 400);
+  }
+  if (!name || !dateOfBirth || !placeOfBirth || (!isTimeUnknown && !rawTimeOfBirth)) {
+    return jsonError(getKundliError(language, "missing_fields"), 400);
+  }
+  if (!validDate(dateOfBirth) || (!isTimeUnknown && !validTime(rawTimeOfBirth))) {
+    return jsonError(getKundliError(language, "bad_details"), 400);
   }
 
-  // ---------- 2. Place + Chart calculation (before charging) ----------
-  const place = await resolvePlace(placeOfBirth);
-  if (!place) return jsonError(getKundliError(language, "place_not_found"), 422);
+  const today = new Date();
+  const dobDate = new Date(dateOfBirth + "T00:00:00Z");
+  if (dobDate > today) {
+    return jsonError(getKundliError(language, "future_date"), 400);
+  }
 
+  // ---------- FREE LIMIT + WALLET CHECK (FIXED) ----------
+  const [userRow] = await db
+    .select({
+      id: users.id,
+      freeKundliUsed: users.freeKundliUsed,
+      walletBalancePaise: users.walletBalancePaise,
+    })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+
+  if (!userRow) {
+    return jsonError(getKundliError(language, "guest_blocked"), 404);
+  }
+
+  const freeUsed = userRow.freeKundliUsed ?? 0;
+  const walletBalance = userRow.walletBalancePaise ?? 0;
+
+  if (freeUsed >= FREE_KUNDLI_LIMIT) {
+    if (walletBalance < COST_PER_KUNDLI_PAISE) {
+      return jsonError(getKundliError(language, "wallet_recharge"), 402);
+    }
+  }
+  // ---------- END FREE LIMIT CHECK ----------
+
+  // Resolve place
+  const place = await resolvePlace(placeOfBirth);
+  if (!place) {
+    return jsonError(getKundliError(language, "place_not_found"), 400);
+  }
+
+  // Compute chart
   let chart: KundliChart;
   try {
-    chart = computeChart({ dob: dateOfBirth, time: timeOfBirth, lat: place.lat, lng: place.lng, timeZone: place.timeZone });
-  } catch (error) {
-    return jsonError(getKundliError(language, "calc_failed"), 422);
+    chart = computeChart({
+      name,
+      dateOfBirth,
+      timeOfBirth,
+      latitude: place.lat,
+      longitude: place.lng,
+      timeZone: place.timeZone,
+    });
+  } catch (err) {
+    console.error("Chart calculation failed:", err);
+    return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
-  // ---------- 3. Only now charge / increment free count (after success) ----------
-  try {
-    if (freeUsed >= FREE_KUNDLI_LIMIT) {
-      // Paid
-      await db.update(users)
-        .set({ walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}` })
-        .where(eq(users.id, user.id));
-    } else {
-      // Free
-      await db.update(users)
-        .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
-        .where(eq(users.id, user.id));
-    }
-  } catch (billingError) {
-    console.error("Billing update failed:", billingError);
-    // Calculation already succeeded, so we still return the chart
-  }
-
-  // ---------- 4. Save to DB ----------
-  let saved = false;
-  try {
-    await db.insert(birthDetails).values({
-      userId: user.id, 
-      name, 
-      gender, 
+  // Save birth details + chart
+  await db
+    .insert(birthDetails)
+    .values({
+      userId: user.id,
+      name,
+      gender,
+      isBirthTimeUnknown: isTimeUnknown,
       dob: dateOfBirth,
       birthTime: timeOfBirth,
       birthPlace: placeOfBirth,
-      isBirthTimeUnknown: isTimeUnknown
-    }).onConflictDoUpdate({
+      lat: place.lat,
+      lng: place.lng,
+      timeZone: place.timeZone,
+      consent: true,
+      updatedAt: new Date(),
+    })
+    .onConflictDoUpdate({
       target: birthDetails.userId,
-      set: { name, gender, dob: dateOfBirth, birthTime: timeOfBirth, birthPlace: placeOfBirth, isBirthTimeUnknown: isTimeUnknown }
+      set: {
+        name,
+        gender,
+        isBirthTimeUnknown: isTimeUnknown,
+        dob: dateOfBirth,
+        birthTime: timeOfBirth,
+        birthPlace: placeOfBirth,
+        lat: place.lat,
+        lng: place.lng,
+        timeZone: place.timeZone,
+        consent: true,
+        updatedAt: new Date(),
+      },
     });
 
-    await db.insert(charts).values({
-      id: crypto.randomUUID(),
-      userId: user.id,
-      data: chart
-    });
-    
-    saved = true;
-  } catch (error) {
-    console.error("Failed to save kundli to DB:", error);
+  await db.insert(charts).values({
+    id: crypto.randomUUID(),
+    userId: user.id,
+    data: chart,
+  });
+
+  // Increment free usage OR deduct from wallet
+  if (freeUsed < FREE_KUNDLI_LIMIT) {
+    await db
+      .update(users)
+      .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
+      .where(eq(users.id, user.id));
+  } else {
+    await db
+      .update(users)
+      .set({
+        walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
+      })
+      .where(eq(users.id, user.id));
   }
 
-  // ---------- 5. AI Interpretation ----------
-  const aiResult = await writeInterpretation({ name, dateOfBirth, timeOfBirth, placeOfBirth, chart, language });
+  // Generate interpretation
+  const interpretation = await writeInterpretation({
+    name,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    chart,
+    language,
+  });
 
-  // ---------- 6. Response ----------
-  return NextResponse.json({
-    success: true,
-    chart: publicChart(chart),
-    interpretation: aiResult.text,
-    interpretationStatus: aiResult.status,
-    calculatedReport: calculatedReport(name, chart),
-    suggestedChatPrompt: getSuggestedChatPrompt(language, name, chart),
-    saved
-  }, { headers: { "Cache-Control": "no-store" } });
+  const suggestedPrompt = getSuggestedChatPrompt(language, name, chart);
+
+  const newFreeUsed = freeUsed < FREE_KUNDLI_LIMIT ? freeUsed + 1 : freeUsed;
+  const newWallet =
+    freeUsed >= FREE_KUNDLI_LIMIT
+      ? walletBalance - COST_PER_KUNDLI_PAISE
+      : walletBalance;
+
+  return NextResponse.json(
+    {
+      success: true,
+      chart: publicChart(chart),
+      calculatedReport: calculatedReport(name, chart),
+      interpretation: interpretation.text,
+      interpretationStatus: interpretation.status,
+      suggestedChatPrompt: suggestedPrompt,
+      freeKundliLeft: Math.max(0, FREE_KUNDLI_LIMIT - newFreeUsed),
+      walletBalancePaise: newWallet,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
 }
