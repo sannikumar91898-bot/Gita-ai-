@@ -608,6 +608,12 @@ export async function POST(request: Request) {
     isBirthTimeUnknown: false,
   });
 
+  // ✅ नया जोड़ा गया — कुंडली charts टेबल में सेव करें
+  await db.insert(charts).values({
+    userId: userRow.id,
+    data: chart,
+  });
+
   const interpretation = await writeInterpretation({
     name,
     dateOfBirth,
