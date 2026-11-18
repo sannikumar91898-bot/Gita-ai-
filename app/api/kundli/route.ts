@@ -1,4 +1,4 @@
-Import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 
 import { getUser } from "@/auth";
@@ -582,4 +582,70 @@ export async function POST(request: Request) {
   }
 
   const gender = typeof body.gender === "string" ? body.gender : "other";
-  const isBirthTimeU
+  const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
+
+  try {
+    await db.transaction(async (tx) => {
+      await tx
+        .insert(birthDetails)
+        .values({
+          id: crypto.randomUUID(),
+          userId: userRow.id,
+          name,
+          dob: dateOfBirth,
+          birthTime: timeOfBirth,
+          birthPlace: placeOfBirth,
+          gender,
+          isBirthTimeUnknown,
+        })
+        .onConflictDoUpdate({
+          target: birthDetails.userId,
+          set: {
+            name,
+            dob: dateOfBirth,
+            birthTime: timeOfBirth,
+            birthPlace: placeOfBirth,
+            gender,
+            isBirthTimeUnknown,
+          },
+        });
+
+      await tx.insert(charts).values({
+        id: crypto.randomUUID(),
+        userId: userRow.id,
+        data: chart,
+      });
+
+      if (isFreeKundli) {
+        await tx
+          .update(users)
+          .set({ freeKundliUsed: freeUsed + 1 })
+          .where(eq(users.id, userRow.id));
+      } else {
+        await tx
+          .update(users)
+          .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
+          .where(eq(users.id, userRow.id));
+      }
+    });
+  } catch {}
+
+  const interpretation = await writeInterpretation({
+    name,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    chart,
+    language,
+  });
+
+  return NextResponse.json(
+    {
+      chart: publicChart(chart),
+      calculatedReport: calculatedReport(name, chart),
+      interpretation: interpretation.text,
+      interpretationStatus: interpretation.status,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
+}
