@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { desc, eq, sql } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
@@ -417,6 +417,10 @@ async function writeInterpretation(params: {
   }
 }
 
+/* -------------------------------------------------------------------------- */
+/*                                GET HANDLER                                 */
+/* -------------------------------------------------------------------------- */
+
 export async function GET() {
   const userRow = await getUser();
 
@@ -426,10 +430,6 @@ export async function GET() {
       { headers: { "Cache-Control": "no-store" } }
     );
   }
-
-  // Safe type-casting access for user row properties
-  const freeUsed = (userRow as any).freeKundliUsed || 0;
-  const walletBalance = (userRow as any).walletBalancePaise || 0;
 
   const [birthRows, chartRows] = await Promise.all([
     db.select().from(birthDetails).where(eq(birthDetails.userId, userRow.id)).limit(1),
@@ -461,6 +461,143 @@ export async function GET() {
       chart: stored && stored.lagna ? publicChart(stored) : null,
       calculatedReport:
         stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
+    },
+    { headers: { "Cache-Control": "no-store" } }
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                                POST HANDLER                                */
+/* -------------------------------------------------------------------------- */
+
+export async function POST(request: Request) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(getKundliError("hi", "invalid_req"), 400);
+  }
+
+  if (!isRecord(body)) {
+    return jsonError(getKundliError("hi", "invalid_req"), 400);
+  }
+
+  const language = typeof body.language === "string" ? body.language : "hi";
+  const consent = body.consent === true;
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
+  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
+  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+
+  if (!consent) return jsonError(getKundliError(language, "consent"), 400);
+  if (!name || !dateOfBirth || !placeOfBirth) {
+    return jsonError(getKundliError(language, "missing_fields"), 400);
+  }
+  if (!validDate(dateOfBirth)) {
+    return jsonError(getKundliError(language, "bad_details"), 400);
+  }
+  if (!validTime(timeOfBirth)) {
+    return jsonError(getKundliError(language, "bad_details"), 400);
+  }
+
+  // Future date check
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+  if (dateOfBirth > todayStr) {
+    return jsonError(getKundliError(language, "future_date"), 400);
+  }
+
+  // ─── Auth ────────────────────────────────────────────────────────────────
+  const userRow = await getUser();
+
+  if (!userRow || userRow.isGuest) {
+    return jsonError(getKundliError(language, "guest_blocked"), 401);
+  }
+
+  // ─── Free limit + wallet check ───────────────────────────────────────────
+  const freeUsed = userRow.freeKundliUsed ?? 0;
+  const walletBalance = userRow.walletBalancePaise ?? 0;
+
+  const isFreeKundli = freeUsed < FREE_KUNDLI_LIMIT;
+  const needsWalletCharge = !isFreeKundli;
+
+  if (needsWalletCharge && walletBalance < COST_PER_KUNDLI_PAISE) {
+    return jsonError(getKundliError(language, "wallet_recharge"), 402);
+  }
+
+  // ─── Resolve place ───────────────────────────────────────────────────────
+  const place = await resolvePlace(placeOfBirth);
+  if (!place) {
+    return jsonError(getKundliError(language, "place_not_found"), 400);
+  }
+
+  // ─── Compute chart ───────────────────────────────────────────────────────
+  let chart: KundliChart;
+  try {
+    chart = computeChart({
+      name,
+      date: dateOfBirth,
+      time: timeOfBirth,
+      lat: place.lat,
+      lng: place.lng,
+      timeZone: place.timeZone,
+    });
+  } catch {
+    return jsonError(getKundliError(language, "calc_failed"), 400);
+  }
+
+  // ─── Deduct wallet OR bump free counter ──────────────────────────────────
+  if (needsWalletCharge) {
+    await db
+      .update(users)
+      .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
+      .where(eq(users.id, userRow.id));
+  } else {
+    await db
+      .update(users)
+      .set({ freeKundliUsed: freeUsed + 1 })
+      .where(eq(users.id, userRow.id));
+  }
+
+  // ─── Persist birth details + chart ──────────────────────────────────────
+  await db
+    .insert(birthDetails)
+    .values({
+      userId: userRow.id,
+      name,
+      dob: dateOfBirth,
+      birthTime: timeOfBirth,
+      birthPlace: placeOfBirth,
+      gender: typeof body.gender === "string" ? body.gender : null,
+      isBirthTimeUnknown: body.isBirthTimeUnknown === true,
+    })
+    .onConflictDoNothing();
+
+  await db.insert(charts).values({
+    userId: userRow.id,
+    data: chart,
+  });
+
+  // ─── AI interpretation ──────────────────────────────────────────────────
+  const interpretation = await writeInterpretation({
+    name,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    chart,
+    language,
+  });
+
+  return NextResponse.json(
+    {
+      chart: publicChart(chart),
+      calculatedReport: calculatedReport(name, chart),
+      interpretation: interpretation.text,
+      interpretationStatus: interpretation.status,
+      freeKundliUsed: isFreeKundli ? freeUsed + 1 : freeUsed,
+      walletBalancePaise: needsWalletCharge
+        ? walletBalance - COST_PER_KUNDLI_PAISE
+        : walletBalance,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
