@@ -22,10 +22,6 @@ const COST_PER_KUNDLI_PAISE = 200; // ₹2
 type PlaceHit = { lat: number; lng: number; timeZone: string };
 type InterpretationStatus = "ready" | "quota" | "unavailable" | "not_configured" | "empty";
 
-/* -------------------------------------------------------------------------- */
-/*               🔥 PREMIUM 10-LANGUAGE ERROR TRANSLATIONS                    */
-/* -------------------------------------------------------------------------- */
-
 function getKundliError(
   lang: string,
   type:
@@ -417,10 +413,6 @@ async function writeInterpretation(params: {
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                GET HANDLER                                 */
-/* -------------------------------------------------------------------------- */
-
 export async function GET() {
   const userRow = await getUser();
 
@@ -466,10 +458,6 @@ export async function GET() {
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/*                                POST HANDLER                                */
-/* -------------------------------------------------------------------------- */
-
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -500,21 +488,18 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "bad_details"), 400);
   }
 
-  // Future date check
   const today = new Date();
   const todayStr = today.toISOString().slice(0, 10);
   if (dateOfBirth > todayStr) {
     return jsonError(getKundliError(language, "future_date"), 400);
   }
 
-  // ─── Auth ────────────────────────────────────────────────────────────────
   const userRow = await getUser();
 
   if (!userRow || userRow.isGuest) {
     return jsonError(getKundliError(language, "guest_blocked"), 401);
   }
 
-  // ─── Free limit + wallet check ───────────────────────────────────────────
   const freeUsed = (userRow as any).freeKundliUsed || 0;
   const walletBalance = (userRow as any).walletBalancePaise || 0;
 
@@ -524,80 +509,3 @@ export async function POST(request: Request) {
   if (needsWalletCharge && walletBalance < COST_PER_KUNDLI_PAISE) {
     return jsonError(getKundliError(language, "wallet_recharge"), 402);
   }
-
-  // ─── Resolve place ───────────────────────────────────────────────────────
-  const place = await resolvePlace(placeOfBirth);
-  if (!place) {
-    return jsonError(getKundliError(language, "place_not_found"), 400);
-  }
-
-  // ─── Compute chart ───────────────────────────────────────────────────────
-  let chart: KundliChart;
-  try {
-    chart = computeChart({
-      dob: dateOfBirth,
-      time: timeOfBirth,
-      lat: place.lat,
-      lng: place.lng,
-      timeZone: place.timeZone,
-    });
-  } catch {
-    return jsonError(getKundliError(language, "calc_failed"), 400);
-  }
-
-  // ─── Deduct wallet OR bump free counter ──────────────────────────────────
-  if (needsWalletCharge) {
-    await db
-      .update(users)
-      .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
-      .where(eq(users.id, userRow.id));
-  } else {
-    await db
-      .update(users)
-      .set({ freeKundliUsed: freeUsed + 1 })
-      .where(eq(users.id, userRow.id));
-  }
-
-  // ─── Persist birth details + chart ──────────────────────────────────────
-  await db
-    .insert(birthDetails)
-    .values({
-      userId: userRow.id,
-      name,
-      dob: dateOfBirth,
-      birthTime: timeOfBirth,
-      birthPlace: placeOfBirth,
-      gender: typeof body.gender === "string" ? body.gender : null,
-      isBirthTimeUnknown: body.isBirthTimeUnknown === true,
-    })
-    .onConflictDoNothing();
-
-  await db.insert(charts).values({
-    userId: userRow.id,
-    data: chart,
-  });
-
-  // ─── AI interpretation ──────────────────────────────────────────────────
-  const interpretation = await writeInterpretation({
-    name,
-    dateOfBirth,
-    timeOfBirth,
-    placeOfBirth,
-    chart,
-    language,
-  });
-
-  return NextResponse.json(
-    {
-      chart: publicChart(chart),
-      calculatedReport: calculatedReport(name, chart),
-      interpretation: interpretation.text,
-      interpretationStatus: interpretation.status,
-      freeKundliUsed: isFreeKundli ? freeUsed + 1 : freeUsed,
-      walletBalancePaise: needsWalletCharge
-        ? walletBalance - COST_PER_KUNDLI_PAISE
-        : walletBalance,
-    },
-    { headers: { "Cache-Control": "no-store" } }
-  );
-}
