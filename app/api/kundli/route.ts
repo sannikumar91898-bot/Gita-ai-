@@ -136,7 +136,7 @@ function getKundliError(
       consent: "કુંડળી બનાવવા માટે સંમતિ જરૂરી છે.",
       missing_fields: "કૃપા કરીને બધી જન્મ વિગતો ભરો.",
       bad_details: "કૃપા કરીને તમારી જન્મ વિગતો તપાસો.",
-      future_date: "જન્મ તારીખ ભવિષ્યની હોઈ શકતી નથી.",
+      future_date: "જન્મ તારીખ ભવિષ્યની હોઈ શક્તિ નથી.",
       place_not_found: "આ જન્મ સ્થળનું સ્થાન મળ્યું નથી. શહેર અને રાજ્ય સ્પષ્ટ લખો.",
       calc_failed: "આ જન્મ વિગતોમાંથી કુંડળીની ગણતરી કરી શકાઈ નથી.",
       guest_blocked: "કુંડળી બનાવવા માટે લોગિન અથવા નોંધણી કરો.",
@@ -287,7 +287,7 @@ async function resolvePlace(place: string): Promise<PlaceHit | null> {
 function extractText(data: unknown): string {
   if (!isRecord(data) || !Array.isArray(data.candidates)) return "";
   const candidate = data.candidates[0];
-  if (!isRecord(candidate) || !IsRecord(candidate.content)) return "";
+  if (!isRecord(candidate) || !isRecord(candidate.content)) return "";
   const parts = candidate.content.parts;
   if (!Array.isArray(parts)) return "";
   return parts
@@ -430,16 +430,16 @@ function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart):
     kn: `ನಮಸ್ಕಾರ, ನನ್ನ ಹೆಸರು ${name}. ನಾನು ಈಗಷ್ಟೇ ನನ್ನ ಕುಂಡಲಿ ನೋಡಿದೆ ಮತ್ತು ನನ್ನ ${moon} ರಾಶಿ ಮತ್ತು ಪ್ರಸ್ತುತ ${dasha} ಮಹಾದಶೆಯಲ್ಲಿ ಕೆಲವು ಅಡೆತಡೆಗಳು ಕಂಡುಬರುತ್ತಿವೆ ಎಂದು ಚಿಂತೆಗೊಳಗಾಗಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ಈ ದೋಷಗಳ ನಿಖರವಾದ ಕಾರಣ ಮತ್ತು ಪರಿಹಾರವನ್ನು ಹೇಳಬಹುದೇ?`,
     bn: `নমস্কার, আমার নাম ${name}। আমি এইমাত্র আমার কুণ্ডলী দেখেছি এবং আমার ${moon} রাশি এবং বর্তমান ${dasha} মহাদশায় কিছু বাধা দেখতে পাচ্ছি। আপনি কি এই দোষগুলির সঠিক কারণ এবং প্রতিকার বলতে পারেন?`,
     mr: `नमस्कार, माझे नाव ${name} आहे. मी नुकतीच माझी कुंडली पाहिली आणि माझ्या ${moon} राशी आणि सध्याच्या ${dasha} महादशेत काही अडथळे दिसत आहेत. कृपया या दोषांचे नेमके कारण आणि उपाय सांगू शकाल का?`,
-    gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાડશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકશો?`,
-    ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദോഷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`,
+    gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાડશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકાશે?`,
+    ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദೋಷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`,
   };
   return dict[lang] || dict["hinglish"];
 }
 
 export async function GET() {
-  const user = await getUser();
+  const userRow = await getUser();
 
-  if (!user || user.isGuest) {
+  if (!userRow || userRow.isGuest) {
     return NextResponse.json(
       { birth: null, chart: null },
       { headers: { "Cache-Control": "no-store" } }
@@ -447,15 +447,15 @@ export async function GET() {
   }
 
   // Safe type-casting access for user row properties
-  const freeUsed = (user as any).freeKundliUsed || 0;
-  const walletBalance = (user as any).walletBalancePaise || 0;
+  const freeUsed = (userRow as any).freeKundliUsed || 0;
+  const walletBalance = (userRow as any).walletBalancePaise || 0;
 
   const [birthRows, chartRows] = await Promise.all([
-    db.select().from(birthDetails).where(eq(birthDetails.userId, user.id)).limit(1),
+    db.select().from(birthDetails).where(eq(birthDetails.userId, userRow.id)).limit(1),
     db
       .select()
       .from(charts)
-      .where(eq(charts.userId, user.id))
+      .where(eq(charts.userId, userRow.id))
       .orderBy(desc(charts.createdAt))
       .limit(1),
   ]);
