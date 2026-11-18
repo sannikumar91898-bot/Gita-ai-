@@ -22,10 +22,6 @@ const COST_PER_KUNDLI_PAISE = 200; // ₹2
 type PlaceHit = { lat: number; lng: number; timeZone: string };
 type InterpretationStatus = "ready" | "quota" | "unavailable" | "not_configured" | "empty";
 
-/* -------------------------------------------------------------------------- */
-/*               🔥 PREMIUM 10-LANGUAGE ERROR TRANSLATIONS                    */
-/* -------------------------------------------------------------------------- */
-
 function getKundliError(
   lang: string,
   type:
