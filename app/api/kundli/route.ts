@@ -417,25 +417,6 @@ async function writeInterpretation(params: {
   }
 }
 
-function getSuggestedChatPrompt(lang: string, name: string, chart: KundliChart): string {
-  const moon = RASHIS_HI[chart.moonSign.rashi];
-  const dasha = chart.currentDasha ? chart.currentDasha.maha.lord : "Shani";
-
-  const dict: Record<string, string> = {
-    hi: `नमस्ते, मेरा नाम ${name} है। मैंने अभी अपनी कुंडली देखी और मुझे चिंता है कि मेरी ${moon} राशि और वर्तमान ${dasha} महादशा में कुछ रुकावटें दिख रही हैं। क्या आप मेरी कुंडली के दोषों का सटीक कारण और उसका उपाय बता सकती हैं?`,
-    hinglish: `Namaste, mera naam ${name} hai. Maine abhi apni kundli dekhi aur mujhe chinta hai ki meri ${moon} rashi aur current ${dasha} mahadasha me kuch rukawatein dikh rahi hain. Kya aap meri kundli ke doshon ka exact reason aur upay bata sakti hain?`,
-    en: `Hello, my name is ${name}. I just checked my Kundli and I'm concerned about some blockages showing in my ${moon} moon sign and current ${dasha} mahadasha. Can you tell me the exact cause of these doshas and their remedies?`,
-    te: `నమస్తే, నా పేరు ${name}. నేను ఇప్పుడే నా కుండలిని చూశాను మరియు నా ${moon} రాశి మరియు ప్రస్తుత ${dasha} మహాదశలో కొన్ని అడ్డంకులు కనిపిస్తున్నాయని ఆందోళన చెందుతున్నాను. దయచేసి ఈ దోషాల ఖచ్చితమైన కారణం మరియు పరిహారం చెప్పగలరా?`,
-    ta: `வணக்கம், என் பெயர் ${name}. நான் இப்போதுதான் என் ஜாதகத்தைப் பார்த்தேன், எனது ${moon} ராசி மற்றும் தற்போதைய ${dasha} மகாதசையில் சில தடைகள் இருப்பதாகக் கவலைப்படுகிறேன். இந்த தோஷங்களுக்கான சரியான காரணத்தையும் பரிகாரத்தையும் சொல்ல முடியுமா?`,
-    kn: `ನಮಸ್ಕಾರ, ನನ್ನ ಹೆಸರು ${name}. ನಾನು ಈಗಷ್ಟೇ ನನ್ನ ಕುಂಡಲಿ ನೋಡಿದೆ ಮತ್ತು ನನ್ನ ${moon} ರಾಶಿ ಮತ್ತು ಪ್ರಸ್ತುತ ${dasha} ಮಹಾದಶೆಯಲ್ಲಿ ಕೆಲವು ಅಡೆತಡೆಗಳು ಕಂಡುಬರುತ್ತಿವೆ ಎಂದು ಚಿಂತೆಗೊಳಗಾಗಿದ್ದೇನೆ. ದಯವಿಟ್ಟು ಈ ದೋಷಗಳ ನಿಖರವಾದ ಕಾರಣ ಮತ್ತು ಪರಿಹಾರವನ್ನು ಹೇಳಬಹುದೇ?`,
-    bn: `নমস্কার, আমার নাম ${name}। আমি এইমাত্র আমার কুণ্ডলী দেখেছি এবং আমার ${moon} রাশি এবং বর্তমান ${dasha} মহাদশায় কিছু বাধা দেখতে পাচ্ছি। আপনি কি এই দোষগুলির সঠিক কারণ এবং প্রতিকার বলতে পারেন?`,
-    mr: `नमस्कार, माझे नाव ${name} आहे. मी नुकतीच माझी कुंडली पाहिली आणि माझ्या ${moon} राशी आणि सध्याच्या ${dasha} महादशेत काही अडथळे दिसत आहेत. कृपया या दोषांचे नेमके कारण आणि उपाय सांगू शकाल का?`,
-    gu: `નમસ્તે, મારું નામ ${name} છે. મેં હમણાં જ મારી કુંડળી જોઈ અને મારી ${moon} રાશિ અને વર્તમાન ${dasha} મહાડશામાં કેટલીક રુકાવટો દેખાઈ રહી છે. શું તમે આ દોષોનું ચોક્કસ કારણ અને ઉપાય જણાવી શકાશે?`,
-    ml: `നമസ്തേ, എന്റെ പേര് ${name}. ഞാൻ ഇപ്പോൾ എന്റെ കുണ്ഡലി പരിശോധിച്ചു, എന്റെ ${moon} രാശിയിലും നിലവിലെ ${dasha} മഹാദശയിലും ചില തടസ്സങ്ങൾ കാണുന്നതിൽ ഞാൻ ആശങ്കാകുലനാണ്. ഈ ദೋಷങ്ങളുടെ കൃത്യമായ കാരണവും പരിഹാരവും നൽകാമോ?`,
-  };
-  return dict[lang] || dict["hinglish"];
-}
-
 export async function GET() {
   const userRow = await getUser();
 
