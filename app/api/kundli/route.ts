@@ -533,11 +533,11 @@ export async function POST(request: Request) {
   }
 
   // ─── Compute chart ───────────────────────────────────────────────────────
+  // 🔥 FIX: Yahan `name` aur `date` hata kar `dob` kar diya gaya hai
   let chart: KundliChart;
   try {
     chart = computeChart({
-      name,
-      date: dateOfBirth,
+      dob: dateOfBirth,
       time: timeOfBirth,
       lat: place.lat,
       lng: place.lng,
