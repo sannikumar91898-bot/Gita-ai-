@@ -20,7 +20,12 @@ const FREE_KUNDLI_LIMIT = 2;
 const COST_PER_KUNDLI_PAISE = 200; // ₹2
 
 type PlaceHit = { lat: number; lng: number; timeZone: string };
-type InterpretationStatus = "ready" | "quota" | "unavailable" | "not_configured" | "empty";
+type InterpretationStatus =
+  | "ready"
+  | "quota"
+  | "unavailable"
+  | "not_configured"
+  | "empty";
 
 function getKundliError(
   lang: string,
@@ -42,9 +47,11 @@ function getKundliError(
       missing_fields: "कृपया सभी जन्म विवरण भरें।",
       bad_details: "कृपया अपने जन्म विवरण की जाँच करें।",
       future_date: "जन्म तिथि भविष्य की नहीं हो सकती।",
-      place_not_found: "इस जन्म स्थान की लोकेशन नहीं मिली। शहर और राज्य साफ लिखें।",
+      place_not_found:
+        "इस जन्म स्थान की लोकेशन नहीं मिली। शहर और राज्य साफ लिखें।",
       calc_failed: "इन जन्म विवरणों से कुंडली गणना नहीं हो सकी।",
-      guest_blocked: "कुंडली बनाने के लिए कृपया लॉगिन या रजिस्टर करें।",
+      guest_blocked:
+        "कुंडली बनाने के लिए कृपया लॉगिन या रजिस्टर करें।",
       wallet_recharge:
         "आपकी 2 मुफ्त कुंडली समाप्त हो गई हैं। तीसरी कुंडली सिर्फ ₹2 में बन सकती है — अभी वॉलेट रिचार्ज करें और गहराई से जानें।",
     },
@@ -54,9 +61,11 @@ function getKundliError(
       missing_fields: "Kripya sabhi birth details bharein.",
       bad_details: "Kripya apne birth details check karein.",
       future_date: "Birth date future ki nahi ho sakti.",
-      place_not_found: "Is birth place ki location nahi mili. Sheher aur state saaf likhein.",
+      place_not_found:
+        "Is birth place ki location nahi mili. Sheher aur state saaf likhein.",
       calc_failed: "In birth details se kundli calculate nahi ho saki.",
-      guest_blocked: "Kundli banane ke liye kripya login ya register karein.",
+      guest_blocked:
+        "Kundli banane ke liye kripya login ya register karein.",
       wallet_recharge:
         "Aapki 2 free kundli khatam ho gayi hain. Teesri kundli sirf ₹2 mein ban sakti hai — abhi wallet recharge karein aur depth se jaanein.",
     },
@@ -66,9 +75,11 @@ function getKundliError(
       missing_fields: "Please fill in all birth details.",
       bad_details: "Please check your birth details.",
       future_date: "Birth date cannot be in the future.",
-      place_not_found: "Location for this birth place not found. Please write city and state clearly.",
+      place_not_found:
+        "Location for this birth place not found. Please write city and state clearly.",
       calc_failed: "Could not calculate kundli from these birth details.",
-      guest_blocked: "Registration required to generate Kundli. Please login or register.",
+      guest_blocked:
+        "Registration required to generate Kundli. Please login or register.",
       wallet_recharge:
         "Your 2 free Kundli are over. The next one costs only ₹2 — recharge your wallet now and go deeper.",
     },
@@ -78,10 +89,13 @@ function getKundliError(
       missing_fields: "దయచేసి అన్ని పుట్టిన వివరాలను పూరించండి.",
       bad_details: "దయచేసి మీ పుట్టిన వివరాలను తనిఖీ చేయండి.",
       future_date: "పుట్టిన తేదీ భవిష్యత్తులో ఉండకూడదు.",
-      place_not_found: "ఈ పుట్టిన స్థలం స్థానం కనుగొనబడలేదు. నగరం మరియు రాష్ట్రాన్ని స్పష్టంగా రాయండి.",
+      place_not_found:
+        "ఈ పుట్టిన స్థలం స్థానం కనుగొనబడలేదు. నగరం మరియు రాష్ట్రాన్ని స్పష్టంగా రాయండి.",
       calc_failed: "ఈ పుట్టిన వివరాల నుండి కుండలి లెక్కించబడలేదు.",
-      guest_blocked: "కుండలి రూపొందించడానికి దయచేసి లాగిన్ లేదా నమోదు చేసుకోండి.",
-      wallet_recharge: "మీ 2 ఉచిత కుండలి ముగిసింది. తదుపరి కుండలి కేవలం ₹2కి — వాలెట్ రీఛార్జ్ చేయండి.",
+      guest_blocked:
+        "కుండలి రూపొందించడానికి దయచేసి లాగిన్ లేదా నమోదు చేసుకోండి.",
+      wallet_recharge:
+        "మీ 2 ఉచిత కుండలి ముగిసింది. తదుపరి కుండలి కేవలం ₹2కి — వాలెట్ రీఛార్జ్ చేయండి.",
     },
     ta: {
       invalid_req: "தவறான கோரிக்கை. மீண்டும் முயற்சிக்கவும்.",
@@ -89,10 +103,13 @@ function getKundliError(
       missing_fields: "அனைத்து பிறப்பு விவரங்களையும் நிரப்பவும்.",
       bad_details: "உங்கள் பிறப்பு விவரங்களைச் சரிபார்க்கவும்.",
       future_date: "பிறந்த தேதி எதிர்காலத்தில் இருக்க முடியாது.",
-      place_not_found: "இந்த பிறந்த இடத்தின் இருப்பிடம் கிடைக்கவில்லை. நகரம் மற்றும் மாநிலத்தை தெளிவாக எழுதுங்கள்.",
-      calc_failed: "இந்த பிறப்பு விவரங்களிலிருந்து ஜாதகத்தை கணக்கிட முடியவில்லை.",
+      place_not_found:
+        "இந்த பிறந்த இடத்தின் இருப்பிடம் கிடைக்கவில்லை. நகரம் மற்றும் மாநிலத்தை தெளிவாக எழுதுங்கள்.",
+      calc_failed:
+        "இந்த பிறப்பு விவரங்களிலிருந்து ஜாதகத்தை கணக்கிட முடியவில்லை.",
       guest_blocked: "ஜாதகத்தை உருவாக்க உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
-      wallet_recharge: "உங்கள் 2 இலவச ஜாதகம் முடிந்தது. அடுத்தது வெறும் ₹2 — வாலெட் ரீசார்ஜ் செய்யவும்.",
+      wallet_recharge:
+        "உங்கள் 2 இலவச ஜாதகம் முடிந்தது. அடுத்தது வெறும் ₹2 — வாலெட் ரீசார்ஜ் செய்யவும்.",
     },
     kn: {
       invalid_req: "ಅಮಾನ್ಯ ವಿನಂತಿ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
@@ -100,10 +117,14 @@ function getKundliError(
       missing_fields: "ದಯವಿಟ್ಟು ಎಲ್ಲಾ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.",
       bad_details: "ದಯವಿಟ್ಟು ನಿಮ್ಮ ಜನ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
       future_date: "ಜನ್ಮ ದಿನಾಂಕ ಭವಿಷ್ಯದಲ್ಲಿರಲು ಸಾಧ್ಯವಿಲ್ಲ.",
-      place_not_found: "ಈ ಜನ್ಮ ಸ್ಥಳದ ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ. ನಗರ ಮತ್ತು ರಾಜ್ಯವನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಬರೆಯಿರಿ.",
-      calc_failed: "ಈ ಜನ್ಮ ವಿವರಗಳಿಂದ ಕುಂಡಲಿ ಲೆಕ್ಕಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
-      guest_blocked: "ಕುಂಡಲಿ ರಚಿಸಲು ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
-      wallet_recharge: "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿ ಮುಗಿದಿದೆ. ಮುಂದಿನದು ಕೇವಲ ₹2 — ವಾಲೆಟ್ ರೀಚಾರ್ಜ್ ಮಾಡಿ.",
+      place_not_found:
+        "ಈ ಜನ್ಮ ಸ್ಥಳದ ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ. ನಗರ ಮತ್ತು ರಾಜ್ಯವನ್ನು ಸ್ಪಷ್ಟವಾಗಿ ಬರೆಯಿರಿ.",
+      calc_failed:
+        "ಈ ಜನ್ಮ ವಿವರಗಳಿಂದ ಕುಂಡಲಿ ಲೆಕ್ಕಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+      guest_blocked:
+        "ಕುಂಡಲಿ ರಚಿಸಲು ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
+      wallet_recharge:
+        "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿ ಮುಗಿದಿದೆ. ಮುಂದಿನದು ಕೇವಲ ₹2 — ವಾಲೆಟ್ ರೀಚಾರ್ಜ್ ಮಾಡಿ.",
     },
     bn: {
       invalid_req: "অবৈধ অনুরোধ। আবার চেষ্টা করুন।",
@@ -111,10 +132,12 @@ function getKundliError(
       missing_fields: "সমস্ত জন্ম বিবরণ পূরণ করুন।",
       bad_details: "আপনার জন্ম বিবরণ পরীক্ষা করুন।",
       future_date: "জন্ম তারিখ ভবিষ্যতে হতে পারে না।",
-      place_not_found: "এই জন্মস্থানের অবস্থান পাওয়া যায়নি। শহর এবং রাজ্য স্পষ্টভাবে লিখুন।",
+      place_not_found:
+        "এই জন্মস্থানের অবস্থান পাওয়া যায়নি। শহর এবং রাজ্য স্পষ্টভাবে লিখুন।",
       calc_failed: "এই জন্ম বিবরণ থেকে কুণ্ডলী গণনা করা যায়নি।",
       guest_blocked: "কুণ্ডলী তৈরি করতে লগইন বা নিবন্ধন করুন।",
-      wallet_recharge: "আপনার 2টি ফ্রি কুণ্ডলী শেষ। পরেরটি মাত্র ₹2 — ওয়ালেট রিচার্জ করুন।",
+      wallet_recharge:
+        "আপনার 2টি ফ্রি কুণ্ডলী শেষ। পরেরটি মাত্র ₹2 — ওয়ালেট রিচার্জ করুন।",
     },
     mr: {
       invalid_req: "अवैध विनंती. कृपया पुन्हा प्रयत्न करा.",
@@ -122,10 +145,13 @@ function getKundliError(
       missing_fields: "कृपया सर्व जन्म तपशील भरा.",
       bad_details: "कृपया तुमचे जन्म तपशील तपासा.",
       future_date: "जन्म तारीख भविष्यातील असू शकत नाही.",
-      place_not_found: "या जन्मस्थानाचे स्थान सापडले नाही. शहर आणि राज्य स्पष्टपणे लिहा.",
+      place_not_found:
+        "या जन्मस्थानाचे स्थान सापडले नाही. शहर आणि राज्य स्पष्टपणे लिहा.",
       calc_failed: "या जन्म तपशीलांवरून कुंडलीची गणना करता आली नाही.",
-      guest_blocked: "कुंडली तयार करण्यासाठी कृपया लॉग इन किंवा नोंदणी करा.",
-      wallet_recharge: "तुमची 2 मोफत कुंडली संपली आहेत. पुढची फक्त ₹2 — वॉलेट रिचार्ज करा.",
+      guest_blocked:
+        "कुंडली तयार करण्यासाठी कृपया लॉग इन किंवा नोंदणी करा.",
+      wallet_recharge:
+        "तुमची 2 मोफत कुंडली संपली आहेत. पुढची फक्त ₹2 — वॉलेट रिचार्ज करा.",
     },
     gu: {
       invalid_req: "અમાન્ય વિનંતી. ફરી પ્રયાસ કરો.",
@@ -133,10 +159,12 @@ function getKundliError(
       missing_fields: "કૃપા કરીને બધી જન્મ વિગતો ભરો.",
       bad_details: "કૃપા કરીને તમારી જન્મ વિગતો તપાસો.",
       future_date: "જન્મ તારીખ ભવિષ્યની હોઈ શક્તિ નથી.",
-      place_not_found: "આ જન્મ સ્થળનું સ્થાન મળ્યું નથી. શહેર અને રાજ્ય સ્પષ્ટ લખો.",
+      place_not_found:
+        "આ જન્મ સ્થળનું સ્થાન મળ્યું નથી. શહેર અને રાજ્ય સ્પષ્ટ લખો.",
       calc_failed: "આ જન્મ વિગતોમાંથી કુંડળીની ગણતરી કરી શકાઈ નથી.",
       guest_blocked: "કુંડળી બનાવવા માટે લોગિન અથવા નોંધણી કરો.",
-      wallet_recharge: "તમારી 2 મફત કુંડળી પૂરી થઈ. આગળની માત્ર ₹2 — વોલેટ રિચાર્જ કરો.",
+      wallet_recharge:
+        "તમારી 2 મફત કુંડળી પૂરી થઈ. આગળની માત્ર ₹2 — વોલેટ રિચાર્જ કરો.",
     },
     ml: {
       invalid_req: "അസാധുവായ അഭ്യർത്ഥന. വീണ്ടും ശ്രമിക്കുക.",
@@ -144,10 +172,14 @@ function getKundliError(
       missing_fields: "എല്ലാ ജനന വിവരങ്ങളും പൂരിപ്പിക്കുക.",
       bad_details: "നിങ്ങളുടെ ജനന വിവരങ്ങൾ പരിശോധിക്കുക.",
       future_date: "ജനനത്തീയതി ഭാവിയിൽ ആകാൻ കഴിയില്ല.",
-      place_not_found: "ഈ ജനനസ്ഥലത്തിന്റെ സ്ഥാനം കണ്ടെത്തിയില്ല. നഗരവും സംസ്ഥാനവും വ്യക്തമായി എഴുതുക.",
-      calc_failed: "ഈ ജനന വിവരങ്ങളിൽ നിന്ന് കുണ്ഡലി കണക്കാക്കാൻ കഴിഞ്ഞില്ല.",
-      guest_blocked: "കുണ്ഡലി സൃഷ്ടിക്കാൻ ദയവായി ലോഗിൻ ചെയ്യുക അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക.",
-      wallet_recharge: "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലി തീർന്നു. അടുത്തത് വെറും ₹2 — വാലറ്റ് റീചാർജ് ചെയ്യുക.",
+      place_not_found:
+        "ഈ ജനനസ്ഥലത്തിന്റെ സ്ഥാനം കണ്ടെത്തിയില്ല. നഗരവും സംസ്ഥാനവും വ്യക്തമായി എഴുതുക.",
+      calc_failed:
+        "ഈ ജനന വിവരങ്ങളിൽ നിന്ന് കുണ്ഡലി കണക്കാക്കാൻ കഴിഞ്ഞില്ല.",
+      guest_blocked:
+        "കുണ്ഡലി സൃഷ്ടിക്കാൻ ദയവായി ലോഗിൻ ചെയ്യുക അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക.",
+      wallet_recharge:
+        "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലി തീർന്നു. അടുത്തത് വെറും ₹2 — വാലറ്റ് റീചാർജ് ചെയ്യുക.",
     },
   };
 
@@ -216,8 +248,18 @@ function calculatedReport(name: string, chart: KundliChart): string {
   const view = publicChart(chart);
   const lines = [
     name + " की गणना की गई कुंडली",
-    "लग्न: " + view.lagna.rashiNameHi + " (" + view.lagna.rashiName + ") " + view.lagna.degreeInSign + "°",
-    "चंद्र राशि: " + view.moonSign.rashiNameHi + " (" + view.moonSign.rashiName + ")",
+    "लग्न: " +
+      view.lagna.rashiNameHi +
+      " (" +
+      view.lagna.rashiName +
+      ") " +
+      view.lagna.degreeInSign +
+      "°",
+    "चंद्र राशि: " +
+      view.moonSign.rashiNameHi +
+      " (" +
+      view.moonSign.rashiName +
+      ")",
     "जन्म नक्षत्र: " + view.nakshatra.name + ", पद " + view.nakshatra.pada,
   ];
   if (view.currentDasha) {
@@ -289,7 +331,9 @@ function extractText(data: unknown): string {
   return parts
     .filter(
       (part): part is Record<string, unknown> =>
-        isRecord(part) && typeof part.text === "string" && part.thought !== true
+        isRecord(part) &&
+        typeof part.text === "string" &&
+        part.thought !== true
     )
     .map((part) => part.text as string)
     .join("")
@@ -412,6 +456,7 @@ async function writeInterpretation(params: {
     clearTimeout(timeout);
   }
 }
+
 export async function GET() {
   const userRow = await getUser();
 
@@ -423,7 +468,11 @@ export async function GET() {
   }
 
   const [birthRows, chartRows] = await Promise.all([
-    db.select().from(birthDetails).where(eq(birthDetails.userId, userRow.id)).limit(1),
+    db
+      .select()
+      .from(birthDetails)
+      .where(eq(birthDetails.userId, userRow.id))
+      .limit(1),
     db
       .select()
       .from(charts)
@@ -451,7 +500,9 @@ export async function GET() {
       birth,
       chart: stored && stored.lagna ? publicChart(stored) : null,
       calculatedReport:
-        stored && stored.lagna ? calculatedReport(birth?.name || "", stored) : null,
+        stored && stored.lagna
+          ? calculatedReport(birth?.name || "", stored)
+          : null,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
@@ -472,9 +523,12 @@ export async function POST(request: Request) {
   const language = typeof body.language === "string" ? body.language : "hi";
   const consent = body.consent === true;
   const name = typeof body.name === "string" ? body.name.trim() : "";
-  const dateOfBirth = typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
-  const timeOfBirth = typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
-  const placeOfBirth = typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+  const dateOfBirth =
+    typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
+  const timeOfBirth =
+    typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
+  const placeOfBirth =
+    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
 
   if (!consent) return jsonError(getKundliError(language, "consent"), 400);
   if (!name || !dateOfBirth || !placeOfBirth) {
@@ -513,6 +567,7 @@ export async function POST(request: Request) {
   if (!place) {
     return jsonError(getKundliError(language, "place_not_found"), 400);
   }
+
   let chart: KundliChart;
   try {
     chart = computeChart({
@@ -538,22 +593,19 @@ export async function POST(request: Request) {
       .where(eq(users.id, userRow.id));
   }
 
-  await db
-    .insert(birthDetails)
-    .values({
-      userId: userRow.id,
-      name,
-      dob: dateOfBirth,
-      birthTime: timeOfBirth,
-      birthPlace: placeOfBirth,
-      gender: typeof body.gender === "string" ? body.gender : null,
-      isBirthTimeUnknown: body.isBirthTimeUnknown === true,
-    })
-    .onConflictDoNothing();
+  const gender =
+    typeof body.gender === "string" && body.gender.trim()
+      ? body.gender.trim()
+      : null;
 
-  await db.insert(charts).values({
+  await db.insert(birthDetails).values({
     userId: userRow.id,
-    data: chart,
+    name,
+    dob: dateOfBirth,
+    birthTime: timeOfBirth,
+    birthPlace: placeOfBirth,
+    gender,
+    isBirthTimeUnknown: false,
   });
 
   const interpretation = await writeInterpretation({
@@ -571,10 +623,6 @@ export async function POST(request: Request) {
       calculatedReport: calculatedReport(name, chart),
       interpretation: interpretation.text,
       interpretationStatus: interpretation.status,
-      freeKundliUsed: isFreeKundli ? freeUsed + 1 : freeUsed,
-      walletBalancePaise: needsWalletCharge
-        ? walletBalance - COST_PER_KUNDLI_PAISE
-        : walletBalance,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
