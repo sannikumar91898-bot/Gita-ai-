@@ -407,7 +407,7 @@ async function writeInterpretation(params: {
           systemInstruction: {
             parts: [
               {
-                // ✅ Psychology + Responsibility upgrade: No fear mongering
+                // ✅ Psychology + Trust: No fear mongering, only solutions
                 text: `You are a premium human Vedic Astrologer. ${getLangInstruction(
                   params.language
                 )} Use only the calculated chart facts supplied. DO NOT invent planets. Provide a short, highly engaging reflection with headings for Nature (स्वभाव), Career (करियर), and Relationships (संबंध). Also include a section called "Areas to reflect on" (जिन बातों पर ध्यान दें). CRITICAL: Only mention a dosha if it is actually supported by the calculated chart. Never invent problems, create fear, or claim that a dosha guarantees negative outcomes. Keep the tone positive, empowering, and solution-oriented.`,
@@ -554,7 +554,6 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "guest_blocked"), 401);
   }
 
-  // ✅ Fix: as any removed, using proper nullish coalescing
   const freeUsed = userRow.freeKundliUsed ?? 0;
   const walletBalance = userRow.walletBalancePaise ?? 0;
 
@@ -572,7 +571,6 @@ export async function POST(request: Request) {
 
   let chart: KundliChart;
   try {
-    // ✅ Fix: dob used instead of name/date
     chart = computeChart({
       dob: dateOfBirth,
       time: timeOfBirth,
@@ -589,12 +587,10 @@ export async function POST(request: Request) {
       ? body.gender.trim()
       : null;
 
-  // ✅ Fix: Database Transaction ensures atomic operations
   let transactionResult: "ok" | "insufficient" | "missing" = "ok";
 
   try {
     transactionResult = await db.transaction(async (tx) => {
-      // 1. Lock user row to prevent simultaneous updates
       const [lockedUser] = await tx
         .select({
           freeKundliUsed: users.freeKundliUsed,
@@ -609,7 +605,6 @@ export async function POST(request: Request) {
       const currentFreeUsed = lockedUser.freeKundliUsed ?? 0;
       const currentBalance = lockedUser.walletBalancePaise ?? 0;
 
-      // 2. Free limit ya Wallet check karo
       if (currentFreeUsed < FREE_KUNDLI_LIMIT) {
         await tx
           .update(users)
@@ -627,7 +622,6 @@ export async function POST(request: Request) {
           .where(eq(users.id, userRow.id));
       }
 
-      // 3. Birth details Update karo (Duplicate key error se bachne ke liye)
       await tx
         .insert(birthDetails)
         .values({
@@ -659,7 +653,6 @@ export async function POST(request: Request) {
           },
         });
 
-      // 4. Chart history save karo
       await tx.insert(charts).values({
         userId: userRow.id,
         data: chart,
@@ -683,7 +676,6 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "wallet_recharge"), 402);
   }
 
-  // 5. AI Interpretation generate karo (using upgraded safe prompt)
   const interpretation = await writeInterpretation({
     name,
     dateOfBirth,
