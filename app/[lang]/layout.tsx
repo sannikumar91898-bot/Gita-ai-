@@ -1,6 +1,5 @@
 // app/[lang]/layout.tsx
 import React from "react";
-import "../globals.css"; // Path check kar lena, agar zaroorat ho
 
 export default function LangLayout({
   children,
@@ -10,10 +9,9 @@ export default function LangLayout({
   params: { lang: string };
 }) {
   return (
-    <html lang={params.lang} suppressHydrationWarning>
-      <body className="antialiased overflow-x-hidden">
-        {children}
-      </body>
-    </html>
+    // Ye wrapper Google ko batata hai ki is page ki language kya hai
+    <div lang={params.lang} className="contents">
+      {children}
+    </div>
   );
 }
