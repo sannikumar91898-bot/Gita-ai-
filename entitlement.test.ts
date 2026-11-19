@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeEntitlement, extendPremium, TRIAL_SECONDS } from "../src/lib/entitlement";
+import { computeEntitlement, extendPremium, TRIAL_SECONDS } from "./entitlement";
 
 const NOW = new Date("2026-01-01T12:00:00Z");
 
