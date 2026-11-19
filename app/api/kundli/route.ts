@@ -4,6 +4,8 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   let body: unknown;
+
+  // ---------- Parse request ----------
   try {
     body = await request.json();
   } catch {
@@ -14,36 +16,56 @@ export async function POST(request: Request) {
     return jsonError(getKundliError("hi", "invalid_req"), 400);
   }
 
+  // ---------- Input fields ----------
   const language = typeof body.language === "string" ? body.language : "hi";
   const consent = body.consent === true;
   const name = typeof body.name === "string" ? body.name.trim() : "";
+
   const dateOfBirth =
     typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
+
   const timeOfBirth =
     typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
+
   const placeOfBirth =
     typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+
   const gender = typeof body.gender === "string" ? body.gender : "other";
+
   const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
 
-  if (!consent) return jsonError(getKundliError(language, "consent"), 400);
+  // ---------- Validation ----------
+  if (!consent) {
+    return jsonError(getKundliError(language, "consent"), 400);
+  }
+
   if (!name || !dateOfBirth || !placeOfBirth) {
     return jsonError(getKundliError(language, "missing_fields"), 400);
   }
+
   if (!validDate(dateOfBirth)) {
     return jsonError(getKundliError(language, "bad_details"), 400);
   }
+
   if (!validTime(timeOfBirth)) {
     return jsonError(getKundliError(language, "bad_details"), 400);
   }
 
-  const today = new Date();
-  const todayStr = today.toISOString().slice(0, 10);
+  const todayStr = new Date().toISOString().slice(0, 10);
+
   if (dateOfBirth > todayStr) {
     return jsonError(getKundliError(language, "future_date"), 400);
   }
 
-  const userRow = await getUser();
+  // ---------- Authentication ----------
+  let userRow;
+
+  try {
+    userRow = await getUser();
+  } catch (error) {
+    console.error("Kundli authentication error:", error);
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
 
   if (!userRow || userRow.isGuest) {
     return jsonError(getKundliError(language, "guest_blocked"), 401);
@@ -55,16 +77,31 @@ export async function POST(request: Request) {
   const isFreeKundli = freeUsed < FREE_KUNDLI_LIMIT;
   const needsWalletCharge = !isFreeKundli;
 
-  if (needsWalletCharge && walletBalance < COST_PER_KUNDLI_PAISE) {
+  // ---------- Wallet pre-check ----------
+  if (
+    needsWalletCharge &&
+    walletBalance < COST_PER_KUNDLI_PAISE
+  ) {
     return jsonError(getKundliError(language, "wallet_recharge"), 402);
   }
 
-  const place = await resolvePlace(placeOfBirth);
+  // ---------- Resolve birthplace ----------
+  let place;
+
+  try {
+    place = await resolvePlace(placeOfBirth);
+  } catch (error) {
+    console.error("Place resolution error:", error);
+    return jsonError(getKundliError(language, "place_not_found"), 400);
+  }
+
   if (!place) {
     return jsonError(getKundliError(language, "place_not_found"), 400);
   }
 
+  // ---------- Calculate Kundli ----------
   let chart: KundliChart;
+
   try {
     chart = computeChart({
       dob: dateOfBirth,
@@ -73,7 +110,8 @@ export async function POST(request: Request) {
       lng: place.lng,
       timeZone: place.timeZone,
     });
-  } catch {
+  } catch (error) {
+    console.error("Kundli calculation error:", error);
     return jsonError(getKundliError(language, "calc_failed"), 400);
   }
 
@@ -109,8 +147,9 @@ export async function POST(request: Request) {
         isBirthTimeUnknown,
       });
     }
-  } catch {
-    // non-fatal
+  } catch (error) {
+    console.error("Birth details save error:", error);
+    // Non-fatal
   }
 
   // ---------- Save chart history ----------
@@ -121,14 +160,19 @@ export async function POST(request: Request) {
       data: chart as unknown as Record<string, unknown>,
       createdAt: new Date(),
     });
-  } catch {
-    // non-fatal
+  } catch (error) {
+    console.error("Chart history save error:", error);
+    // Non-fatal
   }
 
-  // ---------- Charge wallet or increment free counter (ATOMIC) ----------
+  // ---------- Charge wallet / increment free usage ----------
+  let chargedPaise = 0;
+
   try {
     if (needsWalletCharge) {
-      await db
+      // Atomic wallet deduction.
+      // RETURNING confirms whether deduction actually happened.
+      const [charged] = await db
         .update(users)
         .set({
           walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
@@ -138,44 +182,56 @@ export async function POST(request: Request) {
             eq(users.id, userRow.id),
             gte(users.walletBalancePaise, COST_PER_KUNDLI_PAISE)
           )
+        )
+        .returning({
+          walletBalancePaise: users.walletBalancePaise,
+        });
+
+      if (!charged) {
+        return jsonError(
+          getKundliError(language, "wallet_recharge"),
+          402
         );
-
-      const [fresh] = await db
-        .select({ walletBalancePaise: users.walletBalancePaise })
-        .from(users)
-        .where(eq(users.id, userRow.id))
-        .limit(1);
-
-      if (!fresh || fresh.walletBalancePaise !== walletBalance - COST_PER_KUNDLI_PAISE) {
-        return jsonError(getKundliError(language, "wallet_recharge"), 402);
       }
+
+      chargedPaise = COST_PER_KUNDLI_PAISE;
     } else {
-      await db
+      // Atomic free Kundli counter increment.
+      // RETURNING confirms whether quota was consumed.
+      const [updated] = await db
         .update(users)
-        .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
+        .set({
+          freeKundliUsed: sql`${users.freeKundliUsed} + 1`,
+        })
         .where(
           and(
             eq(users.id, userRow.id),
             lt(users.freeKundliUsed, FREE_KUNDLI_LIMIT)
           )
+        )
+        .returning({
+          freeKundliUsed: users.freeKundliUsed,
+        });
+
+      if (!updated) {
+        return jsonError(
+          getKundliError(language, "wallet_recharge"),
+          402
         );
-
-      const [fresh] = await db
-        .select({ freeKundliUsed: users.freeKundliUsed })
-        .from(users)
-        .where(eq(users.id, userRow.id))
-        .limit(1);
-
-      if (!fresh || (fresh.freeKundliUsed ?? 0) !== freeUsed + 1) {
-        return jsonError(getKundliError(language, "wallet_recharge"), 402);
       }
     }
-  } catch {
-    return jsonError(getKundliError(language, "calc_failed"), 500);
+  } catch (error) {
+    console.error("Kundli payment/quota error:", error);
+
+    return jsonError(
+      getKundliError(language, "calc_failed"),
+      500
+    );
   }
 
   // ---------- AI interpretation ----------
   let interpretation: Awaited<ReturnType<typeof writeInterpretation>>;
+
   try {
     interpretation = await writeInterpretation({
       name,
@@ -185,10 +241,19 @@ export async function POST(request: Request) {
       chart,
       language,
     });
-  } catch {
-    return jsonError(getKundliError(language, "calc_failed"), 500);
+  } catch (error) {
+    console.error("Kundli AI interpretation error:", error);
+
+    // NOTE:
+    // If a paid Kundli was charged above and AI fails,
+    // refund logic should be implemented here.
+    return jsonError(
+      getKundliError(language, "calc_failed"),
+      500
+    );
   }
 
+  // ---------- Success response ----------
   return NextResponse.json(
     {
       birth: {
@@ -199,13 +264,23 @@ export async function POST(request: Request) {
         gender,
         isBirthTimeUnknown,
       },
+
       chart: publicChart(chart),
+
       calculatedReport: calculatedReport(name, chart),
+
       interpretation: interpretation.text,
+
       interpretationStatus: interpretation.status,
+
       isFreeKundli,
-      chargedPaise: needsWalletCharge ? COST_PER_KUNDLI_PAISE : 0,
+
+      chargedPaise,
     },
-    { headers: { "Cache-Control": "no-store" } }
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
   );
 }
