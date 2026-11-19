@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { verifyCheckoutSignature, verifyWebhookSignature } from "../src/lib/payments";
+import { verifyCheckoutSignature, verifyWebhookSignature } from "./payments";
 
 const SECRET = "test_secret_key";
 const ORDER = "order_TEST123";
