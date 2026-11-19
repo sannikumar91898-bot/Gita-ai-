@@ -128,7 +128,7 @@ export async function POST(request: Request) {
   // ---------- Charge wallet or increment free counter (ATOMIC) ----------
   try {
     if (needsWalletCharge) {
-      const result = await db
+      await db
         .update(users)
         .set({
           walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
@@ -138,14 +138,19 @@ export async function POST(request: Request) {
             eq(users.id, userRow.id),
             gte(users.walletBalancePaise, COST_PER_KUNDLI_PAISE)
           )
-        )
-        .returning({ id: users.id });
+        );
 
-      if (result.length === 0) {
+      const [fresh] = await db
+        .select({ walletBalancePaise: users.walletBalancePaise })
+        .from(users)
+        .where(eq(users.id, userRow.id))
+        .limit(1);
+
+      if (!fresh || fresh.walletBalancePaise !== walletBalance - COST_PER_KUNDLI_PAISE) {
         return jsonError(getKundliError(language, "wallet_recharge"), 402);
       }
     } else {
-      const result = await db
+      await db
         .update(users)
         .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
         .where(
@@ -153,10 +158,15 @@ export async function POST(request: Request) {
             eq(users.id, userRow.id),
             lt(users.freeKundliUsed, FREE_KUNDLI_LIMIT)
           )
-        )
-        .returning({ id: users.id });
+        );
 
-      if (result.length === 0) {
+      const [fresh] = await db
+        .select({ freeKundliUsed: users.freeKundliUsed })
+        .from(users)
+        .where(eq(users.id, userRow.id))
+        .limit(1);
+
+      if (!fresh || (fresh.freeKundliUsed ?? 0) !== freeUsed + 1) {
         return jsonError(getKundliError(language, "wallet_recharge"), 402);
       }
     }
@@ -165,7 +175,7 @@ export async function POST(request: Request) {
   }
 
   // ---------- AI interpretation ----------
-  let interpretation;
+  let interpretation: Awaited<ReturnType<typeof writeInterpretation>>;
   try {
     interpretation = await writeInterpretation({
       name,
