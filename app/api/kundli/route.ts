@@ -1,18 +1,148 @@
+export type KundliErrorType =
+  | "invalid_req"
+  | "consent"
+  | "missing_fields"
+  | "bad_details"
+  | "future_date"
+  | "place_not_found"
+  | "calc_failed"
+  | "guest_blocked"
+  | "wallet_recharge";
+
+const dict: Record<string, Record<string, string>> = {
+  hi: {
+    invalid_req: "अमान्य अनुरोध। कृपया पुनः प्रयास करें।",
+    consent: "कुंडली बनाने के लिए सहमति आवश्यक है।",
+    missing_fields: "कृपया सभी जन्म विवरण भरें।",
+    bad_details: "कृपया अपने जन्म विवरण की जाँच करें।",
+    future_date: "जन्म तिथि भविष्य की नहीं हो सकती।",
+    place_not_found: "जन्म स्थान नहीं मिला। शहर और राज्य साफ लिखें।",
+    calc_failed: "कुंडली गणना नहीं हो सकी।",
+    guest_blocked: "कुंडली बनाने के लिए लॉगिन या रजिस्टर करें।",
+    wallet_recharge:
+      "आपकी 2 मुफ्त कुंडली समाप्त हो गई हैं। अगली कुंडली ₹2 में बन सकती है। वॉलेट रिचार्ज करें।",
+  },
+
+  hinglish: {
+    invalid_req: "Invalid request. Kripya phir try karein.",
+    consent: "Kundli banane ke liye consent zaroori hai.",
+    missing_fields: "Kripya sabhi birth details bharein.",
+    bad_details: "Kripya birth details check karein.",
+    future_date: "Birth date future ki nahi ho sakti.",
+    place_not_found: "Birth place nahi mila. City aur state clear likhein.",
+    calc_failed: "Kundli calculate nahi ho saki.",
+    guest_blocked: "Kundli ke liye login ya register karein.",
+    wallet_recharge:
+      "Aapki 2 free Kundli khatam ho gayi hain. Next Kundli ₹2 mein hai. Wallet recharge karein.",
+  },
+
+  en: {
+    invalid_req: "Invalid request. Please try again.",
+    consent: "Consent is required to generate Kundli.",
+    missing_fields: "Please fill in all birth details.",
+    bad_details: "Please check your birth details.",
+    future_date: "Birth date cannot be in the future.",
+    place_not_found: "Birth location not found. Enter city and state clearly.",
+    calc_failed: "Could not calculate Kundli.",
+    guest_blocked: "Please login or register to generate Kundli.",
+    wallet_recharge:
+      "Your 2 free Kundlis are over. The next Kundli costs ₹2. Please recharge your wallet.",
+  },
+
+  te: {
+    invalid_req: "చెల్లని అభ్యర్థన. మళ్లీ ప్రయత్నించండి.",
+    consent: "కుండలి రూపొందించడానికి సమ్మతి అవసరం.",
+    missing_fields: "అన్ని పుట్టిన వివరాలను పూరించండి.",
+    bad_details: "పుట్టిన వివరాలను తనిఖీ చేయండి.",
+    future_date: "పుట్టిన తేదీ భవిష్యత్తులో ఉండకూడదు.",
+    place_not_found: "పుట్టిన ప్రదేశం కనుగొనబడలేదు.",
+    calc_failed: "కుండలి లెక్కించలేకపోయాము.",
+    guest_blocked: "దయచేసి లాగిన్ లేదా నమోదు చేసుకోండి.",
+    wallet_recharge: "మీ 2 ఉచిత కుండలులు పూర్తయ్యాయి. తదుపరిది ₹2.",
+  },
+
+  ta: {
+    invalid_req: "தவறான கோரிக்கை. மீண்டும் முயற்சிக்கவும்.",
+    consent: "ஜாதகம் உருவாக்க ஒப்புதல் தேவை.",
+    missing_fields: "அனைத்து பிறப்பு விவரங்களையும் நிரப்பவும்.",
+    bad_details: "பிறப்பு விவரங்களைச் சரிபார்க்கவும்.",
+    future_date: "பிறந்த தேதி எதிர்காலத்தில் இருக்க முடியாது.",
+    place_not_found: "பிறந்த இடம் கிடைக்கவில்லை.",
+    calc_failed: "ஜாதகத்தை கணக்கிட முடியவில்லை.",
+    guest_blocked: "உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
+    wallet_recharge: "உங்கள் 2 இலவச ஜாதகங்கள் முடிந்துவிட்டன. அடுத்தது ₹2.",
+  },
+
+  kn: {
+    invalid_req: "ಅಮಾನ್ಯ ವಿನಂತಿ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+    consent: "ಕುಂಡಲಿ ರಚಿಸಲು ಒಪ್ಪಿಗೆ ಅಗತ್ಯ.",
+    missing_fields: "ಎಲ್ಲಾ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.",
+    bad_details: "ಜನ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
+    future_date: "ಜನ್ಮ ದಿನಾಂಕ ಭವಿಷ್ಯದಲ್ಲಿರಲು ಸಾಧ್ಯವಿಲ್ಲ.",
+    place_not_found: "ಜನ್ಮ ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.",
+    calc_failed: "ಕುಂಡಲಿ ಲೆಕ್ಕಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
+    guest_blocked: "ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
+    wallet_recharge: "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿಗಳು ಮುಗಿದಿವೆ. ಮುಂದಿನದು ₹2.",
+  },
+
+  bn: {
+    invalid_req: "অবৈধ অনুরোধ। আবার চেষ্টা করুন।",
+    consent: "কুণ্ডলী তৈরি করতে সম্মতি প্রয়োজন।",
+    missing_fields: "সমস্ত জন্ম বিবরণ পূরণ করুন।",
+    bad_details: "জন্ম বিবরণ পরীক্ষা করুন।",
+    future_date: "জন্ম তারিখ ভবিষ্যতে হতে পারে না।",
+    place_not_found: "জন্মস্থান পাওয়া যায়নি।",
+    calc_failed: "কুণ্ডলী গণনা করা যায়নি।",
+    guest_blocked: "কুণ্ডলী তৈরি করতে লগইন বা নিবন্ধন করুন।",
+    wallet_recharge: "আপনার 2টি ফ্রি কুণ্ডলী শেষ। পরেরটি মাত্র ₹2।",
+  },
+
+  mr: {
+    invalid_req: "अवैध विनंती. पुन्हा प्रयत्न करा.",
+    consent: "कुंडली तयार करण्यासाठी संमती आवश्यक आहे.",
+    missing_fields: "सर्व जन्म तपशील भरा.",
+    bad_details: "जन्म तपशील तपासा.",
+    future_date: "जन्म तारीख भविष्यातील असू शकत नाही.",
+    place_not_found: "जन्मस्थान सापडले नाही.",
+    calc_failed: "कुंडली गणना करता आली नाही.",
+    guest_blocked: "कृपया लॉगिन किंवा नोंदणी करा.",
+    wallet_recharge: "तुमच्या 2 मोफत कुंडल्या संपल्या. पुढची फक्त ₹2.",
+  },
+
+  gu: {
+    invalid_req: "અમાન્ય વિનંતી. ફરી પ્રયાસ કરો.",
+    consent: "કુંડળી બનાવવા સંમતિ જરૂરી છે.",
+    missing_fields: "બધી જન્મ વિગતો ભરો.",
+    bad_details: "જન્મ વિગતો તપાસો.",
+    future_date: "જન્મ તારીખ ભવિષ્યની હોઈ શકે નહીં.",
+    place_not_found: "જન્મ સ્થળ મળ્યું નથી.",
+    calc_failed: "કુંડળીની ગણતરી થઈ શકી નથી.",
+    guest_blocked: "કૃપા કરીને લોગિન અથવા નોંધણી કરો.",
+    wallet_recharge: "તમારી 2 મફત કુંડળી પૂરી થઈ. આગળની માત્ર ₹2.",
+  },
+
+  ml: {
+    invalid_req: "അസാധുവായ അഭ്യർത്ഥന. വീണ്ടും ശ്രമിക്കുക.",
+    consent: "കുണ്ഡലി സൃഷ്ടിക്കാൻ സമ്മതം ആവശ്യമാണ്.",
+    missing_fields: "എല്ലാ ജനന വിവരങ്ങളും പൂരിപ്പിക്കുക.",
+    bad_details: "ജനന വിവരങ്ങൾ പരിശോധിക്കുക.",
+    future_date: "ജനന തീയതി ഭാവിയിൽ ആകാൻ കഴിയില്ല.",
+    place_not_found: "ജനന സ്ഥലം കണ്ടെത്തിയില്ല.",
+    calc_failed: "കുണ്ഡലി കണക്കാക്കാൻ കഴിഞ്ഞില്ല.",
+    guest_blocked: "ദയവായി ലോഗിൻ അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക.",
+    wallet_recharge: "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലികൾ തീർന്നു. അടുത്തത് ₹2.",
+  },
+};
+
+export function getKundliError(lang: string, type: KundliErrorType): string {
+  return dict[lang]?.[type] ?? dict.en[type];
+}
 import { NextResponse } from "next/server";
-import { sql, eq, desc, and, lt, gte } from "drizzle-orm";
+import { sql, eq, and, lt, gte } from "drizzle-orm";
 
-import { getUser } from "@/auth";
 import { db } from "@/index";
-import { aiResponseCache, birthDetails, charts, users } from "@/schema";
-import {
-  RASHIS_HI,
-  chartSummary,
-  computeChart,
-  type KundliChart,
-} from "@/vedic";
-
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { aiResponseCache, users } from "@/schema";
+import { RASHIS_HI, chartSummary, type KundliChart } from "@/vedic";
 
 const REQUEST_TIMEOUT_MS = 18_000;
 const DEFAULT_MODEL = "gemini-1.5-flash";
@@ -22,21 +152,20 @@ const COST_PER_KUNDLI_PAISE = 200; // ₹2
 // Prompt badalne par isko bump karo, taaki purane cached jawab na aayein
 const PROMPT_VERSION = "v2";
 
-type PlaceHit = {
+export type PlaceHit = {
   lat: number;
   lng: number;
   timeZone: string;
 };
 
-type InterpretationStatus =
+export type InterpretationStatus =
   | "ready"
   | "quota"
   | "unavailable"
   | "not_configured"
   | "empty";
 
-// 10 supported languages
-const SUPPORTED_LANGUAGES = [
+export const SUPPORTED_LANGUAGES = [
   "hi",
   "hinglish",
   "en",
@@ -49,152 +178,10 @@ const SUPPORTED_LANGUAGES = [
   "ml",
 ] as const;
 
-type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
-
-// ---------- Error messages ----------
-function getKundliError(
-  lang: string,
-  type:
-    | "invalid_req"
-    | "consent"
-    | "missing_fields"
-    | "bad_details"
-    | "future_date"
-    | "place_not_found"
-    | "calc_failed"
-    | "guest_blocked"
-    | "wallet_recharge"
-): string {
-  const dict: Record<string, Record<string, string>> = {
-    hi: {
-      invalid_req: "अमान्य अनुरोध। कृपया पुनः प्रयास करें।",
-      consent: "कुंडली बनाने के लिए सहमति आवश्यक है।",
-      missing_fields: "कृपया सभी जन्म विवरण भरें।",
-      bad_details: "कृपया अपने जन्म विवरण की जाँच करें।",
-      future_date: "जन्म तिथि भविष्य की नहीं हो सकती।",
-      place_not_found: "जन्म स्थान नहीं मिला। शहर और राज्य साफ लिखें।",
-      calc_failed: "कुंडली गणना नहीं हो सकी।",
-      guest_blocked: "कुंडली बनाने के लिए लॉगिन या रजिस्टर करें।",
-      wallet_recharge:
-        "आपकी 2 मुफ्त कुंडली समाप्त हो गई हैं। अगली कुंडली ₹2 में बन सकती है। वॉलेट रिचार्ज करें।",
-    },
-
-    hinglish: {
-      invalid_req: "Invalid request. Kripya phir try karein.",
-      consent: "Kundli banane ke liye consent zaroori hai.",
-      missing_fields: "Kripya sabhi birth details bharein.",
-      bad_details: "Kripya birth details check karein.",
-      future_date: "Birth date future ki nahi ho sakti.",
-      place_not_found: "Birth place nahi mila. City aur state clear likhein.",
-      calc_failed: "Kundli calculate nahi ho saki.",
-      guest_blocked: "Kundli ke liye login ya register karein.",
-      wallet_recharge:
-        "Aapki 2 free Kundli khatam ho gayi hain. Next Kundli ₹2 mein hai. Wallet recharge karein.",
-    },
-
-    en: {
-      invalid_req: "Invalid request. Please try again.",
-      consent: "Consent is required to generate Kundli.",
-      missing_fields: "Please fill in all birth details.",
-      bad_details: "Please check your birth details.",
-      future_date: "Birth date cannot be in the future.",
-      place_not_found: "Birth location not found. Enter city and state clearly.",
-      calc_failed: "Could not calculate Kundli.",
-      guest_blocked: "Please login or register to generate Kundli.",
-      wallet_recharge:
-        "Your 2 free Kundlis are over. The next Kundli costs ₹2. Please recharge your wallet.",
-    },
-
-    te: {
-      invalid_req: "చెల్లని అభ్యర్థన. మళ్లీ ప్రయత్నించండి.",
-      consent: "కుండలి రూపొందించడానికి సమ్మతి అవసరం.",
-      missing_fields: "అన్ని పుట్టిన వివరాలను పూరించండి.",
-      bad_details: "పుట్టిన వివరాలను తనిఖీ చేయండి.",
-      future_date: "పుట్టిన తేదీ భవిష్యత్తులో ఉండకూడదు.",
-      place_not_found: "పుట్టిన ప్రదేశం కనుగొనబడలేదు.",
-      calc_failed: "కుండలి లెక్కించలేకపోయాము.",
-      guest_blocked: "దయచేసి లాగిన్ లేదా నమోదు చేసుకోండి.",
-      wallet_recharge: "మీ 2 ఉచిత కుండలులు పూర్తయ్యాయి. తదుపరిది ₹2.",
-    },
-
-    ta: {
-      invalid_req: "தவறான கோரிக்கை. மீண்டும் முயற்சிக்கவும்.",
-      consent: "ஜாதகம் உருவாக்க ஒப்புதல் தேவை.",
-      missing_fields: "அனைத்து பிறப்பு விவரங்களையும் நிரப்பவும்.",
-      bad_details: "பிறப்பு விவரங்களைச் சரிபார்க்கவும்.",
-      future_date: "பிறந்த தேதி எதிர்காலத்தில் இருக்க முடியாது.",
-      place_not_found: "பிறந்த இடம் கிடைக்கவில்லை.",
-      calc_failed: "ஜாதகத்தை கணக்கிட முடியவில்லை.",
-      guest_blocked: "உள்நுழையவும் அல்லது பதிவு செய்யவும்.",
-      wallet_recharge: "உங்கள் 2 இலவச ஜாதகங்கள் முடிந்துவிட்டன. அடுத்தது ₹2.",
-    },
-
-    kn: {
-      invalid_req: "ಅಮಾನ್ಯ ವಿನಂತಿ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-      consent: "ಕುಂಡಲಿ ರಚಿಸಲು ಒಪ್ಪಿಗೆ ಅಗತ್ಯ.",
-      missing_fields: "ಎಲ್ಲಾ ಜನ್ಮ ವಿವರಗಳನ್ನು ಭರ್ತಿ ಮಾಡಿ.",
-      bad_details: "ಜನ್ಮ ವಿವರಗಳನ್ನು ಪರಿಶೀಲಿಸಿ.",
-      future_date: "ಜನ್ಮ ದಿನಾಂಕ ಭವಿಷ್ಯದಲ್ಲಿರಲು ಸಾಧ್ಯವಿಲ್ಲ.",
-      place_not_found: "ಜನ್ಮ ಸ್ಥಳ ಕಂಡುಬಂದಿಲ್ಲ.",
-      calc_failed: "ಕುಂಡಲಿ ಲೆಕ್ಕಹಾಕಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ.",
-      guest_blocked: "ದಯವಿಟ್ಟು ಲಾಗಿನ್ ಅಥವಾ ನೋಂದಾಯಿಸಿ.",
-      wallet_recharge: "ನಿಮ್ಮ 2 ಉಚಿತ ಕುಂಡಲಿಗಳು ಮುಗಿದಿವೆ. ಮುಂದಿನದು ₹2.",
-    },
-
-    bn: {
-      invalid_req: "অবৈধ অনুরোধ। আবার চেষ্টা করুন।",
-      consent: "কুণ্ডলী তৈরি করতে সম্মতি প্রয়োজন।",
-      missing_fields: "সমস্ত জন্ম বিবরণ পূরণ করুন।",
-      bad_details: "জন্ম বিবরণ পরীক্ষা করুন।",
-      future_date: "জন্ম তারিখ ভবিষ্যতে হতে পারে না।",
-      place_not_found: "জন্মস্থান পাওয়া যায়নি।",
-      calc_failed: "কুণ্ডলী গণনা করা যায়নি।",
-      guest_blocked: "কুণ্ডলী তৈরি করতে লগইন বা নিবন্ধন করুন।",
-      wallet_recharge: "আপনার 2টি ফ্রি কুণ্ডলী শেষ। পরেরটি মাত্র ₹2।",
-    },
-
-    mr: {
-      invalid_req: "अवैध विनंती. पुन्हा प्रयत्न करा.",
-      consent: "कुंडली तयार करण्यासाठी संमती आवश्यक आहे.",
-      missing_fields: "सर्व जन्म तपशील भरा.",
-      bad_details: "जन्म तपशील तपासा.",
-      future_date: "जन्म तारीख भविष्यातील असू शकत नाही.",
-      place_not_found: "जन्मस्थान सापडले नाही.",
-      calc_failed: "कुंडली गणना करता आली नाही.",
-      guest_blocked: "कृपया लॉगिन किंवा नोंदणी करा.",
-      wallet_recharge: "तुमच्या 2 मोफत कुंडल्या संपल्या. पुढची फक्त ₹2.",
-    },
-
-    gu: {
-      invalid_req: "અમાન્ય વિનંતી. ફરી પ્રયાસ કરો.",
-      consent: "કુંડળી બનાવવા સંમતિ જરૂરી છે.",
-      missing_fields: "બધી જન્મ વિગતો ભરો.",
-      bad_details: "જન્મ વિગતો તપાસો.",
-      future_date: "જન્મ તારીખ ભવિષ્યની હોઈ શકે નહીં.",
-      place_not_found: "જન્મ સ્થળ મળ્યું નથી.",
-      calc_failed: "કુંડળીની ગણતરી થઈ શકી નથી.",
-      guest_blocked: "કૃપા કરીને લોગિન અથવા નોંધણી કરો.",
-      wallet_recharge: "તમારી 2 મફત કુંડળી પૂરી થઈ. આગળની માત્ર ₹2.",
-    },
-
-    ml: {
-      invalid_req: "അസാധുവായ അഭ്യർത്ഥന. വീണ്ടും ശ്രമിക്കുക.",
-      consent: "കുണ്ഡലി സൃഷ്ടിക്കാൻ സമ്മതം ആവശ്യമാണ്.",
-      missing_fields: "എല്ലാ ജനന വിവരങ്ങളും പൂരിപ്പിക്കുക.",
-      bad_details: "ജനന വിവരങ്ങൾ പരിശോധിക്കുക.",
-      future_date: "ജനന തീയതി ഭാവിയിൽ ആകാൻ കഴിയില്ല.",
-      place_not_found: "ജനന സ്ഥലം കണ്ടെത്തിയില്ല.",
-      calc_failed: "കുണ്ഡലി കണക്കാക്കാൻ കഴിഞ്ഞില്ല.",
-      guest_blocked: "ദയവായി ലോഗിൻ അല്ലെങ്കിൽ രജിസ്റ്റർ ചെയ്യുക.",
-      wallet_recharge: "നിങ്ങളുടെ 2 സൗജന്യ കുണ്ഡലികൾ തീർന്നു. അടുത്തത് ₹2.",
-    },
-  };
-
-  return dict[lang]?.[type] ?? dict.en[type];
-}
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 // ---------- JSON error ----------
-function jsonError(message: string, status: number) {
+export function jsonError(message: string, status: number) {
   return NextResponse.json(
     { error: message },
     {
@@ -204,12 +191,12 @@ function jsonError(message: string, status: number) {
   );
 }
 
-// ---------- Validation helpers ----------
-function isRecord(value: unknown): value is Record<string, unknown> {
+// ---------- Validation ----------
+export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function validDate(value: string): boolean {
+export function validDate(value: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 
   const [y, m, d] = value.split("-").map(Number);
@@ -223,7 +210,7 @@ function validDate(value: string): boolean {
   );
 }
 
-function validTime(value: string): boolean {
+export function validTime(value: string): boolean {
   if (!/^\d{2}:\d{2}$/.test(value)) return false;
 
   const [h, m] = value.split(":").map(Number);
@@ -232,7 +219,7 @@ function validTime(value: string): boolean {
 }
 
 // ---------- Public chart ----------
-function publicChart(chart: KundliChart) {
+export function publicChart(chart: KundliChart) {
   return {
     lagna: {
       rashiName: chart.lagna.rashiName,
@@ -269,7 +256,7 @@ function publicChart(chart: KundliChart) {
 }
 
 // ---------- Calculated report ----------
-function calculatedReport(name: string, chart: KundliChart): string {
+export function calculatedReport(name: string, chart: KundliChart): string {
   const view = publicChart(chart);
 
   const lines = [
@@ -323,9 +310,8 @@ function calculatedReport(name: string, chart: KundliChart): string {
 }
 
 // ---------- Place lookup ----------
-async function resolvePlace(place: string): Promise<PlaceHit | null> {
+export async function resolvePlace(place: string): Promise<PlaceHit | null> {
   const controller = new AbortController();
-
   const timeout = setTimeout(() => controller.abort(), 8000);
 
   try {
@@ -371,7 +357,7 @@ async function resolvePlace(place: string): Promise<PlaceHit | null> {
   }
 }
 
-// ---------- Gemini response extraction ----------
+// ---------- Gemini helpers ----------
 function extractText(data: unknown): string {
   if (!isRecord(data) || !Array.isArray(data.candidates)) {
     return "";
@@ -397,7 +383,6 @@ function extractText(data: unknown): string {
     .trim();
 }
 
-// ---------- Language instructions ----------
 function getLangInstruction(lang: string): string {
   const map: Record<string, string> = {
     hi: "Write strictly in Hindi using Devanagari script.",
@@ -417,7 +402,7 @@ function getLangInstruction(lang: string): string {
 }
 
 // ---------- AI interpretation ----------
-async function writeInterpretation(params: {
+export async function writeInterpretation(params: {
   name: string;
   dateOfBirth: string;
   timeOfBirth: string;
@@ -434,7 +419,6 @@ async function writeInterpretation(params: {
     params.language,
   ].join("_");
 
-  // Cache lookup
   try {
     const cached = await db
       .select()
@@ -443,10 +427,7 @@ async function writeInterpretation(params: {
       .limit(1);
 
     if (cached[0]?.aiAnswer?.trim()) {
-      return {
-        text: cached[0].aiAnswer,
-        status: "ready",
-      };
+      return { text: cached[0].aiAnswer, status: "ready" };
     }
   } catch {
     // Cache errors are non-fatal
@@ -456,14 +437,10 @@ async function writeInterpretation(params: {
   const model = process.env.GEMINI_MODEL?.trim() || DEFAULT_MODEL;
 
   if (!apiKey) {
-    return {
-      text: null,
-      status: "not_configured",
-    };
+    return { text: null, status: "not_configured" };
   }
 
   const controller = new AbortController();
-
   const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
@@ -539,7 +516,6 @@ async function writeInterpretation(params: {
       return { text: null, status: "empty" };
     }
 
-    // Cache successful answer
     try {
       await db
         .insert(aiResponseCache)
@@ -553,27 +529,20 @@ async function writeInterpretation(params: {
       // Cache saving is non-fatal
     }
 
-    return {
-      text,
-      status: "ready",
-    };
+    return { text, status: "ready" };
   } catch (error) {
     console.error("Gemini interpretation error:", error);
-
-    return {
-      text: null,
-      status: "unavailable",
-    };
+    return { text: null, status: "unavailable" };
   } finally {
     clearTimeout(timeout);
   }
 }
 
-// ---------- Billing helpers ----------
-type ChargeKind = "free" | "paid" | "none";
+// ---------- Billing ----------
+export type ChargeKind = "free" | "paid" | "none";
 
-// Pehle free quota try karo, warna wallet se ₹2 kaato. Dono atomic hain.
-async function chargeForKundli(userId: string): Promise<ChargeKind> {
+// Pehle free quota, warna wallet se ₹2. Dono atomic hain.
+export async function chargeForKundli(userId: string): Promise<ChargeKind> {
   const free = await db
     .update(users)
     .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
@@ -600,7 +569,7 @@ async function chargeForKundli(userId: string): Promise<ChargeKind> {
   return paid.length > 0 ? "paid" : "none";
 }
 
-async function refundKundli(userId: string, kind: ChargeKind) {
+export async function refundKundli(userId: string, kind: ChargeKind) {
   try {
     if (kind === "free") {
       await db
@@ -619,6 +588,33 @@ async function refundKundli(userId: string, kind: ChargeKind) {
     console.error("Kundli refund error:", error);
   }
 }
+import { NextResponse } from "next/server";
+import { eq, desc } from "drizzle-orm";
+
+import { getUser } from "@/auth";
+import { db } from "@/index";
+import { birthDetails, charts } from "@/schema";
+import { computeChart, type KundliChart } from "@/vedic";
+
+import { getKundliError } from "./messages";
+import {
+  SUPPORTED_LANGUAGES,
+  type ChargeKind,
+  type SupportedLanguage,
+  calculatedReport,
+  chargeForKundli,
+  isRecord,
+  jsonError,
+  publicChart,
+  refundKundli,
+  resolvePlace,
+  validDate,
+  validTime,
+  writeInterpretation,
+} from "./helpers";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 // ---------- GET: Existing Kundli ----------
 export async function GET() {
@@ -663,421 +659,13 @@ export async function GET() {
   return NextResponse.json(
     {
       birth,
-
       chart: stored && stored.lagna ? publicChart(stored) : null,
-
       calculatedReport:
         stored && stored.lagna
           ? calculatedReport(birth?.name || "", stored)
           : null,
     },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
-}
-
-// ---------- POST: Generate Kundli ----------
-export async function POST(request: Request) {
-  let body: unknown;
-
-  // Parse request
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError(getKundliError("hi", "invalid_req"), 400);
-  }
-
-  if (!isRecord(body)) {
-    return jsonError(getKundliError("hi", "invalid_req"), 400);
-  }
-
-  // Validate language
-  const requestedLanguage =
-    typeof body.language === "string" ? body.language : "hi";
-
-  const language: SupportedLanguage = SUPPORTED_LANGUAGES.includes(
-    requestedLanguage as SupportedLanguage
-  )
-    ? (requestedLanguage as SupportedLanguage)
-    : "hi";
-
-  // Inputs
-  const consent = body.consent === true;
-
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-
-  const dateOfBirth =
-    typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
-
-  const timeOfBirth =
-    typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
-
-  const placeOfBirth =
-    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
-
-  const gender = typeof body.gender === "string" ? body.gender : "other";
-
-  const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
-
-  // Validation
-  if (!consent) {
-    return jsonError(getKundliError(language, "consent"), 400);
-  }
-
-  if (!name || !dateOfBirth || !placeOfBirth) {
-    return jsonError(getKundliError(language, "missing_fields"), 400);
-  }
-
-  if (!validDate(dateOfBirth)) {
-    return jsonError(getKundliError(language, "bad_details"), 400);
-  }
-
-  if (!validTime(timeOfBirth)) {
-    return jsonError(getKundliError(language, "bad_details"), 400);
-  }
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  if (dateOfBirth > todayStr) {
-    return jsonError(getKundliError(language, "future_date"), 400);
-  }
-
-  // Authentication
-  let userRow;
-
-  try {
-    userRow = await getUser();
-  } catch (error) {
-    console.error("Kundli authentication error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (!userRow || userRow.isGuest) {
-    return jsonError(getKundliError(language, "guest_blocked"), 401);
-  }
-
-  // Resolve birthplace
-  const place = await resolvePlace(placeOfBirth);
-
-  if (!place) {
-    return jsonError(getKundliError(language, "place_not_found"), 400);
-  }
-
-  // Calculate chart
-  let chart: KundliChart;
-
-  try {
-    chart = computeChart({
-      dob: dateOfBirth,
-      time: timeOfBirth,
-      lat: place.lat,
-      lng: place.lng,
-      timeZone: place.timeZone,
-    });
-  } catch (error) {
-    console.error("Kundli calculation error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (!chart || !chart.lagna) {
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  // Free quota / wallet charge
-  let charged: ChargeKind;
-
-  try {
-    charged = await chargeForKundli(userRow.id);
-  } catch (error) {
-    console.error("Kundli billing error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (charged === "none") {
-    return jsonError(getKundliError(language, "wallet_recharge"), 402);
-  }
-
-  // Save birth details + chart
-  try {
-    await db
-      .insert(birthDetails)
-      .values({
-        userId: userRow.id,
-        name,
-        gender,
-        isBirthTimeUnknown,
-        dob: dateOfBirth,
-        birthTime: timeOfBirth,
-        birthPlace: placeOfBirth,
-        lat: place.lat,
-        lng: place.lng,
-        timeZone: place.timeZone,
-        consent: true,
-      })
-      .onConflictDoUpdate({
-        target: birthDetails.userId,
-        set: {
-          name,
-          gender,
-          isBirthTimeUnknown,
-          dob: dateOfBirth,
-          birthTime: timeOfBirth,
-          birthPlace: placeOfBirth,
-          lat: place.lat,
-          lng: place.lng,
-          timeZone: place.timeZone,
-          consent: true,
-          updatedAt: new Date(),
-        },
-      });
-
-    await db.insert(charts).values({
-      userId: userRow.id,
-      data: chart,
-    });
-  } catch (error) {
-    console.error("Kundli save error:", error);
-
-    await refundKundli(userRow.id, charted(charged));
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  // AI interpretation (non-fatal if it fails)
-  const interpretation = await writeInterpretation({
-    name,
-    dateOfBirth,
-    timeOfBirth,
-    placeOfBirth,
-    chart,
-    language,
-  });
-
-  return NextResponse.json(
-    {
-      chart: publicChart(chart),
-      calculatedReport: calculatedReport(name, chart),
-      interpretation: interpretation.text,
-      interpretationStatus: interpretation.status,
-    },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
-}
-
-function charted(kind: ChargeKind): ChargeKind {
-  return kind;
-}
-      },
-    }
-  );
-}
-
-// ---------- POST: Generate Kundli ----------
-export async function POST(request: Request) {
-  let body: unknown;
-
-  // Parse request
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError(getKundliError("hi", "invalid_req"), 400);
-  }
-
-  if (!isRecord(body)) {
-    return jsonError(getKundliError("hi", "invalid_req"), 400);
-  }
-
-  // Validate language
-  const requestedLanguage =
-    typeof body.language === "string" ? body.language : "hi";
-
-  const language: SupportedLanguage = SUPPORTED_LANGUAGES.includes(
-    requestedLanguage as SupportedLanguage
-  )
-    ? (requestedLanguage as SupportedLanguage)
-    : "hi";
-
-  // Inputs
-  const consent = body.consent === true;
-
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-
-  const dateOfBirth =
-    typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
-
-  const timeOfBirth =
-    typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
-
-  const placeOfBirth =
-    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
-
-  const gender = typeof body.gender === "string" ? body.gender : "other";
-
-  const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
-
-  // Validation
-  if (!consent) {
-    return jsonError(getKundliError(language, "consent"), 400);
-  }
-
-  if (!name || !dateOfBirth || !placeOfBirth) {
-    return jsonError(getKundliError(language, "missing_fields"), 400);
-  }
-
-  if (!validDate(dateOfBirth)) {
-    return jsonError(getKundliError(language, "bad_details"), 400);
-  }
-
-  if (!validTime(timeOfBirth)) {
-    return jsonError(getKundliError(language, "bad_details"), 400);
-  }
-
-  const todayStr = new Date().toISOString().slice(0, 10);
-
-  if (dateOfBirth > todayStr) {
-    return jsonError(getKundliError(language, "future_date"), 400);
-  }
-
-  // Authentication
-  let userRow;
-
-  try {
-    userRow = await getUser();
-  } catch (error) {
-    console.error("Kundli authentication error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (!userRow || userRow.isGuest) {
-    return jsonError(getKundliError(language, "guest_blocked"), 401);
-  }
-
-  // Resolve birthplace
-  const place = await resolvePlace(placeOfBirth);
-
-  if (!place) {
-    return jsonError(getKundliError(language, "place_not_found"), 400);
-  }
-
-  // Calculate chart
-  let chart: KundliChart;
-
-  try {
-    chart = computeChart({
-      dob: dateOfBirth,
-      time: timeOfBirth,
-      lat: place.lat,
-      lng: place.lng,
-      timeZone: place.timeZone,
-    });
-  } catch (error) {
-    console.error("Kundli calculation error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (!chart || !chart.lagna) {
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  // Free quota / wallet charge
-  let charged: ChargeKind;
-
-  try {
-    charged = await chargeForKundli(userRow.id);
-  } catch (error) {
-    console.error("Kundli billing error:", error);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  if (charged === "none") {
-    return jsonError(getKundliError(language, "wallet_recharge"), 402);
-  }
-
-  // Save birth details + chart
-  try {
-    await db
-      .insert(birthDetails)
-      .values({
-        userId: userRow.id,
-        name,
-        gender,
-        isBirthTimeUnknown,
-        dob: dateOfBirth,
-        birthTime: timeOfBirth,
-        birthPlace: placeOfBirth,
-        lat: place.lat,
-        lng: place.lng,
-        timeZone: place.timeZone,
-        consent: true,
-      })
-      .onConflictDoUpdate({
-        target: birthDetails.userId,
-        set: {
-          name,
-          gender,
-          isBirthTimeUnknown,
-          dob: dateOfBirth,
-          birthTime: timeOfBirth,
-          birthPlace: placeOfBirth,
-          lat: place.lat,
-          lng: place.lng,
-          timeZone: place.timeZone,
-          consent: true,
-          updatedAt: new Date(),
-        },
-      });
-
-    await db.insert(charts).values({
-      userId: userRow.id,
-      data: chart,
-    });
-  } catch (error) {
-    console.error("Kundli save error:", error);
-
-    await refundKundli(userRow.id, charged);
-
-    return jsonError(getKundliError(language, "calc_failed"), 500);
-  }
-
-  // AI interpretation (non-fatal if it fails)
-  const interpretation = await writeInterpretation({
-    name,
-    dateOfBirth,
-    timeOfBirth,
-    placeOfBirth,
-    chart,
-    language,
-  });
-
-  return NextResponse.json(
-    {
-      chart: publicChart(chart),
-      calculatedReport: calculatedReport(name, chart),
-      interpretation: interpretation.text,
-      interpretationStatus: interpretation.status,
-    },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
-  );
-}
-      },
-    }
+    { headers: { "Cache-Control": "no-store" } }
   );
 }
 
@@ -1243,10 +831,6 @@ export async function POST(request: Request) {
       interpretation: interpretation.text,
       interpretationStatus: interpretation.status,
     },
-    {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    }
+    { headers: { "Cache-Control": "no-store" } }
   );
 }
