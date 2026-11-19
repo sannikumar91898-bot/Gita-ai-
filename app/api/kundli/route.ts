@@ -877,3 +877,202 @@ export async function POST(request: Request) {
 function charted(kind: ChargeKind): ChargeKind {
   return kind;
 }
+      },
+    }
+  );
+}
+
+// ---------- POST: Generate Kundli ----------
+export async function POST(request: Request) {
+  let body: unknown;
+
+  // Parse request
+  try {
+    body = await request.json();
+  } catch {
+    return jsonError(getKundliError("hi", "invalid_req"), 400);
+  }
+
+  if (!isRecord(body)) {
+    return jsonError(getKundliError("hi", "invalid_req"), 400);
+  }
+
+  // Validate language
+  const requestedLanguage =
+    typeof body.language === "string" ? body.language : "hi";
+
+  const language: SupportedLanguage = SUPPORTED_LANGUAGES.includes(
+    requestedLanguage as SupportedLanguage
+  )
+    ? (requestedLanguage as SupportedLanguage)
+    : "hi";
+
+  // Inputs
+  const consent = body.consent === true;
+
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+
+  const dateOfBirth =
+    typeof body.dateOfBirth === "string" ? body.dateOfBirth : "";
+
+  const timeOfBirth =
+    typeof body.timeOfBirth === "string" ? body.timeOfBirth : "12:00";
+
+  const placeOfBirth =
+    typeof body.placeOfBirth === "string" ? body.placeOfBirth.trim() : "";
+
+  const gender = typeof body.gender === "string" ? body.gender : "other";
+
+  const isBirthTimeUnknown = body.isBirthTimeUnknown === true;
+
+  // Validation
+  if (!consent) {
+    return jsonError(getKundliError(language, "consent"), 400);
+  }
+
+  if (!name || !dateOfBirth || !placeOfBirth) {
+    return jsonError(getKundliError(language, "missing_fields"), 400);
+  }
+
+  if (!validDate(dateOfBirth)) {
+    return jsonError(getKundliError(language, "bad_details"), 400);
+  }
+
+  if (!validTime(timeOfBirth)) {
+    return jsonError(getKundliError(language, "bad_details"), 400);
+  }
+
+  const todayStr = new Date().toISOString().slice(0, 10);
+
+  if (dateOfBirth > todayStr) {
+    return jsonError(getKundliError(language, "future_date"), 400);
+  }
+
+  // Authentication
+  let userRow;
+
+  try {
+    userRow = await getUser();
+  } catch (error) {
+    console.error("Kundli authentication error:", error);
+
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
+
+  if (!userRow || userRow.isGuest) {
+    return jsonError(getKundliError(language, "guest_blocked"), 401);
+  }
+
+  // Resolve birthplace
+  const place = await resolvePlace(placeOfBirth);
+
+  if (!place) {
+    return jsonError(getKundliError(language, "place_not_found"), 400);
+  }
+
+  // Calculate chart
+  let chart: KundliChart;
+
+  try {
+    chart = computeChart({
+      dob: dateOfBirth,
+      time: timeOfBirth,
+      lat: place.lat,
+      lng: place.lng,
+      timeZone: place.timeZone,
+    });
+  } catch (error) {
+    console.error("Kundli calculation error:", error);
+
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
+
+  if (!chart || !chart.lagna) {
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
+
+  // Free quota / wallet charge
+  let charged: ChargeKind;
+
+  try {
+    charged = await chargeForKundli(userRow.id);
+  } catch (error) {
+    console.error("Kundli billing error:", error);
+
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
+
+  if (charged === "none") {
+    return jsonError(getKundliError(language, "wallet_recharge"), 402);
+  }
+
+  // Save birth details + chart
+  try {
+    await db
+      .insert(birthDetails)
+      .values({
+        userId: userRow.id,
+        name,
+        gender,
+        isBirthTimeUnknown,
+        dob: dateOfBirth,
+        birthTime: timeOfBirth,
+        birthPlace: placeOfBirth,
+        lat: place.lat,
+        lng: place.lng,
+        timeZone: place.timeZone,
+        consent: true,
+      })
+      .onConflictDoUpdate({
+        target: birthDetails.userId,
+        set: {
+          name,
+          gender,
+          isBirthTimeUnknown,
+          dob: dateOfBirth,
+          birthTime: timeOfBirth,
+          birthPlace: placeOfBirth,
+          lat: place.lat,
+          lng: place.lng,
+          timeZone: place.timeZone,
+          consent: true,
+          updatedAt: new Date(),
+        },
+      });
+
+    await db.insert(charts).values({
+      userId: userRow.id,
+      data: chart,
+    });
+  } catch (error) {
+    console.error("Kundli save error:", error);
+
+    await refundKundli(userRow.id, charged);
+
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
+
+  // AI interpretation (non-fatal if it fails)
+  const interpretation = await writeInterpretation({
+    name,
+    dateOfBirth,
+    timeOfBirth,
+    placeOfBirth,
+    chart,
+    language,
+  });
+
+  return NextResponse.json(
+    {
+      chart: publicChart(chart),
+      calculatedReport: calculatedReport(name, chart),
+      interpretation: interpretation.text,
+      interpretationStatus: interpretation.status,
+    },
+    {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    }
+  );
+}
