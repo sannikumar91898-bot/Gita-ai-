@@ -1,3 +1,7 @@
+import { sql, eq, and, gte, lt } from "drizzle-orm";
+
+export const runtime = "nodejs";
+
 export async function POST(request: Request) {
   let body: unknown;
   try {
@@ -121,32 +125,59 @@ export async function POST(request: Request) {
     // non-fatal
   }
 
-  // ---------- Charge wallet or increment free counter ----------
+  // ---------- Charge wallet or increment free counter (ATOMIC) ----------
   try {
     if (needsWalletCharge) {
-      await db
+      const result = await db
         .update(users)
-        .set({ walletBalancePaise: walletBalance - COST_PER_KUNDLI_PAISE })
-        .where(eq(users.id, userRow.id));
+        .set({
+          walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
+        })
+        .where(
+          and(
+            eq(users.id, userRow.id),
+            gte(users.walletBalancePaise, COST_PER_KUNDLI_PAISE)
+          )
+        )
+        .returning({ id: users.id });
+
+      if (result.length === 0) {
+        return jsonError(getKundliError(language, "wallet_recharge"), 402);
+      }
     } else {
-      await db
+      const result = await db
         .update(users)
-        .set({ freeKundliUsed: freeUsed + 1 })
-        .where(eq(users.id, userRow.id));
+        .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
+        .where(
+          and(
+            eq(users.id, userRow.id),
+            lt(users.freeKundliUsed, FREE_KUNDLI_LIMIT)
+          )
+        )
+        .returning({ id: users.id });
+
+      if (result.length === 0) {
+        return jsonError(getKundliError(language, "wallet_recharge"), 402);
+      }
     }
   } catch {
-    // non-fatal
+    return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
   // ---------- AI interpretation ----------
-  const interpretation = await writeInterpretation({
-    name,
-    dateOfBirth,
-    timeOfBirth,
-    placeOfBirth,
-    chart,
-    language,
-  });
+  let interpretation;
+  try {
+    interpretation = await writeInterpretation({
+      name,
+      dateOfBirth,
+      timeOfBirth,
+      placeOfBirth,
+      chart,
+      language,
+    });
+  } catch {
+    return jsonError(getKundliError(language, "calc_failed"), 500);
+  }
 
   return NextResponse.json(
     {
