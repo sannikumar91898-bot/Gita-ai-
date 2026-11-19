@@ -115,6 +115,7 @@ function meanNorthNode(date: Date): number {
 }
 
 export function computeChart(params: {
+  name?: string; // <-- YAHAN NAME ADD KIYA GAYA HAI
   dob: string; time: string; lat: number; lng: number; timeZone: string;
 }): KundliChart {
   const birthUtc = birthToUtc(params.dob, params.time, params.timeZone);
