@@ -37,5 +37,8 @@
     "ts-node": "^10.9.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/html2pdf.js": "^0.10.0"
+  },
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "14.2.35"
   }
 }
