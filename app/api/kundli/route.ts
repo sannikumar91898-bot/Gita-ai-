@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sql, eq, desc } from "drizzle-orm";
+import { sql, eq, desc, and, lt, gte } from "drizzle-orm";
 
 import { getUser } from "@/auth";
 import { db } from "@/index";
@@ -544,7 +544,6 @@ async function writeInterpretation(params: {
       await db
         .insert(aiResponseCache)
         .values({
-          id: crypto.randomUUID(),
           questionKey: cacheKey,
           originalQuestion: "Kundli interpretation for " + params.name,
           aiAnswer: text,
@@ -567,6 +566,57 @@ async function writeInterpretation(params: {
     };
   } finally {
     clearTimeout(timeout);
+  }
+}
+
+// ---------- Billing helpers ----------
+type ChargeKind = "free" | "paid" | "none";
+
+// Pehle free quota try karo, warna wallet se ₹2 kaato. Dono atomic hain.
+async function chargeForKundli(userId: string): Promise<ChargeKind> {
+  const free = await db
+    .update(users)
+    .set({ freeKundliUsed: sql`${users.freeKundliUsed} + 1` })
+    .where(
+      and(eq(users.id, userId), lt(users.freeKundliUsed, FREE_KUNDLI_LIMIT))
+    )
+    .returning({ id: users.id });
+
+  if (free.length > 0) return "free";
+
+  const paid = await db
+    .update(users)
+    .set({
+      walletBalancePaise: sql`${users.walletBalancePaise} - ${COST_PER_KUNDLI_PAISE}`,
+    })
+    .where(
+      and(
+        eq(users.id, userId),
+        gte(users.walletBalancePaise, COST_PER_KUNDLI_PAISE)
+      )
+    )
+    .returning({ id: users.id });
+
+  return paid.length > 0 ? "paid" : "none";
+}
+
+async function refundKundli(userId: string, kind: ChargeKind) {
+  try {
+    if (kind === "free") {
+      await db
+        .update(users)
+        .set({ freeKundliUsed: sql`GREATEST(${users.freeKundliUsed} - 1, 0)` })
+        .where(eq(users.id, userId));
+    } else if (kind === "paid") {
+      await db
+        .update(users)
+        .set({
+          walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_KUNDLI_PAISE}`,
+        })
+        .where(eq(users.id, userId));
+    }
+  } catch (error) {
+    console.error("Kundli refund error:", error);
   }
 }
 
@@ -721,10 +771,9 @@ export async function POST(request: Request) {
   let chart: KundliChart;
 
   try {
-    // NOTE: apne computeChart ke signature ke hisaab se adjust karo
-    chart = await computeChart({
-      dateOfBirth,
-      timeOfBirth,
+    chart = computeChart({
+      dob: dateOfBirth,
+      time: timeOfBirth,
       lat: place.lat,
       lng: place.lng,
       timeZone: place.timeZone,
@@ -739,74 +788,63 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
-  // Free quota / wallet check
+  // Free quota / wallet charge
+  let charged: ChargeKind;
+
   try {
-    const countRows = await db
-      .select({ total: sql<number>`count(*)` })
-      .from(charts)
-      .where(eq(charts.userId, userRow.id));
-
-    const used = Number(countRows[0]?.total ?? 0);
-
-    if (used >= FREE_KUNDLI_LIMIT) {
-      // NOTE: `walletPaise` column ka naam apne users schema se match karo
-      const charged = await db
-        .update(users)
-        .set({
-          walletPaise: sql`${users.walletPaise} - ${COST_PER_KUNDLI_PAISE}`,
-        })
-        .where(
-          sql`${users.id} = ${userRow.id} AND ${users.walletPaise} >= ${COST_PER_KUNDLI_PAISE}`
-        )
-        .returning({ id: users.id });
-
-      if (charged.length === 0) {
-        return jsonError(getKundliError(language, "wallet_recharge"), 402);
-      }
-    }
+    charged = await chargeForKundli(userRow.id);
   } catch (error) {
     console.error("Kundli billing error:", error);
 
     return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
+  if (charged === "none") {
+    return jsonError(getKundliError(language, "wallet_recharge"), 402);
+  }
+
   // Save birth details + chart
   try {
-    const existing = await db
-      .select({ id: birthDetails.id })
-      .from(birthDetails)
-      .where(eq(birthDetails.userId, userRow.id))
-      .limit(1);
-
-    const birthValues = {
-      name,
-      dob: dateOfBirth,
-      birthTime: timeOfBirth,
-      birthPlace: placeOfBirth,
-      gender,
-      isBirthTimeUnknown,
-    };
-
-    if (existing[0]) {
-      await db
-        .update(birthDetails)
-        .set(birthValues)
-        .where(eq(birthDetails.userId, userRow.id));
-    } else {
-      await db.insert(birthDetails).values({
-        id: crypto.randomUUID(),
+    await db
+      .insert(birthDetails)
+      .values({
         userId: userRow.id,
-        ...birthValues,
+        name,
+        gender,
+        isBirthTimeUnknown,
+        dob: dateOfBirth,
+        birthTime: timeOfBirth,
+        birthPlace: placeOfBirth,
+        lat: place.lat,
+        lng: place.lng,
+        timeZone: place.timeZone,
+        consent: true,
+      })
+      .onConflictDoUpdate({
+        target: birthDetails.userId,
+        set: {
+          name,
+          gender,
+          isBirthTimeUnknown,
+          dob: dateOfBirth,
+          birthTime: timeOfBirth,
+          birthPlace: placeOfBirth,
+          lat: place.lat,
+          lng: place.lng,
+          timeZone: place.timeZone,
+          consent: true,
+          updatedAt: new Date(),
+        },
       });
-    }
 
     await db.insert(charts).values({
-      id: crypto.randomUUID(),
       userId: userRow.id,
       data: chart,
     });
   } catch (error) {
     console.error("Kundli save error:", error);
+
+    await refundKundli(userRow.id, charted(charged));
 
     return jsonError(getKundliError(language, "calc_failed"), 500);
   }
@@ -834,4 +872,8 @@ export async function POST(request: Request) {
       },
     }
   );
+}
+
+function charted(kind: ChargeKind): ChargeKind {
+  return kind;
 }
