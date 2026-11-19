@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeChart, lahiriAyanamsa, birthToUtc, currentMoonSign } from "../src/lib/vedic";
+import { computeChart, lahiriAyanamsa, birthToUtc, currentMoonSign } from "./vedic";
 
 // Reference: 15 Aug 1990, 08:30 IST, New Delhi
 const params = { dob: "1990-08-15", time: "08:30", lat: 28.6139, lng: 77.209, timeZone: "Asia/Kolkata" };
