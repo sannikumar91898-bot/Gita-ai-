@@ -6,7 +6,6 @@ import ServiceWorkerRegister from "./ServiceWorkerRegister";
 import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
-  // 🔥 1. Custom Domain Set
   metadataBase: new URL("https://gitatalk.in"), 
   
   title: {
@@ -18,32 +17,30 @@ export const metadata: Metadata = {
   keywords: [
     "AI Astrologer", "Online Kundli", "Free Kundli Milan", "Vedic Astrology", 
     "Daily Horoscope", "Palmistry AI", "Face Reading", "GitaTalk", "Astrology Chat",
-    "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India",
-    "Free AI Palmistry", "Online Kundli Matching", "Talk to Astrologer Free"
+    "Free Online Astrologer", "Kundli Matching for Marriage", "Best Astrology App India"
   ],
   authors: [{ name: "GitaTalk Team" }],
   creator: "GitaTalk",
   publisher: "GitaTalk",
   category: "Astrology",
   
-  // 🔥 2. Canonical & Hreflang (10 Languages) Fix
+  // 🔥 FIXED: 10 Languages ke liye alag-alag URL set kiye gaye hain
   alternates: { 
     canonical: "/",
     languages: {
-      'hi': '/',
-      'en': '/',
-      'te': '/',
-      'ta': '/',
-      'kn': '/',
-      'bn': '/',
-      'mr': '/',
-      'gu': '/',
-      'ml': '/',
+      'en': '/en',
+      'hi': '/hi',
+      'te': '/te',
+      'ta': '/ta',
+      'kn': '/kn',
+      'bn': '/bn',
+      'mr': '/mr',
+      'gu': '/gu',
+      'ml': '/ml',
       'x-default': '/',
     },
   },
   
-  // Google Search Console Verification
   verification: {
     google: "ZcIHuXYR5-z_kC0EliGBYoR41O-duRHgJ9tQVqp3E1I", 
   },
@@ -60,7 +57,6 @@ export const metadata: Metadata = {
     },
   },
   
-  // 🔥 3. OpenGraph Fix (WhatsApp/Facebook Share)
   openGraph: {
     type: "website",
     locale: "en_IN",
@@ -70,7 +66,7 @@ export const metadata: Metadata = {
     description: "Talk to GitaTalk AI, your personal Vedic astrologer. Get accurate online kundli matching, daily horoscope, and remedies. 100% Free first chat!",
     images: [
       {
-        url: "/gita-portrait.jpg", // Make sure this image exists in your public folder
+        url: "/gita-portrait.jpg", 
         width: 1200,
         height: 630,
         alt: "GitaTalk - Your Favorite AI Astrologer",
@@ -106,7 +102,7 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // 🔥 ULTIMATE JSON-LD (100% Fixed for Google Merchant Error & SEO)
+  // 🔥 FIXED: Fake Phone Number, Fake Product Schema, aur Broken Search Action hata diya gaya hai
   const jsonLd = [
     {
       "@context": "https://schema.org",
@@ -114,45 +110,18 @@ export default function RootLayout({
       "name": "GitaTalk",
       "url": "https://gitatalk.in",
       "description": "AI-powered Vedic astrology platform for Kundli, Horoscope, and Matchmaking.",
-      "potentialAction": {
-        "@type": "SearchAction",
-        "target": "https://gitatalk.in/search?q={search_term_string}",
-        "query-input": "required name=search_term_string"
-      }
+      // SearchAction hata diya kyunki /search page broken hai
     },
     {
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "GitaTalk",
       "url": "https://gitatalk.in",
-      "logo": "https://gitatalk.in/icon-512.png", // Ensure you have an icon-512.png in public folder
+      "logo": "https://gitatalk.in/icon-512.png",
       "contactPoint": {
         "@type": "ContactPoint",
-        "telephone": "+91-XXXXXXXXXX", // Add your real number here later
         "contactType": "customer service",
         "email": "gitaaisupport@gmail.com"
-      }
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "Product",
-      "name": "GitaTalk Premium",
-      // 🔥 FIX: Added Image
-      "image": "https://gitatalk.in/gita-portrait.jpg", 
-      "description": "Unlimited AI Astrologer Chat & Premium Reports",
-      "brand": {
-        "@type": "Brand",
-        "name": "GitaTalk"
-      },
-      "offers": {
-        "@type": "Offer",
-        // 🔥 FIX: Added URL where they can buy it
-        "url": "https://gitatalk.in/wallet", 
-        "price": "199",
-        "priceCurrency": "INR",
-        // 🔥 FIX: Added Valid Until Date (Google requires this)
-        "priceValidUntil": "2027-12-31", 
-        "availability": "https://schema.org/InStock"
       }
     }
   ];
