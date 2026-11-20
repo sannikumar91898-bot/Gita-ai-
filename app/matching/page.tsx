@@ -202,7 +202,6 @@ function CityInput({
     </div>
   );
 }
-}
 export default function MatchingPage() {
   const router = useRouter();
   const { lang, theme, me } = useApp();
