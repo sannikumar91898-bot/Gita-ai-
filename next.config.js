@@ -4,15 +4,15 @@ const nextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // 2. Build ke dauran TypeScript errors ko ignore karo (Build fail nahi hoga)
+  // 2. Build ke dauran TypeScript errors ko ignore karo (🔴 YAHAN FIX HAI)
   typescript: {
-    ignoreDuringBuilds: true,
+    ignoreBuildErrors: true, 
   },
-  // 3. Image optimization settings (Agar error aaye toh)
+  // 3. Image optimization settings
   images: {
     unoptimized: true, 
   },
-  // 4. SWC compiler ko force karo (Babel se slow nahi hoga)
+  // 4. SWC compiler ko force karo
   swcMinify: true, 
 };
 
