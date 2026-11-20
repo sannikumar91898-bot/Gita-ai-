@@ -322,9 +322,7 @@ export default function PalmReadingPage() {
           </span>
         </div>
       </header>
-
-      <main className="mx-auto max-w-2xl px-4 py-4">
-        {!result && !loading && (
+  <main className="w-full px-4 py-4"> {!result && !loading && (
           <div className={`rounded-2xl border p-4 ${cardClass}`}>
             {/* Gender Selection */}
             <div className="mb-4">
