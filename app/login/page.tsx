@@ -121,7 +121,6 @@ function LoginContent() {
       setLoading(false);
     }
   };
- };
 const authenticateWithBackend = async (
   token: string,
   identifier: string
