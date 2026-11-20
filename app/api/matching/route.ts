@@ -291,7 +291,7 @@ export async function POST(request: Request) {
       }
 
       const used = row.matchingCount ?? 0;
-      const balance = row.walletBalance ?? 0; // in paise
+      const balance = row.walletBalancePaise ?? 0; // 🔥 FIX: walletBalancePaise
 
       if (used < FREE_MATCHING_LIMIT) {
         // Free slot
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: used + 1,
-            walletBalance: balance - COST_PER_MATCHING_PAISE,
+            walletBalancePaise: balance - COST_PER_MATCHING_PAISE, // 🔥 FIX: walletBalancePaise
           })
           .where(eq(users.id, user.id));
         charged = true;
@@ -319,8 +319,8 @@ export async function POST(request: Request) {
     // ---------- 4. Real Vedic Calculation ----------
     let result;
     try {
-      const boyDate = new Date(`\( {boy.dob}T \){boy.time}:00`);
-      const girlDate = new Date(`\( {girl.dob}T \){girl.time}:00`);
+      const boyDate = new Date(`${boy.dob}T${boy.time}:00`);
+      const girlDate = new Date(`${girl.dob}T${girl.time}:00`);
 
       const boyPlace: BirthPlace = {
         latitude: Number(boy.lat),
@@ -339,7 +339,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: sql`${users.matchingCount} - 1`,
-            walletBalance: sql`${users.walletBalance} + ${COST_PER_MATCHING_PAISE}`,
+            walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MATCHING_PAISE}`, // 🔥 FIX: walletBalancePaise
           })
           .where(eq(users.id, user.id));
       } else if (isFree) {
