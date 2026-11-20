@@ -379,7 +379,7 @@ const authenticateWithBackend = async (
       </div>
     </main>
   );
-}
+}; 
 
 export default function LoginPage() {
   return (
