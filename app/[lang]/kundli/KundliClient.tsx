@@ -8,7 +8,7 @@ import {
   ArrowLeft, Sparkles, Download, RefreshCcw, Star, 
   ShieldCheck, Home, MessageCircle, Sun, User, Loader2, FileText
 } from "lucide-react";
-import { useApp } from "../../Providers"; // Path check kar lein (agar [lang] folder ke bahar hai toh)
+import { useApp } from "../../Providers"; // Path check kar lein
 
 // ============================================================
 // 10 Language Translation Helper
@@ -24,7 +24,6 @@ const getUIText = (lang: string, key: string) => {
     en: { 
       title: "Janam Kundli", subtitle: "Prepared by Gita Jyotishi", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", calc: "Calculating...", generate: "Generate Kundli", chart: "Birth Chart", by: "By Gita Jyotishi", lagna: "Lagna", rashi: "Moon Sign", nakshatra: "Nakshatra", dasha: "Current Dasha", planetsTitle: "Planetary Positions", planet: "Planet", sign: "Sign", house: "House", noPlanets: "Planetary details unavailable", generated: "Generated on", notice: "Special Advice:", scareText: "Talk to our Jyotishi to understand the planets in your chart and accurate career/marriage timing.", chatCTA: "Talk to Jyotishi — First chat FREE", wait: "Wait...", download: "Download PDF", again: "Calculate Again", consentText: "I consent to storing my birth details securely to generate my personal kundli and readings.", unknownTime: "I don't know my exact birth time (12:00 PM will be assumed)", aiReport: "Astrological Analysis", loadingHistory: "Loading your previous kundli...", moonDegree: "Moon Degree"
     },
-    // ... (aap baaki 7 languages yahan add kar sakte hain)
   };
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key] || "";
 };
@@ -92,6 +91,12 @@ export default function KundliClient() {
       setError(t("consentText")); 
       return;
     }
+
+    // 🔥 FIX: Agar user guest hai ya login nahi hai, toh direct login page par bhejo
+    if (!me || me.isGuest) {
+      router.push("/login"); 
+      return;
+    }
     
     setLoading(true);
     setError("");
@@ -104,13 +109,24 @@ export default function KundliClient() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          name, dateOfBirth: dob, timeOfBirth: notSureTime ? "12:00" : time, 
-          isTimeUnknown: notSureTime, placeOfBirth: place, language: lang, consent: true
+          name, 
+          dateOfBirth: dob, 
+          timeOfBirth: notSureTime ? "12:00" : time, 
+          isBirthTimeUnknown: notSureTime, // 🔥 FIXED: isTimeUnknown -> isBirthTimeUnknown
+          placeOfBirth: place, 
+          language: lang, 
+          consent: true
         }),
       });
       
       const data = await res.json().catch(() => null);
       
+      // 🔥 FIX: Agar backend se 401 error aaye, toh bhi login par bhejo
+      if (res.status === 401) {
+        router.push("/login");
+        return;
+      }
+
       if (res.status === 402 || data?.code === "WALLET_RECHARGE_REQUIRED") {
         router.push("/wallet?reason=kundli_limit");
         return;
