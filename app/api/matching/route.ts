@@ -52,7 +52,7 @@ interface GeneralMessages {
 }
 
 // ============================================================
-// 3. DOSHA MESSAGES — 10 languages (soft + reassurance)
+// 3. DOSHA MESSAGES — 10 languages
 // ============================================================
 const DOSHA_MSGS: Record<LangKey, DoshaMessages> = {
   hi: {
@@ -254,15 +254,33 @@ export async function POST(request: Request) {
         : "hinglish"
     ) as LangKey;
 
-    // ---------- 1. Validation ----------
+    // ---------- 1. Validation (Fixed) ----------
+    // 🔥 FIXED: 0 latitude/longitude ke liye == null check kiya
     if (
-      !boy?.name || !boy?.dob || !boy?.time || !boy?.lat || !boy?.lon ||
-      !girl?.name || !girl?.dob || !girl?.time || !girl?.lat || !girl?.lon
+      !boy?.name || !boy?.dob || !boy?.time || boy?.lat == null || boy?.lon == null ||
+      !girl?.name || !girl?.dob || !girl?.time || girl?.lat == null || girl?.lon == null
     ) {
       return NextResponse.json(
         { error: "Kripya dono ki saari janm vivaran (Name, DOB, Time, Place) bharein." },
         { status: 400 }
       );
+    }
+
+    // 🔥 NEW: Basic Format Validations
+    const isValidDate = (dateStr: string) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
+    const isValidTime = (timeStr: string) => /^\d{2}:\d{2}$/.test(timeStr);
+
+    if (!isValidDate(boy.dob) || !isValidDate(girl.dob)) {
+      return NextResponse.json({ error: "DOB format YYYY-MM-DD hona chahiye." }, { status: 400 });
+    }
+    if (!isValidTime(boy.time) || !isValidTime(girl.time)) {
+      return NextResponse.json({ error: "Time format HH:MM hona chahiye." }, { status: 400 });
+    }
+    if (Number(boy.lat) < -90 || Number(boy.lat) > 90 || Number(girl.lat) < -90 || Number(girl.lat) > 90) {
+      return NextResponse.json({ error: "Latitude -90 se 90 ke beech hona chahiye." }, { status: 400 });
+    }
+    if (Number(boy.lon) < -180 || Number(boy.lon) > 180 || Number(girl.lon) < -180 || Number(girl.lon) > 180) {
+      return NextResponse.json({ error: "Longitude -180 se 180 ke beech hona chahiye." }, { status: 400 });
     }
 
     // ---------- 2. Auth ----------
@@ -291,7 +309,7 @@ export async function POST(request: Request) {
       }
 
       const used = row.matchingCount ?? 0;
-      const balance = row.walletBalancePaise ?? 0; // 🔥 FIX: walletBalancePaise
+      const balance = row.walletBalancePaise ?? 0; // 🔥 FIXED: walletBalancePaise
 
       if (used < FREE_MATCHING_LIMIT) {
         // Free slot
@@ -309,7 +327,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: used + 1,
-            walletBalancePaise: balance - COST_PER_MATCHING_PAISE, // 🔥 FIX: walletBalancePaise
+            walletBalancePaise: balance - COST_PER_MATCHING_PAISE, // 🔥 FIXED: walletBalancePaise
           })
           .where(eq(users.id, user.id));
         charged = true;
@@ -319,6 +337,7 @@ export async function POST(request: Request) {
     // ---------- 4. Real Vedic Calculation ----------
     let result;
     try {
+      // 🔥 FIXED: Proper Template Literal format
       const boyDate = new Date(`${boy.dob}T${boy.time}:00`);
       const girlDate = new Date(`${girl.dob}T${girl.time}:00`);
 
@@ -339,7 +358,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: sql`${users.matchingCount} - 1`,
-            walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MATCHING_PAISE}`, // 🔥 FIX: walletBalancePaise
+            walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MATCHING_PAISE}`, // 🔥 FIXED: walletBalancePaise
           })
           .where(eq(users.id, user.id));
       } else if (isFree) {
