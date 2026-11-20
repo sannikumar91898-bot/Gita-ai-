@@ -34,6 +34,19 @@ function readSavedTheme(): Theme {
   }
 }
 
+// ✅ NEW — Guest के लिए browser language detect करें
+function detectBrowserLanguage(): Lang | null {
+  try {
+    if (typeof navigator === "undefined") return null;
+    const raw = navigator.language || (navigator as any).userLanguage || "";
+    if (!raw) return null;
+    const code = raw.split("-")[0].toLowerCase();
+    return isLang(code) ? (code as Lang) : null;
+  } catch {
+    return null;
+  }
+}
+
 export type MeUser = {
   id: string;
   name: string | null;
@@ -98,6 +111,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (savedLanguage) {
       hasLocalLanguageRef.current = true;
       setLocalLang(savedLanguage);
+    } else {
+      // ✅ NEW — Guest के लिए browser language
+      const browserLang = detectBrowserLanguage();
+      if (browserLang) {
+        hasLocalLanguageRef.current = true;
+        setLocalLang(browserLang);
+        try { localStorage.setItem("gita_lang", browserLang); } catch {}
+      }
     }
     setThemeState(savedTheme);
     languageLoadedRef.current = true;
