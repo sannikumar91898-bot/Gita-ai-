@@ -254,11 +254,30 @@ export async function POST(request: Request) {
         : "hinglish"
     ) as LangKey;
 
-    // ---------- 1. Validation (Fixed) ----------
-    // 🔥 FIXED: 0 latitude/longitude ke liye == null check kiya
+    // ---------- 1. Strict Validation ----------
+    
+    // 🔥 FIXED: Strict Date Validation (2026-02-31 reject karega)
+    const isValidDate = (dateStr: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const date = new Date(dateStr);
+      return date.getUTCFullYear() === y && 
+             date.getUTCMonth() + 1 === m && 
+             date.getUTCDate() === d;
+    };
+    
+    // 🔥 FIXED: Strict Time Validation (99:99 reject karega)
+    const isValidTime = (timeStr: string) => {
+      if (!/^\d{2}:\d{2}$/.test(timeStr)) return false;
+      const [h, m] = timeStr.split(':').map(Number);
+      return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+    };
+
     if (
-      !boy?.name || !boy?.dob || !boy?.time || boy?.lat == null || boy?.lon == null ||
-      !girl?.name || !girl?.dob || !girl?.time || girl?.lat == null || girl?.lon == null
+      !boy?.name || !boy?.dob || !boy?.time || 
+      boy?.lat == null || boy?.lon == null ||
+      !girl?.name || !girl?.dob || !girl?.time || 
+      girl?.lat == null || girl?.lon == null
     ) {
       return NextResponse.json(
         { error: "Kripya dono ki saari janm vivaran (Name, DOB, Time, Place) bharein." },
@@ -266,20 +285,28 @@ export async function POST(request: Request) {
       );
     }
 
-    // 🔥 NEW: Basic Format Validations
-    const isValidDate = (dateStr: string) => /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
-    const isValidTime = (timeStr: string) => /^\d{2}:\d{2}$/.test(timeStr);
-
     if (!isValidDate(boy.dob) || !isValidDate(girl.dob)) {
-      return NextResponse.json({ error: "DOB format YYYY-MM-DD hona chahiye." }, { status: 400 });
+      return NextResponse.json({ error: "DOB valid YYYY-MM-DD format mein hona chahiye." }, { status: 400 });
     }
     if (!isValidTime(boy.time) || !isValidTime(girl.time)) {
-      return NextResponse.json({ error: "Time format HH:MM hona chahiye." }, { status: 400 });
+      return NextResponse.json({ error: "Time valid HH:MM format mein hona chahiye." }, { status: 400 });
     }
-    if (Number(boy.lat) < -90 || Number(boy.lat) > 90 || Number(girl.lat) < -90 || Number(girl.lat) > 90) {
+
+    const boyLat = Number(boy.lat);
+    const boyLon = Number(boy.lon);
+    const girlLat = Number(girl.lat);
+    const girlLon = Number(girl.lon);
+
+    if (
+      isNaN(boyLat) || boyLat < -90 || boyLat > 90 ||
+      isNaN(girlLat) || girlLat < -90 || girlLat > 90
+    ) {
       return NextResponse.json({ error: "Latitude -90 se 90 ke beech hona chahiye." }, { status: 400 });
     }
-    if (Number(boy.lon) < -180 || Number(boy.lon) > 180 || Number(girl.lon) < -180 || Number(girl.lon) > 180) {
+    if (
+      isNaN(boyLon) || boyLon < -180 || boyLon > 180 ||
+      isNaN(girlLon) || girlLon < -180 || girlLon > 180
+    ) {
       return NextResponse.json({ error: "Longitude -180 se 180 ke beech hona chahiye." }, { status: 400 });
     }
 
@@ -297,7 +324,6 @@ export async function POST(request: Request) {
     let charged = false;
 
     await db.transaction(async (tx) => {
-      // Lock the row
       const [row] = await tx
         .select()
         .from(users)
@@ -312,14 +338,12 @@ export async function POST(request: Request) {
       const balance = row.walletBalancePaise ?? 0; // 🔥 FIXED: walletBalancePaise
 
       if (used < FREE_MATCHING_LIMIT) {
-        // Free slot
         isFree = true;
         await tx
           .update(users)
           .set({ matchingCount: used + 1 })
           .where(eq(users.id, user.id));
       } else {
-        // Paid
         if (balance < COST_PER_MATCHING_PAISE) {
           throw new Error("INSUFFICIENT_BALANCE");
         }
@@ -362,7 +386,6 @@ export async function POST(request: Request) {
           })
           .where(eq(users.id, user.id));
       } else if (isFree) {
-        // free slot used → restore count
         await db
           .update(users)
           .set({ matchingCount: sql`${users.matchingCount} - 1` })
@@ -381,7 +404,6 @@ export async function POST(request: Request) {
 
     const doshaNotes: string[] = [];
 
-    // Manglik
     if (result.doshas.manglik.present) {
       doshaNotes.push(
         result.doshas.manglik.cancelled
@@ -390,7 +412,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Nadi
     if (result.doshas.nadi.present) {
       doshaNotes.push(
         result.doshas.nadi.cancelled
@@ -399,7 +420,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Bhakoot
     if (result.doshas.bhakoot.present) {
       doshaNotes.push(
         result.doshas.bhakoot.cancelled
