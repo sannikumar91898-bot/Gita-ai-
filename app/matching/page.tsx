@@ -202,3 +202,430 @@ function CityInput({
     </div>
   );
 }
+function CityInput({
+  value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
+}: any) {
+  const searchCity = async (query: string) => {
+    if (!query || query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    const delay = setTimeout(() => searchCity(value.city), 600);
+    return () => clearTimeout(delay);
+  }, [value.city]);
+
+  const handleSelect = (city: any) => {
+    setValue((prev: any) => ({
+      ...prev,
+      city: city.display_name,
+      lat: Number(city.lat),
+      lon: Number(city.lon),
+    }));
+    setSuggestions([]);
+  };
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value.city}
+        onChange={(e) => {
+          setValue((prev: any) => ({
+            ...prev,
+            city: e.target.value,
+            lat: null,
+            lon: null,
+          }));
+        }}
+        placeholder={placeholder}
+        className={inputClass}
+      />
+      {suggestions.length > 0 && (
+        <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
+          {suggestions.map((city: any, i: number) => (
+            <li
+              key={i}
+              onClick={() => handleSelect(city)}
+              className="cursor-pointer px-3 py-2 text-sm hover:bg-gray-100"
+            >
+              {city.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+export default function MatchingPage() {
+  const router = useRouter();
+  const { lang, theme, me } = useApp();
+  const isDark = theme === "dark";
+
+  const [boy, setBoy] = useState<any>({ name: "", dob: "", birthTime: "", city: "", lat: null, lon: null });
+  const [girl, setGirl] = useState<any>({ name: "", dob: "", birthTime: "", city: "", lat: null, lon: null });
+  const [boySuggestions, setBoySuggestions] = useState<any[]>([]);
+  const [girlSuggestions, setGirlSuggestions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const t = (key: string) => getUIText(lang, key);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    const steps = getLoadingSteps(lang);
+    if (loading) {
+      setLoadingText(steps[0]);
+      let i = 0;
+      interval = setInterval(() => {
+        i = (i + 1) % steps.length;
+        setLoadingText(steps[i]);
+      }, 2000);
+    }
+    return () => clearInterval(interval);
+  }, [loading, lang]);
+
+  const handleMatch = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!me?.user || me.user.isGuest) {
+      router.push("/login?redirect=/matching");
+      return;
+    }
+
+    if (!boy.city || !girl.city) {
+      alert(t("alertCity"));
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const res = await fetch("/api/matching", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ boy, girl }),
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        router.push("/login?redirect=/matching");
+        return;
+      }
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setError(err?.message || "Something went wrong");
+        return;
+      }
+
+      const data = await res.json();
+      setResult(data);
+    } catch (err: any) {
+      setError(err?.message || "Network error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setBoy({ name: "", dob: "", birthTime: "", city: "", lat: null, lon: null });
+    setGirl({ name: "", dob: "", birthTime: "", city: "", lat: null, lon: null });
+    setResult(null);
+    setError(null);
+  };
+
+  const inputClass = isDark
+    ? "w-full rounded-xl border border-slate-700 bg-[#0A0F19] px-3 py-2 text-sm text-slate-100"
+    : "w-full rounded-xl border border-orange-200 bg-orange-50 px-3 py-2 text-sm text-slate-900";
+  const cardClass = isDark ? "border-slate-800 bg-[#151d2c]" : "border-orange-100 bg-white";
+  const labelClass = "text-xs font-semibold mb-1 block opacity-80";
+  const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
+  const navBg = isDark ? "bg-[#151d2c] border-slate-800" : "bg-white border-orange-100";
+
+  return (
+    <div className={`min-h-screen ${pageClass}`}>
+      <header className={`sticky top-0 z-20 border-b ${navBg}`}>
+        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
+          <button onClick={() => router.back()} className="rounded-full p-2 hover:bg-black/5" aria-label="Back">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="flex-1">
+            <h1 className="flex items-center gap-2 text-base font-bold">
+              <Heart size={18} /> {t("title")}
+            </h1>
+            <p className="text-xs opacity-70">{t("subtitle")}</p>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-2xl px-4 py-5 pb-28">
+        {!result && !loading && (
+          <form onSubmit={handleMatch} className="space-y-4">
+            <div className={`rounded-2xl border p-4 ${cardClass}`}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-bold">
+                <User size={16} /> {t("boy")}
+              </h2>
+              <div className="mb-3">
+                <label className={labelClass}>{t("name")}</label>
+                <input
+                  type="text"
+                  value={boy.name}
+                  onChange={(e) => setBoy((p: any) => ({ ...p, name: e.target.value }))}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelClass}>DOB</label>
+                  <input
+                    type="date"
+                    value={boy.dob}
+                    onChange={(e) => setBoy((p: any) => ({ ...p, dob: e.target.value }))}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Time</label>
+                  <input
+                    type="time"
+                    value={boy.birthTime}
+                    onChange={(e) => setBoy((p: any) => ({ ...p, birthTime: e.target.value }))}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>{t("city")}</label>
+                <CityInput
+                  value={boy}
+                  setValue={setBoy}
+                  suggestions={boySuggestions}
+                  setSuggestions={setBoySuggestions}
+                  isDark={isDark}
+                  inputClass={inputClass}
+                  placeholder={t("city")}
+                />
+              </div>
+            </div>
+
+            <div className={`rounded-2xl border p-4 ${cardClass}`}>
+              <h2 className="mb-3 flex items-center gap-2 text-sm font-bold">
+                <Heart size={16} /> {t("girl")}
+              </h2>
+              <div className="mb-3">
+                <label className={labelClass}>{t("name")}</label>
+                <input
+                  type="text"
+                  value={girl.name}
+                  onChange={(e) => setGirl((p: any) => ({ ...p, name: e.target.value }))}
+                  className={inputClass}
+                  required
+                />
+              </div>
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className={labelClass}>DOB</label>
+                  <input
+                    type="date"
+                    value={girl.dob}
+                    onChange={(e) => setGirl((p: any) => ({ ...p, dob: e.target.value }))}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>Time</label>
+                  <input
+                    type="time"
+                    value={girl.birthTime}
+                    onChange={(e) => setGirl((p: any) => ({ ...p, birthTime: e.target.value }))}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={labelClass}>{t("city")}</label>
+                <CityInput
+                  value={girl}
+                  setValue={setGirl}
+                  suggestions={girlSuggestions}
+                  setSuggestions={setGirlSuggestions}
+                  isDark={isDark}
+                  inputClass={inputClass}
+                  placeholder={t("city")}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-xs text-red-600">
+                <AlertCircle size={16} className="mt-0.5 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white shadow hover:bg-orange-600"
+            >
+              <Sparkles size={16} />
+              {t("matchBtn")}
+            </button>
+          </form>
+        )}
+
+        {loading && (
+          <div className={`rounded-2xl border p-8 text-center ${cardClass}`}>
+            <div className="mx-auto mb-4 flex h-16 w-16 animate-pulse items-center justify-center rounded-full bg-orange-100">
+              <Heart size={28} className="text-orange-500" />
+            </div>
+            <p className="text-sm font-medium">{loadingText}</p>
+          </div>
+        )}
+
+        {result && !loading && (
+          <div className="space-y-4">
+            <div className={`rounded-2xl border p-5 text-center ${cardClass}`}>
+              <p className="text-xs opacity-70">{t("result")}</p>
+              <p className="mt-2 text-4xl font-bold text-orange-500">
+                {result.score ?? 0}
+                <span className="text-sm opacity-70">{t("total")}</span>
+              </p>
+              {result.label && (
+                <p className={`mt-1 text-sm font-semibold ${getLabelColor(result.label).text}`}>
+                  {getLabelText(lang, result.label)}
+                </p>
+              )}
+            </div>
+
+            {result.doshas && result.doshas.length > 0 && (
+              <div className={`rounded-2xl border p-4 ${cardClass}`}>
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
+                  <ShieldAlert size={16} /> {t("doshaTitle")}
+                </h3>
+                <div className="space-y-2">
+                  {result.doshas.map((d: any, i: number) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span>{d.name}</span>
+                      <span className={d.present ? "text-red-500" : "text-green-600"}>
+                        {d.present ? t("doshaPresent") : d.cancelled ? t("doshaCancelled") : t("doshaAbsent")}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {result.strengths && result.strengths.length > 0 && (
+              <div className={`rounded-2xl border p-4 ${cardClass}`}>
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
+                  <Star size={16} /> {t("strengths")}
+                </h3>
+                <ul className="space-y-1 text-xs">
+                  {result.strengths.map((s: string, i: number) => (
+                    <li key={i} className="flex gap-2">
+                      <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-green-500" />
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {result.attention && result.attention.length > 0 && (
+              <div className={`rounded-2xl border p-4 ${cardClass}`}>
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
+                  <AlertCircle size={16} /> {t("attention")}
+                </h3>
+                <ul className="space-y-1 text-xs">
+                  {result.attention.map((s: string, i: number) => (
+                    <li key={i} className="flex gap-2">
+                      <AlertCircle size={14} className="mt-0.5 shrink-0 text-amber-500" />
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {result.advice && (
+              <div className={`rounded-2xl border p-4 ${cardClass}`}>
+                <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
+                  <ArrowRight size={16} /> {t("advice")}
+                </h3>
+                <p className="text-xs leading-relaxed">{result.advice}</p>
+              </div>
+            )}
+
+            <p className={`rounded-xl border p-3 text-[11px] italic opacity-70 ${cardClass}`}>
+              {t("disclaimer")}
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={handleReset}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl border py-3 text-sm font-semibold"
+              >
+                <RefreshCw size={16} /> {t("reset")}
+              </button>
+              <Link
+                href="/chat"
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white"
+              >
+                <MessageCircle size={16} /> {t("chat")}
+              </Link>
+            </div>
+          </div>
+        )}
+
+        <Link
+          href="/chat"
+          className="mt-4 flex items-center justify-between rounded-2xl bg-gradient-to-r from-orange-500 to-pink-500 p-4 text-white"
+        >
+          <div>
+            <p className="text-sm font-bold">{t("bannerTitle")}</p>
+            <p className="text-[11px] opacity-90">{t("bannerSub")}</p>
+          </div>
+          <Sparkles size={22} />
+        </Link>
+      </main>
+
+      <nav className={`fixed bottom-0 left-0 right-0 z-20 border-t ${navBg}`}>
+        <div className="mx-auto flex max-w-2xl items-center justify-around py-2">
+          <Link href="/" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70">
+            <Home size={18} /> {t("home")}
+          </Link>
+          <Link href="/chat" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70">
+            <MessageCircle size={18} /> {t("chatNav")}
+          </Link>
+          <Link href="/matching" className="flex flex-col items-center gap-0.5 text-[10px] text-orange-500">
+            <Heart size={18} /> {t("title")}
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70">
+            <User size={18} /> {t("profile")}
+          </Link>
+        </div>
+      </nav>
+    </div>
+  );
+}
