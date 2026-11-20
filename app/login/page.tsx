@@ -121,24 +121,40 @@ function LoginContent() {
       setLoading(false);
     }
   };
+ };
+const authenticateWithBackend = async (
+  token: string,
+  identifier: string
+) => {
+  try {
+    const res = await fetch("/api/auth/firebase-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        token,
+        identifier,
+        language: lang,
+      }),
+    });
 
-  const authenticateWithBackend = async (token: string, identifier: string) => {
-    try {
-      const res = await fetch("/api/auth/firebase-login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, identifier, language: lang }),
-      });
-      if (!res.ok) throw new Error("Backend auth failed");
-      await refresh();
-      router.replace(redirectUrl);
-      router.refresh();
-    } catch (err) {
-      setError("Authentication failed at server. Please try again.");
-      setLoading(false);
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(
+        data.error || `Authentication failed (${res.status})`
+      );
     }
-  };
 
+    await refresh();
+    router.replace(redirectUrl);
+    router.refresh();
+  } catch (err: any) {
+    console.error("Backend authentication error:", err);
+    setError(err.message || "Authentication failed. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
   const handleGoogleLogin = async () => {
     setError(null); setLoading(true);
     try {
