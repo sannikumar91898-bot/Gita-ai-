@@ -135,7 +135,7 @@ return { text: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200", 
 };
 
 // ============================================================
-// City Input Component
+// City Input Component — सिर्फ एक ही बार define है
 // ============================================================
 function CityInput({
 value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
@@ -156,115 +156,67 @@ console.error(e);
 }
 };
 
-// ============================================================
-// City Input Component
-// ============================================================
-function CityInput({
-  value,
-  setValue,
-  suggestions,
-  setSuggestions,
-  isDark,
-  inputClass,
-  placeholder,
-}: any) {
-  useEffect(() => {
-    // City already selected with coordinates
-    if (value.lat != null && value.lon != null) {
-      setSuggestions([]);
-      return;
-    }
+useEffect(() => {
+const delay = setTimeout(() => searchCity(value.city
 
-    const query = value.city?.trim();
+useEffect(() => {
+  const delay = setTimeout(() => searchCity(value.city), 600);
 
-    if (!query || query.length < 3) {
-      setSuggestions([]);
-      return;
-    }
+  return () => clearTimeout(delay);
+}, [value.city]);
 
-    const controller = new AbortController();
+const handleSelect = (city: any) => {
+  setValue((prev: any) => ({
+    ...prev,
+    city: city.display_name,
+    lat: Number(city.lat),
+    lon: Number(city.lon),
+  }));
 
-    const delay = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`,
-          {
-            signal: controller.signal,
-          }
-        );
+  setSuggestions([]);
+};
 
-        if (!res.ok) {
-          throw new Error("City search failed");
-        }
+return (
+  <div className="relative">
+    <input
+      type="text"
+      value={value.city}
+      onChange={(e) => {
+        setValue((prev: any) => ({
+          ...prev,
+          city: e.target.value,
+          lat: null,
+          lon: null,
+        }));
+      }}
+      placeholder={placeholder}
+      className={inputClass}
+    />
 
-        const data = await res.json();
-        setSuggestions(data);
-      } catch (error: any) {
-        if (error.name !== "AbortError") {
-          console.error("City search error:", error);
-          setSuggestions([]);
-        }
-      }
-    }, 600);
-
-    return () => {
-      clearTimeout(delay);
-      controller.abort();
-    };
-  }, [value.city, value.lat, value.lon, setSuggestions]);
-
-  const handleSelect = (city: any) => {
-    setValue((prev: any) => ({
-      ...prev,
-      city: city.display_name,
-      lat: Number(city.lat),
-      lon: Number(city.lon),
-    }));
-
-    setSuggestions([]);
-  };
-
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={value.city}
-        onChange={(e) =>
-          setValue((prev: any) => ({
-            ...prev,
-            city: e.target.value,
-            lat: null,
-            lon: null,
-          }))
-        }
-        placeholder={placeholder}
-        className={inputClass}
-      />
-
-      {suggestions.length > 0 && (
-        <div
-          className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto border ${
-            isDark
-              ? "bg-slate-800 border-slate-700"
-              : "bg-white border-slate-200"
-          }`}
-        >
-          {suggestions.map((city: any, index: number) => (
-            <button
-              key={city.place_id ?? index}
-              type="button"
-              onClick={() => handleSelect(city)}
-              className={`w-full text-left px-3 py-2 text-sm border-b last:border-b-0 ${
-                isDark
-                  ? "hover:bg-slate-700 text-slate-200 border-slate-700"
-                  : "hover:bg-amber-50 text-slate-700 border-slate-100"
-              }`}
-            >
-              {city.display_name}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+    {suggestions.length > 0 && (
+      <div
+        className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto border ${
+          isDark
+            ? "bg-slate-800 border-slate-700"
+            : "bg-white border-slate-200"
+        }`}
+      >
+        {suggestions.map((city: any, index: number) => (
+          <button
+            key={city.place_id ?? index}
+            type="button"
+            onClick={() => handleSelect(city)}
+            className={`w-full text-left px-3 py-2 text-sm border-b last:border-b-0 ${
+              isDark
+                ? "hover:bg-slate-700 text-slate-200 border-slate-700"
+                : "hover:bg-amber-50 text-slate-700 border-slate-100"
+            }`}
+          >
+            {city.display_name}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
 }
