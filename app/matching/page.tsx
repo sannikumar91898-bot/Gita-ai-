@@ -3,10 +3,10 @@
 
 import { useState, useRef, useEffect } from "react";
 import {
-ArrowLeft, Heart, Sparkles, MessageCircle, Download,
-ShieldAlert, MapPin, Calendar, Clock, ChevronDown,
-Home, User, Share2, FileText, Star, AlertCircle,
-CheckCircle2, ArrowRight, RefreshCw, Sun
+  ArrowLeft, Heart, Sparkles, MessageCircle, Download,
+  ShieldAlert, MapPin, Calendar, Clock, ChevronDown,
+  Home, User, Share2, FileText, Star, AlertCircle,
+  CheckCircle2, ArrowRight, RefreshCw, Sun
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,207 +16,189 @@ import { useApp } from "../Providers";
 // Loading Text — 10 Languages
 // ============================================================
 const getLoadingSteps = (lang: string) => {
-const steps: Record<string, string[]> = {
-hi: ["ग्रहों की स्थिति मिलाई जा रही है...", "नाड़ी और भकूट स्कोर की गणना...", "मंगल दोष का विश्लेषण...", "कॉस्मिक रिपोर्ट तैयार हो रही है..."],
-hinglish: ["Planetary positions align ho rahi hain...", "Nadi aur Bhakoot score calculate ho raha hai...", "Manglik Dosha analyze ho raha hai...", "Cosmic report taiyaar ho rahi hai..."],
-en: ["Aligning planetary positions...", "Calculating Nadi and Bhakoot scores...", "Analyzing Manglik Dosha...", "Generating Cosmic Diagnostic Report..."],
-te: ["గ్రహ స్థానాలు సరిచేయబడుతున్నాయి...", "నాడి మరియు భకూట్ స్కోర్లు లెక్కిస్తోంది...", "మంగళ దోషాన్ని విశ్లేషిస్తోంది...", "కాస్మిక్ నివేదిక సిద్ధమవుతోంది..."],
-ta: ["கிரக நிலைகள் சீரமைக்கப்படுகின்றன...", "நாடி மற்றும் பகூட் மதிப்பெண்கள் கணக்கிடப்படுகிறது...", "மங்கள தோஷம் ஆராயப்படுகிறது...", "காஸ்மிக் அறிக்கை தயாராகிறது..."],
-kn: ["ಗ್ರಹಗಳ ಸ್ಥಾನಗಳನ್ನು ಜೋಡಿಸಲಾಗುತ್ತಿದೆ...", "ನಾಡಿ ಮತ್ತು ಭಕೂಟ್ ಸ್ಕೋರ್ಗಳನ್ನು ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತಿದೆ...", "ಮಂಗಳ ದೋಷವನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ಕಾಸ್ಮಿಕ್ ವರದಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..."],
-bn: ["গ্রহের অবস্থান সারিবদ্ধ করা হচ্ছে...", "নাড়ি এবং ভকূট স্কোর গণনা করা হচ্ছে...", "মঙ্গল দোষ বিশ্লেষণ করা হচ্ছে...", "কসমিক রিপোর্ট তৈরি হচ্ছে..."],
-mr: ["ग्रहांची स्थिती जुळवली जात आहे...", "नाडी आणि भकूट स्कोअर मोजले जात आहे...", "मंगळ दोषाचे विश्लेषण केले जात आहे...", "कॉस्मिक अहवाल तयार होत आहे..."],
-gu: ["ગ્રહોની સ્થિતિ ગોઠવાઈ રહી છે...", "નાડી અને ભકૂટ સ્કોરની ગણતરી થઈ રહી છે...", "મંગળ દોષનું વિશ્લેષણ થઈ રહ્યું છે...", "કોસ્મિક રિપોર્ટ તૈયાર થઈ રહ્યો છે..."],
-ml: ["ഗ്രഹസ്ഥാനങ്ങൾ ക്രമീകരിക്കുന്നു...", "നാഡിയും ഭകൂട്ടും കണക്കാക്കുന്നു...", "ചൊവ്വാദോഷം വിശകലനം ചെയ്യുന്നു...", "കോസ്മിക് റിപ്പോർട്ട് തയ്യാറാക്കുന്നു..."],
-};
-return steps[lang] || steps["hinglish"];
+  const steps: Record<string, string[]> = {
+    hi: ["ग्रहों की स्थिति मिलाई जा रही है...", "नाड़ी और भकूट स्कोर की गणना...", "मंगल दोष का विश्लेषण...", "कॉस्मिक रिपोर्ट तैयार हो रही है..."],
+    hinglish: ["Planetary positions align ho rahi hain...", "Nadi aur Bhakoot score calculate ho raha hai...", "Manglik Dosha analyze ho raha hai...", "Cosmic report taiyaar ho rahi hai..."],
+    en: ["Aligning planetary positions...", "Calculating Nadi and Bhakoot scores...", "Analyzing Manglik Dosha...", "Generating Cosmic Diagnostic Report..."],
+    te: ["గ్రహ స్థానాలు సరిచేయబడుతున్నాయి...", "నాడి మరియు భకూట్ స్కోర్లు లెక్కిస్తోంది...", "మంగళ దోషాన్ని విశ్లేషిస్తోంది...", "కాస్మిక్ నివేదిక సిద్ధమవుతోంది..."],
+    ta: ["கிரக நிலைகள் சீரமைக்கப்படுகின்றன...", "நாடி மற்றும் பகூட் மதிப்பெண்கள் கணக்கிடப்படுகிறது...", "மங்கள தோஷம் ஆராயப்படுகிறது...", "காஸ்மிக் அறிக்கை தயாராகிறது..."],
+    kn: ["ಗ್ರಹಗಳ ಸ್ಥಾನಗಳನ್ನು ಜೋಡಿಸಲಾಗುತ್ತಿದೆ...", "ನಾಡಿ ಮತ್ತು ಭಕೂಟ್ ಸ್ಕೋರ್ಗಳನ್ನು ಲೆಕ್ಕಹಾಕಲಾಗುತ್ತಿದೆ...", "ಮಂಗಳ ದೋಷವನ್ನು ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...", "ಕಾಸ್ಮಿಕ್ ವರದಿ ಸಿದ್ಧವಾಗುತ್ತಿದೆ..."],
+    bn: ["গ্রহের অবস্থান সারিবদ্ধ করা হচ্ছে...", "নাড়ি এবং ভকূট স্কোর গণনা করা হচ্ছে...", "মঙ্গল দোষ বিশ্লেষণ করা হচ্ছে...", "কসমিক রিপোর্ট তৈরি হচ্ছে..."],
+    mr: ["ग्रहांची स्थिती जुळवली जात आहे...", "नाडी आणि भकूट स्कोअर मोजले जात आहे...", "मंगळ दोषाचे विश्लेषण केले जात आहे...", "कॉस्मिक अहवाल तयार होत आहे..."],
+    gu: ["ગ્રહોની સ્થિતિ ગોઠવાઈ રહી છે...", "નાડી અને ભકૂટ સ્કોરની ગણતરી થઈ રહી છે...", "મંગળ દોષનું વિશ્લેષણ થઈ રહ્યું છે...", "કોસ્મિક રિપોર્ટ તૈયાર થઈ રહ્યો છે..."],
+    ml: ["ഗ്രഹസ്ഥാനങ്ങൾ ക്രമീകരിക്കുന്നു...", "നാഡിയും ഭകൂട്ടും കണക്കാക്കുന്നു...", "ചൊവ്വാദോഷം വിശകലനം ചെയ്യുന്നു...", "കോസ്മിക് റിപ്പോർട്ട് തയ്യാറാക്കുന്നു..."],
+  };
+  return steps[lang] || steps["hinglish"];
 };
 
 // ============================================================
 // UI Text — 10 Languages
 // ============================================================
 const getUIText = (lang: string, key: string) => {
-const ui: Record<string, Record<string, string>> = {
-hi: {
-title: "कुंडली मिलान", subtitle: "सटीक विवाह मिलान", boy: "वर (लड़के) का विवरण", girl: "वधू (लड़की) का विवरण",
-name: "पूरा नाम", city: "जन्म स्थान (City)", matchBtn: "मिलान करें", alertCity: "कृपया लिस्ट से शहर चुनें!",
-result: "मिलान परिणाम", total: "/ 36 कुल अष्टकूट मिलान", breakdown: "सभी 8 गुणों का गणित देखें",
-chat: "ज्योतिषी से बात करें — पहली चैट FREE", pdf: "PDF डाउनलोड", reset: "दोबारा बनाएं", share: "WhatsApp पर भेजें",
-bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "मिलान को गहराई से समझने के लिए चैट करें — FREE",
-warning: "सही मिलान समझने से रिश्ता और मजबूत बनता है। यह रिपोर्ट आपको सही दिशा देने के लिए है।",
-home: "होम", chatNav: "चैट", daily: "राशिफल", profile: "प्रोफाइल",
-doshaTitle: "दोष और उनका निवारण", strengths: "आपकी 3 सबसे बड़ी ताकत", attention: "ध्यान देने वाली बातें",
-advice: "व्यवहारिक सलाह", nextSteps: "अगला कदम", soulLabel: "रिश्ते का निचोड़",
-doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "कोई दोष नहीं",
-manglik: "मंगल दोष", nadi: "नाड़ी दोष", bhakoot: "भकूट दोष",
-disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष पर आधारित है। यह मार्गदर्शन है, चिकित्सीय/कानूनी सलाह नहीं।",
-askQ: "और जानना चाहते हैं?",
-q1: "क्या हमारी शादी में परिवार आसानी से मान जाएगा?",
-q2: "हमारी कुंडली के अनुसार शादी का सबसे शुभ समय कब है?",
-q3: "करियर और धन पर इस रिश्ते का क्या असर होगा?",
-labelUtkrisht: "उत्कृष्ट मिलान", labelBahutAcha: "बहुत अच्छा मिलान", labelAcha: "अच्छा मिलान", labelAusat: "औसत मिलान", labelSudhar: "सुधार की गुंजाइश",
-boyPrefix: "वर", girlPrefix: "वधू"
-},
-hinglish: {
-title: "Kundli Milan", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
-name: "Full Name", city: "Birth City", matchBtn: "Milan Karein", alertCity: "Kripya list me se city select karein!",
-result: "Matching Result", total: "/ 36 Total Ashtakoot", breakdown: "Saare 8 gunon ka ganit dekhein",
-chat: "Jyotishi se baat karein — Pehli chat FREE", pdf: "PDF Download", reset: "Reset", share: "WhatsApp par bhejein",
-bannerTitle: "Astrologer • 24x7 Available", bannerSub: "Milan ki gehrai samajhne ke liye chat karein — FREE",
-warning: "Sahi milan samajhne se rishta aur mazboot banta hai. Yeh report aapko sahi disha dene ke liye hai.",
-home: "Home", chatNav: "Chat", daily: "Daily", profile: "Profile",
-doshaTitle: "Dosh aur Unka Nivaran", strengths: "Aapki 3 Sabse Badi Taaqat", attention: "Dhyan Dene Wali Baatein",
-advice: "Vyavaharik Salah", nextSteps: "Agla Kadam", soulLabel: "Rishte ka Nichod",
-doshaPresent: "Upasthit", doshaCancelled: "Nivarit", doshaAbsent: "Koi Dosh Nahi",
-manglik: "Manglik Dosh", nadi: "Nadi Dosh", bhakoot: "Bhakoot Dosh",
-disclaimer: "Yeh report traditional Vedic astrology par aadharit hai. Yeh guidance hai, medical/legal advice nahi.",
-askQ: "Aur jaanna chahte hain?",
-q1: "Kya hamari shaadi mein family aasani se maan jayegi?",
-q2: "Hamari kundli ke anusaar shaadi ka sabse shubh samay kab hai?",
-q3: "Career aur dhan par is rishte ka kya asar hoga?",
-labelUtkrisht: "Utkrisht Milan", labelBahutAcha: "Bahut Acha Milan", labelAcha: "Acha Milan", labelAusat: "Ausat Milan", labelSudhar: "Sudhar ki Gunjayish",
-boyPrefix: "Var", girlPrefix: "Vadhu"
-},
-en: {
-title: "Kundli Matching", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
-name: "Full Name", city: "Birth City", matchBtn: "Match Now", alertCity: "Please select a valid city from the list!",
-result: "Matching Result", total: "/ 36 Total Ashtakoot", breakdown: "See all 8 koota calculations",
-chat: "Talk to Astrologer — First chat FREE", pdf: "PDF Download", reset: "Reset", share: "Share on WhatsApp",
-bannerTitle: "Astrologer • 24x7 Available", bannerSub: "Chat to deeply understand the match — FREE",
-warning: "Understanding the match better strengthens the relationship. This report gives you right direction.",
-home: "Home", chatNav: "Chat", daily: "Daily", profile: "Profile",
-doshaTitle: "Doshas & Their Cancellation", strengths: "Your 3 Greatest Strengths", attention: "Areas of Attention",
-advice: "Practical Advice", nextSteps: "Next Steps", soulLabel: "Soul Summary",
-doshaPresent: "Present", doshaCancelled: "Cancelled", doshaAbsent: "No Dosha",
-manglik: "Manglik Dosha", nadi: "Nadi Dosha", bhakoot: "Bhakoot Dosha",
-disclaimer: "This report is based on traditional Vedic astrology. It is guidance, not medical/legal advice.",
-askQ: "Want to know more?",
-q1: "Will our families easily agree to this marriage?",
-q2: "What is the most auspicious time for marriage as per our charts?",
-q3: "How will this relationship affect career and wealth?",
-labelUtkrisht: "Excellent Match", labelBahutAcha: "Very Good Match", labelAcha: "Good Match", labelAusat: "Average Match", labelSudhar: "Needs Improvement",
-boyPrefix: "Groom", girlPrefix: "Bride"
-},
-te: { title: "కుండలి మిలన్", subtitle: "ఖచ్చితమైన వివాహ మ్యాచింగ్", boy: "అబ్బాయి వివరాలు", girl: "అమ్మాయి వివరాలు", name: "పూర్తి పేరు", city: "పుట్టిన నగరం", matchBtn: "మ్యాచ్ చేయండి", alertCity: "దయచేసి జాబితా నుండి నగరాన్ని ఎంచుకోండి!", result: "మ్యాచింగ్ ఫలితం", total: "/ 36 మొత్తం అష్టకూట్", breakdown: "అన్ని 8 కూటాలు చూడండి", chat: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ FREE", pdf: "PDF", reset: "రీసెట్", share: "WhatsApp లో పంపండి", bannerTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", bannerSub: "మ్యాచ్‌ను లోతుగా అర్థం చేసుకోవడానికి చాట్ చేయండి — FREE", warning: "సరైన మ్యాచ్ అర్థం చేసుకోవడం సంబంధాన్ని బలపరుస్తుంది.", home: "హోమ్", chatNav: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", doshaTitle: "దోషాలు & నివారణ", strengths: "మీ 3 గొప్ప బలాలు", attention: "శ్రద్ధ వహించవలసిన అంశాలు", advice: "ఆచరణాత్మక సలహా", nextSteps: "తదుపరి అడుగు", soulLabel: "సంబంధ సారాంశం", doshaPresent: "ఉంది", doshaCancelled: "నివారించబడింది", doshaAbsent: "దోషం లేదు", manglik: "మంగళ దోషం", nadi: "నాడి దోషం", bhakoot: "భకూట్ దోషం", disclaimer: "ఈ నివేదిక సాంప్రదాయ వేద జ్యోతిష్యంపై ఆధారపడి ఉంది.", askQ: "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?", q1: "మా పెళ్లికి కుటుంబం సులభంగా అంగీకరిస్తుందా?", q2: "మా జాతకాల ప్రకారం పెళ్లికి శుభ సమయం ఎప్పుడు?", q3: "ఈ సంబంధం కెరీర్ మరియు ధనంపై ఎలా ప్రభావితం చేస్తుంది?", labelUtkrisht: "అద్భుతమైన మ్యాచ్", labelBahutAcha: "చాలా మంచి మ్యాచ్", labelAcha: "మంచి మ్యాచ్", labelAusat: "సగటు మ్యాచ్", labelSudhar: "మెరుగుపరచాల్సిన అవసరం", boyPrefix: "వరుడు", girlPrefix: "వధువు" },
-ta: { title: "ஜாதக பொருத்தம்", subtitle: "துல்லியமான திருமண பொருத்தம்", boy: "ஆண் விவரங்கள்", girl: "பெண் விவரங்கள்", name: "முழு பெயர்", city: "பிறந்த நகரம்", matchBtn: "பொருத்தம் பார்க்க", alertCity: "பட்டியலில் இருந்து நகரத்தை தேர்ந்தெடுக்கவும்!", result: "பொருத்தம் முடிவு", total: "/ 36 மொத்த அஷ்டகூடம்", breakdown: "அனைத்து 8 கூடங்களையும் பார்க்க", chat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE", pdf: "PDF", reset: "மீட்டமை", share: "WhatsApp இல் பகிரவும்", bannerTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", bannerSub: "பொருத்தத்தை ஆழமாக புரிந்துகொள்ள அரட்டை செய்யுங்கள் — FREE", warning: "சரியான பொருத்தத்தை புரிந்துகொள்வது உறவை வலுப்படுத்தும்.", home: "முகப்பு", chatNav: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", doshaTitle: "தோஷங்கள் & நிவாரணம்", strengths: "உங்கள் 3 சிறந்த பலங்கள்", attention: "கவனிக்க வேண்டிய பகுதிகள்", advice: "நடைமுறை ஆலோசனை", nextSteps: "அடுத்த படி", soulLabel: "உறவு சாராம்சம்", doshaPresent: "உள்ளது", doshaCancelled: "நிவாரணம்", doshaAbsent: "தோஷம் இல்லை", manglik: "மாங்கலிக் தோஷம்", nadi: "நாடி தோஷம்", bhakoot: "பகூட் தோஷம்", disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடத்தை அடிப்படையாகக் கொண்டது.", askQ: "மேலும் அறிய விரும்புகிறீர்களா?", q1: "எங்கள் திருமணத்திற்கு குடும்பம் எளிதில் ஒப்புக்கொள்ளுமா?", q2: "எங்கள் ஜாதகங்களின்படி திருமணத்திற்கு மிக நல்ல நேரம் எப்போது?", q3: "இந்த உறவு தொழில் மற்றும் செல்வத்தை எவ்வாறு பாதிக்கும்?", labelUtkrisht: "சிறந்த பொருத்தம்", labelBahutAcha: "மிக நல்ல பொருத்தம்", labelAcha: "நல்ல பொருத்தம்", labelAusat: "சராசரி பொருத்தம்", labelSudhar: "மேம்பாடு தேவை", boyPrefix: "மணமகன்", girlPrefix: "மணமகள்" },
-kn: { title: "ಕುಂಡಲಿ ಹೊಂದಾಣಿಕೆ", subtitle: "ನಿಖರವಾದ ವಿವಾಹ ಹೊಂದಾಣಿಕೆ", boy: "ಹುಡುಗನ ವಿವರಗಳು", girl: "ಹುಡುಗಿಯ ವಿವರಗಳು", name: "ಪೂರ್ಣ ಹೆಸರು", city: "ಹುಟ್ಟಿದ ನಗರ", matchBtn: "ಹೊಂದಿಸಿ", alertCity: "ದಯವಿಟ್ಟು ಪಟ್ಟಿಯಿಂದ ನಗರವನ್ನು ಆಯ್ಕೆಮಾಡಿ!", result: "ಹೊಂದಾಣಿಕೆಯ ಫಲಿತಾಂಶ", total: "/ 36 ಒಟ್ಟು ಅಷ್ಟಕೂಟ", breakdown: "ಎಲ್ಲಾ 8 ಕೂಟಗಳನ್ನು ನೋಡಿ", chat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE", pdf: "PDF", reset: "ಮರುಹೊಂದಿಸಿ", share: "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಳವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಚಾಟ್ ಮಾಡಿ — FREE", warning: "ಸರಿಯಾದ ಹೊಂದಾಣಿಕೆ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.", home: "ಮುಖಪುಟ", chatNav: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", doshaTitle: "ದೋಷಗಳು & ನಿವಾರಣೆ", strengths: "ನಿಮ್ಮ 3 ಶ್ರೇಷ್ಠ ಶಕ್ತಿಗಳು", attention: "ಗಮನಿಸಬೇಕಾದ ಅಂಶಗಳು", advice: "ಪ್ರಾಯೋಗಿಕ ಸಲಹೆ", nextSteps: "ಮುಂದಿನ ಹೆಜ್ಜೆ", soulLabel: "ಸಂಬಂಧದ ಸಾರಾಂಶ", doshaPresent: "ಇದೆ", doshaCancelled: "ನಿವಾರಣೆ", doshaAbsent: "ದೋಷ ಇಲ್ಲ", manglik: "ಮಾಂಗ್ಲಿಕ್ ದೋಷ", nadi: "ನಾಡಿ ದೋಷ", bhakoot: "ಭಕೂಟ್ ದೋಷ", disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯವನ್ನು ಆಧರಿಸಿದೆ.", askQ: "ಇನ್ನಷ್ಟು ತಿಳಿಯಲು ಬಯಸುವಿರಾ?", q1: "ನಮ್ಮ ಮದುವೆಗೆ ಕುಟುಂಬ ಸುಲಭವಾಗಿ ಒಪ್ಪುತ್ತದೆಯೇ?", q2: "ನಮ್ಮ ಜಾತಕದ ಪ್ರಕಾರ ಮದುವೆಗೆ ಶುಭ ಸಮಯ ಯಾವುದು?", q3: "ಈ ಸಂಬಂಧ ವೃತ್ತಿ ಮತ್ತು ಸಂಪತ್ತಿನ ಮೇಲೆ ಹೇಗೆ ಪರಿಣಾಮ ಬೀರುತ್ತದೆ?", labelUtkrisht: "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelBahutAcha: "ಬಹಳ ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAcha: "ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAusat: "ಸರಾಸರಿ ಹೊಂದಾಣಿಕೆ", labelSudhar: "ಸುಧಾರಣೆ ಅಗತ್ಯ", boyPrefix: "ವರ", girlPrefix: "ವಧು" },
-bn: { title: "কুণ্ডলী মিলন", subtitle: "সঠিক বিবাহ ম্যাচিং", boy: "ছেলের বিবরণ", girl: "মেয়ের বিবরণ", name: "পুরো নাম", city: "জন্ম শহর", matchBtn: "মিলন করুন", alertCity: "অনুগ্রহ করে তালিকা থেকে শহর নির্বাচন করুন!", result: "মিলন ফলাফল", total: "/ 36 মোট অষ্টকূট", breakdown: "সব ৮টি কূট দেখুন", chat: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট FREE", pdf: "PDF", reset: "রিসেট", share: "WhatsApp এ শেয়ার করুন", bannerTitle: "জ্যোতিষী • 24x7 উপলব্ধ", bannerSub: "মিলন গভীরভাবে বুঝতে চ্যাট করুন — FREE", warning: "সঠিক মিলন বুঝলে সম্পর্ক আরও মজবুত হয়।", home: "হোম", chatNav: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", doshaTitle: "দোষ ও তাদের নিবারণ", strengths: "আপনার ৩টি সেরা শক্তি", attention: "মনোযোগ দেওয়ার বিষয়", advice: "ব্যবহারিক পরামর্শ", nextSteps: "পরবর্তী পদক্ষেপ", soulLabel: "সম্পর্কের সারাংশ", doshaPresent: "উপস্থিত", doshaCancelled: "নিবারিত", doshaAbsent: "কোনো দোষ নেই", manglik: "মাঙ্গলিক দোষ", nadi: "নাড়ি দোষ", bhakoot: "ভকূট দোষ", disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষের উপর ভিত্তি করে।", askQ: "আরও জানতে চান?", q1: "আমাদের বিয়েতে পরিবার সহজে রাজি হবে?", q2: "আমাদের কুণ্ডলী অনুযায়ী বিয়ের শুভ সময় কখন?", q3: "এই সম্পর্ক ক্যারিয়ার ও ধনে কী প্রভাব ফেলবে?", labelUtkrisht: "চমৎকার মিলন", labelBahutAcha: "খুব ভালো মিলন", labelAcha: "ভালো মিলন", labelAusat: "গড় মিলন", labelSudhar: "উন্নতি প্রয়োজন", boyPrefix: "বর", girlPrefix: "কনে" },
-mr: { title: "कुंडली मिलन", subtitle: "अचूक विवाह जुळणी", boy: "मुलाचे तपशील", girl: "मुलीचे तपशील", name: "पूर्ण नाव", city: "जन्म शहर", matchBtn: "जुळवा", alertCity: "कृपया यादीतून शहर निवडा!", result: "जुळणी निकाल", total: "/ 36 एकूण अष्टकूट", breakdown: "सर्व 8 कूट पहा", chat: "ज्योतिषाशी बोला — पहिली चॅट FREE", pdf: "PDF", reset: "रीसेट", share: "WhatsApp वर शेअर करा", bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "जुळणी सखोल समजून घेण्यासाठी चॅट करा — FREE", warning: "योग्य जुळणी समजल्यास नातं अधिक मजबूत होतं.", home: "होम", chatNav: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", doshaTitle: "दोष आणि त्यांचे निवारण", strengths: "तुमच्या 3 सर्वात मोठ्या ताकदी", attention: "लक्ष देण्याच्या गोष्टी", advice: "व्यवहारिक सल्ला", nextSteps: "पुढील पाऊल", soulLabel: "नात्याचा निचरा", doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "दोष नाही", manglik: "मांगलिक दोष", nadi: "नाडी दोष", bhakoot: "भकूट दोष", disclaimer: "हा अहवाल पारंपारिक वैदिक ज्योतिषावर आधारित आहे.", askQ: "अजून जाणून घ्यायचंय?", q1: "आमच्या लग्नाला कुटुंब सहज मान्य करेल का?", q2: "आमच्या कुंडलीनुसार लग्नाची सर्वात शुभ वेळ कधी?", q3: "या नात्याचा करिअर आणि पैशावर काय परिणाम होईल?", labelUtkrisht: "उत्कृष्ट जुळणी", labelBahutAcha: "खूप चांगली जुळणी", labelAcha: "चांगली जुळणी", labelAusat: "सरासरी जुळणी", labelSudhar: "सुधारणा आवश्यक", boyPrefix: "वर", girlPrefix: "वधू" },
-gu: { title: "કુંડળી મેળાપ", subtitle: "સચોટ લગ્ન મેચિંગ", boy: "છોકરાની વિગતો", girl: "છોકરીની વિગતો", name: "પૂરું નામ", city: "જન્મ શહેર", matchBtn: "મેળવો", alertCity: "કૃપા કરીને સૂચિમાંથી શહેર પસંદ કરો!", result: "મેચિંગ પરિણામ", total: "/ 36 કુલ અષ્ટકૂટ", breakdown: "બધા 8 કૂટ જુઓ", chat: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ FREE", pdf: "PDF", reset: "રીસેટ", share: "WhatsApp પર શેર કરો", bannerTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", bannerSub: "મેચિંગ ઊંડાણપૂર્વક સમજવા ચેટ કરો — FREE", warning: "યોગ્ય મેચિંગ સમજવાથી સંબંધ વધુ મજબૂત બને છે.", home: "હોમ", chatNav: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", doshaTitle: "દોષ અને તેમનું નિવારણ", strengths: "તમારી 3 સૌથી મોટી તાકાત", attention: "ધ્યાન આપવાની બાબતો", advice: "વ્યવહારુ સલાહ", nextSteps: "આગળનું પગલું", soulLabel: "સંબંધનો નિચોડ", doshaPresent: "હાજર", doshaCancelled: "નિવારિત", doshaAbsent: "કોઈ દોષ નથી", manglik: "માંગલિક દોષ", nadi: "નાડી દોષ", bhakoot: "ભકૂટ દોષ", disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ પર આધારિત છે.", askQ: "વધુ જાણવા માંગો છો?", q1: "અમારા લગ્નમાં પરિવાર સહેલાઈથી માની જશે?", q2: "અમારી કુંડળી મુજબ લગ્નનો સૌથી શુભ સમય ક્યારે?", q3: "આ સંબંધ કરિયર અને ધન પર કેવી અસર કરશે?", labelUtkrisht: "ઉત્કૃષ્ટ મેચિંગ", labelBahutAcha: "ખૂબ સારું મેચિંગ", labelAcha: "સારું મેચિંગ", labelAusat: "સરેરાશ મેચિંગ", labelSudhar: "સુધારાની જરૂર", boyPrefix: "વર", girlPrefix: "વધૂ" },
-ml: { title: "കുണ്ഡലി മാച്ചിംഗ്", subtitle: "കൃത്യമായ വിവാഹ മാച്ചിംഗ്", boy: "ആൺകുട്ടിയുടെ വിവരങ്ങൾ", girl: "പെൺകുട്ടിയുടെ വിവരങ്ങൾ", name: "പൂർണ്ണ നാമം", city: "ജനന നഗരം", matchBtn: "മാച്ച് ചെയ്യുക", alertCity: "ലിസ്റ്റിൽ നിന്ന് ഒരു നഗരം തിരഞ്ഞെടുക്കുക!", result: "മാച്ചിംഗ് ഫലം", total: "/ 36 മൊത്തം അഷ്ടകൂട്ടം", breakdown: "എല്ലാ 8 കൂട്ടങ്ങളും കാണുക", chat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE", pdf: "PDF", reset: "പുനഃസജ്ജമാക്കുക", share: "WhatsApp ൽ പങ്കിടുക", bannerTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", bannerSub: "മാച്ചിംഗ് ആഴത്തിൽ മനസ്സിലാക്കാൻ ചാറ്റ് ചെയ്യുക — FREE", warning: "ശരിയായ മാച്ചിംഗ് മനസ്സിലാക്കുന്നത് ബന്ധം ശക്തമാക്കുന്നു.", home: "ഹോം", chatNav: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", doshaTitle: "ദോഷങ്ങളും പരിഹാരവും", strengths: "നിങ്ങളുടെ 3 മികച്ച ശക്തികൾ", attention: "ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ", advice: "പ്രായോഗിക ഉപദേശം", nextSteps: "അടുത്ത ഘട്ടം", soulLabel: "ബന്ധത്തിന്റെ സാരാംശം", doshaPresent: "ഉണ്ട്", doshaCancelled: "പരിഹരിച്ചു", doshaAbsent: "ദോഷമില്ല", manglik: "മാംഗ്ലിക് ദോഷം", nadi: "നാഡി ദോഷം", bhakoot: "ഭകൂട്ട് ദോഷം", disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷത്തെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.", askQ: "കൂടുതൽ അറിയാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?", q1: "ഞങ്ങളുടെ വിവാഹത്തിന് കുടുംബം എളുപ്പത്തിൽ സമ്മതിക്കുമോ?", q2: "ഞങ്ങളുടെ ജാതകം അനുസരിച്ച് വിവാഹത്തിന് ഏറ്റവും ശുഭമായ സമയം എപ്പോൾ?", q3: "ഈ ബന്ധം കരിയറിലും ധനത്തിലും എന്ത് സ്വാധീനം ചെലുത്തും?", labelUtkrisht: "മികച്ച മാച്ചിംഗ്", labelBahutAcha: "വളരെ നല്ല മാച്ചിംഗ്", labelAcha: "നല്ല മാച്ചിംഗ്", labelAusat: "ശരാശരി മാച്ചിംഗ്", labelSudhar: "മെച്ചപ്പെടുത്തൽ ആവശ്യം", boyPrefix: "വരൻ", girlPrefix: "വധു" },
+  const ui: Record<string, Record<string, string>> = {
+    hi: {
+      title: "कुंडली मिलान", subtitle: "सटीक विवाह मिलान", boy: "वर (लड़के) का विवरण", girl: "वधू (लड़की) का विवरण",
+      name: "पूरा नाम", city: "जन्म स्थान (City)", matchBtn: "मिलान करें", alertCity: "कृपया लिस्ट से शहर चुनें!",
+      result: "मिलान परिणाम", total: "/ 36 कुल अष्टकूट मिलान", breakdown: "सभी 8 गुणों का गणित देखें",
+      chat: "ज्योतिषी से बात करें — पहली चैट FREE", pdf: "PDF डाउनलोड", reset: "दोबारा बनाएं", share: "WhatsApp पर भेजें",
+      bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "मिलान को गहराई से समझने के लिए चैट करें — FREE",
+      warning: "सही मिलान समझने से रिश्ता और मजबूत बनता है। यह रिपोर्ट आपको सही दिशा देने के लिए है।",
+      home: "होम", chatNav: "चैट", daily: "राशिफल", profile: "प्रोफाइल",
+      doshaTitle: "दोष और उनका निवारण", strengths: "आपकी 3 सबसे बड़ी ताकत", attention: "ध्यान देने वाली बातें",
+      advice: "व्यवहारिक सलाह", nextSteps: "अगला कदम", soulLabel: "रिश्ते का निचोड़",
+      doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "कोई दोष नहीं",
+      manglik: "मंगल दोष", nadi: "नाड़ी दोष", bhakoot: "भकूट दोष",
+      disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष पर आधारित है। यह मार्गदर्शन है, चिकित्सीय/कानूनी सलाह नहीं।",
+      askQ: "और जानना चाहते हैं?",
+      q1: "क्या हमारी शादी में परिवार आसानी से मान जाएगा?",
+      q2: "हमारी कुंडली के अनुसार शादी का सबसे शुभ समय कब है?",
+      q3: "करियर और धन पर इस रिश्ते का क्या असर होगा?",
+      labelUtkrisht: "उत्कृष्ट मिलान", labelBahutAcha: "बहुत अच्छा मिलान", labelAcha: "अच्छा मिलान", labelAusat: "औसत मिलान", labelSudhar: "सुधार की गुंजाइश",
+      boyPrefix: "वर", girlPrefix: "वधू"
+    },
+    hinglish: {
+      title: "Kundli Milan", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
+      name: "Full Name", city: "Birth City", matchBtn: "Milan Karein", alertCity: "Kripya list me se city select karein!",
+      result: "Matching Result", total: "/ 36 Total Ashtakoot", breakdown: "Saare 8 gunon ka ganit dekhein",
+      chat: "Jyotishi se baat karein — Pehli chat FREE", pdf: "PDF Download", reset: "Reset", share: "WhatsApp par bhejein",
+      bannerTitle: "Astrologer • 24x7 Available", bannerSub: "Milan ki gehrai samajhne ke liye chat karein — FREE",
+      warning: "Sahi milan samajhne se rishta aur mazboot banta hai. Yeh report aapko sahi disha dene ke liye hai.",
+      home: "Home", chatNav: "Chat", daily: "Daily", profile: "Profile",
+      doshaTitle: "Dosh aur Unka Nivaran", strengths: "Aapki 3 Sabse Badi Taaqat", attention: "Dhyan Dene Wali Baatein",
+      advice: "Vyavaharik Salah", nextSteps: "Agla Kadam", soulLabel: "Rishte ka Nichod",
+      doshaPresent: "Upasthit", doshaCancelled: "Nivarit", doshaAbsent: "Koi Dosh Nahi",
+      manglik: "Manglik Dosh", nadi: "Nadi Dosh", bhakoot: "Bhakoot Dosh",
+      disclaimer: "Yeh report traditional Vedic astrology par aadharit hai. Yeh guidance hai, medical/legal advice nahi.",
+      askQ: "Aur jaanna chahte hain?",
+      q1: "Kya hamari shaadi mein family aasani se maan jayegi?",
+      q2: "Hamari kundli ke anusaar shaadi ka sabse shubh samay kab hai?",
+      q3: "Career aur dhan par is rishte ka kya asar hoga?",
+      labelUtkrisht: "Utkrisht Milan", labelBahutAcha: "Bahut Acha Milan", labelAcha: "Acha Milan", labelAusat: "Ausat Milan", labelSudhar: "Sudhar ki Gunjayish",
+      boyPrefix: "Var", girlPrefix: "Vadhu"
+    },
+    en: {
+      title: "Kundli Matching", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
+      name: "Full Name", city: "Birth City", matchBtn: "Match Now", alertCity: "Please select a valid city from the list!",
+      result: "Matching Result", total: "/ 36 Total Ashtakoot", breakdown: "See all 8 koota calculations",
+      chat: "Talk to Astrologer — First chat FREE", pdf: "PDF Download", reset: "Reset", share: "Share on WhatsApp",
+      bannerTitle: "Astrologer • 24x7 Available", bannerSub: "Chat to deeply understand the match — FREE",
+      warning: "Understanding the match better strengthens the relationship. This report gives you right direction.",
+      home: "Home", chatNav: "Chat", daily: "Daily", profile: "Profile",
+      doshaTitle: "Doshas & Their Cancellation", strengths: "Your 3 Greatest Strengths", attention: "Areas of Attention",
+      advice: "Practical Advice", nextSteps: "Next Steps", soulLabel: "Soul Summary",
+      doshaPresent: "Present", doshaCancelled: "Cancelled", doshaAbsent: "No Dosha",
+      manglik: "Manglik Dosha", nadi: "Nadi Dosha", bhakoot: "Bhakoot Dosha",
+      disclaimer: "This report is based on traditional Vedic astrology. It is guidance, not medical/legal advice.",
+      askQ: "Want to know more?",
+      q1: "Will our families easily agree to this marriage?",
+      q2: "What is the most auspicious time for marriage as per our charts?",
+      q3: "How will this relationship affect career and wealth?",
+      labelUtkrisht: "Excellent Match", labelBahutAcha: "Very Good Match", labelAcha: "Good Match", labelAusat: "Average Match", labelSudhar: "Needs Improvement",
+      boyPrefix: "Groom", girlPrefix: "Bride"
+    },
+    te: { title: "కుండలి మిలన్", subtitle: "ఖచ్చితమైన వివాహ మ్యాచింగ్", boy: "అబ్బాయి వివరాలు", girl: "అమ్మాయి వివరాలు", name: "పూర్తి పేరు", city: "పుట్టిన నగరం", matchBtn: "మ్యాచ్ చేయండి", alertCity: "దయచేసి జాబితా నుండి నగరాన్ని ఎంచుకోండి!", result: "మ్యాచింగ్ ఫలితం", total: "/ 36 మొత్తం అష్టకూట్", breakdown: "అన్ని 8 కూటాలు చూడండి", chat: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ FREE", pdf: "PDF", reset: "రీసెట్", share: "WhatsApp లో పంపండి", bannerTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", bannerSub: "మ్యాచ్‌ను లోతుగా అర్థం చేసుకోవడానికి చాట్ చేయండి — FREE", warning: "సరైన మ్యాచ్ అర్థం చేసుకోవడం సంబంధాన్ని బలపరుస్తుంది.", home: "హోమ్", chatNav: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", doshaTitle: "దోషాలు & నివారణ", strengths: "మీ 3 గొప్ప బలాలు", attention: "శ్రద్ధ వహించవలసిన అంశాలు", advice: "ఆచరణాత్మక సలహా", nextSteps: "తదుపరి అడుగు", soulLabel: "సంబంధ సారాంశం", doshaPresent: "ఉంది", doshaCancelled: "నివారించబడింది", doshaAbsent: "దోషం లేదు", manglik: "మంగళ దోషం", nadi: "నాడి దోషం", bhakoot: "భకూట్ దోషం", disclaimer: "ఈ నివేదిక సాంప్రదాయ వేద జ్యోతిష్యంపై ఆధారపడి ఉంది.", askQ: "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?", q1: "మా పెళ్లికి కుటుంబం సులభంగా అంగీకరిస్తుందా?", q2: "మా జాతకాల ప్రకారం పెళ్లికి శుభ సమయం ఎప్పుడు?", q3: "ఈ సంబంధం కెరీర్ మరియు ధనంపై ఎలా ప్రభావితం చేస్తుంది?", labelUtkrisht: "అద్భుతమైన మ్యాచ్", labelBahutAcha: "చాలా మంచి మ్యాచ్", labelAcha: "మంచి మ్యాచ్", labelAusat: "సగటు మ్యాచ్", labelSudhar: "మెరుగుపరచాల్సిన అవసరం", boyPrefix: "వరుడు", girlPrefix: "వధువు" },
+    ta: { title: "ஜாதக பொருத்தம்", subtitle: "துல்லியமான திருமண பொருத்தம்", boy: "ஆண் விவரங்கள்", girl: "பெண் விவரங்கள்", name: "முழு பெயர்", city: "பிறந்த நகரம்", matchBtn: "பொருத்தம் பார்க்க", alertCity: "பட்டியலில் இருந்து நகரத்தை தேர்ந்தெடுக்கவும்!", result: "பொருத்தம் முடிவு", total: "/ 36 மொத்த அஷ்டகூடம்", breakdown: "அனைத்து 8 கூடங்களையும் பார்க்க", chat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE", pdf: "PDF", reset: "மீட்டமை", share: "WhatsApp இல் பகிரவும்", bannerTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", bannerSub: "பொருத்தத்தை ஆழமாக புரிந்துகொள்ள அரட்டை செய்யுங்கள் — FREE", warning: "சரியான பொருத்தத்தை புரிந்துகொள்வது உறவை வலுப்படுத்தும்.", home: "முகப்பு", chatNav: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", doshaTitle: "தோஷங்கள் & நிவாரணம்", strengths: "உங்கள் 3 சிறந்த பலங்கள்", attention: "கவனிக்க வேண்டிய பகுதிகள்", advice: "நடைமுறை ஆலோசனை", nextSteps: "அடுத்த படி", soulLabel: "உறவு சாராம்சம்", doshaPresent: "உள்ளது", doshaCancelled: "நிவாரணம்", doshaAbsent: "தோஷம் இல்லை", manglik: "மாங்கலிக் தோஷம்", nadi: "நாடி தோஷம்", bhakoot: "பகூட் தோஷம்", disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடத்தை அடிப்படையாகக் கொண்டது.", askQ: "மேலும் அறிய விரும்புகிறீர்களா?", q1: "எங்கள் திருமணத்திற்கு குடும்பம் எளிதில் ஒப்புக்கொள்ளுமா?", q2: "எங்கள் ஜாதகங்களின்படி திருமணத்திற்கு மிக நல்ல நேரம் எப்போது?", q3: "இந்த உறவு தொழில் மற்றும் செல்வத்தை எவ்வாறு பாதிக்கும்?", labelUtkrisht: "சிறந்த பொருத்தம்", labelBahutAcha: "மிக நல்ல பொருத்தம்", labelAcha: "நல்ல பொருத்தம்", labelAusat: "சராசரி பொருத்தம்", labelSudhar: "மேம்பாடு தேவை", boyPrefix: "மணமகன்", girlPrefix: "மணமகள்" },
+    kn: { title: "ಕುಂಡಲಿ ಹೊಂದಾಣಿಕೆ", subtitle: "ನಿಖರವಾದ ವಿವಾಹ ಹೊಂದಾಣಿಕೆ", boy: "ಹುಡುಗನ ವಿವರಗಳು", girl: "ಹುಡುಗಿಯ ವಿವರಗಳು", name: "ಪೂರ್ಣ ಹೆಸರು", city: "ಹುಟ್ಟಿದ ನಗರ", matchBtn: "ಹೊಂದಿಸಿ", alertCity: "ದಯವಿಟ್ಟು ಪಟ್ಟಿಯಿಂದ ನಗರವನ್ನು ಆಯ್ಕೆಮಾಡಿ!", result: "ಹೊಂದಾಣಿಕೆಯ ಫಲಿತಾಂಶ", total: "/ 36 ಒಟ್ಟು ಅಷ್ಟಕೂಟ", breakdown: "ಎಲ್ಲಾ 8 ಕೂಟಗಳನ್ನು ನೋಡಿ", chat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE", pdf: "PDF", reset: "ಮರುಹೊಂದಿಸಿ", share: "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಳವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಚಾಟ್ ಮಾಡಿ — FREE", warning: "ಸರಿಯಾದ ಹೊಂದಾಣಿಕೆ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.", home: "ಮುಖಪುಟ", chatNav: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", doshaTitle: "ದೋಷಗಳು & ನಿವಾರಣೆ", strengths: "ನಿಮ್ಮ 3 ಶ್ರೇಷ್ಠ ಶಕ್ತಿಗಳು", attention: "ಗಮನಿಸಬೇಕಾದ ಅಂಶಗಳು", advice: "ಪ್ರಾಯೋಗಿಕ ಸಲಹೆ", nextSteps: "ಮುಂದಿನ ಹೆಜ್ಜೆ", soulLabel: "ಸಂಬಂಧದ ಸಾರಾಂಶ", doshaPresent: "ಇದೆ", doshaCancelled: "ನಿವಾರಣೆ", doshaAbsent: "ದೋಷ ಇಲ್ಲ", manglik: "ಮಾಂಗ್ಲಿಕ್ ದೋಷ", nadi: "ನಾಡಿ ದೋಷ", bhakoot: "ಭಕೂಟ್ ದೋಷ", disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯವನ್ನು ಆಧರಿಸಿದೆ.", askQ: "ಇನ್ನಷ್ಟು ತಿಳಿಯಲು ಬಯಸುವಿರಾ?", q1: "ನಮ್ಮ ಮದುವೆಗೆ ಕುಟುಂಬ ಸುಲಭವಾಗಿ ಒಪ್ಪುತ್ತದೆಯೇ?", q2: "ನಮ್ಮ ಜಾತಕದ ಪ್ರಕಾರ ಮದುವೆಗೆ ಶುಭ ಸಮಯ ಯಾವುದು?", q3: "ಈ ಸಂಬಂಧ ವೃತ್ತಿ ಮತ್ತು ಸಂಪತ್ತಿನ ಮೇಲೆ ಹೇಗೆ ಪರಿಣಾಮ ಬೀರುತ್ತದೆ?", labelUtkrisht: "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelBahutAcha: "ಬಹಳ ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAcha: "ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAusat: "ಸರಾಸರಿ ಹೊಂದಾಣಿಕೆ", labelSudhar: "ಸುಧಾರಣೆ ಅಗತ್ಯ", boyPrefix: "ವರ", girlPrefix: "ವಧು" },
+    bn: { title: "কুণ্ডলী মিলন", subtitle: "সঠিক বিবাহ ম্যাচিং", boy: "ছেলের বিবরণ", girl: "মেয়ের বিবরণ", name: "পুরো নাম", city: "জন্ম শহর", matchBtn: "মিলন করুন", alertCity: "অনুগ্রহ করে তালিকা থেকে শহর নির্বাচন করুন!", result: "মিলন ফলাফল", total: "/ 36 মোট অষ্টকূট", breakdown: "সব ৮টি কূট দেখুন", chat: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট FREE", pdf: "PDF", reset: "রিসেট", share: "WhatsApp এ শেয়ার করুন", bannerTitle: "জ্যোতিষী • 24x7 উপলব্ধ", bannerSub: "মিলন গভীরভাবে বুঝতে চ্যাট করুন — FREE", warning: "সঠিক মিলন বুঝলে সম্পর্ক আরও মজবুত হয়।", home: "হোম", chatNav: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", doshaTitle: "দোষ ও তাদের নিবারণ", strengths: "আপনার ৩টি সেরা শক্তি", attention: "মনোযোগ দেওয়ার বিষয়", advice: "ব্যবহারিক পরামর্শ", nextSteps: "পরবর্তী পদক্ষেপ", soulLabel: "সম্পর্কের সারাংশ", doshaPresent: "উপস্থিত", doshaCancelled: "নিবারিত", doshaAbsent: "কোনো দোষ নেই", manglik: "মাঙ্গলিক দোষ", nadi: "নাড়ি দোষ", bhakoot: "ভকূট দোষ", disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষের উপর ভিত্তি করে।", askQ: "আরও জানতে চান?", q1: "আমাদের বিয়েতে পরিবার সহজে রাজি হবে?", q2: "আমাদের কুণ্ডলী অনুযায়ী বিয়ের শুভ সময় কখন?", q3: "এই সম্পর্ক ক্যারিয়ার ও ধনে কী প্রভাব ফেলবে?", labelUtkrisht: "চমৎকার মিলন", labelBahutAcha: "খুব ভালো মিলন", labelAcha: "ভালো মিলন", labelAusat: "গড় মিলন", labelSudhar: "উন্নতি প্রয়োজন", boyPrefix: "বর", girlPrefix: "কনে" },
+    mr: { title: "कुंडली मिलन", subtitle: "अचूक विवाह जुळणी", boy: "मुलाचे तपशील", girl: "मुलीचे तपशील", name: "पूर्ण नाव", city: "जन्म शहर", matchBtn: "जुळवा", alertCity: "कृपया यादीतून शहर निवडा!", result: "जुळणी निकाल", total: "/ 36 एकूण अष्टकूट", breakdown: "सर्व 8 कूट पहा", chat: "ज्योतिषाशी बोला — पहिली चॅट FREE", pdf: "PDF", reset: "रीसेट", share: "WhatsApp वर शेअर करा", bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "जुळणी सखोल समजून घेण्यासाठी चॅट करा — FREE", warning: "योग्य जुळणी समजल्यास नातं अधिक मजबूत होतं.", home: "होम", chatNav: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", doshaTitle: "दोष आणि त्यांचे निवारण", strengths: "तुमच्या 3 सर्वात मोठ्या ताकदी", attention: "लक्ष देण्याच्या गोष्टी", advice: "व्यवहारिक सल्ला", nextSteps: "पुढील पाऊल", soulLabel: "नात्याचा निचरा", doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "दोष नाही", manglik: "मांगलिक दोष", nadi: "नाडी दोष", bhakoot: "भकूट दोष", disclaimer: "हा अहवाल पारंपारिक वैदिक ज्योतिषावर आधारित आहे.", askQ: "अजून जाणून घ्यायचंय?", q1: "आमच्या लग्नाला कुटुंब सहज मान्य करेल का?", q2: "आमच्या कुंडलीनुसार लग्नाची सर्वात शुभ वेळ कधी?", q3: "या नात्याचा करिअर आणि पैशावर काय परिणाम होईल?", labelUtkrisht: "उत्कृष्ट जुळणी", labelBahutAcha: "खूप चांगली जुळणी", labelAcha: "चांगली जुळणी", labelAusat: "सरासरी जुळणी", labelSudhar: "सुधारणा आवश्यक", boyPrefix: "वर", girlPrefix: "वधू" },
+    gu: { title: "કુંડળી મેળાપ", subtitle: "સચોટ લગ્ન મેચિંગ", boy: "છોકરાની વિગતો", girl: "છોકરીની વિગતો", name: "પૂરું નામ", city: "જન્મ શહેર", matchBtn: "મેળવો", alertCity: "કૃપા કરીને સૂચિમાંથી શહેર પસંદ કરો!", result: "મેચિંગ પરિણામ", total: "/ 36 કુલ અષ્ટકૂટ", breakdown: "બધા 8 કૂટ જુઓ", chat: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ FREE", pdf: "PDF", reset: "રીસેટ", share: "WhatsApp પર શેર કરો", bannerTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", bannerSub: "મેચિંગ ઊંડાણપૂર્વક સમજવા ચેટ કરો — FREE", warning: "યોગ્ય મેચિંગ સમજવાથી સંબંધ વધુ મજબૂત બને છે.", home: "હોમ", chatNav: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", doshaTitle: "દોષ અને તેમનું નિવારણ", strengths: "તમારી 3 સૌથી મોટી તાકાત", attention: "ધ્યાન આપવાની બાબતો", advice: "વ્યવહારુ સલાહ", nextSteps: "આગળનું પગલું", soulLabel: "સંબંધનો નિચોડ", doshaPresent: "હાજર", doshaCancelled: "નિવારિત", doshaAbsent: "કોઈ દોષ નથી", manglik: "માંગલિક દોષ", nadi: "નાડી દોષ", bhakoot: "ભકૂટ દોષ", disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ પર આધારિત છે.", askQ: "વધુ જાણવા માંગો છો?", q1: "અમારા લગ્નમાં પરિવાર સહેલાઈથી માની જશે?", q2: "અમારી કુંડળી મુજબ લગ્નનો સૌથી શુભ સમય ક્યારે?", q3: "આ સંબંધ કરિયર અને ધન પર કેવી અસર કરશે?", labelUtkrisht: "ઉત્કૃષ્ટ મેચિંગ", labelBahutAcha: "ખૂબ સારું મેચિંગ", labelAcha: "સારું મેચિંગ", labelAusat: "સરેરાશ મેચિંગ", labelSudhar: "સુધારાની જરૂર", boyPrefix: "વર", girlPrefix: "વધૂ" },
+    ml: { title: "കുണ്ഡലി മാച്ചിംഗ്", subtitle: "കൃത്യമായ വിവാഹ മാച്ചിംഗ്", boy: "ആൺകുട്ടിയുടെ വിവരങ്ങൾ", girl: "പെൺകുട്ടിയുടെ വിവരങ്ങൾ", name: "പൂർണ്ണ നാമം", city: "ജനന നഗരം", matchBtn: "മാച്ച് ചെയ്യുക", alertCity: "ലിസ്റ്റിൽ നിന്ന് ഒരു നഗരം തിരഞ്ഞെടുക്കുക!", result: "മാച്ചിംഗ് ഫലം", total: "/ 36 മൊത്തം അഷ്ടകൂട്ടം", breakdown: "എല്ലാ 8 കൂട്ടങ്ങളും കാണുക", chat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE", pdf: "PDF", reset: "പുനഃസജ്ജമാക്കുക", share: "WhatsApp ൽ പങ്കിടുക", bannerTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", bannerSub: "മാച്ചിംഗ് ആഴത്തിൽ മനസ്സിലാക്കാൻ ചാറ്റ് ചെയ്യുക — FREE", warning: "ശരിയായ മാച്ചിംഗ് മനസ്സിലാക്കുന്നത് ബന്ധം ശക്തമാക്കുന്നു.", home: "ഹോം", chatNav: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", doshaTitle: "ദോഷങ്ങളും പരിഹാരവും", strengths: "നിങ്ങളുടെ 3 മികച്ച ശക്തികൾ", attention: "ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ", advice: "പ്രായോഗിക ഉപദേശം", nextSteps: "അടുത്ത ഘട്ടം", soulLabel: "ബന്ധത്തിന്റെ സാരാംശം", doshaPresent: "ഉണ്ട്", doshaCancelled: "പരിഹരിച്ചു", doshaAbsent: "ദോഷമില്ല", manglik: "മാംഗ്ലിക് ദോഷം", nadi: "നാഡി ദോഷം", bhakoot: "ഭകൂട്ട് ദോഷം", disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷത്തെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.", askQ: "കൂടുതൽ അറിയാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?", q1: "ഞങ്ങളുടെ വിവാഹത്തിന് കുടുംബം എളുപ്പത്തിൽ സമ്മതിക്കുമോ?", q2: "ഞങ്ങളുടെ ജാതകം അനുസരിച്ച് വിവാഹത്തിന് ഏറ്റവും ശുഭമായ സമയം എപ്പോൾ?", q3: "ഈ ബന്ധം കരിയറിലും ധനത്തിലും എന്ത് സ്വാധീനം ചെലുത്തും?", labelUtkrisht: "മികച്ച മാച്ചിംഗ്", labelBahutAcha: "വളരെ നല്ല മാച്ചിംഗ്", labelAcha: "നല്ല മാച്ചിംഗ്", labelAusat: "ശരാശരി മാച്ചിംഗ്", labelSudhar: "മെച്ചപ്പെടുത്തൽ ആവശ്യം", boyPrefix: "വരൻ", girlPrefix: "വധു" },
+  };
+  return ui[lang]?.[key] || ui["en"][key];
 };
-return ui[lang]?.[key] || ui["en"][key];
-};
-
 // ============================================================
 // Label helpers (5-band)
 // ============================================================
 const getLabelText = (lang: string, label: string) => {
-const keyMap: Record<string, string> = {
-utkrisht: "labelUtkrisht",
-"bahut-acha": "labelBahutAcha",
-acha: "labelAcha",
-ausat: "labelAusat",
-sudhar: "labelSudhar",
-};
-return getUIText(lang, keyMap[label] || "labelAcha");
+  const keyMap: Record<string, string> = {
+    utkrisht: "labelUtkrisht",
+    "bahut-acha": "labelBahutAcha",
+    acha: "labelAcha",
+    ausat: "labelAusat",
+    sudhar: "labelSudhar",
+  };
+  return getUIText(lang, keyMap[label] || "labelAcha");
 };
 
 const getLabelColor = (label: string) => {
-if (label === "utkrisht" || label === "bahut-acha") {
-return { text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", ring: "#10b981" };
-}
-if (label === "acha") {
-return { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", ring: "#f59e0b" };
-}
-if (label === "ausat") {
-return { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", ring: "#d97706" };
-}
-return { text: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200", ring: "#64748b" };
+  if (label === "utkrisht" || label === "bahut-acha") {
+    return { text: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-200", ring: "#10b981" };
+  }
+  if (label === "acha") {
+    return { text: "text-amber-600", bg: "bg-amber-50", border: "border-amber-200", ring: "#f59e0b" };
+  }
+  if (label === "ausat") {
+    return { text: "text-amber-700", bg: "bg-amber-50", border: "border-amber-200", ring: "#d97706" };
+  }
+  return { text: "text-slate-600", bg: "bg-slate-50", border: "border-slate-200", ring: "#64748b" };
 };
 
 // ============================================================
-// City Input Component — सिर्फ एक ही बार define है
+// City Input Component
 // ============================================================
 function CityInput({
-value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
+  value, setValue, suggestions, setSuggestions, isDark, inputClass, placeholder,
 }: any) {
-const searchCity = async (query: string) => {
-if (!query || query.length < 3) {
-setSuggestions([]);
-return;
-}
-try {
-const res = await fetch(
-https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5
-);
-const data = await res.json();
-setSuggestions(data);
-} catch (e) {
-console.error(e);
-}
-};
+  const searchCity = async (query: string) => {
+    if (!query || query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`
+      );
+      const data = await res.json();
+      setSuggestions(data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
 
-useEffect(() => {
-const delay = setTimeout(() => searchCity(value.city
+  useEffect(() => {
+    const delay = setTimeout(() => searchCity(value.city), 600);
+    return () => clearTimeout(delay);
+  }, [value.city]);
 
-useEffect(() => {
-  const delay = setTimeout(() => searchCity(value.city), 600);
+  const handleSelect = (city: any) => {
+    setValue((prev: any) => ({
+      ...prev,
+      city: city.display_name,
+      lat: Number(city.lat),
+      lon: Number(city.lon),
+    }));
+    setSuggestions([]);
+  };
 
-  return () => clearTimeout(delay);
-}, [value.city]);
-
-const handleSelect = (city: any) => {
-  setValue((prev: any) => ({
-    ...prev,
-    city: city.display_name,
-    lat: Number(city.lat),
-    lon: Number(city.lon),
-  }));
-
-  setSuggestions([]);
-};
-
-return (
-  <div className="relative">
-    <input
-      type="text"
-      value={value.city}
-      onChange={(e) => {
-        setValue((prev: any) => ({
-          ...prev,
-          city: e.target.value,
-          lat: null,
-          lon: null,
-        }));
-      }}
-      placeholder={placeholder}
-      className={inputClass}
-    />
-
-    {suggestions.length > 0 && (
-      <div
-        className={`absolute z-20 w-full mt-1 rounded-lg shadow-lg max-h-60 overflow-y-auto border ${
-          isDark
-            ? "bg-slate-800 border-slate-700"
-            : "bg-white border-slate-200"
-        }`}
-      >
-        {suggestions.map((city: any, index: number) => (
-          <button
-            key={city.place_id ?? index}
-            type="button"
-            onClick={() => handleSelect(city)}
-            className={`w-full text-left px-3 py-2 text-sm border-b last:border-b-0 ${
-              isDark
-                ? "hover:bg-slate-700 text-slate-200 border-slate-700"
-                : "hover:bg-amber-50 text-slate-700 border-slate-100"
-            }`}
-          >
-            {city.display_name}
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-);
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={value.city}
+        onChange={(e) => {
+          setValue((prev: any) => ({
+            ...prev,
+            city: e.target.value,
+            lat: null,
+            lon: null,
+          }));
+        }}
+        placeholder={placeholder}
+        className={inputClass}
+      />
+      {suggestions.length > 0 && (
+        <ul className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border bg-white shadow-lg">
+          {suggestions.map((city: any, i: number) => (
+            <li
+              key={i}
+              onClick={() => handleSelect(city)}
+              className="cursor-pointer px-3 py-2 text-sm hover:bg-gray-100"
+            >
+              {city.display_name}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
