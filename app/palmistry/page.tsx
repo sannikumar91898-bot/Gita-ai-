@@ -257,7 +257,6 @@ const handleReset = () => {
 };
 
 return (
-  return (
     <div className={`min-h-screen pb-24 ${pageClass}`}>
       {/* Header */}
       <header className={`sticky top-0 z-20 border-b ${navBg}`}>
