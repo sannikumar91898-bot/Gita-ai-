@@ -318,12 +318,33 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
                       </thead>
                       <tbody className={`divide-y ${isDark ? "divide-slate-700/50" : "divide-gray-100"}`}>
                         {chart.planets?.map((p: any, i: number) => (
-                          <tr key={i} className={isDark ? "hover:bg-slate-800/30" : "hover:bg-orange-50/30"}>
-                            <td className="px-4 py-3 font-bold flex items-center gap-2">
-                              {p.planet} {p.retrograde && <span className="text-[9px] text-red-500 border border-red-500 rounded px-1">R</span>}
-                            </td>
-                            <td className="px-4 py-3">{p.rashiName}</td>
-                            <td className="px-4 py-3">{p.house}</td>
+  <tr key={i} className={isDark ? "hover:bg-slate-800/30" : "hover:bg-orange-50/30"}>
+    
+    {/* 1. ग्रह का नाम */}
+    <td className="px-4 py-3 font-bold flex items-center gap-2">
+      {p.planet?.name || p.planet || "-"} 
+      {p.retrograde && <span className="text-[9px] text-red-500 border border-red-500 rounded px-1">R</span>}
+    </td>
+    
+    {/* 2. राशि */}
+    <td className="px-4 py-3">
+      {p.rashiName?.name || p.rashiName || "-"}
+    </td>
+    
+    {/* 3. भाव (House) */}
+    <td className="px-4 py-3">
+      {p.house || "-"}
+    </td>
+    
+    {/* 4. Degree (यह कॉलम मिसिंग था, इसे जोड़ें) */}
+    <td className="px-4 py-3">
+      {typeof p.degreeInSign === "number" 
+        ? `${p.degreeInSign.toFixed(2)}°` 
+        : "-"}
+    </td>
+    
+  </tr>
+))}
                           </tr>
                         ))}
                       </tbody>
