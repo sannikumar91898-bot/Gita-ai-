@@ -29,35 +29,41 @@ const getLoadingSteps = (lang: string) => {
   return steps[lang] || steps["hinglish"];
 };
 
-// 🔥 UI Text — 10 languages
+// 🔥 UI Text — 10 languages (Pure & Clean)
 const getUIText = (lang: string, key: string): string => {
   const ui: Record<string, Record<string, string>> = {
     hi: {
       title: "हस्तरेखा रीडिंग", subtitle: "वैदिक विश्लेषण", free: "FREE",
       genderTitle: "आपका लिंग", male: "पुरुष", female: "महिला", other: "अन्य",
       handTitle: "कौन सा हाथ?", left: "बायां", right: "दायां", handDesc: "सामान्यतः पुरुष का दायां, महिला का बायां हाथ मुख्य माना जाता है।",
-      uploadTitle: "हथेली की फोटो अपलोड करें", uploadDesc: "हथेली की रेखाएँ आपके भाग्य की दिशा बताती हैं। (Max 10MB)",
+      uploadTitle: "अपनी हथेली की फोटो अपलोड करें", uploadDesc: "हथेली की रेखाएँ आपके भाग्य की दिशा बताती हैं। (Max 10MB)",
       chooseBtn: "फोटो चुनें", errorTitle: "त्रुटि", errSize: "फोटो 10MB से छोटी होनी चाहिए।",
       errType: "सिर्फ JPG, PNG या WEBP फोटो अपलोड करें।", errNotPalm: "ये हथेली की फोटो नहीं लग रही। कृपया साफ फोटो डालें।",
       complete: "विश्लेषण पूरा हुआ", tryAnother: "दूसरी फोटो अपलोड करें", chatNow: "इस रिपोर्ट पर ज्योतिषी से बात करें",
       bannerTitle: "ज्योतिषी - 24x7 उपलब्ध", bannerSub: "अपनी समस्या का समाधान पाएं - पहली चैट FREE",
       home: "होम", chat: "चैट", daily: "राशिफल", profile: "प्रोफाइल",
-      faqTitle: "Free AI Palmistry Reading Online", faqDesc: "हस्तरेखा शास्त्र (Palmistry) के अनुसार, हमारी हथेली की रेखाएं हमारे भूतकाल, वर्तमान और भविष्य के बारे में बहुत कुछ बताती हैं। GitaTalk का AI पामिस्ट्री टूल आपकी हथेली की फोटो का स्कैन करके जीवन रेखा, मस्तिष्क रेखा, हृदय रेखा और भाग्य रेखा का सटीक विश्लेषण करता है।",
-      qTitle: "Frequently Asked Questions (FAQs)", q1: "क्या AI हस्तरेखा विश्लेषण सही है?", a1: "हाँ, हमारा AI पारंपरिक सामुद्रिक शास्त्र के नियमों का उपयोग करके आपकी हथेली का विश्लेषण करता है।", q2: "क्या हथेली की रेखाएं बदल सकती हैं?", a2: "जी हाँ, कर्म और उपायों के प्रभाव से हर 3-6 महीने में हथेली की छोटी रेखाएं बदल सकती हैं।",
+      faqTitle: "Free AI Palmistry Reading Online", 
+      faqDesc: "हस्तरेखा शास्त्र (Palmistry) के अनुसार, हमारी हथेली की रेखाएं हमारे भूतकाल, वर्तमान और भविष्य के बारे में बहुत कुछ बताती हैं। GitaTalk का AI पामिस्ट्री टूल आपकी हथेली की फोटो का स्कैन करके जीवन रेखा, मस्तिष्क रेखा, हृदय रेखा और भाग्य रेखा का सटीक विश्लेषण करता है।",
+      qTitle: "Frequently Asked Questions (FAQs)", 
+      q1: "क्या AI हस्तरेखा विश्लेषण सही है?", a1: "हाँ, हमारा AI पारंपरिक सामुद्रिक शास्त्र के नियमों का उपयोग करके आपकी हथेली का विश्लेषण करता है।", 
+      q2: "क्या हथेली की रेखाएं बदल सकती हैं?", a2: "जी हाँ, कर्म और उपायों के प्रभाव से हर 3-6 महीने में हथेली की छोटी रेखाएं बदल सकती हैं।",
       limitTitle: "आपकी फ्री लिमिट खत्म हो गई है!", limitSub: "आगे की रीडिंग के लिए वॉलेट रिचार्ज करें या ज्योतिषी से बात करें।", chatFree: "ज्योतिषी से फ्री बात करें", recharge: "वॉलेट रिचार्ज करें", close: "बंद करें"
     },
     hinglish: {
-      title: "Palm Reading", subtitle: "Vedic Analysis", free: "FREE",
+      title: "Palmistry", subtitle: "Vedic Analysis", free: "FREE",
       genderTitle: "Aapka Ling", male: "Purush", female: "Mahila", other: "Anya",
       handTitle: "Kaun sa haath?", left: "Baayan", right: "Daayan", handDesc: "Aamtaur par purush ka daayan, mahila ka baayan haath mukhya mana jata hai.",
-      uploadTitle: "Hatheli ki photo upload karein", uploadDesc: "Hatheli ki rekhaayein aapke bhagya ki disha batati hain. (Max 10MB)",
-      chooseBtn: "Choose Photo", errorTitle: "Error", errSize: "Photo 10MB se chhoti honi chahiye.",
+      uploadTitle: "Apni hatheli ki photo upload karein", uploadDesc: "Hatheli ki rekhaayein aapke bhavishya ki disha batati hain. (Max 10MB)",
+      chooseBtn: "Photo Chunein", errorTitle: "Error", errSize: "Photo 10MB se chhoti honi chahiye.",
       errType: "Sirf JPG, PNG ya WEBP upload karein.", errNotPalm: "Ye hatheli ki photo nahi lag rahi.",
-      complete: "Analysis Complete", tryAnother: "Try another photo", chatNow: "Is report par jyotishi se baat karein",
-      bannerTitle: "Astrologer - 24x7 Available", bannerSub: "Apni samasya ka samadhan payein - Pehli chat FREE",
-      home: "Home", chat: "Chat", daily: "Daily", profile: "Profile",
-      faqTitle: "Free AI Palmistry Reading Online", faqDesc: "Hatheli ki rekhaon ke anusaar, hamari hatheli ki rekhaayein bhootkaal, vartaman aur bhavishya ke baare mein batati hain. GitaTalk ka AI tool aapki hatheli ki photo scan karta hai.",
-      qTitle: "FAQs", q1: "Kya AI hastrekha sahi hai?", a1: "Haan, hamara AI traditional niyamon ka use karta hai.", q2: "Kya hatheli ki rekhayein badal sakti hain?", a2: "Ji haan, karm aur upayon se badal sakti hain.",
+      complete: "Analysis Complete", tryAnother: "Doosri photo upload karein", chatNow: "Is report par jyotishi se baat karein",
+      bannerTitle: "Jyotishi - 24x7 Available", bannerSub: "Apni samasya ka samadhan payein - Pehli chat FREE",
+      home: "Home", chat: "Chat", daily: "Rashifal", profile: "Profile",
+      faqTitle: "Free AI Palmistry Reading Online", 
+      faqDesc: "Hatheli ki rekhaon ke anusaar, hamari hatheli ki rekhaayein bhootkaal, vartaman aur bhavishya ke baare mein batati hain. GitaTalk ka AI tool aapki hatheli ki photo scan karta hai.",
+      qTitle: "Frequently Asked Questions (FAQs)", 
+      q1: "Kya AI hastrekha sahi hai?", a1: "Haan, hamara AI traditional niyamon ka use karta hai.", 
+      q2: "Kya hatheli ki rekhayein badal sakti hain?", a2: "Ji haan, karm aur upayon se badal sakti hain.",
       limitTitle: "Aapki Free Limit Khatam Ho Gayi Hai!", limitSub: "Aage ki reading ke liye wallet recharge karein.", chatFree: "Jyotishi se Free baat karein", recharge: "Wallet Recharge", close: "Band karein"
     },
     en: {
@@ -70,10 +76,14 @@ const getUIText = (lang: string, key: string): string => {
       complete: "Analysis Complete", tryAnother: "Try another photo", chatNow: "Talk to Astrologer about this",
       bannerTitle: "Astrologer - 24x7 Available", bannerSub: "Get your problems solved - First chat FREE",
       home: "Home", chat: "Chat", daily: "Daily", profile: "Profile",
-      faqTitle: "Free AI Palmistry Reading Online", faqDesc: "According to Palmistry, the lines on our palm tell a lot about our past, present, and future. GitaTalk's AI tool scans your palm photo to accurately analyze your Life Line, Head Line, Heart Line, and Fate Line.",
-      qTitle: "Frequently Asked Questions (FAQs)", q1: "Is AI palm analysis accurate?", a1: "Yes, our AI uses traditional rules and modern vision models.", q2: "Can palm lines change?", a2: "Yes, due to karma and remedies, minor lines can change every 3-6 months.",
+      faqTitle: "Free AI Palmistry Reading Online", 
+      faqDesc: "According to Palmistry, the lines on our palm tell a lot about our past, present, and future. GitaTalk's AI tool scans your palm photo to accurately analyze your Life Line, Head Line, Heart Line, and Fate Line.",
+      qTitle: "Frequently Asked Questions (FAQs)", 
+      q1: "Is AI palm analysis accurate?", a1: "Yes, our AI uses traditional rules and modern vision models.", 
+      q2: "Can palm lines change?", a2: "Yes, due to karma and remedies, minor lines can change every 3-6 months.",
       limitTitle: "Your Free Limit is Exhausted!", limitSub: "Recharge your wallet or talk to an astrologer.", chatFree: "Chat with Astrologer FREE", recharge: "Recharge Wallet", close: "Close"
     },
+    // बाकी 7 भाषाओं (te, ta, kn, bn, mr, gu, ml) के लिए आप पिछला वाला ही कोड रख सकते हैं, क्योंकि वो पहले से सही थीं।
     te: { title: "హస్త రేఖా పఠనం", subtitle: "వేద విశ్లేషణ", free: "ఉచితం", genderTitle: "మీ లింగం", male: "పురుషుడు", female: "స్త్రీ", other: "ఇతర", handTitle: "ఏ చేయి?", left: "ఎడమ", right: "కుడి", handDesc: "సాధారణంగా పురుషులకు కుడి చేయి, మహిళలకు ఎడమ చేయి ప్రధానం.", uploadTitle: "ఫోటో అప్‌లోడ్ చేయండి", uploadDesc: "మీ విధిని తెలుసుకోండి (Max 10MB)", chooseBtn: "ఫోటో ఎంచుకోండి", errorTitle: "లోపం", errSize: "10MB కంటే తక్కువ ఉండాలి.", errType: "JPG, PNG లేదా WEBP మాత్రమే.", errNotPalm: "అరచేయి ఫోటో కాదు.", complete: "పూర్తయింది", tryAnother: "మరో ఫోటో", chatNow: "జ్యోతిష్యుడితో మాట్లాడండి", bannerTitle: "జ్యోతిష్యుడు - 24x7", bannerSub: "మొదటి చాట్ ఉచితం", home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", faqTitle: "Free AI Palmistry", faqDesc: "సాముద్రిక శాస్త్రం ప్రకారం...", qTitle: "FAQs", q1: "AI సరైనదా?", a1: "అవును.", q2: "రేఖలు మారవచ్చా?", a2: "అవును.", limitTitle: "పరిమితి ముగిసింది!", limitSub: "రీఛార్జ్ చేయండి.", chatFree: "ఉచిత చాట్", recharge: "రీఛార్జ్", close: "మూసివేయి" },
     ta: { title: "கைரேகை படிப்பு", subtitle: "வேத பகுப்பாய்வு", free: "இலவசம்", genderTitle: "உங்கள் பாலினம்", male: "ஆண்", female: "பெண்", other: "மற்றவை", handTitle: "எந்த கை?", left: "இடது", right: "வலது", handDesc: "ஆண்களுக்கு வலது கை, பெண்களுக்கு இடது கை முதன்மையானது.", uploadTitle: "புகைப்படத்தை பதிவேற்றவும்", uploadDesc: "உங்கள் விதியை அறியுங்கள் (Max 10MB)", chooseBtn: "தேர்ந்தெடு", errorTitle: "பிழை", errSize: "10MB க்குள் இருக்க வேண்டும்.", errType: "JPG, PNG மட்டும்.", errNotPalm: "உள்ளங்கை படம் இல்லை.", complete: "முடிந்தது", tryAnother: "மற்றொரு படம்", chatNow: "ஜோதிடரிடம் பேசுங்கள்", bannerTitle: "ஜோதிடர் - 24x7", bannerSub: "முதல் அரட்டை இலவசம்", home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", faqTitle: "Free AI Palmistry", faqDesc: "கைரேகை சாஸ்திரத்தின் படி...", qTitle: "FAQs", q1: "AI சரியானதா?", a1: "ஆம்.", q2: "கைரேகைகள் மாறுமா?", a2: "ஆம்.", limitTitle: "வரம்பு முடிந்தது!", limitSub: "ரீசார்ஜ் செய்யுங்கள்.", chatFree: "இலவச அரட்டை", recharge: "ரீசார்ஜ்", close: "மூடு" },
     kn: { title: "ಕರನ್ಯಾಸ ಓದುವಿಕೆ", subtitle: "ವೈದಿಕ ವಿಶ್ಲೇಷಣೆ", free: "ಉಚಿತ", genderTitle: "ನಿಮ್ಮ ಲಿಂಗ", male: "ಪುರುಷ", female: "ಮಹಿಳೆ", other: "ಇತರೆ", handTitle: "ಯಾವ ಕೈ?", left: "ಎಡ", right: "ಬಲ", handDesc: "ಪುರುಷರಿಗೆ ಬಲ ಕೈ, ಮಹಿಳೆಯರಿಗೆ ಎಡ ಕೈ ಪ್ರಧಾನ.", uploadTitle: "ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", uploadDesc: "ನಿಮ್ಮ ಭವಿಷ್ಯ ತಿಳಿಯಿರಿ (Max 10MB)", chooseBtn: "ಆಯ್ಕೆಮಾಡಿ", errorTitle: "ದೋಷ", errSize: "10MB ಗಿಂತ ಕಡಿಮೆ ಇರಬೇಕು.", errType: "JPG, PNG ಮಾತ್ರ.", errNotPalm: "ಅಂಗೈ ಫೋಟೋ ಅಲ್ಲ.", complete: "ಪೂರ್ಣಗೊಂಡಿದೆ", tryAnother: "ಇನ್ನೊಂದು ಫೋಟೋ", chatNow: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ - 24x7", bannerSub: "ಮೊದಲ ಚಾಟ್ ಉಚಿತ", home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", faqTitle: "Free AI Palmistry", faqDesc: "ಕರನ್ಯಾಸ ಶಾಸ್ತ್ರದ ಪ್ರಕಾರ...", qTitle: "FAQs", q1: "AI ನಿಖರವೇ?", a1: "ಹೌದು.", q2: "ರೇಖೆಗಳು ಬದಲಾಗಬಹುದೇ?", a2: "ಹೌದು.", limitTitle: "ಮಿತಿ ಮುಗಿದಿದೆ!", limitSub: "ರೀಚಾರ್ಜ್ ಮಾಡಿ.", chatFree: "ಉಚಿತ ಚಾಟ್", recharge: "ರೀಚಾರ್ಜ್", close: "ಮುಚ್ಚಿ" },
@@ -84,58 +94,6 @@ const getUIText = (lang: string, key: string): string => {
   };
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
 };
-// Image compression
-const compressImage = async (file: File, maxWidth = 800, quality = 0.8): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const scaleSize = img.width > maxWidth ? maxWidth / img.width : 1;
-        canvas.width = img.width * scaleSize;
-        canvas.height = img.height * scaleSize;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return reject("Canvas error");
-
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob)
-              resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() }));
-            else reject("Compression failed");
-          },
-          "image/jpeg",
-          quality
-        );
-      };
-      img.onerror = (error) => reject(error);
-    };
-    reader.onerror = (error) => reject(error);
-  });
-};
-
-export default function PalmReadingPage() {
-  const { lang, theme, me, loading: authLoading } = useApp();
-  const router = useRouter();
-  const isDark = theme === "dark";
-
-  const [photo, setPhoto] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [loadingText, setLoadingText] = useState("");
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [result, setResult] = useState<PalmResult | null>(null);
-  const [showLimitModal, setShowLimitModal] = useState(false);
-  const [scanCount, setScanCount] = useState(0);
-  
-  // नए UI के लिए State
-  const [gender, setGender] = useState<"male" | "female" | "other">("male");
-  const [hand, setHand] = useState<"left" | "right">("right");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
 
   const t = (key: string) => getUIText(lang, key);
 
