@@ -140,10 +140,6 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
-  if (!userRow || userRow.isGuest) {
-    return jsonError(getKundliError(language, "guest_blocked"), 401);
-  }
-
   const place = await resolvePlace(placeOfBirth);
 
   if (!place) {
