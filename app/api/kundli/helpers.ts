@@ -106,16 +106,17 @@ export function publicChart(chart: KundliChart) {
           antarUntil: chart.currentDasha.antar.end.slice(0, 10),
         }
       : null,
-
-    planets: chart.planets.map((planet) => ({
+        planets: chart.planets.map((planet) => ({
       planet: planet.planet,
+      longitude: planet.longitude,       // जोड़ें
+      rashi: planet.rashi,               // जोड़ें
       rashiName: planet.rashiName,
+      degreeInSign: planet.degreeInSign, // जोड़ें (डिग्री दिखाने के लिए जरूरी)
       house: planet.house,
+      nakshatra: planet.nakshatra,       // जोड़ें (नक्षत्र दिखाने के लिए जरूरी)
       retrograde: planet.retrograde,
     })),
-  };
-}
-
+   
 // ---------- Calculated report ----------
 export function calculatedReport(name: string, chart: KundliChart): string {
   const view = publicChart(chart);
