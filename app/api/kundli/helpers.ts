@@ -116,6 +116,8 @@ export function publicChart(chart: KundliChart) {
       nakshatra: planet.nakshatra,       // जोड़ें (नक्षत्र दिखाने के लिए जरूरी)
       retrograde: planet.retrograde,
     })),
+      };
+}
    
 // ---------- Calculated report ----------
 export function calculatedReport(name: string, chart: KundliChart): string {
