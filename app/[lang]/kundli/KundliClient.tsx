@@ -8,7 +8,7 @@ import {
   ArrowLeft, Sparkles, Download, RefreshCcw, Star, 
   ShieldCheck, Home, MessageCircle, Sun, User, Loader2, FileText
 } from "lucide-react";
-import { useApp } from "../../Providers"; // Path check kar lein
+import { useApp } from "../../Providers";
 
 // ============================================================
 // 10 Language Translation Helper
@@ -16,20 +16,20 @@ import { useApp } from "../../Providers"; // Path check kar lein
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: { 
-      title: "जन्म कुंडली", subtitle: "गीता ज्योतिषी द्वारा तैयार", name: "पूरा नाम", dob: "जन्म तिथि", time: "जन्म का समय", place: "जन्म स्थान", calc: "गणना हो रही है...", generate: "कुंडली बनाएं", chart: "जन्म कुंडली", by: "गीता ज्योतिषी द्वारा", lagna: "लग्न", rashi: "चंद्र राशि", nakshatra: "नक्षत्र", dasha: "वर्तमान दशा", planetsTitle: "ग्रह स्पष्ट", planet: "ग्रह", sign: "राशि", house: "भाव", noPlanets: "ग्रहों की जानकारी उपलब्ध नहीं है", generated: "तैयार किया गया", notice: "विशेष सुझाव:", scareText: "अपनी कुंडली के ग्रहों और सही करियर/विवाह टाइमिंग को समझने के लिए हमारी ज्योतिषी से बात करें।", chatCTA: "ज्योतिषी से बात करें — पहली चैट मुफ्त", wait: "रुकें...", download: "PDF डाउनलोड", again: "दोबारा बनाएं", consentText: "मैं अपनी जन्म तिथि, समय और स्थान को सुरक्षित रूप से सहेजने की सहमति देता/देती हूँ।", unknownTime: "मुझे अपना सही जन्म समय नहीं पता (12:00 PM मान लिया जाएगा)", aiReport: "ज्योतिषीय विश्लेषण", loadingHistory: "आपकी पुरानी कुंडली लोड हो रही है...", moonDegree: "चंद्र डिग्री"
+      title: "जन्म कुंडली", subtitle: "गीता ज्योतिषी द्वारा तैयार", name: "पूरा नाम", dob: "जन्म तिथि", time: "जन्म का समय", place: "जन्म स्थान", calc: "गणना हो रही है...", generate: "कुंडली बनाएं", chart: "जन्म कुंडली", by: "गीता ज्योतिषी द्वारा", lagna: "लग्न", rashi: "चंद्र राशि", nakshatra: "नक्षत्र", dasha: "वर्तमान दशा", planetsTitle: "ग्रह स्पष्ट", planet: "ग्रह", sign: "राशि", house: "भाव", degree: "डिग्री", noPlanets: "ग्रहों की जानकारी उपलब्ध नहीं है", generated: "तैयार किया गया", notice: "विशेष सुझाव:", scareText: "अपनी कुंडली के ग्रहों और सही करियर/विवाह टाइमिंग को समझने के लिए हमारी ज्योतिषी से बात करें।", chatCTA: "ज्योतिषी से बात करें — पहली चैट मुफ्त", wait: "रुकें...", download: "PDF डाउनलोड", again: "दोबारा बनाएं", consentText: "मैं अपनी जन्म तिथि, समय और स्थान को सुरक्षित रूप से सहेजने की सहमति देता/देती हूँ।", unknownTime: "मुझे अपना सही जन्म समय नहीं पता (12:00 PM मान लिया जाएगा)", aiReport: "ज्योतिषीय विश्लेषण", loadingHistory: "आपकी पुरानी कुंडली लोड हो रही है...", moonDegree: "चंद्र डिग्री"
     },
     hinglish: { 
-      title: "Janam Kundli", subtitle: "Gita Jyotishi dwara taiyar", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", calc: "Calculating...", generate: "Generate Kundli", chart: "Birth Chart", by: "By Gita Jyotishi", lagna: "Lagna", rashi: "Moon Sign", nakshatra: "Nakshatra", dasha: "Current Dasha", planetsTitle: "Graha Spashta", planet: "Planet", sign: "Sign", house: "House", noPlanets: "Planetary details unavailable", generated: "Generated on", notice: "Special Advice:", scareText: "Apni kundli ke grahon aur sahi career/vivah timing ko samajhne ke liye humari jyotishi se baat karein.", chatCTA: "Jyotishi se baat karein — First chat FREE", wait: "Wait...", download: "Download PDF", again: "Calculate Again", consentText: "Main apni janm tithi, samay aur sthan ko securely save karne ki consent deta/deti hoon.", unknownTime: "Mujhe apna exact birth time nahi pata (12:00 PM assume kiya jayega)", aiReport: "Jyotishiy Vishleshan", loadingHistory: "Aapki purani kundli load ho rahi hai...", moonDegree: "Moon Degree"
+      title: "Janam Kundli", subtitle: "Gita Jyotishi dwara taiyar", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", calc: "Calculating...", generate: "Generate Kundli", chart: "Birth Chart", by: "By Gita Jyotishi", lagna: "Lagna", rashi: "Moon Sign", nakshatra: "Nakshatra", dasha: "Current Dasha", planetsTitle: "Graha Spashta", planet: "Planet", sign: "Sign", house: "House", degree: "Degree", noPlanets: "Planetary details unavailable", generated: "Generated on", notice: "Special Advice:", scareText: "Apni kundli ke grahon aur sahi career/vivah timing ko samajhne ke liye humari jyotishi se baat karein.", chatCTA: "Jyotishi se baat karein — First chat FREE", wait: "Wait...", download: "Download PDF", again: "Calculate Again", consentText: "Main apni janm tithi, samay aur sthan ko securely save karne ki consent deta/deti hoon.", unknownTime: "Mujhe apna exact birth time nahi pata (12:00 PM assume kiya jayega)", aiReport: "Jyotishiy Vishleshan", loadingHistory: "Aapki purani kundli load ho rahi hai...", moonDegree: "Moon Degree"
     },
     en: { 
-      title: "Janam Kundli", subtitle: "Prepared by Gita Jyotishi", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", calc: "Calculating...", generate: "Generate Kundli", chart: "Birth Chart", by: "By Gita Jyotishi", lagna: "Lagna", rashi: "Moon Sign", nakshatra: "Nakshatra", dasha: "Current Dasha", planetsTitle: "Planetary Positions", planet: "Planet", sign: "Sign", house: "House", noPlanets: "Planetary details unavailable", generated: "Generated on", notice: "Special Advice:", scareText: "Talk to our Jyotishi to understand the planets in your chart and accurate career/marriage timing.", chatCTA: "Talk to Jyotishi — First chat FREE", wait: "Wait...", download: "Download PDF", again: "Calculate Again", consentText: "I consent to storing my birth details securely to generate my personal kundli and readings.", unknownTime: "I don't know my exact birth time (12:00 PM will be assumed)", aiReport: "Astrological Analysis", loadingHistory: "Loading your previous kundli...", moonDegree: "Moon Degree"
+      title: "Janam Kundli", subtitle: "Prepared by Gita Jyotishi", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", calc: "Calculating...", generate: "Generate Kundli", chart: "Birth Chart", by: "By Gita Jyotishi", lagna: "Lagna", rashi: "Moon Sign", nakshatra: "Nakshatra", dasha: "Current Dasha", planetsTitle: "Planetary Positions", planet: "Planet", sign: "Sign", house: "House", degree: "Degree", noPlanets: "Planetary details unavailable", generated: "Generated on", notice: "Special Advice:", scareText: "Talk to our Jyotishi to understand the planets in your chart and accurate career/marriage timing.", chatCTA: "Talk to Jyotishi — First chat FREE", wait: "Wait...", download: "Download PDF", again: "Calculate Again", consentText: "I consent to storing my birth details securely to generate my personal kundli and readings.", unknownTime: "I don't know my exact birth time (12:00 PM will be assumed)", aiReport: "Astrological Analysis", loadingHistory: "Loading your previous kundli...", moonDegree: "Moon Degree"
     },
   };
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key] || "";
 };
 
 export default function KundliClient() {
-  const { theme, lang, me } = useApp();
+  const { theme, lang, me, loading: authLoading } = useApp(); // authLoading add kiya
   const router = useRouter();
   const isDark = theme === "dark";
   
@@ -51,6 +51,15 @@ export default function KundliClient() {
   const pdfRef = useRef<HTMLDivElement>(null);
   const t = (key: string) => getUIText(lang, key);
 
+  // 🔥 PAGE PROTECTION: Check authentication on load
+  useEffect(() => {
+    if (authLoading) return; 
+    if (!me?.user || me.user.isGuest) {
+      router.replace("/login"); 
+    }
+  }, [authLoading, me, router]);
+
+  // Fetch existing kundli
   useEffect(() => {
     let cancelled = false;
     async function fetchExisting() {
@@ -87,14 +96,14 @@ export default function KundliClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!consent) {
-      setError(t("consentText")); 
+    // 🔥 FIX: Check authentication before submit
+    if (!me?.user || me.user.isGuest) {
+      router.push("/login"); 
       return;
     }
 
-    // 🔥 FIX: Agar user guest hai ya login nahi hai, toh direct login page par bhejo
-    if (!me || me.isGuest) {
-      router.push("/login"); 
+    if (!consent) {
+      setError(t("consentText")); 
       return;
     }
     
@@ -112,7 +121,7 @@ export default function KundliClient() {
           name, 
           dateOfBirth: dob, 
           timeOfBirth: notSureTime ? "12:00" : time, 
-          isBirthTimeUnknown: notSureTime, // 🔥 FIXED: isTimeUnknown -> isBirthTimeUnknown
+          isBirthTimeUnknown: notSureTime, 
           placeOfBirth: place, 
           language: lang, 
           consent: true
@@ -121,7 +130,6 @@ export default function KundliClient() {
       
       const data = await res.json().catch(() => null);
       
-      // 🔥 FIX: Agar backend se 401 error aaye, toh bhi login par bhejo
       if (res.status === 401) {
         router.push("/login");
         return;
@@ -176,8 +184,8 @@ export default function KundliClient() {
     let planetsText = "";
     if (chart?.planets && Array.isArray(chart.planets)) {
       planetsText = chart.planets.map((p: any) => {
-        const pName = p.planet || p.name || "N/A";
-        const pSign = p.rashiName || p.sign || "N/A";
+        const pName = p.planet?.name || p.planet || "N/A";
+        const pSign = p.rashiName?.name || p.rashiName || "N/A";
         return `${String(pName)} (${String(pSign)})`;
       }).join(", ");
     }
@@ -203,11 +211,12 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
     setSuggestedChatPrompt(null);
   };
 
-  if (historyLoading) {
+  // 🔥 LOADING & AUTH CHECK UI
+  if (authLoading || historyLoading || !me?.user || me.user.isGuest) {
     return (
       <div className={`min-h-[100dvh] flex flex-col items-center justify-center ${pageClass}`}>
         <Sparkles className="animate-spin text-[#ff6b00] mb-4" size={40} />
-        <p className="text-[15px] font-bold text-[#ff6b00]">{t("loadingHistory")}</p>
+        <p className="text-[15px] font-bold text-[#ff6b00]">{historyLoading ? t("loadingHistory") : "Checking authentication..."}</p>
       </div>
     );
   }
@@ -286,20 +295,20 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className={`p-3 rounded-xl text-center border ${isDark ? "bg-slate-800/50 border-slate-700" : "bg-orange-50 border-orange-100"}`}>
                     <p className="text-[10px] font-bold text-[#ff6b00] uppercase tracking-wider mb-1">{t("lagna")}</p>
-                    <p className="text-[14px] font-black">{chart.lagna?.rashiNameHi || chart.lagna?.rashiName}</p>
+                    <p className="text-[14px] font-black">{chart.lagna?.rashiNameHi || chart.lagna?.rashiName || chart.lagna?.name || "-"}</p>
                   </div>
                   <div className={`p-3 rounded-xl text-center border ${isDark ? "bg-slate-800/50 border-slate-700" : "bg-orange-50 border-orange-100"}`}>
                     <p className="text-[10px] font-bold text-[#ff6b00] uppercase tracking-wider mb-1">{t("rashi")}</p>
-                    <p className="text-[14px] font-black">{chart.moonSign?.rashiNameHi || chart.moonSign?.rashiName}</p>
+                    <p className="text-[14px] font-black">{chart.moonSign?.rashiNameHi || chart.moonSign?.rashiName || chart.moonSign?.name || "-"}</p>
                   </div>
                   <div className={`p-3 rounded-xl text-center border ${isDark ? "bg-slate-800/50 border-slate-700" : "bg-orange-50 border-orange-100"}`}>
                     <p className="text-[10px] font-bold text-[#ff6b00] uppercase tracking-wider mb-1">{t("nakshatra")}</p>
-                    <p className="text-[14px] font-black">{chart.nakshatra?.name}</p>
+                    <p className="text-[14px] font-black">{chart.nakshatra?.name || chart.nakshatra || "-"}</p>
                   </div>
                   {chart.currentDasha && (
                     <div className={`p-3 rounded-xl text-center border ${isDark ? "bg-slate-800/50 border-slate-700" : "bg-orange-50 border-orange-100"}`}>
                       <p className="text-[10px] font-bold text-[#ff6b00] uppercase tracking-wider mb-1">{t("dasha")}</p>
-                      <p className="text-[14px] font-black">{chart.currentDasha.maha}</p>
+                      <p className="text-[14px] font-black">{chart.currentDasha?.maha || chart.currentDasha?.name || chart.currentDasha || "-"}</p>
                     </div>
                   )}
                 </div>
@@ -314,37 +323,36 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
                           <th className="px-4 py-3">{t("planet")}</th>
                           <th className="px-4 py-3">{t("sign")}</th>
                           <th className="px-4 py-3">{t("house")}</th>
+                          <th className="px-4 py-3">{t("degree")}</th> {/* 🔥 Degree Header Added */}
                         </tr>
                       </thead>
                       <tbody className={`divide-y ${isDark ? "divide-slate-700/50" : "divide-gray-100"}`}>
                         {chart.planets?.map((p: any, i: number) => (
-  <tr key={i} className={isDark ? "hover:bg-slate-800/30" : "hover:bg-orange-50/30"}>
-    
-    {/* 1. ग्रह का नाम */}
-    <td className="px-4 py-3 font-bold flex items-center gap-2">
-      {p.planet?.name || p.planet || "-"} 
-      {p.retrograde && <span className="text-[9px] text-red-500 border border-red-500 rounded px-1">R</span>}
-    </td>
-    
-    {/* 2. राशि */}
-    <td className="px-4 py-3">
-      {p.rashiName?.name || p.rashiName || "-"}
-    </td>
-    
-    {/* 3. भाव (House) */}
-    <td className="px-4 py-3">
-      {p.house || "-"}
-    </td>
-    
-    {/* 4. Degree (यह कॉलम मिसिंग था, इसे जोड़ें) */}
-    <td className="px-4 py-3">
-      {typeof p.degreeInSign === "number" 
-        ? `${p.degreeInSign.toFixed(2)}°` 
-        : "-"}
-    </td>
-    
-  </tr>
-))}
+                          <tr key={i} className={isDark ? "hover:bg-slate-800/30" : "hover:bg-orange-50/30"}>
+                            
+                            {/* 1. Planet Name */}
+                            <td className="px-4 py-3 font-bold flex items-center gap-2">
+                              {p.planet?.name || p.planet || "-"} 
+                              {p.retrograde && <span className="text-[9px] text-red-500 border border-red-500 rounded px-1">R</span>}
+                            </td>
+                            
+                            {/* 2. Rashi */}
+                            <td className="px-4 py-3">
+                              {p.rashiName?.name || p.rashiName || "-"}
+                            </td>
+                            
+                            {/* 3. House */}
+                            <td className="px-4 py-3">
+                              {p.house || "-"}
+                            </td>
+                            
+                            {/* 4. Degree (FIXED) */}
+                            <td className="px-4 py-3">
+                              {typeof p.degreeInSign === "number" 
+                                ? `${p.degreeInSign.toFixed(2)}°` 
+                                : "-"}
+                            </td>
+                            
                           </tr>
                         ))}
                       </tbody>
@@ -354,38 +362,36 @@ Mujhe apne career, marriage aur health ke baare mein margdarshan chahiye.`;
               </div>
             </div>
 
-            {/* AI Interpretation (Outside PDF) */}
+            {/* AI Interpretation */}
             {interpretation && (
               <div className={`rounded-[1.5rem] border p-6 ${cardClass}`}>
                 <h3 className="text-[15px] font-black text-[#ff6b00] mb-4 flex items-center gap-2 uppercase tracking-wider">
                   <Star size={18} /> {t("aiReport")}
                 </h3>
                 <div className={`prose prose-sm max-w-none text-[14px] leading-relaxed ${isDark ? "prose-invert text-slate-300" : "text-gray-700"}`}>
-                  {interpretation.split('\n').map((line, i) => (
-                    <p key={i} className="mb-2">{line}</p>
+                  {interpretation.split('\n').map((line, idx) => (
+                    <p key={idx} className="mb-2">{line}</p>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button onClick={handleDownload} disabled={isDownloading} className="flex-1 bg-[#ff6b00] hover:bg-[#e65c00] text-white font-bold py-4 rounded-xl shadow-lg transition-all flex justify-center items-center gap-2">
-                {isDownloading ? <><Loader2 className="animate-spin" size={18} /> {t("wait")}</> : <><Download size={18} /> {t("download")}</>}
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <button onClick={resetForm} className={`flex-1 flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-[14px] border transition-all ${isDark ? "border-slate-700 bg-slate-800 hover:bg-slate-700 text-white" : "border-gray-300 bg-white hover:bg-gray-50 text-gray-800"}`}>
+                <RefreshCcw size={16} /> {t("again")}
               </button>
-              <button onClick={resetForm} className={`flex-1 font-bold py-4 rounded-xl shadow-sm transition-all flex justify-center items-center gap-2 border ${isDark ? "bg-slate-800 border-slate-700 hover:bg-slate-700 text-slate-200" : "bg-white border-gray-200 hover:bg-gray-50 text-gray-700"}`}>
-                <RefreshCcw size={18} /> {t("again")}
+              <button onClick={handleDownload} disabled={isDownloading} className="flex-1 flex justify-center items-center gap-2 py-3 rounded-xl font-bold text-[14px] bg-[#ff6b00] hover:bg-[#e65c00] text-white shadow-md transition-all">
+                {isDownloading ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />} 
+                {t("download")}
               </button>
             </div>
 
             {/* Chat CTA */}
-            <div className={`rounded-[1.5rem] p-5 border shadow-md ${isDark ? "bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700" : "bg-gradient-to-br from-orange-50 to-white border-orange-100"}`}>
-              <p className={`text-[13.5px] font-medium mb-4 leading-snug ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-                <span className="font-black text-[#ff6b00] block mb-1 uppercase tracking-wider text-[11px]">{t("notice")}</span>
-                {t("scareText")}
-              </p>
-              <button onClick={handleChatNow} className="w-full bg-[#0B0F19] hover:bg-black text-[#ff6b00] font-black text-[14px] uppercase tracking-wide py-4 rounded-xl shadow-md transition-all flex justify-center items-center gap-2">
-                <MessageCircle size={20} /> {t("chatCTA")}
+            <div className={`rounded-2xl border p-5 ${isDark ? "bg-blue-900/20 border-blue-800/50" : "bg-blue-50 border-blue-100"}`}>
+              <p className={`text-[13px] font-medium mb-3 ${isDark ? "text-slate-300" : "text-gray-700"}`}>{t("scareText")}</p>
+              <button onClick={handleChatNow} className="w-full bg-[#ff6b00] text-white font-black py-3.5 rounded-xl shadow-lg hover:bg-[#e65c00] transition-colors flex justify-center items-center gap-2">
+                <MessageCircle size={18} /> {t("chatCTA")}
               </button>
             </div>
 
