@@ -508,7 +508,5 @@ const getUIText = (lang: string, key: string): string => {
             </Link>
           </div>
         </nav>
-      </div>
-    </div>
   );
 }
