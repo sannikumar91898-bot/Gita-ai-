@@ -249,13 +249,14 @@ const getUIText = (lang: string, key: string): string => {
 
     reader.readAsDataURL(file);
   };
+const handleReset = () => {
+  setPhoto(null);
+  setResult(null);
+  setErrorMsg(null);
+  if (fileInputRef.current) fileInputRef.current.value = "";
+};
 
-  const handleReset = () => {
-    setPhoto(null);
-    setResult(null);
-    setErrorMsg(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
+return (
   return (
     <div className={`min-h-screen pb-24 ${pageClass}`}>
       {/* Header */}
