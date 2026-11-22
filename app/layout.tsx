@@ -1,11 +1,6 @@
 // app/layout.tsx
-import "./globals.css"; // अगर आपकी globals.css कहीं और है तो path चेक कर लें
-import { AppProvider } from "./Providers"; // पक्का करें कि Providers.tsx में AppProvider export हो रहा है
-
-export const metadata = {
-  title: "Gita AI - Your Personal AI Astrologer",
-  description: "Premium AI Vedic astrology, kundli, palmistry and more.",
-};
+import "./globals.css";
+import { AppProvider } from "./Providers"; // या जो भी सही path हो
 
 export default function RootLayout({
   children,
