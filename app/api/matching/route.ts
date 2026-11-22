@@ -335,8 +335,8 @@ export async function POST(request: Request) {
       }
 
       const used = row.matchingCount ?? 0;
-      const balance = row.walletBalancePaise ?? 0; // 🔥 FIXED: walletBalancePaise
 
+const balance = row.walletBalancePaise ?? 0; // in paise
       if (used < FREE_MATCHING_LIMIT) {
         isFree = true;
         await tx
