@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useApp } from "./Providers";
+import { useApp } from "@/app/Providers";
 import {
   Home, MessageCircle, Sun, CalendarDays, User, Star, Settings,
   Sparkles, Hand, ScanFace, Heart, Scroll, Gem, Crown, ChevronRight
