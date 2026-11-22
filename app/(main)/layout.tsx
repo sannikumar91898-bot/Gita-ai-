@@ -7,8 +7,11 @@ import type { Metadata, Viewport } from "next";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://gitatalk.in"),
-  title: { default: "GitaTalk – Best AI Astrologer & Free Online Kundli", template: "%s | GitaTalk" },
-  // ... आपका पुराना मेटाडेटा यहाँ कॉपी करें ...
+  title: {
+    default: "GitaTalk – Best AI Astrologer & Free Online Kundli",
+    template: "%s | GitaTalk",
+  },
+  description: "AI-powered Vedic astrology, kundli, tarot and matching.",
 };
 
 export const viewport: Viewport = {
