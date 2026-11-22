@@ -291,7 +291,7 @@ export async function POST(request: Request) {
       }
 
       const used = row.matchingCount ?? 0;
-      const balance = row.walletBalance ?? 0; // in paise
+      const balance = row.walletBalancePaisePaise ?? 0; // in paise
 
       if (used < FREE_MATCHING_LIMIT) {
         // Free slot
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: used + 1,
-            walletBalance: balance - COST_PER_MATCHING_PAISE,
+            walletBalancePaisePaise: balance - COST_PER_MATCHING_PAISE,
           })
           .where(eq(users.id, user.id));
         charged = true;
@@ -339,7 +339,7 @@ export async function POST(request: Request) {
           .update(users)
           .set({
             matchingCount: sql`${users.matchingCount} - 1`,
-            walletBalance: sql`${users.walletBalance} + ${COST_PER_MATCHING_PAISE}`,
+            walletBalancePaisePaise: sql`${users.walletBalancePaisePaise} + ${COST_PER_MATCHING_PAISE}`,
           })
           .where(eq(users.id, user.id));
       } else if (isFree) {
