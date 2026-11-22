@@ -1,5 +1,6 @@
 // app/(localized)/[lang]/page.tsx
 import type { Metadata } from "next";
+import HomePage from "@/components/HomePage"; // 🔥 असली होमपेज इम्पोर्ट किया
 
 const locales = ['en', 'hi', 'hinglish', 'te', 'ta', 'kn', 'bn', 'mr', 'gu', 'ml'];
 const BASE_URL = "https://gitatalk.in";
@@ -31,5 +32,7 @@ export default async function LocalizedHome({
 }) {
   const { lang } = await params;
   if (!locales.includes(lang)) return null;
-  return <div>Homepage for {lang} will be here.</div>;
+  
+  // 🔥 टेस्ट टेक्स्ट की जगह असली होमपेज रेंडर कर दिया
+  return <HomePage lang={lang} />;
 }
