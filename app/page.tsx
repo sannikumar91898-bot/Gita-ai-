@@ -119,8 +119,9 @@ const ASTROLOGERS: Astrologer[] = [
   { id: "gargi", name: "Gargi Maa", specialty: "Spiritual Healing • Vastu", rating: 4.9, experience: "25+ Years", price: 18, image: "/astrologers/gargi.jpg", reviews: [{ text: "Ghar me niche 2 saal se bahut kalesh tha. Gargi maa ne simple upay bataye the, believe nahi ho raha par shanti aa gayi hai. Really grateful maa 🙏", author: "Vikram R.", rating: 5 }] },
 ];
 
-export default function HomePage() {
-  const { lang, me, refresh, theme } = useApp(); 
+export default function HomePage({ lang: langProp }: { lang?: string } = {}) {
+  const { lang: contextLang, me, refresh, theme } = useApp();
+  const lang = langProp || contextLang;
   const isDark = theme === "dark"; 
   const [expandedReview, setExpandedReview] = useState<string | null>(null);
   
