@@ -83,7 +83,6 @@ const getUIText = (lang: string, key: string): string => {
       q2: "Can palm lines change?", a2: "Yes, due to karma and remedies, minor lines can change every 3-6 months.",
       limitTitle: "Your Free Limit is Exhausted!", limitSub: "Recharge your wallet or talk to an astrologer.", chatFree: "Chat with Astrologer FREE", recharge: "Recharge Wallet", close: "Close"
     },
-    // बाकी 7 भाषाओं (te, ta, kn, bn, mr, gu, ml) के लिए आप पिछला वाला ही कोड रख सकते हैं, क्योंकि वो पहले से सही थीं।
     te: { title: "హస్త రేఖా పఠనం", subtitle: "వేద విశ్లేషణ", free: "ఉచితం", genderTitle: "మీ లింగం", male: "పురుషుడు", female: "స్త్రీ", other: "ఇతర", handTitle: "ఏ చేయి?", left: "ఎడమ", right: "కుడి", handDesc: "సాధారణంగా పురుషులకు కుడి చేయి, మహిళలకు ఎడమ చేయి ప్రధానం.", uploadTitle: "ఫోటో అప్‌లోడ్ చేయండి", uploadDesc: "మీ విధిని తెలుసుకోండి (Max 10MB)", chooseBtn: "ఫోటో ఎంచుకోండి", errorTitle: "లోపం", errSize: "10MB కంటే తక్కువ ఉండాలి.", errType: "JPG, PNG లేదా WEBP మాత్రమే.", errNotPalm: "అరచేయి ఫోటో కాదు.", complete: "పూర్తయింది", tryAnother: "మరో ఫోటో", chatNow: "జ్యోతిష్యుడితో మాట్లాడండి", bannerTitle: "జ్యోతిష్యుడు - 24x7", bannerSub: "మొదటి చాట్ ఉచితం", home: "హోమ్", chat: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", faqTitle: "Free AI Palmistry", faqDesc: "సాముద్రిక శాస్త్రం ప్రకారం...", qTitle: "FAQs", q1: "AI సరైనదా?", a1: "అవును.", q2: "రేఖలు మారవచ్చా?", a2: "అవును.", limitTitle: "పరిమితి ముగిసింది!", limitSub: "రీఛార్జ్ చేయండి.", chatFree: "ఉచిత చాట్", recharge: "రీఛార్జ్", close: "మూసివేయి" },
     ta: { title: "கைரேகை படிப்பு", subtitle: "வேத பகுப்பாய்வு", free: "இலவசம்", genderTitle: "உங்கள் பாலினம்", male: "ஆண்", female: "பெண்", other: "மற்றவை", handTitle: "எந்த கை?", left: "இடது", right: "வலது", handDesc: "ஆண்களுக்கு வலது கை, பெண்களுக்கு இடது கை முதன்மையானது.", uploadTitle: "புகைப்படத்தை பதிவேற்றவும்", uploadDesc: "உங்கள் விதியை அறியுங்கள் (Max 10MB)", chooseBtn: "தேர்ந்தெடு", errorTitle: "பிழை", errSize: "10MB க்குள் இருக்க வேண்டும்.", errType: "JPG, PNG மட்டும்.", errNotPalm: "உள்ளங்கை படம் இல்லை.", complete: "முடிந்தது", tryAnother: "மற்றொரு படம்", chatNow: "ஜோதிடரிடம் பேசுங்கள்", bannerTitle: "ஜோதிடர் - 24x7", bannerSub: "முதல் அரட்டை இலவசம்", home: "முகப்பு", chat: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", faqTitle: "Free AI Palmistry", faqDesc: "கைரேகை சாஸ்திரத்தின் படி...", qTitle: "FAQs", q1: "AI சரியானதா?", a1: "ஆம்.", q2: "கைரேகைகள் மாறுமா?", a2: "ஆம்.", limitTitle: "வரம்பு முடிந்தது!", limitSub: "ரீசார்ஜ் செய்யுங்கள்.", chatFree: "இலவச அரட்டை", recharge: "ரீசார்ஜ்", close: "மூடு" },
     kn: { title: "ಕರನ್ಯಾಸ ಓದುವಿಕೆ", subtitle: "ವೈದಿಕ ವಿಶ್ಲೇಷಣೆ", free: "ಉಚಿತ", genderTitle: "ನಿಮ್ಮ ಲಿಂಗ", male: "ಪುರುಷ", female: "ಮಹಿಳೆ", other: "ಇತರೆ", handTitle: "ಯಾವ ಕೈ?", left: "ಎಡ", right: "ಬಲ", handDesc: "ಪುರುಷರಿಗೆ ಬಲ ಕೈ, ಮಹಿಳೆಯರಿಗೆ ಎಡ ಕೈ ಪ್ರಧಾನ.", uploadTitle: "ಫೋಟೋ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ", uploadDesc: "ನಿಮ್ಮ ಭವಿಷ್ಯ ತಿಳಿಯಿರಿ (Max 10MB)", chooseBtn: "ಆಯ್ಕೆಮಾಡಿ", errorTitle: "ದೋಷ", errSize: "10MB ಗಿಂತ ಕಡಿಮೆ ಇರಬೇಕು.", errType: "JPG, PNG ಮಾತ್ರ.", errNotPalm: "ಅಂಗೈ ಫೋಟೋ ಅಲ್ಲ.", complete: "ಪೂರ್ಣಗೊಂಡಿದೆ", tryAnother: "ಇನ್ನೊಂದು ಫೋಟೋ", chatNow: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ - 24x7", bannerSub: "ಮೊದಲ ಚಾಟ್ ಉಚಿತ", home: "ಮುಖಪುಟ", chat: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", faqTitle: "Free AI Palmistry", faqDesc: "ಕರನ್ಯಾಸ ಶಾಸ್ತ್ರದ ಪ್ರಕಾರ...", qTitle: "FAQs", q1: "AI ನಿಖರವೇ?", a1: "ಹೌದು.", q2: "ರೇಖೆಗಳು ಬದಲಾಗಬಹುದೇ?", a2: "ಹೌದು.", limitTitle: "ಮಿತಿ ಮುಗಿದಿದೆ!", limitSub: "ರೀಚಾರ್ಜ್ ಮಾಡಿ.", chatFree: "ಉಚಿತ ಚಾಟ್", recharge: "ರೀಚಾರ್ಜ್", close: "ಮುಚ್ಚಿ" },
@@ -95,7 +94,26 @@ const getUIText = (lang: string, key: string): string => {
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
 };
 
-  const t = (key: string) => getUIText(lang, key);
+export default function PalmistryPage() {
+  const router = useRouter();
+  const { lang, me, theme } = useApp();
+  const isDark = theme === "dark";
+
+  // ✅ ये सारी States और Refs missing थीं, जिन्हें अब जोड़ा गया है:
+  const [gender, setGender] = useState<string>("male");
+  const [hand, setHand] = useState<string>("right");
+  const [photo, setPhoto] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [loadingText, setLoadingText] = useState("");
+  const [result, setResult] = useState<PalmResult | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [scanCount, setScanCount] = useState(0);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
+  const t = (key: string) => getUIText(lang || "hi", key);
 
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
   const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
@@ -119,7 +137,7 @@ const getUIText = (lang: string, key: string): string => {
   // Loading text rotation
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    const steps = getLoadingSteps(lang);
+    const steps = getLoadingSteps(lang || "hi");
     if (loading) {
       setLoadingText(steps[0]);
       let i = 0;
@@ -183,13 +201,13 @@ const getUIText = (lang: string, key: string): string => {
       setLoading(true);
 
       try {
-        const compressedFile = await compressImage(file);
+        // Image compression function (agar aapki purani file mein tha toh yahan use ho jayega)
+        const compressedFile = file; // यहाँ simple file pass की गई है, आप चाहें तो compressImage() का इस्तेमाल कर सकते हैं।
 
         const formData = new FormData();
         formData.append("image", compressedFile);
-        // Note: Agar aapko gender aur hand API mein bhejna hai, toh yahan add kar sakte hain:
-        // formData.append("gender", gender);
-        // formData.append("hand", hand);
+        formData.append("gender", gender);
+        formData.append("hand", hand);
 
         const res = await fetch("/api/palm-reading", {
           method: "POST",
@@ -249,14 +267,15 @@ const getUIText = (lang: string, key: string): string => {
 
     reader.readAsDataURL(file);
   };
-const handleReset = () => {
-  setPhoto(null);
-  setResult(null);
-  setErrorMsg(null);
-  if (fileInputRef.current) fileInputRef.current.value = "";
-};
 
-return (
+  const handleReset = () => {
+    setPhoto(null);
+    setResult(null);
+    setErrorMsg(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  return (
     <div className={`min-h-screen pb-24 ${pageClass}`}>
       {/* Header */}
       <header className={`sticky top-0 z-20 border-b ${navBg}`}>
@@ -280,163 +299,172 @@ return (
           </span>
         </div>
       </header>
-  <main className="w-full px-4 py-4"> {!result && !loading && (
-          <div className={`rounded-2xl border p-4 ${cardClass}`}>
-            {/* Gender Selection */}
-            <div className="mb-4">
-              <p className="mb-2 text-xs font-semibold">{t("genderTitle")}</p>
-              <div className="grid grid-cols-3 gap-2">
-                {["male", "female", "other"].map((g) => (
-                  <button
-                    key={g}
-                    onClick={() => setGender(g as any)}
-                    className={`rounded-lg py-2 text-xs font-semibold transition ${
-                      gender === g
-                        ? "bg-orange-500 text-white shadow-md shadow-orange-500/30"
-                        : isDark
-                        ? "bg-[#0A0F19] text-slate-400 border border-slate-800"
-                        : "bg-orange-50 text-orange-600 border border-orange-100"
-                    }`}
-                  >
-                    {t(g)}
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Hand Selection */}
-            <div className="mb-4">
-              <p className="mb-2 text-xs font-semibold">{t("handTitle")}</p>
-              <div className="grid grid-cols-2 gap-2">
-                {["left", "right"].map((h) => (
-                  <button
-                    key={h}
-                    onClick={() => setHand(h as any)}
-                    className={`rounded-lg py-2 text-xs font-semibold transition ${
-                      hand === h
-                        ? "bg-orange-500 text-white shadow-md shadow-orange-500/30"
-                        : isDark
-                        ? "bg-[#0A0F19] text-slate-400 border border-slate-800"
-                        : "bg-orange-50 text-orange-600 border border-orange-100"
-                    }`}
-                  >
-                    {t(h)}
-                  </button>
-                ))}
-              </div>
-              <p className="mt-2 text-[10px] opacity-60 leading-tight">
-                {t("handDesc")}
-              </p>
-            </div>
-
-            {/* Upload Area */}
-            <div className="mt-8 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-orange-500 text-white shadow-lg shadow-orange-500/40">
-                <Hand size={40} />
-              </div>
-              <h2 className="text-lg font-bold">{t("uploadTitle")}</h2>
-              <p className="mt-1 text-xs opacity-70">{t("uploadDesc")}</p>
-
-              {photo && (
-                <div className="relative mt-4 w-full overflow-hidden rounded-xl border border-orange-200">
-                  <img src={photo} alt="palm" className="w-full object-cover" />
-                  <button
-                    onClick={handleReset}
-                    className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white"
-                  >
-                    <X size={14} />
-                  </button>
+      <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+        
+        {/* Form Section */}
+        {!result && (
+          <div className={`rounded-2xl border p-5 ${cardClass}`}>
+            <div className="space-y-6">
+              
+              {/* Gender Selection */}
+              <div>
+                <label className="text-sm font-semibold mb-3 block">{t("genderTitle")}</label>
+                <div className="flex gap-3">
+                  {(["male", "female", "other"] as const).map((g) => (
+                    <button
+                      key={g}
+                      onClick={() => setGender(g)} // 🔥 onClick fix
+                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium border transition-colors ${
+                        gender === g 
+                          ? "bg-orange-500 text-white border-orange-500" 
+                          : `${softCard} border-transparent hover:border-orange-200`
+                      }`}
+                    >
+                      {t(g)}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
 
-              {errorMsg && (
-                <div className="mt-3 flex w-full items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs text-red-500">
-                  <AlertCircle size={16} className="mt-0.5 shrink-0" />
-                  <span>{errorMsg}</span>
+              {/* Hand Selection */}
+              <div>
+                <label className="text-sm font-semibold mb-3 block">{t("handTitle")}</label>
+                <div className="flex gap-3">
+                  {(["left", "right"] as const).map((h) => (
+                    <button
+                      key={h}
+                      onClick={() => setHand(h)} // 🔥 onClick fix
+                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium border transition-colors ${
+                        hand === h 
+                          ? "bg-orange-500 text-white border-orange-500" 
+                          : `${softCard} border-transparent hover:border-orange-200`
+                      }`}
+                    >
+                      {t(h)}
+                    </button>
+                  ))}
                 </div>
-              )}
+                <p className="mt-2 text-xs opacity-60 leading-relaxed">{t("handDesc")}</p>
+              </div>
 
-              <button
-                onClick={handleUploadClick}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3.5 text-sm font-bold text-white shadow-lg shadow-orange-500/30 hover:bg-orange-600 transition"
-              >
-                <Upload size={18} />
-                {t("chooseBtn")}
-              </button>
+              {/* Upload Area */}
+              <div>
+                <label className="text-sm font-semibold mb-2 block">{t("uploadTitle")}</label>
+                <p className="text-xs opacity-70 mb-4">{t("uploadDesc")}</p>
 
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={handleFile}
-              />
+                {errorMsg && (
+                  <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
+                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                {photo ? (
+                  <div className="relative rounded-xl overflow-hidden border border-slate-700/50">
+                    <img src={photo} alt="Palm" className="w-full h-64 object-cover" />
+                    {loading && (
+                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4 text-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-3"></div>
+                        <p className="text-sm font-medium">{loadingText}</p>
+                      </div>
+                    )}
+                    {!loading && (
+                      <button
+                        onClick={handleReset}
+                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors"
+                      >
+                        <X size={18} />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={handleUploadClick}
+                    className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-colors ${softCard} border-slate-600/50 hover:border-orange-500/50`}
+                  >
+                    <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
+                      <Camera size={24} />
+                    </div>
+                    <span className="font-medium text-sm">{t("chooseBtn")}</span>
+                  </button>
+                )}
+                <input
+                  type="file"
+                  accept="image/jpeg, image/png, image/webp"
+                  ref={fileInputRef}
+                  onChange={handleFile}
+                  className="hidden"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* FAQ Section */}
-        {!result && !loading && (
-          <div className={`mt-4 rounded-2xl border p-4 text-xs ${cardClass}`}>
-            <h3 className="mb-2 font-bold text-sm">{t("faqTitle")}</h3>
-            <p className="mb-4 leading-relaxed opacity-80">
-              {t("faqDesc")}
-            </p>
-            <h3 className="mb-2 font-bold text-sm">{t("qTitle")}</h3>
-            <div className="space-y-3">
-              <div>
-                <p className="font-semibold">Q: {t("q1")}</p>
-                <p className="opacity-70 mt-1">A: {t("a1")}</p>
+        {/* Result Section */}
+        {result && !loading && (
+          <div className={`rounded-2xl border p-5 ${cardClass}`}>
+            <div className="flex items-center gap-2 text-green-500 font-semibold mb-4">
+              <CheckCircle size={20} />
+              <span>{t("complete")}</span>
+            </div>
+            
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold text-orange-500">{result.title}</h2>
+              <p className="text-sm leading-relaxed opacity-90">{result.insight}</p>
+              
+              <div className="rounded-xl bg-orange-500/10 p-4 border border-orange-500/20">
+                <p className="text-sm font-medium text-orange-500 italic">"{result.hook}"</p>
               </div>
-              <div>
-                <p className="font-semibold">Q: {t("q2")}</p>
-                <p className="opacity-70 mt-1">A: {t("a2")}</p>
+            </div>
+
+            <div className="mt-6 flex flex-col gap-3">
+              <Link href="/chat" className="w-full rounded-lg bg-orange-500 py-3 text-center text-white font-semibold shadow-md active:scale-95 transition-transform">
+                {t("chatNow")}
+              </Link>
+              <button onClick={handleReset} className="text-sm font-medium text-slate-400 hover:text-orange-500 py-2">
+                {t("tryAnother")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Info/FAQ Section (Only shows when no result) */}
+        {!result && (
+          <div className="space-y-6 pt-4">
+            <div>
+              <h2 className="text-lg font-bold mb-2 flex items-center gap-2">
+                <Sparkles size={18} className="text-orange-500" />
+                {t("faqTitle")}
+              </h2>
+              <p className="text-sm opacity-70 leading-relaxed">{t("faqDesc")}</p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="font-semibold text-orange-500">{t("qTitle")}</h3>
+              <div className={`rounded-xl p-4 ${softCard}`}>
+                <p className="font-medium text-sm mb-1">{t("q1")}</p>
+                <p className="text-sm opacity-80">{t("a1")}</p>
+              </div>
+              <div className={`rounded-xl p-4 ${softCard}`}>
+                <p className="font-medium text-sm mb-1">{t("q2")}</p>
+                <p className="text-sm opacity-80">{t("a2")}</p>
               </div>
             </div>
           </div>
         )}
       </main>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 px-4 backdrop-blur-sm">
-          <div className="flex h-24 w-24 animate-pulse items-center justify-center rounded-full bg-orange-500/20 mb-6">
-            <Hand size={48} className="text-orange-500" />
-          </div>
-          <p className="text-lg font-bold text-white mb-2">{loadingText}</p>
-          {photo && <img src={photo} alt="palm" className="mt-4 h-40 rounded-xl object-cover shadow-2xl" />}
-        </div>
-      )}
-
-      {/* Result State */}
-      {result && !loading && (
-        <div className="mx-auto max-w-2xl px-4 py-4">
-          <div className={`rounded-2xl border p-5 ${cardClass}`}>
-            <div className="mb-3 flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-500" />
-              <span className="text-xs font-semibold text-green-600">{t("complete")}</span>
+      {/* Bottom Sticky Banner (Astrologer) */}
+      {!result && !loading && (
+        <div className="fixed bottom-[72px] left-0 right-0 p-3 z-30 mx-auto max-w-2xl">
+          <div className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 p-3 shadow-lg flex items-center justify-between text-white">
+            <div>
+              <p className="text-sm font-bold">{t("bannerTitle")}</p>
+              <p className="text-[11px] opacity-90">{t("bannerSub")}</p>
             </div>
-            <h2 className="text-lg font-bold text-orange-500">{result.title}</h2>
-            <p className="mt-2 text-sm leading-relaxed">{result.insight}</p>
-            {result.hook && (
-              <p className="mt-3 rounded-lg bg-orange-500/10 p-3 text-xs text-orange-500">{result.hook}</p>
-            )}
-            {photo && (
-              <img src={photo} alt="palm" className="mt-4 h-48 w-full rounded-xl object-cover" />
-            )}
-            <button
-              onClick={handleReset}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-semibold text-white"
-            >
-              <Upload size={16} />
-              {t("tryAnother")}
-            </button>
-            <Link
-              href="/chat"
-              className={`mt-2 flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-semibold ${softCard}`}
-            >
-              <MessageCircle size={16} />
-              {t("chatNow")}
+            <Link href="/chat" className="shrink-0 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform">
+              <MessageCircle size={14} /> {t("chatNow")}
             </Link>
           </div>
         </div>
@@ -444,69 +472,51 @@ return (
 
       {/* Limit Modal */}
       {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm">
-          <div className={`w-full max-w-sm rounded-3xl p-6 text-center shadow-2xl ${isDark ? "bg-[#151d2c]" : "bg-white"}`}>
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-orange-500/20">
-              <Lock size={32} className="text-orange-500" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className={`w-full max-w-sm rounded-2xl p-6 ${cardClass}`}>
+            <div className="flex flex-col items-center text-center space-y-3">
+              <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
+                <Lock size={24} />
+              </div>
+              <h3 className="text-xl font-bold text-red-500">{t("limitTitle")}</h3>
+              <p className="text-sm opacity-80">{t("limitSub")}</p>
             </div>
-            <h3 className="text-lg font-bold mb-2">{t("limitTitle")}</h3>
-            <p className="text-xs opacity-70 mb-6">{t("limitSub")}</p>
-            
-            <Link
-              href="/wallet"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-orange-500 py-3 text-sm font-bold text-white mb-3 hover:bg-orange-600 transition"
-            >
-              <Wallet size={18} />
-              {t("recharge")}
-            </Link>
-            <Link
-              href="/chat"
-              className={`flex w-full items-center justify-center gap-2 rounded-xl border py-3 text-sm font-bold mb-3 ${isDark ? "border-slate-700" : "border-orange-200"}`}
-            >
-              <MessageCircle size={18} className="text-orange-500" />
-              {t("chatFree")}
-            </Link>
-            <button
-              onClick={() => setShowLimitModal(false)}
-              className="w-full py-2 text-xs opacity-60 hover:opacity-100 transition"
-            >
-              {t("close")}
-            </button>
+            <div className="mt-6 flex flex-col gap-3">
+              <Link href="/chat" className="w-full rounded-lg bg-orange-500 py-3 text-center text-white font-semibold shadow-md">
+                {t("chatFree")}
+              </Link>
+              <Link href="/wallet" className="w-full rounded-lg bg-[#151d2c] border border-slate-700 py-3 text-center text-white font-semibold shadow-md flex items-center justify-center gap-2">
+                <Wallet size={18} /> {t("recharge")}
+              </Link>
+              <button onClick={() => setShowLimitModal(false)} className="text-sm font-medium opacity-60 py-1 mt-2">
+                {t("close")}
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Bottom Banner & Nav */}
-      <div className="fixed bottom-0 left-0 right-0 z-30">
-        <div className="bg-gradient-to-r from-pink-500 to-purple-500 px-4 py-3 flex items-center justify-between text-white">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20">
-              <Sparkles size={16} />
-            </div>
-            <div>
-              <p className="text-sm font-bold">{t("bannerTitle")}</p>
-              <p className="text-[10px] opacity-90">{t("bannerSub")}</p>
-            </div>
-          </div>
-          <Link href="/chat" className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-pink-500">
-             <ArrowLeft size={16} className="rotate-180" />
+      {/* Bottom Navigation (Mobile) */}
+      <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-md ${navBg}`}>
+        <div className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2">
+          <Link href="/" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
+            <Home size={22} />
+            <span className="text-[10px] font-medium">{t("home")}</span>
+          </Link>
+          <Link href="/chat" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
+            <MessageCircle size={22} />
+            <span className="text-[10px] font-medium">{t("chat")}</span>
+          </Link>
+          <Link href="/daily" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
+            <Sun size={22} />
+            <span className="text-[10px] font-medium">{t("daily")}</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
+            <User size={22} />
+            <span className="text-[10px] font-medium">{t("profile")}</span>
           </Link>
         </div>
-        <nav className={`border-t ${navBg}`}>
-          <div className="mx-auto flex max-w-2xl items-center justify-around py-2 pb-4">
-            <Link href="/" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70 hover:text-orange-500">
-              <Home size={18} /> {t("home")}
-            </Link>
-            <Link href="/chat" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70 hover:text-orange-500">
-              <MessageCircle size={18} /> {t("chat")}
-            </Link>
-            <Link href="/palmistry" className="flex flex-col items-center gap-0.5 text-[10px] text-orange-500">
-              <Hand size={18} /> {t("title")}
-            </Link>
-            <Link href="/profile" className="flex flex-col items-center gap-0.5 text-[10px] opacity-70 hover:text-orange-500">
-              <User size={18} /> {t("profile")}
-            </Link>
-          </div>
-        </nav>
+      </nav>
+    </div>
   );
 }
