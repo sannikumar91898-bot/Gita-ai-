@@ -105,7 +105,6 @@ export default function FaceReadingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Helper to get localized text
   const t = (key: string) => getUIText(lang, key);
 
   const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
@@ -241,7 +240,6 @@ export default function FaceReadingPage() {
   const openFilePicker = () => {
     if (authLoading) return;
 
-    // ✅ FIXED: सही auth check (me.user.isGuest)
     if (!me?.user || me.user.isGuest) {
       router.push("/login?redirect=/face-reading");
       return;
@@ -319,14 +317,9 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
 
   return (
     <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
-      {/* Inject FAQ Schema */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
-
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
@@ -336,223 +329,194 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
             <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
             <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
           </div>
-          <span className="rounded-full bg-emerald-500/10 px-3 py-1.5 text-[10px] font-black text-emerald-500 border border-emerald-500/20">{t("free")}</span>
+          <span className="rounded-md bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-500 border border-emerald-500/20">{t("free")}</span>
         </header>
 
-        {/* UPLOAD / LOADING / RESULT CARD */}
-        <section className={`rounded-2xl border p-5 sm:p-6 ${cardClass}`}>
-
-          {/* Error */}
+        {/* MAIN CARD */}
+        <section className={`rounded-[1.5rem] border p-6 sm:p-8 text-center ${cardClass}`}>
+          
+          {/* ERROR MSG */}
           {errorMsg && (
-            <div className="mb-4 flex items-start gap-2 rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-500">
-              <AlertCircle size={18} className="mt-0.5 shrink-0" />
-              <p className="font-semibold">{errorMsg}</p>
+            <div className="mb-6 flex items-start justify-center gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+              <span>{errorMsg}</span>
             </div>
           )}
 
-          {/* Hidden file input */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleFile}
-          />
-
-          {/* ─── RESULT ─── */}
-          {result && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-emerald-500">
-                <ScanFace size={18} />
-                <p className="text-sm font-black uppercase tracking-wide">{t("complete")}</p>
+          {!photo ? (
+            /* UPLOAD SECTION */
+            <div className="flex flex-col items-center justify-center">
+              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-lg mb-5">
+                <ScanFace size={44} strokeWidth={1.5} />
               </div>
-
-              {photo && (
-                <div className="rounded-xl overflow-hidden border border-slate-700/20">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt="Uploaded face" className="w-full max-h-72 object-cover" />
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-lg font-black text-[#ff6b00] mb-1">{result.title}</h3>
-                <p className={`text-sm leading-relaxed ${isDark ? "text-slate-300" : "text-gray-700"}`}>
-                  {result.insight}
-                </p>
-              </div>
-
-              <div className={`rounded-xl p-3 text-sm italic ${isDark ? "bg-[#0A0F19] text-slate-400" : "bg-orange-50 text-orange-600"}`}>
-                ✨ {result.hook}
-              </div>
-
-              <button
-                onClick={handleChatNow}
-                className="w-full rounded-xl bg-[#ff6b00] text-white py-3.5 font-black text-sm flex items-center justify-center gap-2 hover:opacity-90 transition"
-              >
-                <MessageCircle size={18} />
-                {t("chatNow")}
-              </button>
-
-              <button
-                onClick={reset}
-                className={`w-full rounded-xl border py-3 font-bold text-sm ${isDark ? "border-slate-700 text-slate-300" : "border-gray-300 text-gray-600"}`}
-              >
-                {t("tryAnother")}
-              </button>
-            </div>
-          )}
-
-          {/* ─── LOADING ─── */}
-          {loading && !result && (
-            <div className="py-8 text-center space-y-4">
-              {photo && (
-                <div className="mx-auto max-w-xs rounded-xl overflow-hidden border border-slate-700/20 opacity-60">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo} alt="Scanning face" className="w-full max-h-56 object-cover" />
-                </div>
-              )}
-              <div className="mx-auto h-12 w-12 rounded-full border-4 border-[#ff6b00]/30 border-t-[#ff6b00] animate-spin" />
-              <p className="text-sm font-bold text-[#ff6b00]">{loadingText}</p>
-            </div>
-          )}
-
-          {/* ─── UPLOAD BUTTON ─── */}
-          {!result && !loading && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <h2 className="text-base font-black mb-1.5">{t("uploadTitle")}</h2>
-                <p className={`text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-gray-600"}`}>
-                  {t("uploadDesc")}
-                </p>
-              </div>
-
+              <h2 className="text-[18px] sm:text-[22px] font-black mb-2">{t("uploadTitle")}</h2>
+              <p className={`text-[12px] sm:text-[14px] mb-6 max-w-md ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                {t("uploadDesc")}
+              </p>
               <button
                 onClick={openFilePicker}
-                className="w-full rounded-xl bg-[#ff6b00] text-white py-3.5 font-black text-sm flex items-center justify-center gap-2 hover:opacity-90 transition"
+                className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-8 py-3.5 text-[15px] font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
               >
-                <Upload size={18} />
-                {t("chooseBtn")}
+                <Upload size={18} /> {t("chooseBtn")}
               </button>
+              <div className="mt-4 flex items-center justify-center gap-1.5 text-[10px] sm:text-[11px] font-medium text-slate-500">
+                <Lock size={12} /> Aapki photo safe hai – server par save nahi hoti.
+              </div>
+            </div>
+          ) : (
+            /* PREVIEW & LOADING SECTION */
+            <div className="relative w-full max-w-sm mx-auto">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-700/50 shadow-md">
+                <img src={photo} alt="Face Preview" className="w-full h-72 object-cover" />
+                
+                {loading && (
+                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4 text-center">
+                    <RefreshCw size={32} className="animate-spin text-orange-500 mb-4" />
+                    <p className="text-[14px] font-bold tracking-wide">{loadingText}</p>
+                  </div>
+                )}
+              </div>
+              {!loading && (
+                <button
+                  onClick={reset}
+                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+                >
+                  <X size={18} />
+                </button>
+              )}
+            </div>
+          )}
 
-              <div className={`flex items-center justify-center gap-1.5 text-[11px] ${isDark ? "text-slate-500" : "text-gray-500"}`}>
-                <Lock size={12} />
-                <p>🔒 Aapki photo safe hai — server par save nahi hoti.</p>
+          <input
+            type="file"
+            accept="image/jpeg, image/png, image/webp"
+            ref={fileInputRef}
+            onChange={handleFile}
+            className="hidden"
+          />
+
+          {/* RESULT SECTION */}
+          {result && !loading && (
+            <div className="mt-8 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5 sm:p-6 mb-6">
+                <h3 className="text-[20px] font-black text-[#ff6b00] mb-3 flex items-center gap-2">
+                  <Sparkles size={20} /> {result.title}
+                </h3>
+                <p className={`text-[14px] leading-relaxed mb-4 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                  {result.insight}
+                </p>
+                <div className="border-t border-slate-700/50 pt-4 mt-4">
+                  <p className={`text-[13px] font-medium italic ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                    "{result.hook}"
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleChatNow}
+                  className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-3.5 text-[15px] font-bold text-white shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2"
+                >
+                  <MessageCircle size={18} /> {t("chatNow")}
+                </button>
+                <button
+                  onClick={reset}
+                  className={`w-full rounded-xl border py-3.5 text-[14px] font-bold transition-colors ${
+                    isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {t("tryAnother")}
+                </button>
               </div>
             </div>
           )}
         </section>
 
-        {/* Astrologer Banner */}
-        <section className={`rounded-2xl border p-4 flex items-center gap-3 ${cardClass}`}>
-          <div className={`rounded-xl p-2.5 ${isDark ? "bg-[#0A0F19] text-slate-400" : "bg-orange-50 text-orange-600"}`}>
-            <MessageCircle size={20} />
+        {/* ASTROLOGER BANNER */}
+        <div className={`rounded-2xl border p-4 flex items-center justify-between ${isDark ? "border-slate-800 bg-[#151d2c]" : "border-orange-100 bg-white"}`}>
+          <div className="flex items-center gap-3">
+            <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center ${isDark ? "bg-orange-500/20 text-orange-500" : "bg-orange-100 text-orange-600"}`}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <p className={`text-[13px] font-bold ${isDark ? "text-white" : "text-slate-900"}`}>{t("bannerTitle")}</p>
+              <p className="text-[11px] font-medium text-emerald-500">{t("bannerSub")}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-black">{t("bannerTitle")}</p>
-            <p className={`text-[11px] font-bold truncate ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-              {t("bannerSub")}
-            </p>
+          <Link href="/chat" className="shrink-0 rounded-full bg-[#ff6b00]/10 px-4 py-2 text-[12px] font-bold text-[#ff6b00] hover:bg-[#ff6b00]/20 transition-colors">
+            {t("chat")}
+          </Link>
+        </div>
+
+        {/* SEO CONTENT & FAQ */}
+        <section className={`mt-2 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
+          <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            Free AI Face Reading (Chehra Vachan)
+          </h2>
+          <p className={`text-[13px] sm:text-[14px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+            सामुद्रिक शास्त्र (Physiognomy) के अनुसार, किसी व्यक्ति के चेहरे की बनावट, माथे, आँखों और नाक की बनावट उसके स्वभाव और भविष्य के बारे में बहुत कुछ बताती है। GitaTalk का AI फेस रीडिंग टूल आपकी फोटो को स्कैन करके आपके चेहरे के लक्षणों का विश्लेषण करता है और आपके करियर, रिश्तों और समृद्धि के बारे में सटीक जानकारी देता है।
+          </p>
+          
+          <h3 className={`text-[15px] font-bold mt-6 ${isDark ? "text-white" : "text-gray-900"}`}>Frequently Asked Questions (FAQs)</h3>
+          
+          <div className="space-y-4 mt-2">
+            <div>
+              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
+                <span className="text-[#ff6b00]">Q:</span> AI फेस रीडिंग कैसे काम करती है?
+              </p>
+              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+                <span className="text-[#ff6b00] font-bold">A:</span> हमारा AI आपके चेहरे की बनावट और समरूपता का विश्लेषण सामुद्रिक शास्त्र के नियमों के आधार पर करता है और फिर ग्रहों के प्रभाव से इसका मिलान करके रिपोर्ट बनाता है।
+              </p>
+            </div>
+            <div>
+              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
+                <span className="text-[#ff6b00]">Q:</span> क्या मेरी फोटो सुरक्षित है?
+              </p>
+              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+                <span className="text-[#ff6b00] font-bold">A:</span> बिल्कुल! आपकी प्राइवेसी हमारी प्राथमिकता है। हम आपकी इमेज को रियल-टाइम में प्रोसेस करते हैं और उसे सर्वर पर सेव नहीं करते हैं।
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* SEO — Collapsible About */}
-        <details className={`rounded-2xl border p-4 ${cardClass}`}>
-          <summary className="cursor-pointer text-sm font-black text-[#ff6b00]">
-            📖 What is Face Reading (Samudrik Shastra)?
-          </summary>
-          <p className={`mt-3 text-xs leading-relaxed ${isDark ? "text-slate-400" : "text-gray-600"}`}>
-            Face Reading, or Samudrik Shastra (Physiognomy), is an ancient Vedic science
-            that interprets facial features, symmetry, and structure to reveal insights
-            about your personality, destiny, and life path. Our AI combines this timeless
-            wisdom with modern planetary analysis to give you personalized, actionable
-            guidance — without fear-mongering or false promises.
+        {/* FOOTER */}
+        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
+            <Link href="/privacy-policy" className="hover:text-orange-500 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-orange-500 transition-colors">Terms & Refund Policy</Link>
+            <Link href="/contact" className="hover:text-orange-500 transition-colors">Contact Us</Link>
+          </div>
+          <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
+            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br />
+            Astrology is for guidance purposes only. Not a substitute for professional advice.
           </p>
-        </details>
+        </footer>
+
       </div>
 
-      {/* ───── LIMIT MODAL (Complete) ───── */}
+      {/* 🔥 LIMIT MODAL */}
       {showLimitModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-          onClick={() => setShowLimitModal(false)}
-          role="dialog"
-          aria-modal="true"
-        >
-          <div
-            className={`relative w-full max-w-sm rounded-2xl border p-6 ${cardClass}`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setShowLimitModal(false)}
-              className={`absolute top-3 right-3 rounded-lg p-1.5 ${isDark ? "hover:bg-slate-700" : "hover:bg-gray-100"}`}
-              aria-label="Close"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex justify-center mb-4">
-              <div className="rounded-full bg-[#ff6b00]/10 p-4">
-                <Lock size={32} className="text-[#ff6b00]" />
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm rounded-2xl border p-6 shadow-2xl text-center ${cardClass}`}>
+            <div className="h-14 w-14 mx-auto rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
+              <Lock size={28} />
             </div>
-
-            <h2 className="text-base font-black text-center mb-2">{t("limitTitle")}</h2>
-            <p className={`text-xs text-center mb-6 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-600"}`}>
-              {t("limitSub")}
-            </p>
-
+            <h3 className={`text-[18px] font-black mb-2 ${isDark ? "text-white" : "text-slate-900"}`}>{t("limitTitle")}</h3>
+            <p className={`text-[13px] mb-6 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("limitSub")}</p>
+            
             <div className="space-y-3">
-              <button
-                onClick={handleRecharge}
-                className="w-full rounded-xl bg-[#ff6b00] text-white py-3.5 font-black text-sm flex items-center justify-center gap-2 hover:opacity-90 transition"
-              >
-                <Wallet size={18} />
-                {t("recharge")}
+              <button onClick={handleChatNow} className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-3 text-[14px] font-bold text-white shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <MessageCircle size={16} /> {t("chatFree")}
               </button>
-
-              <button
-                onClick={() => {
-                  setShowLimitModal(false);
-                  router.push("/chat/gita");
-                }}
-                className="w-full rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 py-3.5 font-black text-sm flex items-center justify-center gap-2 hover:bg-emerald-500/20 transition"
-              >
-                <MessageCircle size={18} />
-                {t("chatFree")}
+              <button onClick={handleRecharge} className={`w-full rounded-xl border py-3 text-[14px] font-bold transition-colors flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}>
+                <Wallet size={16} /> {t("recharge")}
               </button>
-
-              <button
-                onClick={() => setShowLimitModal(false)}
-                className={`w-full py-2.5 text-sm font-bold ${isDark ? "text-slate-500" : "text-gray-500"}`}
-              >
+              <button onClick={() => setShowLimitModal(false)} className="text-[13px] font-semibold opacity-60 hover:opacity-100 transition-opacity pt-2">
                 {t("close")}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* ───── BOTTOM NAV ───── */}
-      <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t ${navBg}`}>
-        <div className="max-w-4xl mx-auto grid grid-cols-4">
-          <Link href="/" className={`flex flex-col items-center py-3 text-[10px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <Home size={20} className="mb-0.5" />
-            {t("home")}
-          </Link>
-          <Link href="/chat/gita" className={`flex flex-col items-center py-3 text-[10px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <MessageCircle size={20} className="mb-0.5" />
-            {t("chat")}
-          </Link>
-          <Link href="/daily" className={`flex flex-col items-center py-3 text-[10px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <Sun size={20} className="mb-0.5" />
-            {t("daily")}
-          </Link>
-          <Link href="/profile" className={`flex flex-col items-center py-3 text-[10px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>
-            <User size={20} className="mb-0.5" />
-            {t("profile")}
-          </Link>
-        </div>
-      </nav>
     </main>
   );
 }
