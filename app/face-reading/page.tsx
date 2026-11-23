@@ -316,10 +316,10 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
   };
 
   return (
-    <main className={`min-h-screen pb-24 w-full ${pageClass} font-sans`}>
+    <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
@@ -355,7 +355,7 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
               </p>
               <button
                 onClick={openFilePicker}
-                className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-8 py-3.5 text-[15px] font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
+                className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-8 py-4 text-[15px] font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
               >
                 <Upload size={18} /> {t("chooseBtn")}
               </button>
@@ -365,9 +365,9 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
             </div>
           ) : (
             /* PREVIEW & LOADING SECTION */
-            <div className="relative w-full max-w-sm mx-auto">
+            <div className="relative w-full max-w-md mx-auto">
               <div className="relative rounded-2xl overflow-hidden border border-slate-700/50 shadow-md">
-                <img src={photo} alt="Face Preview" className="w-full h-72 object-cover" />
+                <img src={photo} alt="Face Preview" className="w-full h-80 object-cover" />
                 
                 {loading && (
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4 text-center">
@@ -431,24 +431,8 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
           )}
         </section>
 
-        {/* ASTROLOGER BANNER */}
-        <div className={`rounded-2xl border p-4 flex items-center justify-between ${isDark ? "border-slate-800 bg-[#151d2c]" : "border-orange-100 bg-white"}`}>
-          <div className="flex items-center gap-3">
-            <div className={`h-10 w-10 shrink-0 rounded-full flex items-center justify-center ${isDark ? "bg-orange-500/20 text-orange-500" : "bg-orange-100 text-orange-600"}`}>
-              <MessageCircle size={20} />
-            </div>
-            <div>
-              <p className={`text-[13px] font-bold ${isDark ? "text-white" : "text-slate-900"}`}>{t("bannerTitle")}</p>
-              <p className="text-[11px] font-medium text-emerald-500">{t("bannerSub")}</p>
-            </div>
-          </div>
-          <Link href="/chat" className="shrink-0 rounded-full bg-[#ff6b00]/10 px-4 py-2 text-[12px] font-bold text-[#ff6b00] hover:bg-[#ff6b00]/20 transition-colors">
-            {t("chat")}
-          </Link>
-        </div>
-
         {/* SEO CONTENT & FAQ */}
-        <section className={`mt-2 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
+        <section className={`mt-4 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
           <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
             Free AI Face Reading (Chehra Vachan)
           </h2>
@@ -491,6 +475,19 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
           </p>
         </footer>
 
+      </div>
+
+      {/* 🔥 BOTTOM STICKY BANNER (Fixed at bottom, Pink color exactly like Screenshot 2) */}
+      <div className={`fixed bottom-0 left-0 right-0 z-40 p-3 w-full max-w-4xl mx-auto`}>
+        <div className="rounded-xl bg-gradient-to-r from-[#ff0055] to-[#ff4b72] p-3.5 shadow-lg flex items-center justify-between text-white">
+          <div>
+            <p className="text-[13px] sm:text-[14px] font-bold">{t("bannerTitle")}</p>
+            <p className="text-[10px] sm:text-[11px] opacity-90">{t("bannerSub")}</p>
+          </div>
+          <Link href="/chat" className="shrink-0 bg-white text-[#ff0055] text-[11px] sm:text-[12px] font-bold px-4 py-2 rounded-full flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+            <MessageCircle size={14} /> {t("chat")}
+          </Link>
+        </div>
       </div>
 
       {/* 🔥 LIMIT MODAL */}
