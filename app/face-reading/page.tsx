@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, ScanFace, MessageCircle, Upload, Star,
   AlertCircle, RefreshCw, ShieldAlert, Home, Sun, User, Crown,
-  Lock, Wallet, X, HelpCircle,
+  Lock, Wallet, X, HelpCircle, Sparkles
 } from "lucide-react";
 import Link from "next/link";
 import { useApp } from "../Providers";
@@ -316,10 +316,10 @@ Mujhe apne jeevan ke baare mein aur margdarshan chahiye.`;
   };
 
   return (
-    <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
+    <main className={`min-h-screen pb-24 w-full ${pageClass} font-sans`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
 
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         {/* HEADER */}
         <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
