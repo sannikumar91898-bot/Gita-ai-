@@ -6,7 +6,18 @@ const locales = ['en', 'hi', 'hinglish', 'te', 'ta', 'kn', 'bn', 'mr', 'gu', 'ml
 const defaultLocale = 'en';
 
 // (main) group ke routes — inhe locale prefix kabhi nahi milega
-const MAIN_ROUTES = ['/login', '/chat', '/wallet', '/profile', '/career', '/daily'];
+// 🔥 FIX: Yahan /palmistry, /face-reading aur /remedies add kar diye gaye hain
+const MAIN_ROUTES = [
+  '/login', 
+  '/chat', 
+  '/wallet', 
+  '/profile', 
+  '/career', 
+  '/daily',
+  '/palmistry',
+  '/face-reading',
+  '/remedies'
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
