@@ -99,7 +99,6 @@ export default function PalmistryPage() {
   const { lang, me, theme } = useApp();
   const isDark = theme === "dark";
 
-  // ✅ ये सारी States और Refs missing थीं, जिन्हें अब जोड़ा गया है:
   const [gender, setGender] = useState<string>("male");
   const [hand, setHand] = useState<string>("right");
   const [photo, setPhoto] = useState<string | null>(null);
@@ -154,7 +153,6 @@ export default function PalmistryPage() {
     return () => { abortRef.current?.abort(); };
   }, []);
 
-  // ✅ Auth check + limit check
   const handleUploadClick = () => {
     if (!me?.user || me.user.isGuest) {
       router.push("/login?redirect=/palmistry");
@@ -201,14 +199,15 @@ export default function PalmistryPage() {
       setLoading(true);
 
       try {
-        // Image compression function (agar aapki purani file mein tha toh yahan use ho jayega)
-        const compressedFile = file; // यहाँ simple file pass की गई है, आप चाहें तो compressImage() का इस्तेमाल कर सकते हैं।
+        const compressedFile = file; // Assuming compression handled elsewhere or not needed
 
         const formData = new FormData();
         formData.append("image", compressedFile);
         formData.append("gender", gender);
         formData.append("hand", hand);
+        formData.append("language", lang || "hi");
 
+        // 🔥 FIXED API URL
         const res = await fetch("/api/palm", {
           method: "POST",
           body: formData,
@@ -224,7 +223,7 @@ export default function PalmistryPage() {
 
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
-          if (err?.error === "NOT_PALM") {
+          if (err?.error === "NOT_PALM" || err?.error === "INVALID_IMAGE") {
             setPhoto(null);
             setErrorMsg(t("errNotPalm"));
           } else {
@@ -235,7 +234,7 @@ export default function PalmistryPage() {
 
         const data = await res.json();
 
-        if (data?.error === "NOT_PALM") {
+        if (data?.error === "NOT_PALM" || data?.error === "INVALID_IMAGE") {
           setPhoto(null);
           setErrorMsg(t("errNotPalm"));
           return;
@@ -246,10 +245,11 @@ export default function PalmistryPage() {
         localStorage.setItem("palm_scan_count", String(newCount));
         localStorage.setItem("palm_scan_date", new Date().toDateString());
 
+        // Adapt to API result structure
         setResult({
-          title: data.title || "Palm Reading",
-          insight: data.insight || "",
-          hook: data.hook || "",
+          title: data.result?.barnumLines?.[0] || "Palm Reading",
+          insight: data.result?.lines?.life || "",
+          hook: data.result?.suspenseHook || "",
         });
       } catch (err: any) {
         if (err?.name === "AbortError") return;
@@ -276,247 +276,242 @@ export default function PalmistryPage() {
   };
 
   return (
-    <div className={`min-h-screen pb-24 ${pageClass}`}>
-      {/* Header */}
-      <header className={`sticky top-0 z-20 border-b ${navBg}`}>
-        <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3">
-          <button
-            onClick={() => router.back()}
-            className={`flex h-8 w-8 items-center justify-center rounded-full ${
-              isDark ? "bg-[#0A0F19]" : "bg-orange-50"
-            }`}
-          >
-            <ArrowLeft size={18} />
-          </button>
-          <div className="flex-1">
-            <h1 className="flex items-center gap-2 text-base font-bold text-orange-500">
-              <Hand size={18} className="text-orange-500" /> {t("title")}
-            </h1>
-            <p className="text-[11px] opacity-70">{t("subtitle")}</p>
-          </div>
-          <span className="rounded-md bg-green-500/20 px-2 py-1 text-[10px] font-bold text-green-500">
-            {t("free")}
-          </span>
-        </div>
-      </header>
-
-      <main className="mx-auto max-w-2xl px-4 py-6 space-y-6">
+    <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
+      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         
-        {/* Form Section */}
-        {!result && (
-          <div className={`rounded-2xl border p-5 ${cardClass}`}>
-            <div className="space-y-6">
-              
-              {/* Gender Selection */}
-              <div>
-                <label className="text-sm font-semibold mb-3 block">{t("genderTitle")}</label>
-                <div className="flex gap-3">
-                  {(["male", "female", "other"] as const).map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setGender(g)} // 🔥 onClick fix
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium border transition-colors ${
-                        gender === g 
-                          ? "bg-orange-500 text-white border-orange-500" 
-                          : `${softCard} border-transparent hover:border-orange-200`
-                      }`}
-                    >
-                      {t(g)}
-                    </button>
-                  ))}
-                </div>
+        {/* HEADER */}
+        <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
+          <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
+            <ArrowLeft size={20} />
+          </Link>
+          <div className="flex-1">
+            <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00] flex items-center gap-2">
+              <Hand size={18} className="text-[#ff6b00]" /> {t("title")}
+            </h1>
+            <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
+          </div>
+          <span className="rounded-md bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold text-emerald-500 border border-emerald-500/20">{t("free")}</span>
+        </header>
+
+        {/* MAIN CARD */}
+        <section className={`rounded-[1.5rem] border p-5 sm:p-7 ${cardClass}`}>
+          
+          <div className="space-y-6">
+            {/* Gender Selection */}
+            <div>
+              <label className={`text-[14px] font-bold mb-3 block ${isDark ? "text-slate-200" : "text-gray-800"}`}>{t("genderTitle")}</label>
+              <div className="flex gap-3">
+                {(["male", "female", "other"] as const).map((g) => (
+                  <button
+                    key={g}
+                    onClick={() => setGender(g)}
+                    className={`flex-1 rounded-xl py-3 text-[14px] font-bold border transition-colors ${
+                      gender === g 
+                        ? "bg-[#ff6b00] text-white border-[#ff6b00]" 
+                        : `${softCard} border-transparent hover:border-orange-200`
+                    }`}
+                  >
+                    {t(g)}
+                  </button>
+                ))}
               </div>
+            </div>
 
-              {/* Hand Selection */}
-              <div>
-                <label className="text-sm font-semibold mb-3 block">{t("handTitle")}</label>
-                <div className="flex gap-3">
-                  {(["left", "right"] as const).map((h) => (
-                    <button
-                      key={h}
-                      onClick={() => setHand(h)} // 🔥 onClick fix
-                      className={`flex-1 rounded-lg py-2.5 text-sm font-medium border transition-colors ${
-                        hand === h 
-                          ? "bg-orange-500 text-white border-orange-500" 
-                          : `${softCard} border-transparent hover:border-orange-200`
-                      }`}
-                    >
-                      {t(h)}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-xs opacity-60 leading-relaxed">{t("handDesc")}</p>
+            {/* Hand Selection */}
+            <div>
+              <label className={`text-[14px] font-bold mb-3 block ${isDark ? "text-slate-200" : "text-gray-800"}`}>{t("handTitle")}</label>
+              <div className="flex gap-3">
+                {(["left", "right"] as const).map((h) => (
+                  <button
+                    key={h}
+                    onClick={() => setHand(h)}
+                    className={`flex-1 rounded-xl py-3 text-[14px] font-bold border transition-colors ${
+                      hand === h 
+                        ? "bg-[#ff6b00] text-white border-[#ff6b00]" 
+                        : `${softCard} border-transparent hover:border-orange-200`
+                    }`}
+                  >
+                    {t(h)}
+                  </button>
+                ))}
               </div>
+              <p className={`mt-2 text-[11px] sm:text-[12px] opacity-70 leading-relaxed ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("handDesc")}</p>
+            </div>
 
-              {/* Upload Area */}
-              <div>
-                <label className="text-sm font-semibold mb-2 block">{t("uploadTitle")}</label>
-                <p className="text-xs opacity-70 mb-4">{t("uploadDesc")}</p>
+            {/* Upload Area */}
+            <div className="pt-2">
+              {errorMsg && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
+                  <AlertCircle size={18} className="shrink-0 mt-0.5" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
 
-                {errorMsg && (
-                  <div className="mb-4 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
-                    <AlertCircle size={18} className="shrink-0 mt-0.5" />
-                    <span>{errorMsg}</span>
+              {photo ? (
+                <div className="relative rounded-2xl overflow-hidden border border-slate-700/50 shadow-md">
+                  <img src={photo} alt="Palm" className="w-full h-[300px] object-cover" />
+                  {loading && (
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center text-white p-4 text-center">
+                      <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#ff6b00] mb-4"></div>
+                      <p className="text-[15px] font-bold">{loadingText}</p>
+                    </div>
+                  )}
+                  {!loading && (
+                    <button
+                      onClick={handleReset}
+                      className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full transition-colors"
+                    >
+                      <X size={18} />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center mt-2">
+                  <h2 className={`text-[18px] sm:text-[20px] font-black mb-2 ${isDark ? "text-white" : "text-slate-900"}`}>
+                    {t("uploadTitle")}
+                  </h2>
+                  <p className={`text-[12px] sm:text-[13px] mb-6 text-center max-w-sm ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                    {t("uploadDesc")}
+                  </p>
+                  
+                  <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white shadow-lg mb-6">
+                    <Hand size={44} strokeWidth={1.5} />
                   </div>
-                )}
 
-                {photo ? (
-                  <div className="relative rounded-xl overflow-hidden border border-slate-700/50">
-                    <img src={photo} alt="Palm" className="w-full h-64 object-cover" />
-                    {loading && (
-                      <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center text-white p-4 text-center">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500 mb-3"></div>
-                        <p className="text-sm font-medium">{loadingText}</p>
-                      </div>
-                    )}
-                    {!loading && (
-                      <button
-                        onClick={handleReset}
-                        className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white p-1.5 rounded-full transition-colors"
-                      >
-                        <X size={18} />
-                      </button>
-                    )}
-                  </div>
-                ) : (
                   <button
                     onClick={handleUploadClick}
-                    className={`w-full border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center gap-3 transition-colors ${softCard} border-slate-600/50 hover:border-orange-500/50`}
+                    className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] px-8 py-3.5 text-[15px] font-bold text-white shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <div className="h-12 w-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500">
-                      <Camera size={24} />
-                    </div>
-                    <span className="font-medium text-sm">{t("chooseBtn")}</span>
+                    <Upload size={18} /> {t("chooseBtn")}
                   </button>
-                )}
-                <input
-                  type="file"
-                  accept="image/jpeg, image/png, image/webp"
-                  ref={fileInputRef}
-                  onChange={handleFile}
-                  className="hidden"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Result Section */}
-        {result && !loading && (
-          <div className={`rounded-2xl border p-5 ${cardClass}`}>
-            <div className="flex items-center gap-2 text-green-500 font-semibold mb-4">
-              <CheckCircle size={20} />
-              <span>{t("complete")}</span>
-            </div>
-            
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold text-orange-500">{result.title}</h2>
-              <p className="text-sm leading-relaxed opacity-90">{result.insight}</p>
+                </div>
+              )}
               
-              <div className="rounded-xl bg-orange-500/10 p-4 border border-orange-500/20">
-                <p className="text-sm font-medium text-orange-500 italic">"{result.hook}"</p>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3">
-              <Link href="/chat" className="w-full rounded-lg bg-orange-500 py-3 text-center text-white font-semibold shadow-md active:scale-95 transition-transform">
-                {t("chatNow")}
-              </Link>
-              <button onClick={handleReset} className="text-sm font-medium text-slate-400 hover:text-orange-500 py-2">
-                {t("tryAnother")}
-              </button>
+              <input
+                type="file"
+                accept="image/jpeg, image/png, image/webp"
+                ref={fileInputRef}
+                onChange={handleFile}
+                className="hidden"
+              />
             </div>
           </div>
-        )}
 
-        {/* Info/FAQ Section (Only shows when no result) */}
-        {!result && (
-          <div className="space-y-6 pt-4">
+          {/* Result Section */}
+          {result && !loading && (
+            <div className="mt-8 text-left animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="rounded-2xl border border-orange-500/20 bg-orange-500/5 p-5 sm:p-6 mb-6">
+                <h3 className="text-[20px] font-black text-[#ff6b00] mb-3 flex items-center gap-2">
+                  <CheckCircle size={20} /> {t("complete")}
+                </h3>
+                <p className={`text-[14px] leading-relaxed mb-4 ${isDark ? "text-slate-300" : "text-gray-700"}`}>
+                  {result.insight}
+                </p>
+                <div className="border-t border-slate-700/50 pt-4 mt-4">
+                  <p className={`text-[13px] font-medium italic ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                    "{result.hook}"
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-3">
+                <Link href="/chat" className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-3.5 text-[15px] font-bold text-white shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2">
+                  <MessageCircle size={18} /> {t("chatNow")}
+                </Link>
+                <button
+                  onClick={handleReset}
+                  className={`w-full rounded-xl border py-3.5 text-[14px] font-bold transition-colors ${
+                    isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-gray-300 text-gray-700 hover:bg-gray-100"
+                  }`}
+                >
+                  {t("tryAnother")}
+                </button>
+              </div>
+            </div>
+          )}
+        </section>
+
+        {/* SEO CONTENT & FAQ */}
+        <section className={`mt-4 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
+          <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
+            {t("faqTitle")}
+          </h2>
+          <p className={`text-[13px] sm:text-[14px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
+            {t("faqDesc")}
+          </p>
+          
+          <h3 className={`text-[15px] font-bold mt-6 ${isDark ? "text-white" : "text-gray-900"}`}>{t("qTitle")}</h3>
+          <div className="space-y-4 mt-2">
             <div>
-              <h2 className="text-lg font-bold mb-2 flex items-center gap-2">
-                <Sparkles size={18} className="text-orange-500" />
-                {t("faqTitle")}
-              </h2>
-              <p className="text-sm opacity-70 leading-relaxed">{t("faqDesc")}</p>
+              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
+                <span className="text-[#ff6b00]">Q:</span> {t("q1")}
+              </p>
+              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+                <span className="text-[#ff6b00] font-bold">A:</span> {t("a1")}
+              </p>
             </div>
-
-            <div className="space-y-3">
-              <h3 className="font-semibold text-orange-500">{t("qTitle")}</h3>
-              <div className={`rounded-xl p-4 ${softCard}`}>
-                <p className="font-medium text-sm mb-1">{t("q1")}</p>
-                <p className="text-sm opacity-80">{t("a1")}</p>
-              </div>
-              <div className={`rounded-xl p-4 ${softCard}`}>
-                <p className="font-medium text-sm mb-1">{t("q2")}</p>
-                <p className="text-sm opacity-80">{t("a2")}</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </main>
-
-      {/* Bottom Sticky Banner (Astrologer) */}
-      {!result && !loading && (
-        <div className="fixed bottom-[72px] left-0 right-0 p-3 z-30 mx-auto max-w-2xl">
-          <div className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 p-3 shadow-lg flex items-center justify-between text-white">
             <div>
-              <p className="text-sm font-bold">{t("bannerTitle")}</p>
-              <p className="text-[11px] opacity-90">{t("bannerSub")}</p>
+              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
+                <span className="text-[#ff6b00]">Q:</span> {t("q2")}
+              </p>
+              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
+                <span className="text-[#ff6b00] font-bold">A:</span> {t("a2")}
+              </p>
             </div>
-            <Link href="/chat" className="shrink-0 bg-white text-orange-600 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform">
-              <MessageCircle size={14} /> {t("chatNow")}
-            </Link>
           </div>
+        </section>
+
+        {/* FOOTER */}
+        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
+          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
+            <Link href="/privacy-policy" className="hover:text-orange-500 transition-colors">Privacy Policy</Link>
+            <Link href="/terms" className="hover:text-orange-500 transition-colors">Terms & Refund Policy</Link>
+            <Link href="/contact" className="hover:text-orange-500 transition-colors">Contact Us</Link>
+          </div>
+          <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
+            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br />
+            Astrology is for guidance purposes only. Not a substitute for professional advice.
+          </p>
+        </footer>
+
+      </div>
+
+      {/* 🔥 BOTTOM STICKY BANNER (Astrologer) */}
+      <div className={`fixed bottom-[64px] left-0 right-0 p-3 z-40 mx-auto max-w-4xl`}>
+        <div className="rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 p-3.5 shadow-lg flex items-center justify-between text-white">
+          <div>
+            <p className="text-[13px] sm:text-[14px] font-bold">{t("bannerTitle")}</p>
+            <p className="text-[10px] sm:text-[11px] opacity-90">{t("bannerSub")}</p>
+          </div>
+          <Link href="/chat" className="shrink-0 bg-white text-rose-600 text-[11px] sm:text-[12px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+            <MessageCircle size={14} /> {t("chatNow")}
+          </Link>
         </div>
-      )}
+      </div>
 
-      {/* Limit Modal */}
+      {/* 🔥 LIMIT MODAL */}
       {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className={`w-full max-w-sm rounded-2xl p-6 ${cardClass}`}>
-            <div className="flex flex-col items-center text-center space-y-3">
-              <div className="h-12 w-12 rounded-full bg-red-500/10 flex items-center justify-center text-red-500 mb-2">
-                <Lock size={24} />
-              </div>
-              <h3 className="text-xl font-bold text-red-500">{t("limitTitle")}</h3>
-              <p className="text-sm opacity-80">{t("limitSub")}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className={`w-full max-w-sm rounded-2xl border p-6 shadow-2xl text-center ${cardClass}`}>
+            <div className="h-14 w-14 mx-auto rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
+              <Lock size={28} />
             </div>
-            <div className="mt-6 flex flex-col gap-3">
-              <Link href="/chat" className="w-full rounded-lg bg-orange-500 py-3 text-center text-white font-semibold shadow-md">
-                {t("chatFree")}
+            <h3 className={`text-[18px] font-black mb-2 ${isDark ? "text-white" : "text-slate-900"}`}>{t("limitTitle")}</h3>
+            <p className={`text-[13px] mb-6 ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("limitSub")}</p>
+            
+            <div className="space-y-3">
+              <Link href="/chat" className="w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-3 text-[14px] font-bold text-white shadow-md active:scale-95 transition-transform flex items-center justify-center gap-2">
+                <MessageCircle size={16} /> {t("chatFree")}
               </Link>
-              <Link href="/wallet" className="w-full rounded-lg bg-[#151d2c] border border-slate-700 py-3 text-center text-white font-semibold shadow-md flex items-center justify-center gap-2">
-                <Wallet size={18} /> {t("recharge")}
+              <Link href="/wallet" className={`w-full rounded-xl border py-3 text-[14px] font-bold transition-colors flex items-center justify-center gap-2 ${isDark ? "border-slate-700 text-slate-300 hover:bg-slate-800" : "border-gray-300 text-gray-700 hover:bg-gray-100"}`}>
+                <Wallet size={16} /> {t("recharge")}
               </Link>
-              <button onClick={() => setShowLimitModal(false)} className="text-sm font-medium opacity-60 py-1 mt-2">
+              <button onClick={() => setShowLimitModal(false)} className="text-[13px] font-semibold opacity-60 hover:opacity-100 transition-opacity pt-2">
                 {t("close")}
               </button>
             </div>
           </div>
         </div>
       )}
-
-      {/* Bottom Navigation (Mobile) */}
-      <nav className={`fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-md ${navBg}`}>
-        <div className="mx-auto flex max-w-2xl items-center justify-around px-2 py-2">
-          <Link href="/" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
-            <Home size={22} />
-            <span className="text-[10px] font-medium">{t("home")}</span>
-          </Link>
-          <Link href="/chat" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
-            <MessageCircle size={22} />
-            <span className="text-[10px] font-medium">{t("chat")}</span>
-          </Link>
-          <Link href="/daily" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
-            <Sun size={22} />
-            <span className="text-[10px] font-medium">{t("daily")}</span>
-          </Link>
-          <Link href="/profile" className="flex flex-col items-center gap-1 p-2 text-slate-400 hover:text-orange-500">
-            <User size={22} />
-            <span className="text-[10px] font-medium">{t("profile")}</span>
-          </Link>
-        </div>
-      </nav>
-    </div>
+    </main>
   );
 }
