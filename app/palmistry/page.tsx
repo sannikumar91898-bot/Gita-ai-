@@ -199,7 +199,7 @@ export default function PalmistryPage() {
       setLoading(true);
 
       try {
-        const compressedFile = file; // Assuming compression handled elsewhere or not needed
+        const compressedFile = file;
 
         const formData = new FormData();
         formData.append("image", compressedFile);
@@ -207,7 +207,6 @@ export default function PalmistryPage() {
         formData.append("hand", hand);
         formData.append("language", lang || "hi");
 
-        // 🔥 FIXED API URL
         const res = await fetch("/api/palm", {
           method: "POST",
           body: formData,
@@ -215,7 +214,6 @@ export default function PalmistryPage() {
           credentials: "include",
         });
 
-        // API 401 handler redirect
         if (res.status === 401) {
           router.push("/login?redirect=/palmistry");
           return;
@@ -245,7 +243,6 @@ export default function PalmistryPage() {
         localStorage.setItem("palm_scan_count", String(newCount));
         localStorage.setItem("palm_scan_date", new Date().toDateString());
 
-        // Adapt to API result structure
         setResult({
           title: data.result?.barnumLines?.[0] || "Palm Reading",
           insight: data.result?.lines?.life || "",
@@ -276,10 +273,10 @@ export default function PalmistryPage() {
   };
 
   return (
-    <main className={`min-h-[100dvh] w-full pb-32 ${pageClass} font-sans`}>
-      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
-        
-        {/* HEADER */}
+    <div className={`min-h-screen pb-24 ${pageClass}`}>
+      
+      {/* HEADER (Fixed Width) */}
+      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
         <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
           <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
             <ArrowLeft size={20} />
@@ -295,8 +292,8 @@ export default function PalmistryPage() {
 
         {/* MAIN CARD */}
         <section className={`rounded-[1.5rem] border p-5 sm:p-7 ${cardClass}`}>
-          
           <div className="space-y-6">
+            
             {/* Gender Selection */}
             <div>
               <label className={`text-[14px] font-bold mb-3 block ${isDark ? "text-slate-200" : "text-gray-800"}`}>{t("genderTitle")}</label>
@@ -475,20 +472,25 @@ export default function PalmistryPage() {
 
       </div>
 
-      {/* 🔥 BOTTOM STICKY BANNER (Astrologer) */}
-      <div className={`fixed bottom-[64px] left-0 right-0 p-3 z-40 mx-auto max-w-4xl`}>
-        <div className="rounded-xl bg-gradient-to-r from-rose-600 to-rose-500 p-3.5 shadow-lg flex items-center justify-between text-white">
-          <div>
-            <p className="text-[13px] sm:text-[14px] font-bold">{t("bannerTitle")}</p>
-            <p className="text-[10px] sm:text-[11px] opacity-90">{t("bannerSub")}</p>
+      {/* BOTTOM STICKY BANNER */}
+      <div className={`fixed bottom-0 left-0 right-0 z-50 w-full border-t pb-safe ${navBg}`}>
+        <div className="flex items-center justify-between p-3 w-full max-w-2xl mx-auto gap-3">
+          <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${isDark ? "bg-rose-500/20 text-rose-500" : "bg-rose-100 text-rose-600"}`}>
+              <MessageCircle size={20} />
+            </div>
+            <div>
+              <p className={`text-[13px] font-bold leading-tight ${isDark ? "text-white" : "text-slate-900"}`}>{t("bannerTitle")}</p>
+              <p className="text-[11px] font-medium text-emerald-500">{t("bannerSub")}</p>
+            </div>
           </div>
-          <Link href="/chat" className="shrink-0 bg-white text-rose-600 text-[11px] sm:text-[12px] font-bold px-3 py-1.5 rounded-full flex items-center gap-1 active:scale-95 transition-transform shadow-sm">
+          <Link href="/chat" className="shrink-0 rounded-full bg-gradient-to-r from-[#ff7b00] to-[#ff5a00] px-4 py-2 text-[13px] font-bold text-white shadow-md active:scale-95 transition-transform flex items-center gap-1">
             <MessageCircle size={14} /> {t("chatNow")}
           </Link>
         </div>
       </div>
 
-      {/* 🔥 LIMIT MODAL */}
+      {/* LIMIT MODAL */}
       {showLimitModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className={`w-full max-w-sm rounded-2xl border p-6 shadow-2xl text-center ${cardClass}`}>
@@ -512,6 +514,6 @@ export default function PalmistryPage() {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 }
