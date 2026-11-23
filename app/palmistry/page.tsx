@@ -209,7 +209,7 @@ export default function PalmistryPage() {
         formData.append("gender", gender);
         formData.append("hand", hand);
 
-        const res = await fetch("/api/palm-reading", {
+        const res = await fetch("/api/palm", {
           method: "POST",
           body: formData,
           signal: controller.signal,
