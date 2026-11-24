@@ -4,6 +4,8 @@ import { db } from "@/index";
 import { users } from "@/schema";
 import { eq } from "drizzle-orm";
 import { createSession, setSessionCookie } from "@/auth";
+// 🔥 FIX: Admin SDK import kiya gaya hai secure verification ke liye
+import { adminAuth } from "@/lib/firebase-admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,36 +30,27 @@ function getWelcomeMessage(lang: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { token, identifier, language = "en" } = body;
+    // 🔥 FIX: Hum ab client ke bheje gaye 'identifier' par bharosa nahi karenge
+    const { token, language = "en" } = body;
 
     if (!token) {
       return NextResponse.json({ error: "Firebase token is required" }, { status: 400 });
     }
 
-    // 🔥 1. Verify Firebase ID Token using Google Identity Toolkit
-    // Isse humein pakka pata chalega ki user ne sach me Google/OTP se verify kiya hai.
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-    if (!apiKey) {
-      console.error("Firebase API Key missing in env!");
-      return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-    }
-
-    const verifyRes = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken: token }),
-    });
-
-    const verifyData = await verifyRes.json();
-
-    if (!verifyRes.ok || !verifyData.users || verifyData.users.length === 0) {
+    // 🔥 1. Verify Firebase ID Token securely using Admin SDK
+    // Isse humein pakka pata chalega ki token genuine hai aur expired nahi hai
+    let decodedToken;
+    try {
+      decodedToken = await adminAuth.verifyIdToken(token);
+    } catch (verifyError: any) {
+      console.error("Firebase Token Verification Failed:", verifyError.message);
       return NextResponse.json({ error: "Invalid or expired Firebase token" }, { status: 401 });
     }
 
-    // Token verified! Ab humein user ka data mil gaya.
-    const firebaseUser = verifyData.users[0];
-    const verifiedEmail = firebaseUser.email || identifier || "";
-    const verifiedPhone = firebaseUser.phoneNumber || "";
+    // Token verified! Ab humein user ka data decodedToken se milega
+    const verifiedEmail = decodedToken.email || "";
+    const verifiedPhone = decodedToken.phone_number || "";
+    const firebaseName = decodedToken.name || "User";
     
     // Email ya Phone me se jo bhi mile, use identifier banayenge
     const finalIdentifier = verifiedEmail || verifiedPhone;
@@ -67,7 +60,6 @@ export async function POST(request: Request) {
     }
 
     // 🔥 2. Database me User Check karein
-    // Agar email hai to email se dhundo, agar phone hai to email field me phone save karke dhundo
     const normalizedIdentifier = finalIdentifier.trim().toLowerCase();
     
     const existingUsers = await db.select().from(users).where(eq(users.email, normalizedIdentifier)).limit(1);
@@ -76,8 +68,8 @@ export async function POST(request: Request) {
     if (!user) {
       // Agar naya user hai, toh Database me create karein
       const newUsers = await db.insert(users).values({
-        name: firebaseUser.displayName || "User",
-        email: normalizedIdentifier, // Phone number ko email field me save kar rahe hain (ya aap alag column bana sakte hain)
+        name: firebaseName,
+        email: normalizedIdentifier, // Agar phone hai, toh woh email field me save hoga
         password: null, // Firebase users ka password nahi hota
         isGuest: false,
         language: language,
@@ -93,7 +85,7 @@ export async function POST(request: Request) {
       user = updatedUsers[0];
     }
 
-    // 🔥 3. Session create karein aur Cookie set karein
+    // 🔥 3. Session create karein aur Cookie set karein (Aapka purana logic, bilkul waisa hi)
     const session = await createSession(user.id);
     await setSessionCookie(session.token, session.expires);
 
