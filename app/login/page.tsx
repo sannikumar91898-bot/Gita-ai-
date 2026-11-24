@@ -6,7 +6,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Mail, Lock, User, Sparkles, ShieldCheck, Loader2, Star, Phone, ChevronLeft, Github } from "lucide-react";
 import { useApp } from "../Providers";
-import { loginWithGoogle, loginWithGithub, setupRecaptcha, sendPhoneOTP, getFirebaseError } from "../../lib/firebase";
+// 🔥 FIX: Yahan loginWithEmail aur registerWithEmail add kar diye hain
+import { loginWithGoogle, loginWithGithub, setupRecaptcha, sendPhoneOTP, getFirebaseError, loginWithEmail, registerWithEmail } from "../../lib/firebase";
 import { ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
 
 function LoginContent() {
@@ -99,61 +100,57 @@ function LoginContent() {
     setRecaptchaVerifier(verifier);
   }, [method]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(null);
-    const endpoint = isLogin ? "/api/auth/login" : "/api/auth/register";
+  const authenticateWithBackend = async (token: string, identifier: string) => {
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/auth/firebase-login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, language: lang }), 
+        body: JSON.stringify({ token, identifier, language: lang }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.details || data.error || "Something went wrong");
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Authentication failed (${res.status})`);
+
       await refresh();
       router.replace(redirectUrl); 
       router.refresh(); 
     } catch (err: any) {
-      setError(err.message);
-    } finally {
+      console.error("Backend authentication error:", err);
+      setError(err.message || "Authentication failed. Please try again.");
       setLoading(false);
     }
   };
-const authenticateWithBackend = async (
-  token: string,
-  identifier: string
-) => {
-  try {
-    const res = await fetch("/api/auth/firebase-login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        token,
-        identifier,
-        language: lang,
-      }),
-    });
 
-    const data = await res.json().catch(() => ({}));
+  // 🔥 FIX: Handle Submit ab Firebase login/register use karega
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
 
-    if (!res.ok) {
-      throw new Error(
-        data.error || `Authentication failed (${res.status})`
-      );
+    try {
+      let result;
+      if (isLogin) {
+        result = await loginWithEmail(email, password);
+      } else {
+        result = await registerWithEmail(email, password);
+      }
+
+      if (result.error) {
+        setError(getFirebaseError(lang, result.error));
+        setLoading(false);
+        return;
+      }
+
+      if (result.user) {
+        const idToken = await result.user.getIdToken();
+        await authenticateWithBackend(idToken, result.user.email || email);
+      }
+    } catch (err: any) {
+      setError("Something went wrong. Please try again.");
+      setLoading(false);
     }
+  };
 
-    await refresh();
-    router.replace(redirectUrl);
-    router.refresh();
-  } catch (err: any) {
-    console.error("Backend authentication error:", err);
-    setError(err.message || "Authentication failed. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
   const handleGoogleLogin = async () => {
     setError(null); setLoading(true);
     try {
@@ -232,7 +229,6 @@ const authenticateWithBackend = async (
             <div className="mx-auto w-20 h-20 relative flex items-center justify-center mb-5 group">
               <div className="absolute inset-0 bg-gradient-to-tr from-[#ff6b00] to-[#ff3d00] rounded-full blur-xl opacity-60 group-hover:opacity-100 transition-opacity duration-500 animate-pulse"></div>
               <div className={`relative flex items-center justify-center w-full h-full rounded-full border-2 backdrop-blur-xl shadow-[inset_0_0_20px_rgba(255,107,0,0.2)] ${isDark ? "border-white/10 bg-white/5" : "border-white bg-white/60"}`}>
-                {/* 🔥 FIXED SPARKLES ICON (Ab khali nahi dikhega) */}
                 <Sparkles className="text-white drop-shadow-[0_0_12px_rgba(255,107,0,1)]" size={36} strokeWidth={2.5} />
               </div>
             </div>
@@ -289,100 +285,154 @@ const authenticateWithBackend = async (
             </button>
           </div>
 
-          {/* EMAIL FORM */}
-          {method === "email" && (
-            <form onSubmit={handleSubmit} className="space-y-4 animate-in fade-in slide-in-from-right-4 relative z-10">
-              {!isLogin && (
+          {/* MAIN FORM */}
+          <form onSubmit={method === "email" ? handleSubmit : (e) => e.preventDefault()} className="space-y-4 relative z-10">
+            {method === "email" && (
+              <>
+                {!isLogin && (
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder={t("name")}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      required
+                      className={inputClass}
+                    />
+                  </div>
+                )}
                 <div className="relative">
-                  <User size={18} className="absolute left-3.5 top-4 text-gray-400" />
-                  <input type="text" placeholder={t("name")} required={!isLogin} value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="email"
+                    placeholder={t("email")}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className={inputClass}
+                  />
                 </div>
-              )}
-              <div className="relative">
-                <Mail size={18} className="absolute left-3.5 top-4 text-gray-400" />
-                <input type="email" placeholder={t("email")} required value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
-              </div>
-              <div className="relative">
-                <Lock size={18} className="absolute left-3.5 top-4 text-gray-400" />
-                <input type="password" placeholder={t("password")} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} />
-              </div>
-              <button type="submit" disabled={loading} className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100">
-                {loading ? <Loader2 size={20} className="animate-spin" /> : (isLogin ? t("loginBtn") : t("registerBtn"))}
-              </button>
-            </form>
-          )}
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="password"
+                    placeholder={t("password")}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className={inputClass}
+                  />
+                </div>
 
-          {/* PHONE FORM */}
-          {method === "phone" && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4 relative z-10">
-              {!showOtp ? (
-                <>
-                  <div className="relative">
-                    <Phone size={18} className="absolute left-3.5 top-4 text-gray-400" />
-                    <span className={`absolute left-11 top-4 text-[15px] font-bold ${isDark ? "text-slate-300" : "text-gray-600"}`}>+91</span>
-                    <input type="tel" placeholder={t("phoneLabel")} value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} className={`${inputClass} pl-[5.5rem]`} />
-                  </div>
-                  <div id="recaptcha-container"></div>
-                  <button onClick={handleSendOtp} disabled={loading || phone.length !== 10} className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100">
-                    {loading ? <Loader2 size={20} className="animate-spin" /> : t("sendOtp")}
-                  </button>
-                </>
-              ) : (
-                <>
-                  <div className="relative">
-                    <Lock size={18} className="absolute left-3.5 top-4 text-gray-400" />
-                    <input type="text" placeholder={t("otpLabel")} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))} className={`${inputClass} text-center tracking-[0.5em] text-xl font-black pl-4`} />
-                  </div>
-                  <button onClick={handleVerifyOtp} disabled={loading || otp.length !== 6} className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF3D00] px-4 py-4 font-bold text-white shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-70 disabled:hover:scale-100">
-                    {loading ? <Loader2 size={20} className="animate-spin" /> : t("verify")}
-                  </button>
-                  <button onClick={() => setShowOtp(false)} className="w-full flex justify-center items-center gap-1 text-center text-[13px] font-bold text-[#ff6b00] mt-2 hover:underline">
-                    <ChevronLeft size={16} /> {t("back")}
-                  </button>
-                </>
-              )}
-            </div>
-          )}
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
+                  {loading ? t("pleaseWait") : isLogin ? t("loginBtn") : t("registerBtn")}
+                </button>
+              </>
+            )}
 
-          {/* GITHUB BUTTON */}
-          <div className="mt-6 relative z-10">
-            <button onClick={handleGithubLogin} disabled={loading} className={`w-full flex items-center justify-center gap-2 py-3.5 rounded-xl border-2 font-bold text-[14px] transition-all active:scale-95 disabled:opacity-70 ${isDark ? "bg-[#0A0F19] border-slate-700 text-white hover:bg-slate-800" : "bg-white border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm"}`}>
-              <Github size={20} className={isDark ? "text-white" : "text-gray-900"} /> {t("githubBtn")}
+            {method === "phone" && (
+              <>
+                {!showOtp ? (
+                  <>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="tel"
+                        placeholder={t("phoneLabel")}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleSendOtp}
+                      disabled={loading}
+                      className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
+                      {loading ? t("pleaseWait") : t("sendOtp")}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder={t("otpLabel")}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                        className={inputClass}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleVerifyOtp}
+                      disabled={loading}
+                      className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
+                      {loading ? t("pleaseWait") : t("verify")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setShowOtp(false); setOtp(""); }}
+                      className="w-full mt-2 flex justify-center items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-[#ff6b00] transition-colors"
+                    >
+                      <ChevronLeft size={16} /> {t("back")}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
+          </form>
+
+          <div className="mt-8 text-center relative z-10">
+            <button
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
+              className={`text-[13px] font-bold transition-colors ${isDark ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
+            >
+              {isLogin ? t("noAccount") : t("hasAccount")}
+              <span className="ml-1 text-[#ff6b00] hover:underline">
+                {isLogin ? t("registerHere") : t("loginHere")}
+              </span>
             </button>
           </div>
+        </div>
 
-          {/* TRUST BADGES */}
-          <div className={`mt-6 pt-6 border-t flex flex-col items-center gap-3 relative z-10 ${isDark ? "border-slate-800" : "border-gray-100"}`}>
-            <div className="flex items-center gap-3">
-              <span className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-500 bg-emerald-500/10 px-2.5 py-1 rounded-full">
-                <ShieldCheck size={12} /> {t("secure")}
-              </span>
-              <span className="flex items-center gap-1.5 text-[10px] font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full">
-                <Star size={12} className="fill-amber-500" /> {t("trusted")}
-              </span>
-            </div>
-          </div>
-
-          {/* TOGGLE LOGIN/REGISTER */}
-          {method === "email" && (
-            <div className="mt-6 text-center text-[13px] font-medium relative z-10">
-              <span className={isDark ? "text-slate-400" : "text-gray-500"}>
-                {isLogin ? t("noAccount") + " " : t("hasAccount") + " "}
-              </span>
-              <button onClick={() => { setIsLogin(!isLogin); setError(null); }} className="font-bold text-[#ff6b00] hover:underline">
-                {isLogin ? t("registerHere") : t("loginHere")}
-              </button>
-            </div>
-          )}
+        <div className="mt-8 flex justify-center gap-6 relative z-10">
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold ${isDark ? "text-emerald-500/80" : "text-emerald-600"}`}>
+            <ShieldCheck size={14} /> {t("secure")}
+          </span>
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold ${isDark ? "text-amber-500/80" : "text-amber-600"}`}>
+            <Star size={14} /> {t("trusted")}
+          </span>
         </div>
       </div>
+
+      {/* Invisible Recaptcha Container */}
+      <div id="recaptcha-container"></div>
     </main>
   );
-}; 
+}
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0A0F19] text-white"><Loader2 className="animate-spin text-[#ff6b00]" size={40} /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0F19] text-white">
+        <Loader2 className="animate-spin text-[#ff6b00]" size={40} />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );
