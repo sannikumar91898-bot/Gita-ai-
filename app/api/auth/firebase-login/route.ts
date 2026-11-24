@@ -13,16 +13,16 @@ export const dynamic = "force-dynamic";
 // Marketing Hook (Aapke baaki code ki tarah 10 languages me)
 function getWelcomeMessage(lang: string): string {
   const dict: Record<string, string> = {
-    hi: "",
+    hi: "स्वागत है! आपका खाता सुरक्षित रूप से लॉग इन हो गया है।",
     hinglish: "Welcome! Aapka account securely login ho gaya hai.",
     en: "Welcome! Your account has been securely logged in.",
-    te: "",
-    ta: "",
-    kn: "",
-    bn: "",
-    mr: "",
-    gu: "",
-    ml: "",
+    te: "స్వాగతం! మీ ఖాతా సురక్షితంగా లాగిన్ అయింది.",
+    ta: "வருக! உங்கள் கணக்கு பாதுகாப்பாக உள்நுழைந்துள்ளது.",
+    kn: "ಸ್ವಾಗತ! ನಿಮ್ಮ ಖಾತೆಯು ಸುರಕ್ಷಿತವಾಗಿ ಲಾಗಿನ್ ಆಗಿದೆ.",
+    bn: "স্বাগতম! আপনার অ্যাকাউন্ট নিরাপদে লগইন হয়েছে।",
+    mr: "स्वागत आहे! तुमचे खाते सुरक्षितपणे लॉगिन झाले आहे.",
+    gu: "સ્વાગત છે! તમારું ખાતું સુરક્ષિત રીતે લોગિન થયું છે.",
+    ml: "സ്വാഗതം! നിങ്ങളുടെ അക്കൗണ്ട് സുരക്ഷിതമായി ലോഗിൻ ചെയ്തു.",
   };
   return dict[lang] || dict["en"];
 }
