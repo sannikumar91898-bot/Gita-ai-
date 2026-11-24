@@ -8,7 +8,10 @@ import {
   RecaptchaVerifier, 
   signInWithPhoneNumber,
   signOut as firebaseSignOut,
-  type ConfirmationResult
+  type ConfirmationResult,
+  // 🔥 नए इम्पोर्ट्स (ईमेल लॉगिन के लिए)
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from "firebase/auth";
 
 const firebaseConfig = {
@@ -39,6 +42,11 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/invalid-phone-number": "गलत फोन नंबर। कृपया देश कोड (+91) के साथ डालें।",
       "auth/invalid-verification-code": "गलत OTP। कृपया सही कोड डालें।",
       "auth/invalid-app-credential": "सुरक्षा जाँच (CAPTCHA) विफल रही। कृपया Chrome ब्राउज़र में खोलें या पेज रिफ्रेश करें।",
+      "auth/invalid-email": "ईमेल गलत है। कृपया सही ईमेल डालें।",
+      "auth/user-not-found": "यह ईमेल रजिस्टर्ड नहीं है।",
+      "auth/wrong-password": "पासवर्ड गलत है।",
+      "auth/email-already-in-use": "यह ईमेल पहले से रजिस्टर्ड है। कृपया लॉगिन करें।",
+      "auth/weak-password": "पासवर्ड कम से कम 6 अक्षरों का होना चाहिए।",
       "default": "लॉगिन में समस्या आई। कृपया दोबारा प्रयास करें।"
     },
     hinglish: {
@@ -48,6 +56,11 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/invalid-phone-number": "Galat phone number. Kripya country code (+91) ke sath daalein.",
       "auth/invalid-verification-code": "Galat OTP. Kripya sahi code daalein.",
       "auth/invalid-app-credential": "Security check (CAPTCHA) fail hua. Kripya Chrome browser me kholein ya page refresh karein.",
+      "auth/invalid-email": "Email galat hai. Kripya sahi email daalein.",
+      "auth/user-not-found": "Yeh email registered nahi hai.",
+      "auth/wrong-password": "Password galat hai.",
+      "auth/email-already-in-use": "Yeh email pehle se registered hai. Kripya login karein.",
+      "auth/weak-password": "Password kam se kam 6 aksharon ka hona chahiye.",
       "default": "Login me dikkat aayi. Kripya dobara try karein."
     },
     en: {
@@ -57,6 +70,11 @@ export function getFirebaseError(lang: string, code: string): string {
       "auth/invalid-phone-number": "Invalid phone number. Please include country code.",
       "auth/invalid-verification-code": "Invalid OTP. Please enter the correct code.",
       "auth/invalid-app-credential": "Security check failed. Please open in Chrome browser or refresh.",
+      "auth/invalid-email": "Invalid email address.",
+      "auth/user-not-found": "This email is not registered.",
+      "auth/wrong-password": "Incorrect password.",
+      "auth/email-already-in-use": "Email already in use. Please login.",
+      "auth/weak-password": "Password should be at least 6 characters.",
       "default": "Login failed. Please try again."
     },
     te: { "default": "లాగిన్‌లో సమస్య ఉంది. దయచేసి మళ్లీ ప్రయత్నించండి.", "auth/invalid-app-credential": "భద్రతా తనిఖీ విఫలమైంది. Chrome బ్రౌజర్‌లో తెరవండి." },
@@ -70,6 +88,46 @@ export function getFirebaseError(lang: string, code: string): string {
   const userDict = dict[lang || "hi"] || dict["en"];
   return userDict[code] || userDict["default"];
 }
+
+// ==========================================
+// 🔥 नए फंक्शन्स (Email / Password Login)
+// ==========================================
+
+export const loginWithEmail = async (email: string, pass: string) => {
+  try {
+    const result = await signInWithEmailAndPassword(auth, email, pass);
+    return { user: result.user, error: null };
+  } catch (error: any) {
+    return { user: null, error: error.code };
+  }
+};
+
+export const registerWithEmail = async (email: string, pass: string) => {
+  try {
+    const result = await createUserWithEmailAndPassword(auth, email, pass);
+    return { user: result.user, error: null };
+  } catch (error: any) {
+    return { user: null, error: error.code };
+  }
+};
+
+// 🔥 बैकएंड (PostgreSQL) सेशन बनाने के लिए टोकन लेने का तरीका
+export const getCurrentUserToken = async (): Promise<string | null> => {
+  try {
+    const user = auth.currentUser;
+    if (user) {
+      return await user.getIdToken();
+    }
+    return null;
+  } catch (error) {
+    console.error("Error getting token:", error);
+    return null;
+  }
+};
+
+// ==========================================
+// पुराने फंक्शन्स (जैसे थे वैसे ही)
+// ==========================================
 
 export const loginWithGoogle = async () => {
   try {
@@ -92,12 +150,10 @@ export const loginWithGithub = async () => {
   }
 };
 
-// 🔥 FIX: Proper reCAPTCHA Setup & Cleanup (No innerHTML crash)
 export const setupRecaptcha = (containerId: string = "recaptcha-container") => {
   if (typeof window === "undefined") return null;
   
   try {
-    // 1. Cleanup old verifier properly
     if (window.recaptchaVerifier) {
       window.recaptchaVerifier.clear();
       window.recaptchaVerifier = undefined;
@@ -109,7 +165,6 @@ export const setupRecaptcha = (containerId: string = "recaptcha-container") => {
       return null;
     }
 
-    // 2. Create new verifier and attach to window (Survives React re-renders)
     window.recaptchaVerifier = new RecaptchaVerifier(auth, container, {
       size: "invisible",
       callback: () => {
