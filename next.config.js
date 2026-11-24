@@ -13,7 +13,7 @@ const nextConfig = {
     unoptimized: true, 
   },
   // 4. SWC compiler ko force karo
-  swcMinify: true, 
+  swcMinify: false, 
 };
 
 module.exports = nextConfig;
