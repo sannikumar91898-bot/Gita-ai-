@@ -576,3 +576,141 @@ export default function LoginPage() {
     </Suspense>
   );
 }
+            <button 
+              onClick={() => { setMethod("phone"); setShowOtp(false); setError(null); }}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 text-[13px] font-bold rounded-lg transition-all ${method === "phone" ? "bg-white dark:bg-[#1e293b] text-[#ff6b00] shadow-sm" : "text-gray-500"}`}
+            >
+              <Phone size={16} /> {t("phoneBtn")}
+            </button>
+          </div>
+
+          <div className="relative z-10">
+            {method === "email" ? (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {!isLogin && (
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input
+                      type="text"
+                      placeholder={t("name")}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className={inputClass}
+                      required
+                    />
+                  </div>
+                )}
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="email"
+                    placeholder={t("email")}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                  <input
+                    type="password"
+                    placeholder={t("password")}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </div>
+                
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70 mt-2"
+                >
+                  {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? t("loginBtn") : t("registerBtn"))}
+                </button>
+              </form>
+            ) : (
+              <div className="space-y-4">
+                {!showOtp ? (
+                  <>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="tel"
+                        placeholder={t("phoneLabel")}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                        className={inputClass}
+                        maxLength={10}
+                      />
+                    </div>
+                    <button
+                      onClick={handleSendOtp}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : t("sendOtp")}
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative">
+                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <input
+                        type="text"
+                        placeholder={t("otpLabel")}
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        className={inputClass}
+                        maxLength={6}
+                      />
+                    </div>
+                    <button
+                      onClick={handleVerifyOtp}
+                      disabled={loading}
+                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : t("verify")}
+                    </button>
+                    <button
+                      onClick={() => setShowOtp(false)}
+                      className="w-full text-center text-[13px] font-bold text-gray-500 mt-2 hover:text-gray-800 dark:hover:text-gray-300"
+                    >
+                      {t("back")}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 text-center relative z-10">
+            <button
+              onClick={() => { setIsLogin(!isLogin); setError(null); }}
+              className="text-[13px] font-bold text-[#ff6b00] hover:underline"
+            >
+              {isLogin ? t("noAccount") + " " + t("registerHere") : t("hasAccount") + " " + t("loginHere")}
+            </button>
+          </div>
+          
+          <div id="recaptcha-container"></div>
+        </div>
+        
+        <div className="mt-6 flex items-center justify-center gap-4 text-[11px] font-bold text-gray-500">
+          <span className="flex items-center gap-1"><ShieldCheck size={14} className="text-green-500" /> {t("secure")}</span>
+          <span className="flex items-center gap-1"><Star size={14} className="text-yellow-500" /> {t("trusted")}</span>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="animate-spin text-[#ff6b00]" size={32} /></div>}>
+      <LoginContent />
+    </Suspense>
+  );
+}
