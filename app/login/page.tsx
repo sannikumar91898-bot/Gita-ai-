@@ -4,7 +4,7 @@
 import { useState, Suspense, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Mail, Lock, User, Sparkles, ShieldCheck, Loader2, Star, Phone } from "lucide-react";
+import { ArrowLeft, Mail, Lock, User, Sparkles, ShieldCheck, Loader2, Star, Phone, ChevronLeft } from "lucide-react";
 import { useApp } from "../Providers";
 import { loginWithGoogle, setupRecaptcha, sendPhoneOTP, getFirebaseError, loginWithEmail, registerWithEmail } from "../../lib/firebase";
 import { ConfirmationResult, RecaptchaVerifier } from "firebase/auth";
@@ -282,8 +282,8 @@ function LoginContent() {
                       placeholder={t("name")}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className={inputClass}
                       required
+                      className={inputClass}
                     />
                   </div>
                 )}
@@ -294,8 +294,8 @@ function LoginContent() {
                     placeholder={t("email")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className={inputClass}
                     required
+                    className={inputClass}
                   />
                 </div>
                 <div className="relative">
@@ -305,17 +305,18 @@ function LoginContent() {
                     placeholder={t("password")}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className={inputClass}
                     required
+                    className={inputClass}
                   />
                 </div>
-                
+
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70 mt-2"
+                  className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
                 >
-                  {loading ? <Loader2 className="animate-spin" size={20} /> : (isLogin ? t("loginBtn") : t("registerBtn"))}
+                  {loading ? <Loader2 className="animate-spin" size={20} /> : <Sparkles size={20} />}
+                  {loading ? t("pleaseWait") : isLogin ? t("loginBtn") : t("registerBtn")}
                 </button>
               </form>
             ) : (
@@ -328,44 +329,47 @@ function LoginContent() {
                         type="tel"
                         placeholder={t("phoneLabel")}
                         value={phone}
-                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                         className={inputClass}
-                        maxLength={10}
                       />
                     </div>
                     <button
+                      type="button"
                       onClick={handleSendOtp}
                       disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                      className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
                     >
-                      {loading ? <Loader2 className="animate-spin" size={20} /> : t("sendOtp")}
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
+                      {loading ? t("pleaseWait") : t("sendOtp")}
                     </button>
                   </>
                 ) : (
                   <>
                     <div className="relative">
-                      <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                       <input
                         type="text"
                         placeholder={t("otpLabel")}
                         value={otp}
-                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         className={inputClass}
-                        maxLength={6}
                       />
                     </div>
                     <button
+                      type="button"
                       onClick={handleVerifyOtp}
                       disabled={loading}
-                      className="w-full flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] p-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
+                      className="w-full mt-2 flex justify-center items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff6b00] to-[#ff3d00] px-4 py-4 font-bold text-white shadow-lg transition-transform active:scale-95 disabled:opacity-70"
                     >
-                      {loading ? <Loader2 className="animate-spin" size={20} /> : t("verify")}
+                      {loading ? <Loader2 className="animate-spin" size={20} /> : <ShieldCheck size={20} />}
+                      {loading ? t("pleaseWait") : t("verify")}
                     </button>
                     <button
-                      onClick={() => setShowOtp(false)}
-                      className="w-full text-center text-[13px] font-bold text-gray-500 mt-2 hover:text-gray-800 dark:hover:text-gray-300"
+                      type="button"
+                      onClick={() => { setShowOtp(false); setOtp(""); }}
+                      className="w-full mt-2 flex justify-center items-center gap-2 text-[13px] font-bold text-gray-500 hover:text-[#ff6b00] transition-colors"
                     >
-                      {t("back")}
+                      <ChevronLeft size={16} /> {t("back")}
                     </button>
                   </>
                 )}
@@ -375,28 +379,43 @@ function LoginContent() {
 
           <div className="mt-8 text-center relative z-10">
             <button
-              onClick={() => { setIsLogin(!isLogin); setError(null); }}
-              className="text-[13px] font-bold text-[#ff6b00] hover:underline"
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError(null);
+              }}
+              className={`text-[13px] font-bold transition-colors ${isDark ? "text-slate-400 hover:text-white" : "text-gray-500 hover:text-gray-900"}`}
             >
-              {isLogin ? t("noAccount") + " " + t("registerHere") : t("hasAccount") + " " + t("loginHere")}
+              {isLogin ? t("noAccount") : t("hasAccount")}
+              <span className="ml-1 text-[#ff6b00] hover:underline">
+                {isLogin ? t("registerHere") : t("loginHere")}
+              </span>
             </button>
           </div>
-          
-          <div id="recaptcha-container"></div>
         </div>
-        
-        <div className="mt-6 flex items-center justify-center gap-4 text-[11px] font-bold text-gray-500">
-          <span className="flex items-center gap-1"><ShieldCheck size={14} className="text-green-500" /> {t("secure")}</span>
-          <span className="flex items-center gap-1"><Star size={14} className="text-yellow-500" /> {t("trusted")}</span>
+
+        <div className="mt-8 flex justify-center gap-6 relative z-10">
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold ${isDark ? "text-emerald-500/80" : "text-emerald-600"}`}>
+            <ShieldCheck size={14} /> {t("secure")}
+          </span>
+          <span className={`flex items-center gap-1.5 text-[11px] font-bold ${isDark ? "text-amber-500/80" : "text-amber-600"}`}>
+            <Star size={14} /> {t("trusted")}
+          </span>
         </div>
       </div>
+
+      {/* Invisible Recaptcha Container */}
+      <div id="recaptcha-container"></div>
     </main>
   );
 }
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center"><Loader2 className="animate-spin text-[#ff6b00]" size={32} /></div>}>
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#0A0F19] text-white">
+        <Loader2 className="animate-spin text-[#ff6b00]" size={40} />
+      </div>
+    }>
       <LoginContent />
     </Suspense>
   );
