@@ -20,12 +20,10 @@ function LoginContent() {
   const [isLogin, setIsLogin] = useState(true);
   const [method, setMethod] = useState<"email" | "phone">("email"); 
 
-  // Email State
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Phone State
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [showOtp, setShowOtp] = useState(false);
@@ -35,7 +33,6 @@ function LoginContent() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null); 
 
-  // 10 Languages Dictionary
   const getLoginText = (key: string) => {
     const dict: Record<string, Record<string, string>> = {
       hi: {
@@ -73,14 +70,7 @@ function LoginContent() {
         orText: "OR CONTINUE WITH", googleBtn: "Continue with Google", githubBtn: "GitHub", phoneBtn: "Phone",
         phoneLabel: "Mobile Number", sendOtp: "Send OTP", otpLabel: "Enter OTP", verify: "Verify", back: "Back",
         initError: "Phone verification failed to init. Refresh page."
-      },
-      te: { login: "లాగిన్", createAccount: "ఖాతా సృష్టించండి", welcomeBack: "తిరిగి స్వాగతం", joinGita: "గీత AIలో చేరండి", loginDesc: "మీ వాలెట్ మరియు కుండలిని యాక్సెస్ చేయడానికి లాగిన్ చేయండి.", joinDesc: "మీ చాట్లు సేవ్ చేయడానికి ఖాతా సృష్టించండి.", name: "మీ పేరు", email: "ఇమెయిల్", password: "పాస్‌వర్డ్", loginBtn: "లాగిన్", registerBtn: "నమోదు చేయండి", noAccount: "ఖాతా లేదా?", hasAccount: "ఖాతా ఉందా?", registerHere: "నమోదు చేయండి", loginHere: "లాగిన్ చేయండి", pleaseWait: "వేచి ఉండండి...", secure: "100% సురక్షితం", trusted: "10,000+ నమ్మకం", orText: "లేదా ఈమెయిల్/ఫోన్ తో", googleBtn: "Google తో కొనసాగండి", githubBtn: "GitHub", phoneBtn: "ఫోన్", phoneLabel: "మొబైల్ నంబర్", sendOtp: "OTP పంపండి", otpLabel: "OTP నమోదు చేయండి", verify: "ధృవీకరించండి", back: "వెనుకకు", initError: "ఫోన్ వెరిఫికేషన్ ప్రారంభం కాలేదు." },
-      ta: { login: "உள்நுழை", createAccount: "கணக்கை உருவாக்கு", welcomeBack: "மீண்டும் வருக", joinGita: "கீதா AI இல் சேரவும்", loginDesc: "உங்கள் பணப்பை மற்றும் ஜாதகத்தை அணுக உள்நுழையவும்.", joinDesc: "உங்கள் அரட்டைகளை சேமிக்க கணக்கை உருவாக்கவும்.", name: "உங்கள் பெயர்", email: "மின்னஞ்சல்", password: "கடவுச்சொல்", loginBtn: "உள்நுழை", registerBtn: "பதிவு செய்", noAccount: "கணக்கு இல்லையா?", hasAccount: "கணக்கு உள்ளதா?", registerHere: "பதிவு செய்யவும்", loginHere: "உள்நுழையவும்", pleaseWait: "காத்திருங்கள்...", secure: "100% பாதுகாப்பானது", trusted: "10,000+ நம்பிக்கை", orText: "அல்லது மின்னஞ்சல்/தொலைபேசி", googleBtn: "Google மூலம் தொடரவும்", githubBtn: "GitHub", phoneBtn: "தொலைபேசி", phoneLabel: "மொபைல் எண்", sendOtp: "OTP அனுப்பு", otpLabel: "OTP ஐ உள்ளிடவும்", verify: "சரிபார்க்கவும்", back: "பின்னால்", initError: "தொலைபேசி சரிபார்ப்பு தோல்வியடைந்தது." },
-      kn: { login: "ಲಾಗಿನ್", createAccount: "ಖಾತೆ ರಚಿಸಿ", welcomeBack: "ಮತ್ತೆ ಸ್ವಾಗತ", joinGita: "ಗೀತಾ AI ಗೆ ಸೇರಿ", loginDesc: "ನಿಮ್ಮ ವಾಲೆಟ್ ಮತ್ತು ಕುಂಡಲಿಯನ್ನು ಪ್ರವೇಶಿಸಲು ಲಾಗಿನ್ ಮಾಡಿ.", joinDesc: "ನಿಮ್ಮ ಚಾಟ್‌ಗಳನ್ನು ಉಳಿಸಲು ಖಾತೆ ರಚಿಸಿ.", name: "ನಿಮ್ಮ ಹೆಸರು", email: "ಇಮೇಲ್", password: "ಪಾಸ್‌ವರ್ಡ್", loginBtn: "ಲಾಗಿನ್", registerBtn: "ನೋಂದಾಯಿಸಿ", noAccount: "ಖಾತೆ ಇಲ್ಲವೇ?", hasAccount: "ಖಾತೆ ಇದೆಯೇ?", registerHere: "ನೋಂದಾಯಿಸಿ", loginHere: "ಲಾಗಿನ್ ಮಾಡಿ", pleaseWait: "ನಿರೀಕ್ಷಿಸಿ...", secure: "100% ಸುರಕ್ಷಿತ", trusted: "10,000+ ನಂಬಿಕೆ", orText: "ಅಥವಾ ಇಮೇಲ್/ಫೋನ್", googleBtn: "Google ನೊಂದಿಗೆ ಮುಂದುವರಿಸಿ", githubBtn: "GitHub", phoneBtn: "ಫೋನ್", phoneLabel: "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ", sendOtp: "OTP ಕಳುಹಿಸಿ", otpLabel: "OTP ನಮೂದಿಸಿ", verify: "ಪರಿಶೀಲಿಸಿ", back: "ಹಿಂದೆ", initError: "ಫೋನ್ ಪರಿಶೀಲನೆ ವಿಫಲವಾಗಿದೆ." },
-      bn: { login: "লগইন", createAccount: "অ্যাকাউন্ট তৈরি করুন", welcomeBack: "স্বাগতম", joinGita: "গীতা AI-তে যোগ দিন", loginDesc: "আপনার ওয়ালেট এবং কুণ্ডলী অ্যাক্সেস করতে লগইন করুন।", joinDesc: "আপনার চ্যাট সংরক্ষণ করতে অ্যাকাউন্ট তৈরি করুন।", name: "আপনার নাম", email: "ইমেল", password: "পাসওয়ার্ড", loginBtn: "লগইন", registerBtn: "নিবন্ধন করুন", noAccount: "অ্যাকাউন্ট নেই?", hasAccount: "অ্যাকাউন্ট আছে?", registerHere: "নিবন্ধন করুন", loginHere: "লগইন করুন", pleaseWait: "অপেক্ষা করুন...", secure: "100% সুরক্ষিত", trusted: "10,000+ আস্থা", orText: "অথবা ইমেল/ফোন", googleBtn: "Google এর সাথে চালিয়ে যান", githubBtn: "GitHub", phoneBtn: "ফোন", phoneLabel: "মোবাইল নম্বর", sendOtp: "OTP পাঠান", otpLabel: "OTP লিখুন", verify: "যাচাই করুন", back: "ফিরে যান", initError: "ফোন যাচাইকরণ ব্যর্থ হয়েছে।" },
-      mr: { login: "लॉग इन करा", createAccount: "खाते तयार करा", welcomeBack: "स्वागत आहे", joinGita: "गीता AI मध्ये सामील व्हा", loginDesc: "तुमचे वॉलेट आणि कुंडली ॲक्सेस करण्यासाठी लॉग इन करा.", joinDesc: "तुमच्या चॅट जतन करण्यासाठी खाते तयार करा.", name: "तुमचे नाव", email: "ईमेल", password: "पासवर्ड", loginBtn: "लॉग इन करा", registerBtn: "नोंदणी करा", noAccount: "खाते नाही?", hasAccount: "खाते आहे?", registerHere: "नोंदणी करा", loginHere: "लॉग इन करा", pleaseWait: "थांबा...", secure: "100% सुरक्षित", trusted: "10,000+ विश्वास", orText: "किंवा ईमेल/फोन", googleBtn: "Google सह सुरू ठेवा", githubBtn: "GitHub", phoneBtn: "फोन", phoneLabel: "मोबाइल नंबर", sendOtp: "OTP पाठवा", otpLabel: "OTP प्रविष्ट करा", verify: "सत्यापित करा", back: "मागे", initError: "फोन सत्यापन अयशस्वी." },
-      gu: { login: "લોગિન", createAccount: "એકાઉન્ટ બનાવો", welcomeBack: "સ્વાગત છે", joinGita: "ગીતા AI માં જોડાઓ", loginDesc: "તમારા વોલેટ અને કુંડળી ઍક્સેસ કરવા લોગિન કરો.", joinDesc: "તમારી ચેટ સાચવવા એકાઉન્ટ બનાવો.", name: "તમારું નામ", email: "ઇમેઇલ", password: "પાસવર્ડ", loginBtn: "લોગિન", registerBtn: "નોંધણી કરો", noAccount: "એકાઉન્ટ નથી?", hasAccount: "એકાઉન્ટ છે?", registerHere: "નોંધણી કરો", loginHere: "લોગિન કરો", pleaseWait: "રાહ જુઓ...", secure: "100% સુરક્ષિત", trusted: "10,000+ વિશ્વાસ", orText: "અથવા ઇમેઇલ/ફોન", googleBtn: "Google સાથે ચાલુ રાખો", githubBtn: "GitHub", phoneBtn: "ફોન", phoneLabel: "મોબાઇલ નંબર", sendOtp: "OTP મોકલો", otpLabel: "OTP દાખલ કરો", verify: "ચકાસો", back: "પાછળ", initError: "ફોન ચકાસણી નિષ્ફળ." },
-      ml: { login: "ലോഗിൻ", createAccount: "അക്കൗണ്ട് സൃഷ്ടിക്കുക", welcomeBack: "സ്വാഗതം", joinGita: "ഗീത AI-യിൽ ചേരുക", loginDesc: "നിങ്ങളുടെ വാലറ്റും കുണ്ഡലിയും ആക്സസ് ചെയ്യാൻ ലോഗിൻ ചെയ്യുക.", joinDesc: "നിങ്ങളുടെ ചാറ്റുകൾ സേവ് ചെയ്യാൻ അക്കൗണ്ട് സൃഷ്ടിക്കുക.", name: "നിങ്ങളുടെ പേര്", email: "ഇമെയിൽ", password: "പാസ്‌വേഡ്", loginBtn: "ലോഗിൻ", registerBtn: "രജിസ്റ്റർ ചെയ്യുക", noAccount: "അക്കൗണ്ട് ഇല്ലേ?", hasAccount: "അക്കൗണ്ട് ഉണ്ടോ?", registerHere: "രജിസ്റ്റർ ചെയ്യുക", loginHere: "ലോഗിൻ ചെയ്യുക", pleaseWait: "കാത്തിരിക്കുക...", secure: "100% സുരക്ഷിതം", trusted: "10,000+ വിശ്വാസം", orText: "അല്ലെങ്കിൽ ഇമെയിൽ/ഫോൺ", googleBtn: "Google ഉപയോഗിച്ച് തുടരുക", githubBtn: "GitHub", phoneBtn: "ഫോൺ", phoneLabel: "മൊബൈൽ നമ്പർ", sendOtp: "OTP അയയ്ക്കുക", otpLabel: "OTP നൽകുക", verify: "പരിശോധിക്കുക", back: "പിന്നോട്ട്", initError: "ഫോൺ വെരിഫിക്കേഷൻ പരാജയപ്പെട്ടു." }
+      }
     };
     return dict[lang || "hi"]?.[key] || dict["en"][key] || dict["hi"][key];
   };
@@ -403,7 +393,6 @@ function LoginContent() {
         </div>
       </div>
 
-      {/* Invisible Recaptcha Container */}
       <div id="recaptcha-container"></div>
     </main>
   );
