@@ -424,10 +424,11 @@ const getUIText = (lang: string, key: string) => {
 // 6. HELPERS (score label, normalisers for API result)
 // ============================================================
 const getScoreMeta = (score: number, t: (k: string) => string) => {
-  if (score >= 30) return { label: t("labelUtkrisht"), from: "#34d399", to: "#10b981", text: "text-emerald-300" };
-  if (score >= 25) return { label: t("labelBahutAcha"), from: "#a3e635", to: "#22c55e", text: "text-lime-300" };
-  if (score >= 18) return { label: t("labelAcha"), from: "#fbbf24", to: "#f59e0b", text: "text-amber-300" };
-  if (score >= 12) return { label: t("labelAusat"), from: "#fb923c", to: "#f97316", text: "text-orange-300" };
+  // Backend (route.ts) ke getScoreLabel jaisi hi ranges
+  if (score >= 32) return { label: t("labelUtkrisht"), from: "#34d399", to: "#10b981", text: "text-emerald-300" };
+  if (score >= 29) return { label: t("labelBahutAcha"), from: "#a3e635", to: "#22c55e", text: "text-lime-300" };
+  if (score >= 25) return { label: t("labelAcha"), from: "#fbbf24", to: "#f59e0b", text: "text-amber-300" };
+  if (score >= 18) return { label: t("labelAusat"), from: "#fb923c", to: "#f97316", text: "text-orange-300" };
   return { label: t("labelSudhar"), from: "#fb7185", to: "#ef4444", text: "text-rose-300" };
 };
 
@@ -654,9 +655,11 @@ export default function MatchingPage() {
     bhakoot: rawDoshas?.bhakoot?.description || rawDoshas?.bhakoot?.remedy || "",
   };
   const strengths = toArray(result?.strengths).slice(0, 3);
-  const attention = toArray(result?.attention ?? result?.attentionPoints ?? result?.challenges);
+  const attention = toArray(result?.attentionAreas ?? result?.attention ?? result?.attentionPoints ?? result?.challenges);
   const advice = toArray(result?.advice ?? result?.practicalAdvice);
-  const nextSteps = toArray(result?.nextSteps);
+  const nextSteps = result?.nextSteps
+    ? toArray(result.nextSteps)
+    : [result?.nextMuhurat, result?.nextDasha].filter(Boolean);
   const soul = result?.soulSummary ?? result?.summary ?? result?.soul ?? "";
 
   const statusStyle = (s: string) =>
