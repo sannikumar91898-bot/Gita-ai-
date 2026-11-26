@@ -11,6 +11,70 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "../Providers";
+"use client";
+import { useState } from "react";
+
+// Bina API key ke, India ke major shehron ki list (Isko aap badha sakte hain)
+const INDIAN_CITIES = [
+  { name: "Patna, Bihar", lat: 25.5941, lng: 85.1376, timeZone: "Asia/Kolkata" },
+  { name: "Delhi, NCR", lat: 28.6139, lng: 77.2090, timeZone: "Asia/Kolkata" },
+  { name: "Mumbai, Maharashtra", lat: 19.0760, lng: 72.8777, timeZone: "Asia/Kolkata" },
+  { name: "Lucknow, Uttar Pradesh", lat: 26.8467, lng: 80.9462, timeZone: "Asia/Kolkata" },
+  { name: "Jaipur, Rajasthan", lat: 26.9124, lng: 75.7873, timeZone: "Asia/Kolkata" },
+  { name: "Bhopal, Madhya Pradesh", lat: 23.2599, lng: 77.4126, timeZone: "Asia/Kolkata" },
+  { name: "Kolkata, West Bengal", lat: 22.5726, lng: 88.3639, timeZone: "Asia/Kolkata" },
+  { name: "Chennai, Tamil Nadu", lat: 13.0827, lng: 80.2707, timeZone: "Asia/Kolkata" },
+  { name: "Bengaluru, Karnataka", lat: 12.9716, lng: 77.5946, timeZone: "Asia/Kolkata" },
+  { name: "Hyderabad, Telangana", lat: 17.3850, lng: 78.4867, timeZone: "Asia/Kolkata" },
+];
+
+// Component ke andar:
+const [searchTerm, setSearchTerm] = useState("");
+const [showDropdown, setShowDropdown] = useState(false);
+const [selectedCity, setSelectedCity] = useState<any>(null);
+
+// Filter logic
+const filteredCities = INDIAN_CITIES.filter(city => 
+  city.name.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
+// Input Field (Aapke design ke hisaab se class lagayein)
+<div className="relative">
+  <input 
+    type="text"
+    className="your-existing-classes w-full" // Apni purani classes yahan daalein
+    value={searchTerm}
+    onChange={(e) => {
+      setSearchTerm(e.target.value);
+      setShowDropdown(true);
+      setSelectedCity(null); // Reset if they type again
+    }}
+    placeholder="Place of birth (e.g. Patna, Bihar)"
+  />
+  
+  {/* Dropdown Results */}
+  {showDropdown && searchTerm && (
+    <ul className="absolute z-50 w-full bg-gray-800 border border-gray-600 rounded mt-1 max-h-40 overflow-y-auto">
+      {filteredCities.length > 0 ? (
+        filteredCities.map((city, idx) => (
+          <li 
+            key={idx} 
+            className="p-2 hover:bg-gray-700 cursor-pointer text-white"
+            onClick={() => {
+              setSearchTerm(city.name);
+              setSelectedCity(city);
+              setShowDropdown(false);
+            }}
+          >
+            {city.name}
+          </li>
+        ))
+      ) : (
+        <li className="p-2 text-gray-400">City not found</li>
+      )}
+    </ul>
+  )}
+</div>
 
 // ============================================================
 // Loading Text — 10 Languages
@@ -196,11 +260,69 @@ export default function MatchingPage() {
                   <ChevronDown size={16} className="text-slate-400" />
                 </div>
               </div>
-              <div className={`flex items-center gap-2 rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                <MapPin size={16} className="text-slate-400" />
-                <input type="text" placeholder={t("city")} className="w-full bg-transparent focus:outline-none" />
-              </div>
-            </div>
+import { useState } from "react";
+
+// Bina API key ke, India ke major shehron ki list (Isko aap badha sakte hain)
+const INDIAN_CITIES = [
+  { name: "Patna, Bihar", lat: 25.5941, lng: 85.1376, timeZone: "Asia/Kolkata" },
+  { name: "Delhi, NCR", lat: 28.6139, lng: 77.2090, timeZone: "Asia/Kolkata" },
+  { name: "Mumbai, Maharashtra", lat: 19.0760, lng: 72.8777, timeZone: "Asia/Kolkata" },
+  { name: "Lucknow, Uttar Pradesh", lat: 26.8467, lng: 80.9462, timeZone: "Asia/Kolkata" },
+  { name: "Jaipur, Rajasthan", lat: 26.9124, lng: 75.7873, timeZone: "Asia/Kolkata" },
+  { name: "Bhopal, Madhya Pradesh", lat: 23.2599, lng: 77.4126, timeZone: "Asia/Kolkata" },
+  { name: "Kolkata, West Bengal", lat: 22.5726, lng: 88.3639, timeZone: "Asia/Kolkata" },
+  { name: "Chennai, Tamil Nadu", lat: 13.0827, lng: 80.2707, timeZone: "Asia/Kolkata" },
+  { name: "Bengaluru, Karnataka", lat: 12.9716, lng: 77.5946, timeZone: "Asia/Kolkata" },
+  { name: "Hyderabad, Telangana", lat: 17.3850, lng: 78.4867, timeZone: "Asia/Kolkata" },
+];
+
+// Component ke andar:
+const [searchTerm, setSearchTerm] = useState("");
+const [showDropdown, setShowDropdown] = useState(false);
+const [selectedCity, setSelectedCity] = useState<any>(null);
+
+// Filter logic
+const filteredCities = INDIAN_CITIES.filter(city => 
+  city.name.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
+// Input Field (Aapke design ke hisaab se class lagayein)
+<div className="relative">
+  <input 
+    type="text"
+    className="your-existing-classes w-full" // Apni purani classes yahan daalein
+    value={searchTerm}
+    onChange={(e) => {
+      setSearchTerm(e.target.value);
+      setShowDropdown(true);
+      setSelectedCity(null); // Reset if they type again
+    }}
+    placeholder="Place of birth (e.g. Patna, Bihar)"
+  />
+  
+  {/* Dropdown Results */}
+  {showDropdown && searchTerm && (
+    <ul className="absolute z-50 w-full bg-gray-800 border border-gray-600 rounded mt-1 max-h-40 overflow-y-auto">
+      {filteredCities.length > 0 ? (
+        filteredCities.map((city, idx) => (
+          <li 
+            key={idx} 
+            className="p-2 hover:bg-gray-700 cursor-pointer text-white"
+            onClick={() => {
+              setSearchTerm(city.name);
+              setSelectedCity(city);
+              setShowDropdown(false);
+            }}
+          >
+            {city.name}
+          </li>
+        ))
+      ) : (
+        <li className="p-2 text-gray-400">City not found</li>
+      )}
+    </ul>
+  )}
+</div>
           </div>
 
           {/* DIVIDER HEART */}
