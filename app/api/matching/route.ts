@@ -1,13 +1,79 @@
 // ============================================================
-// PATCH for app/api/matching/route.ts
-// Step 1: GENERAL_MSGS ka type badlo:
-//   const GENERAL_MSGS: Record<"hi" | "hinglish" | "en", GeneralMessages> = {
-// ko isse replace karo:
-//   const GENERAL_MSGS: Record<LangKey, GeneralMessages> = {
-// Step 2: hi / hinglish / en ke baad (closing "};" se pehle) neeche wale 7 blocks paste karo.
-// Step 3: getGeneral() ko neeche wale version se replace karo.
+// 4. GENERAL MESSAGES (ALL 10 LANGUAGES)
 // ============================================================
-
+const GENERAL_MSGS: Record<LangKey, GeneralMessages> = {
+  hi: {
+    soulSummary: "{boy} और {girl} — मन की समझ अच्छी है, भावनाएं मिलती हैं। थोड़ा संवाद सुधारें तो यह रिश्ता दीर्घकाल तक बना रहेगा।",
+    strengths: [
+      "चंद्रमा की स्थिति से मन की समझ अच्छी है — सुख-दुख बांटने में आसानी।",
+      "ग्रह मैत्री मजबूत है — सोच और मूल्यों में सामंजस्य।",
+      "गण मिलान शुभ है — स्वभाव में तालमेल।",
+      "योनि मिलान सहज है — शारीरिक और मानसिक लय बनी रहती है।",
+      "वश्य और तारा मिलान संतुलित — एक-दूसरे को सहजता से समझ पाते हैं।",
+    ],
+    attentionAreas: [
+      "स्वभाव स्वतंत्र है → थोड़ा स्पेस दें, रिश्ता और मजबूत रहेगा।",
+      "बहस के समय थोड़ा धैर्य — प्रेम बना रहेगा।",
+      "आर्थिक निर्णय साथ लें — विश्वास बढ़ेगा।",
+    ],
+    practicalAdvice: [
+      "हर सोमवार साथ शिव जी को जल अर्पित करें।",
+      "महीने में एक बार आमने-सामने खुलकर बात करें।",
+    ],
+    nextMuhurat: "शुभ विवाह तिथि देखें",
+    nextDasha: "दोनों की वर्तमान दशा जानें",
+    nextChat: "ज्योतिषी से बात करें — पहली चैट FREE",
+    nextPdf: "PDF डाउनलोड करें",
+    disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष सिद्धांतों पर आधारित है। यह व्यक्तिगत मार्गदर्शन है, चिकित्सीय/कानूनी/व्यावसायिक सलाह नहीं। अंतिम निर्णय अपनी समझ और परिवार के साथ लें।",
+  },
+  hinglish: {
+    soulSummary: "{boy} aur {girl} — man ki samajh achi hai, bhavnayein milti hain. Thoda samvad sudharein toh yeh rishta deerghkal tak bana rahega.",
+    strengths: [
+      "Chandra ki sthiti se man ki samajh achi hai — sukh-dukh baantne mein aasani.",
+      "Graha maitri mazboot hai — soch aur values mein samanjasya.",
+      "Gana milan shubh hai — swabhav mein taalmel.",
+      "Yoni milan sahaj hai — sharirik aur manasik lay bani rehti hai.",
+      "Vashya aur Tara milan santulit — ek-doosre ko sahajta se samajh paate hain.",
+    ],
+    attentionAreas: [
+      "Swabhav swatantra hai → thoda space dein, rishta aur mazboot rahega.",
+      "Behes ke samay thoda dhairya — prem bana rahega.",
+      "Aarthik nirnay saath lein — vishwas badhega.",
+    ],
+    practicalAdvice: [
+      "Har Somvar saath Shiv ji ko jal arpit karein.",
+      "Mahine mein ek baar aamne-saamne khulkar baat karein.",
+    ],
+    nextMuhurat: "Shubh Vivah Tithi dekhein",
+    nextDasha: "Dono ki vartaman dasha jaanein",
+    nextChat: "Jyotishi se baat karein — pehli chat FREE",
+    nextPdf: "PDF Download karein",
+    disclaimer: "Yeh report traditional Vedic astrology siddhanton par aadharit hai. Yeh personal guidance hai, medical/legal/professional advice nahi. Final decision apni samajh aur family ke saath lein.",
+  },
+  en: {
+    soulSummary: "{boy} and {girl} — emotional understanding is good, feelings align. With slightly better communication, this bond will last long-term.",
+    strengths: [
+      "Moon placement gives strong emotional understanding — easy to share joys and sorrows.",
+      "Graha Maitri is strong — alignment in thoughts and values.",
+      "Gana match is auspicious — natural temperament harmony.",
+      "Yoni match is smooth — physical and mental rhythm stays aligned.",
+      "Vashya and Tara matches are balanced — you understand each other naturally.",
+    ],
+    attentionAreas: [
+      "Both have independent natures → giving each other space will strengthen the bond.",
+      "A little patience during arguments — love will stay intact.",
+      "Take financial decisions together — trust will grow.",
+    ],
+    practicalAdvice: [
+      "Offer water to Shiv ji together every Monday.",
+      "Have an open face-to-face conversation once a month.",
+    ],
+    nextMuhurat: "Check auspicious wedding date",
+    nextDasha: "Check current dasha for both",
+    nextChat: "Talk to astrologer — first chat FREE",
+    nextPdf: "Download PDF",
+    disclaimer: "This report is based on traditional Vedic astrology principles. It is personal guidance, not medical/legal/professional advice. Take final decisions with your own understanding and family.",
+  },
   te: {
     soulSummary: "{boy} మరియు {girl} — మనసుల అవగాహన బాగుంది, భావాలు కలుస్తాయి. సంభాషణ కొంచెం మెరుగుపరిస్తే ఈ బంధం చాలా కాలం నిలుస్తుంది.",
     strengths: [
@@ -176,10 +242,4 @@
     nextPdf: "PDF ഡൗൺലോഡ് ചെയ്യുക",
     disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ഇത് വ്യക്തിപരമായ മാർഗനിർദേശം മാത്രമാണ്, വൈദ്യ/നിയമ/പ്രൊഫഷണൽ ഉപദേശമല്ല. അന്തിമ തീരുമാനം സ്വന്തം ധാരണയും കുടുംബവുമായി എടുക്കുക.",
   },
-
-// ------------------------------------------------------------
-// Step 3: getGeneral() replace:
-// ------------------------------------------------------------
-function getGeneral(lang: LangKey): GeneralMessages {
-  return GENERAL_MSGS[lang] || GENERAL_MSGS.en;
-}
+};
