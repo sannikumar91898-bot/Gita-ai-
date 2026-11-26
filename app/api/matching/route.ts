@@ -1,491 +1,185 @@
-// app/api/matching/route.ts
-import { NextResponse } from "next/server";
-import { eq, sql } from "drizzle-orm";
-import { getUser } from "@/auth";
-import { db } from "@/index";
-import { users } from "@/schema";
-import { calculateVedicMatching, type BirthPlace } from "@/lib/vedic-matching";
+// ============================================================
+// PATCH for app/api/matching/route.ts
+// Step 1: GENERAL_MSGS ka type badlo:
+//   const GENERAL_MSGS: Record<"hi" | "hinglish" | "en", GeneralMessages> = {
+// ko isse replace karo:
+//   const GENERAL_MSGS: Record<LangKey, GeneralMessages> = {
+// Step 2: hi / hinglish / en ke baad (closing "};" se pehle) neeche wale 7 blocks paste karo.
+// Step 3: getGeneral() ko neeche wale version se replace karo.
+// ============================================================
 
-// ============================================================
-// BILLING CONSTANTS
-// ============================================================
-const FREE_MATCHING_LIMIT = 2;
-const COST_PER_MATCHING_PAISE = 200; // ₹2
-
-// ============================================================
-// 1. LABEL RANGES
-// ============================================================
-function getScoreLabel(score: number): "utkrisht" | "bahut-acha" | "acha" | "ausat" | "sudhar" {
-  if (score >= 32) return "utkrisht";
-  if (score >= 29) return "bahut-acha";
-  if (score >= 25) return "acha";
-  if (score >= 18) return "ausat";
-  return "sudhar";
-}
-
-// ============================================================
-// 2. TYPES
-// ============================================================
-type LangKey = "hi" | "hinglish" | "en" | "te" | "ta" | "kn" | "bn" | "mr" | "gu" | "ml";
-
-interface DoshaMessages {
-  manglikPresent: string;
-  manglikCancelled: string;
-  nadiPresent: string;
-  nadiCancelled: string;
-  bhakootPresent: string;
-  bhakootCancelled: string;
-  safe: string;
-  lowScore: string;
-}
-
-interface GeneralMessages {
-  soulSummary: string;
-  strengths: string[];
-  attentionAreas: string[];
-  practicalAdvice: string[];
-  nextMuhurat: string;
-  nextDasha: string;
-  nextChat: string;
-  nextPdf: string;
-  disclaimer: string;
-}
-
-// ============================================================
-// 3. DOSHA MESSAGES — 10 languages
-// ============================================================
-const DOSHA_MSGS: Record<LangKey, DoshaMessages> = {
-  hi: {
-    manglikPresent: "मांगलिक स्थिति है, पर यह अकेला फैसला नहीं है। चंद्रमा और सप्तम भाव मिलकर रिश्ते को सहज बना रहे हैं। सरल उपाय: साथ में हनुमान चालीसा पढ़ें, मंगलवार का व्रत रखें।",
-    manglikCancelled: "मांगलिक स्थिति है, पर गुरु की दृष्टि / स्वराशि / वक्री होने से इसका प्रभाव शांत हो रहा है। ✅ कुंडली इस दोष से काफी सुरक्षित है।",
-    nadiPresent: "नाड़ी में थोड़ा अंतर है, लेकिन कई मामलों में यह उपाय और सही दशा से संतुलित हो जाता है। सरल उपाय: हर सोमवार मिलकर शिव जी को जल अर्पित करें।",
-    nadiCancelled: "नाड़ी में थोड़ा अंतर है, पर भिन्न राशि होने से दोष भंग हो रहा है। ✅ शुभ संकेत।",
-    bhakootPresent: "भकूट में थोड़ी असामंजस्य है — आर्थिक मामलों में पारदर्शिता और आपसी समझ रखें। एक छोटी आदत: महीने में एक बार खुलकर बजट चर्चा रिश्ते को और मजबूत करेगी।",
-    bhakootCancelled: "भकूट में थोड़ी असामंजस्य है, पर राशि स्वामी एक / मित्र होने से दोष भंग हो रहा है। ✅ स्थिति सुरक्षित है।",
-    safe: "मिलान अच्छा है। कुछ सूक्ष्म बातें हैं जिन्हें समझकर रिश्ते को और सहज बनाया जा सकता है — कोई बड़ी रुकावट नहीं है।",
-    lowScore: "गुण कम हैं, पर सिर्फ 36 गुण से विवाह का फैसला नहीं होता। चंद्रमा (मन), सप्तम भाव और दशा भी देखना जरूरी है — इनकी गहरी जांच के लिए वरिष्ठ ज्योतिषी से बात करें। पहली चैट FREE है।",
-  },
-  hinglish: {
-    manglikPresent: "Manglik sthiti hai, par yeh akela faisla nahi hai. Chandra aur Saptam bhav milkar rishte ko sahaj bana rahe hain. Saral upay: saath mein Hanuman Chalisa padhein, Mangalvar ka vrat rakhein.",
-    manglikCancelled: "Manglik sthiti hai, par Guru ki drishti / swarashi / vakri hone se iska asar shaant ho raha hai. ✅ Kundli is dosh se kaafi surakshit hai.",
-    nadiPresent: "Nadi mein thoda antar hai, lekin kai maamlon mein yeh upay aur sahi dasha se santulit ho jata hai. Saral upay: har Somvar milkar Shiv ji ko jal arpit karein.",
-    nadiCancelled: "Nadi mein thoda antar hai, par bhinna rashi hone se dosh bhang ho raha hai. ✅ Shubh sanket.",
-    bhakootPresent: "Bhakoot mein thodi asamanjasya hai — aarthik maamlon mein pardarshita aur aapas ki samajh rakhein. Ek chhoti aadat: mahine mein ek baar khulkar budget charcha rishte ko aur mazboot karegi.",
-    bhakootCancelled: "Bhakoot mein thodi asamanjasya hai, par rashi swami ek / mitra hone se dosh bhang ho raha hai. ✅ Sthiti surakshit hai.",
-    safe: "Milan acha hai. Kuch sookshma baatein hain jinhe samajhkar rishte ko aur sahaj banaya ja sakta hai — koi badi rukawat nahi hai.",
-    lowScore: "Gun kam hain, par sirf 36 gun se vivah ka faisla nahi hota. Chandra (man), Saptam bhav aur dasha bhi dekhna zaroori hai — inki gehri jaanch ke liye senior astrologer se baat karein. Pehli chat FREE hai.",
-  },
-  en: {
-    manglikPresent: "A Manglik placement is present, but it is not the only factor. Moon and the 7th house together keep the relationship balanced. Simple remedy: recite Hanuman Chalisa together, observe Tuesday fast.",
-    manglikCancelled: "A Manglik placement is present, but Jupiter's aspect / own sign / retrograde is calming its effect. ✅ The chart is largely protected from this dosha.",
-    nadiPresent: "There is a slight Nadi difference, but in many cases it balances out with remedies and the right dasha. Simple remedy: offer water to Shiv ji together every Monday.",
-    nadiCancelled: "There is a slight Nadi difference, but different rashi is cancelling the dosha. ✅ Auspicious sign.",
-    bhakootPresent: "There is some Bhakoot disharmony — keep financial matters transparent and communicate openly. A small habit: a monthly budget discussion will strengthen the relationship.",
-    bhakootCancelled: "There is some Bhakoot disharmony, but same lord / mutual friendship is cancelling it. ✅ Position is safe.",
-    safe: "The match is good. There are some subtle points to understand which can make the relationship even smoother — no major blockage.",
-    lowScore: "The score is low, but 36 guna alone does not decide marriage. Moon (mind), 7th house, and dasha must also be seen — talk to a senior astrologer for a deeper analysis. First chat is FREE.",
-  },
   te: {
-    manglikPresent: "మాంగ్లిక్ స్థితి ఉంది, కానీ ఇది ఒక్కటే నిర్ణయం కాదు. చంద్రుడు మరియు సప్తమ భావం కలిసి సంబంధాన్ని సమతుల్యం చేస్తున్నాయి. సులభ పరిహారం: కలిసి హనుమాన్ చాలీసా చదవండి, మంగళవారం ఉపవాసం ఉండండి.",
-    manglikCancelled: "మాంగ్లిక్ స్థితి ఉంది, కానీ గురు దృష్టి / స్వరాశి / వక్రీ కారణంగా దాని ప్రభావం శాంతించింది. ✅ జాతకం ఈ దోషం నుండి రక్షించబడింది.",
-    nadiPresent: "నాడిలో కొద్దిగా భేదం ఉంది, కానీ చాలా సందర్భాలలో ఇది పరిహారాలు మరియు సరైన దశతో సమతుల్యమవుతుంది. సులభ పరిహారం: ప్రతి సోమవారం కలిసి శివుడికి నీరు సమర్పించండి.",
-    nadiCancelled: "నాడిలో కొద్దిగా భేదం ఉంది, కానీ వేరు రాశి కారణంగా దోషం తొలగుతోంది. ✅ శుభ సంకేతం.",
-    bhakootPresent: "భకూట్లో కొంత అసమన్వయం ఉంది — ఆర్థిక విషయాల్లో పారదర్శకత మరియు పరస్పర అవగాహన ఉంచండి. చిన్న అలవాటు: నెలకోసారి బడ్జెట్ చర్చ సంబంధాన్ని బలపరుస్తుంది.",
-    bhakootCancelled: "భకూట్లో కొంత అసమన్వయం ఉంది, కానీ రాశి స్వామి ఒకటి / మిత్రులు కావడం వల్ల దోషం తొలగుతోంది. ✅ స్థితి సురక్షితం.",
-    safe: "మ్యాచ్ బాగుంది. కొన్ని సూక్ష్మ విషయాలు అర్థం చేసుకుంటే సంబంధం మరింత సులభమవుతుంది — పెద్ద అడ్డంకి ఏదీ లేదు.",
-    lowScore: "స్కోరు తక్కువగా ఉంది, కానీ 36 గుణాలు మాత్రమే వివాహాన్ని నిర్ణయించవు. చంద్రుడు, సప్తమ భావం మరియు దశ కూడా చూడాలి — లోతైన విశ్లేషణ కోసం సీనియర్ జ్యోతిష్యుడిని సంప్రదించండి. మొదటి చాట్ FREE.",
+    soulSummary: "{boy} మరియు {girl} — మనసుల అవగాహన బాగుంది, భావాలు కలుస్తాయి. సంభాషణ కొంచెం మెరుగుపరిస్తే ఈ బంధం చాలా కాలం నిలుస్తుంది.",
+    strengths: [
+      "చంద్రుడి స్థితి వల్ల మనసుల అవగాహన బాగుంది — సుఖదుఃఖాలు పంచుకోవడం సులభం.",
+      "గ్రహ మైత్రి బలంగా ఉంది — ఆలోచనలు, విలువల్లో సామరస్యం.",
+      "గణ మిలనం శుభప్రదం — స్వభావంలో సమన్వయం.",
+      "యోని మిలనం సాఫీగా ఉంది — శారీరక, మానసిక లయ నిలుస్తుంది.",
+      "వశ్య, తారా మిలనం సమతుల్యంగా ఉన్నాయి — ఒకరినొకరు సహజంగా అర్థం చేసుకుంటారు.",
+    ],
+    attentionAreas: [
+      "ఇద్దరిదీ స్వతంత్ర స్వభావం → కొంచెం స్పేస్ ఇవ్వండి, బంధం బలపడుతుంది.",
+      "వాదనల సమయంలో కొంచెం సహనం — ప్రేమ నిలిచి ఉంటుంది.",
+      "ఆర్థిక నిర్ణయాలు కలిసి తీసుకోండి — నమ్మకం పెరుగుతుంది.",
+    ],
+    practicalAdvice: [
+      "ప్రతి సోమవారం కలిసి శివుడికి నీరు సమర్పించండి.",
+      "నెలకోసారి ముఖాముఖి మనసు విప్పి మాట్లాడండి.",
+    ],
+    nextMuhurat: "శుభ వివాహ తేదీ చూడండి",
+    nextDasha: "ఇద్దరి ప్రస్తుత దశ తెలుసుకోండి",
+    nextChat: "జ్యోతిష్కుడితో మాట్లాడండి — మొదటి చాట్ FREE",
+    nextPdf: "PDF డౌన్‌లోడ్ చేయండి",
+    disclaimer: "ఈ నివేదిక సంప్రదాయ వైదిక జ్యోతిష్య సూత్రాలపై ఆధారపడింది. ఇది వ్యక్తిగత మార్గదర్శనం మాత్రమే, వైద్య/న్యాయ/వృత్తిపరమైన సలహా కాదు. తుది నిర్ణయం మీ అవగాహన మరియు కుటుంబంతో తీసుకోండి.",
   },
   ta: {
-    manglikPresent: "மாங்கலிக் நிலை உள்ளது, ஆனால் இது ஒரே முடிவு அல்ல. சந்திரன் மற்றும் சப்தம பாவம் சேர்ந்து உறவை சமநிலைப்படுத்துகின்றன. எளிய பரிகாரம்: ஒன்றாக ஹனுமான் சாலிசா படியுங்கள், செவ்வாய்க்கிழமை விரதம் இருங்கள்.",
-    manglikCancelled: "மாங்கலிக் நிலை உள்ளது, ஆனால் குரு பார்வை / சுய ராசி / வக்ரி காரணமாக அதன் தாக்கம் அமைதியடைந்துள்ளது. ✅ ஜாதகம் இந்த தோஷத்திலிருந்து பாதுகாக்கப்பட்டுள்ளது.",
-    nadiPresent: "நாடியில் சிறிது வேறுபாடு உள்ளது, ஆனால் பல சந்தர்ப்பங்களில் பரிகாரங்கள் மற்றும் சரியான தசையால் சமநிலைப்படும். எளிய பரிகாரம்: திங்கட்கிழமை ஒன்றாக சிவனுக்கு நீர் சமர்ப்பியுங்கள்.",
-    nadiCancelled: "நாடியில் சிறிது வேறுபாடு உள்ளது, ஆனால் வேறு ராசி காரணமாக தோஷம் நீங்குகிறது. ✅ சுப அறிகுறி.",
-    bhakootPresent: "பகூட்டில் சிறிது ஒற்றுமையின்மை உள்ளது — நிதி விஷயங்களில் வெளிப்படைத்தன்மை மற்றும் பரஸ்பர புரிதல் வையுங்கள். சிறிய பழக்கம்: மாதம் ஒருமுறை பட்ஜெட் கலந்துரையாடல் உறவை வலுப்படுத்தும்.",
-    bhakootCancelled: "பகூட்டில் சிறிது ஒற்றுமையின்மை உள்ளது, ஆனால் ராசி அதிபதி ஒன்று / நண்பர்கள் என்பதால் தோஷம் நீங்குகிறது. ✅ நிலை பாதுகாப்பானது.",
-    safe: "பொருத்தம் நல்லது. சில நுட்பமான விஷயங்களை புரிந்துகொண்டால் உறவு இன்னும் எளிதாகும் — பெரிய தடை எதுவும் இல்லை.",
-    lowScore: "மதிப்பெண் குறைவாக உள்ளது, ஆனால் 36 குணங்கள் மட்டும் திருமணத்தை தீர்மானிக்காது. சந்திரன், சப்தம பாவம் மற்றும் தசையும் பார்க்க வேண்டும் — ஆழமான பகுப்பாய்வுக்கு மூத்த ஜோதிடரை அணுகவும். முதல் அரட்டை FREE.",
+    soulSummary: "{boy} மற்றும் {girl} — மன புரிதல் நன்றாக உள்ளது, உணர்வுகள் ஒத்துப்போகின்றன. தொடர்பை சிறிது மேம்படுத்தினால் இந்த உறவு நீண்ட காலம் நிலைக்கும்.",
+    strengths: [
+      "சந்திரன் நிலையால் மன புரிதல் நன்றாக உள்ளது — சுக துக்கங்களைப் பகிர்வது எளிது.",
+      "கிரக மைத்ரி வலுவாக உள்ளது — எண்ணங்கள் மற்றும் மதிப்புகளில் இணக்கம்.",
+      "கண பொருத்தம் சுபம் — குணத்தில் ஒற்றுமை.",
+      "யோனி பொருத்தம் சுமுகம் — உடல் மற்றும் மன இசைவு நிலைக்கும்.",
+      "வசிய மற்றும் தாரா பொருத்தம் சமநிலையில் உள்ளது — ஒருவரையொருவர் இயல்பாகப் புரிந்துகொள்வீர்கள்.",
+    ],
+    attentionAreas: [
+      "இருவருக்கும் சுதந்திர குணம் → சிறிது இடம் கொடுங்கள், உறவு வலுப்படும்.",
+      "வாக்குவாதத்தின் போது சிறிது பொறுமை — அன்பு நிலைத்திருக்கும்.",
+      "நிதி முடிவுகளை சேர்ந்து எடுங்கள் — நம்பிக்கை வளரும்.",
+    ],
+    practicalAdvice: [
+      "ஒவ்வொரு திங்கட்கிழமையும் சேர்ந்து சிவனுக்கு நீர் சமர்ப்பியுங்கள்.",
+      "மாதம் ஒருமுறை நேருக்கு நேர் மனம் திறந்து பேசுங்கள்.",
+    ],
+    nextMuhurat: "சுப திருமண தேதியைப் பாருங்கள்",
+    nextDasha: "இருவரின் தற்போதைய தசையை அறியுங்கள்",
+    nextChat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE",
+    nextPdf: "PDF பதிவிறக்கவும்",
+    disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடக் கொள்கைகளை அடிப்படையாகக் கொண்டது. இது தனிப்பட்ட வழிகாட்டுதல் மட்டுமே, மருத்துவ/சட்ட/தொழில்முறை ஆலோசனை அல்ல. இறுதி முடிவை உங்கள் புரிதலுடனும் குடும்பத்துடனும் எடுங்கள்.",
   },
   kn: {
-    manglikPresent: "ಮಾಂಗ್ಲಿಕ್ ಸ್ಥಿತಿ ಇದೆ, ಆದರೆ ಇದು ಒಂದೇ ನಿರ್ಧಾರವಲ್ಲ. ಚಂದ್ರ ಮತ್ತು ಸಪ್ತಮ ಭಾವ ಸೇರಿ ಸಂಬಂಧವನ್ನು ಸಮತೋಲನಗೊಳಿಸುತ್ತವೆ. ಸರಳ ಪರಿಹಾರ: ಒಟ್ಟಿಗೆ ಹನುಮಾನ್ ಚಾಲೀಸಾ ಪಠಿಸಿ, ಮಂಗಳವಾರ ಉಪವಾಸ ಮಾಡಿ.",
-    manglikCancelled: "ಮಾಂಗ್ಲಿಕ್ ಸ್ಥಿತಿ ಇದೆ, ಆದರೆ ಗುರು ದೃಷ್ಟಿ / ಸ್ವರಾಶಿ / ವಕ್ರೀ ಕಾರಣದಿಂದ ಅದರ ಪ್ರಭಾವ ಶಾಂತವಾಗಿದೆ. ✅ ಜಾತಕ ಈ ದೋಷದಿಂದ ರಕ್ಷಿಸಲ್ಪಟ್ಟಿದೆ.",
-    nadiPresent: "ನಾಡಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ವ್ಯತ್ಯಾಸವಿದೆ, ಆದರೆ ಅನೇಕ ಸಂದರ್ಭಗಳಲ್ಲಿ ಪರಿಹಾರಗಳು ಮತ್ತು ಸರಿಯಾದ ದಶೆಯಿಂದ ಸಮತೋಲನಗೊಳ್ಳುತ್ತದೆ. ಸರಳ ಪರಿಹಾರ: ಪ್ರತಿ ಸೋಮವಾರ ಒಟ್ಟಿಗೆ ಶಿವನಿಗೆ ನೀರು ಅರ್ಪಿಸಿ.",
-    nadiCancelled: "ನಾಡಿಯಲ್ಲಿ ಸ್ವಲ್ಪ ವ್ಯತ್ಯಾಸವಿದೆ, ಆದರೆ ಬೇರೆ ರಾಶಿ ಕಾರಣದಿಂದ ದೋಷ ತೊಲಗುತ್ತಿದೆ. ✅ ಶುಭ ಸೂಚನೆ.",
-    bhakootPresent: "ಭಕೂಟ್‌ನಲ್ಲಿ ಸ್ವಲ್ಪ ಅಸಾಮರಸ್ಯವಿದೆ — ಆರ್ಥಿಕ ವಿಷಯಗಳಲ್ಲಿ ಪಾರದರ್ಶಕತೆ ಮತ್ತು ಪರಸ್ಪರ ತಿಳುವಳಿಕೆ ಇಟ್ಟುಕೊಳ್ಳಿ. ಸಣ್ಣ ಅಭ್ಯಾಸ: ತಿಂಗಳಿಗೊಮ್ಮೆ ಬಜೆಟ್ ಚರ್ಚೆ ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.",
-    bhakootCancelled: "ಭಕೂಟ್‌ನಲ್ಲಿ ಸ್ವಲ್ಪ ಅಸಾಮರಸ್ಯವಿದೆ, ಆದರೆ ರಾಶಿ ಸ್ವಾಮಿ ಒಂದು / ಮಿತ್ರರು ಆಗಿರುವುದರಿಂದ ದೋಷ ತೊಲಗುತ್ತಿದೆ. ✅ ಸ್ಥಿತಿ ಸುರಕ್ಷಿತ.",
-    safe: "ಹೊಂದಾಣಿಕೆ ಚೆನ್ನಾಗಿದೆ. ಕೆಲವು ಸೂಕ್ಷ್ಮ ಅಂಶಗಳನ್ನು ಅರ್ಥಮಾಡಿಕೊಂಡರೆ ಸಂಬಂಧ ಇನ್ನಷ್ಟು ಸುಲಭವಾಗುತ್ತದೆ — ದೊಡ್ಡ ತಡೆ ಯಾವುದೂ ಇಲ್ಲ.",
-    lowScore: "ಸ್ಕೋರ್ ಕಡಿಮೆಯಿದೆ, ಆದರೆ 36 ಗುಣಗಳು ಮಾತ್ರ ವಿವಾಹವನ್ನು ನಿರ್ಧರಿಸುವುದಿಲ್ಲ. ಚಂದ್ರ, ಸಪ್ತಮ ಭಾವ ಮತ್ತು ದಶೆಯನ್ನೂ ನೋಡಬೇಕು — ಆಳವಾದ ವಿಶ್ಲೇಷಣೆಗಾಗಿ ಹಿರಿಯ ಜ್ಯೋತಿಷಿಯನ್ನು ಸಂಪರ್ಕಿಸಿ. ಮೊದಲ ಚಾಟ್ FREE.",
+    soulSummary: "{boy} ಮತ್ತು {girl} — ಮನಸ್ಸಿನ ತಿಳುವಳಿಕೆ ಚೆನ್ನಾಗಿದೆ, ಭಾವನೆಗಳು ಹೊಂದುತ್ತವೆ. ಸಂವಾದವನ್ನು ಸ್ವಲ್ಪ ಸುಧಾರಿಸಿದರೆ ಈ ಸಂಬಂಧ ದೀರ್ಘಕಾಲ ಉಳಿಯುತ್ತದೆ.",
+    strengths: [
+      "ಚಂದ್ರನ ಸ್ಥಿತಿಯಿಂದ ಮನಸ್ಸಿನ ತಿಳುವಳಿಕೆ ಚೆನ್ನಾಗಿದೆ — ಸುಖ-ದುಃಖ ಹಂಚಿಕೊಳ್ಳುವುದು ಸುಲಭ.",
+      "ಗ್ರಹ ಮೈತ್ರಿ ಬಲವಾಗಿದೆ — ಆಲೋಚನೆ ಮತ್ತು ಮೌಲ್ಯಗಳಲ್ಲಿ ಸಾಮರಸ್ಯ.",
+      "ಗಣ ಮಿಲನ ಶುಭ — ಸ್ವಭಾವದಲ್ಲಿ ಹೊಂದಾಣಿಕೆ.",
+      "ಯೋನಿ ಮಿಲನ ಸುಗಮ — ದೈಹಿಕ ಮತ್ತು ಮಾನಸಿಕ ಲಯ ಉಳಿಯುತ್ತದೆ.",
+      "ವಶ್ಯ ಮತ್ತು ತಾರಾ ಮಿಲನ ಸಮತೋಲನದಲ್ಲಿದೆ — ಒಬ್ಬರನ್ನೊಬ್ಬರು ಸಹಜವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುತ್ತೀರಿ.",
+    ],
+    attentionAreas: [
+      "ಇಬ್ಬರದೂ ಸ್ವತಂತ್ರ ಸ್ವಭಾವ → ಸ್ವಲ್ಪ ಸ್ಥಳ ನೀಡಿ, ಸಂಬಂಧ ಬಲಗೊಳ್ಳುತ್ತದೆ.",
+      "ವಾದದ ಸಮಯದಲ್ಲಿ ಸ್ವಲ್ಪ ತಾಳ್ಮೆ — ಪ್ರೀತಿ ಉಳಿಯುತ್ತದೆ.",
+      "ಆರ್ಥಿಕ ನಿರ್ಧಾರಗಳನ್ನು ಒಟ್ಟಿಗೆ ತೆಗೆದುಕೊಳ್ಳಿ — ನಂಬಿಕೆ ಹೆಚ್ಚುತ್ತದೆ.",
+    ],
+    practicalAdvice: [
+      "ಪ್ರತಿ ಸೋಮವಾರ ಒಟ್ಟಿಗೆ ಶಿವನಿಗೆ ನೀರು ಅರ್ಪಿಸಿ.",
+      "ತಿಂಗಳಿಗೊಮ್ಮೆ ಮುಖಾಮುಖಿ ಮನಬಿಚ್ಚಿ ಮಾತನಾಡಿ.",
+    ],
+    nextMuhurat: "ಶುಭ ವಿವಾಹ ದಿನಾಂಕ ನೋಡಿ",
+    nextDasha: "ಇಬ್ಬರ ಪ್ರಸ್ತುತ ದಶೆ ತಿಳಿಯಿರಿ",
+    nextChat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE",
+    nextPdf: "PDF ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+    disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯ ತತ್ವಗಳನ್ನು ಆಧರಿಸಿದೆ. ಇದು ವೈಯಕ್ತಿಕ ಮಾರ್ಗದರ್ಶನ ಮಾತ್ರ, ವೈದ್ಯಕೀಯ/ಕಾನೂನು/ವೃತ್ತಿಪರ ಸಲಹೆಯಲ್ಲ. ಅಂತಿಮ ನಿರ್ಧಾರವನ್ನು ನಿಮ್ಮ ತಿಳುವಳಿಕೆ ಮತ್ತು ಕುಟುಂಬದೊಂದಿಗೆ ತೆಗೆದುಕೊಳ್ಳಿ.",
   },
   bn: {
-    manglikPresent: "মাঙ্গলিক অবস্থা আছে, তবে এটি একমাত্র সিদ্ধান্ত নয়। চন্দ্র ও সপ্তম ভাব মিলে সম্পর্ককে ভারসাম্যপূর্ণ রাখছে। সহজ প্রতিকার: একসাথে হনুমান চালিশা পড়ুন, মঙ্গলবার উপবাস রাখুন।",
-    manglikCancelled: "মাঙ্গলিক অবস্থা আছে, তবে গুরু দৃষ্টি / স্বরাশি / বক্রী হওয়ার কারণে এর প্রভাব শান্ত হচ্ছে। ✅ কুণ্ডলী এই দোষ থেকে সুরক্ষিত।",
-    nadiPresent: "নাড়িতে সামান্য পার্থক্য আছে, তবে অনেক ক্ষেত্রে প্রতিকার ও সঠিক দশায় এটি ভারসাম্যপূর্ণ হয়। সহজ প্রতিকার: প্রতি সোমবার একসাথে শিবকে জল অর্পণ করুন।",
-    nadiCancelled: "নাড়িতে সামান্য পার্থক্য আছে, তবে ভিন্ন রাশি হওয়ার কারণে দোষ ভঙ্গ হচ্ছে। ✅ শুভ সংকেত।",
-    bhakootPresent: "ভকূটে সামান্য অসামঞ্জস্য আছে — আর্থিক বিষয়ে স্বচ্ছতা ও পারস্পরিক বোঝাপড়া রাখুন। ছোট অভ্যাস: মাসে একবার বাজেট আলোচনা সম্পর্ক আরও মজবুত করবে।",
-    bhakootCancelled: "ভকূটে সামান্য অসামঞ্জস্য আছে, তবে রাশি স্বামী এক / মিত্র হওয়ার কারণে দোষ ভঙ্গ হচ্ছে। ✅ অবস্থা সুরক্ষিত।",
-    safe: "মিলন ভালো। কিছু সূক্ষ্ম বিষয় বুঝে নিলে সম্পর্ক আরও সহজ হবে — বড় কোনো বাধা নেই।",
-    lowScore: "স্কোর কম, তবে শুধু ৩৬ গুণে বিবাহ নির্ধারিত হয় না। চন্দ্র, সপ্তম ভাব ও দশাও দেখতে হবে — গভীর বিশ্লেষণের জন্য সিনিয়র জ্যোতিষীর সাথে কথা বলুন। প্রথম চ্যাট FREE।",
+    soulSummary: "{boy} ও {girl} — মনের বোঝাপড়া ভালো, অনুভূতি মেলে। যোগাযোগ একটু উন্নত করলে এই সম্পর্ক দীর্ঘকাল টিকে থাকবে।",
+    strengths: [
+      "চন্দ্রের অবস্থানের কারণে মনের বোঝাপড়া ভালো — সুখ-দুঃখ ভাগ করা সহজ।",
+      "গ্রহ মৈত্রী শক্তিশালী — চিন্তা ও মূল্যবোধে সামঞ্জস্য।",
+      "গণ মিলন শুভ — স্বভাবে মিল।",
+      "যোনি মিলন সহজ — শারীরিক ও মানসিক ছন্দ বজায় থাকে।",
+      "বশ্য ও তারা মিলন সুষম — একে অপরকে স্বাভাবিকভাবে বোঝেন।",
+    ],
+    attentionAreas: [
+      "দুজনেরই স্বাধীন স্বভাব → একটু জায়গা দিন, সম্পর্ক আরও মজবুত হবে।",
+      "তর্কের সময় একটু ধৈর্য — ভালোবাসা অটুট থাকবে।",
+      "আর্থিক সিদ্ধান্ত একসঙ্গে নিন — বিশ্বাস বাড়বে।",
+    ],
+    practicalAdvice: [
+      "প্রতি সোমবার একসঙ্গে শিবকে জল অর্পণ করুন।",
+      "মাসে একবার মুখোমুখি খোলাখুলি কথা বলুন।",
+    ],
+    nextMuhurat: "শুভ বিবাহ তিথি দেখুন",
+    nextDasha: "দুজনের বর্তমান দশা জানুন",
+    nextChat: "জ্যোতিষীর সঙ্গে কথা বলুন — প্রথম চ্যাট FREE",
+    nextPdf: "PDF ডাউনলোড করুন",
+    disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষ নীতির উপর ভিত্তি করে তৈরি। এটি ব্যক্তিগত দিকনির্দেশনা মাত্র, চিকিৎসা/আইনি/পেশাদার পরামর্শ নয়। চূড়ান্ত সিদ্ধান্ত নিজের বোধ ও পরিবারের সঙ্গে নিন।",
   },
   mr: {
-    manglikPresent: "मांगलिक स्थिती आहे, पण हा एकमेव निर्णय नाही. चंद्र आणि सप्तम भाव मिळून नातं संतुलित ठेवत आहेत. सोपा उपाय: एकत्र हनुमान चालीसा वाचा, मंगळवारी उपवास करा.",
-    manglikCancelled: "मांगलिक स्थिती आहे, पण गुरू दृष्टी / स्वराशी / वक्री असल्याने तिचा प्रभाव शांत होत आहे. ✅ कुंडली या दोषापासून संरक्षित आहे.",
-    nadiPresent: "नाडीत थोडा फरक आहे, पण बऱ्याच प्रसंगी उपाय आणि योग्य दशेने तो संतुलित होतो. सोपा उपाय: दर सोमवारी एकत्र शिवाला जल अर्पण करा.",
-    nadiCancelled: "नाडीत थोडा फरक आहे, पण भिन्न राशी असल्याने दोष भंग होत आहे. ✅ शुभ संकेत.",
-    bhakootPresent: "भकूटमध्ये थोडी असामंजस्यता आहे — आर्थिक बाबतीत पारदर्शकता आणि परस्पर समज ठेवा. छोटी सवय: महिन्यातून एकदा बजेट चर्चा नातं अधिक मजबूत करेल.",
-    bhakootCancelled: "भकूटमध्ये थोडी असामंजस्यता आहे, पण राशी स्वामी एक / मित्र असल्याने दोष भंग होत आहे. ✅ स्थिती सुरक्षित.",
-    safe: "मिलन चांगले आहे. काही सूक्ष्म गोष्टी समजून घेतल्यास नातं अधिक सोपं होईल — मोठा अडथळा नाही.",
-    lowScore: "गुण कमी आहेत, पण फक्त ३६ गुणांवरून विवाह ठरत नाही. चंद्र, सप्तम भाव आणि दशाही पाहणे आवश्यक आहे — सखोल विश्लेषणासाठी वरिष्ठ ज्योतिषांशी बोला. पहिली चॅट FREE.",
+    soulSummary: "{boy} आणि {girl} — मनाची समज चांगली आहे, भावना जुळतात. संवाद थोडा सुधारला तर हे नाते दीर्घकाळ टिकेल.",
+    strengths: [
+      "चंद्राच्या स्थितीमुळे मनाची समज चांगली आहे — सुख-दुःख वाटून घेणे सोपे.",
+      "ग्रह मैत्री मजबूत आहे — विचार आणि मूल्यांमध्ये सुसंवाद.",
+      "गण मिलन शुभ आहे — स्वभावात ताळमेळ.",
+      "योनी मिलन सहज आहे — शारीरिक आणि मानसिक लय टिकून राहते.",
+      "वश्य आणि तारा मिलन संतुलित — एकमेकांना सहज समजून घेता.",
+    ],
+    attentionAreas: [
+      "स्वभाव स्वतंत्र आहे → थोडी स्पेस द्या, नाते अधिक मजबूत राहील.",
+      "वादाच्या वेळी थोडा संयम — प्रेम टिकून राहील.",
+      "आर्थिक निर्णय एकत्र घ्या — विश्वास वाढेल.",
+    ],
+    practicalAdvice: [
+      "दर सोमवारी एकत्र शिवाला जल अर्पण करा.",
+      "महिन्यातून एकदा समोरासमोर मोकळेपणाने बोला.",
+    ],
+    nextMuhurat: "शुभ विवाह तिथी पहा",
+    nextDasha: "दोघांची सध्याची दशा जाणून घ्या",
+    nextChat: "ज्योतिषांशी बोला — पहिली चॅट FREE",
+    nextPdf: "PDF डाउनलोड करा",
+    disclaimer: "हा अहवाल पारंपरिक वैदिक ज्योतिष सिद्धांतांवर आधारित आहे. हे वैयक्तिक मार्गदर्शन आहे, वैद्यकीय/कायदेशीर/व्यावसायिक सल्ला नाही. अंतिम निर्णय स्वतःची समज आणि कुटुंबासोबत घ्या.",
   },
   gu: {
-    manglikPresent: "માંગલિક સ્થિતિ છે, પણ આ એકમાત્ર નિર્ણય નથી. ચંદ્ર અને સપ્તમ ભાવ મળીને સંબંધ સંતુલિત રાખે છે. સરળ ઉપાય: સાથે હનુમાન ચાલીસા પઢો, મંગળવારે ઉપવાસ રાખો.",
-    manglikCancelled: "માંગલિક સ્થિતિ છે, પણ ગુરુ દૃષ્ટિ / સ્વરાશિ / વક્રી હોવાથી તેની અસર શાંત થઈ રહી છે. ✅ કુંડળી આ દોષથી સુરક્ષિત છે.",
-    nadiPresent: "નાડીમાં થોડો ફરક છે, પણ ઘણા કિસ્સાઓમાં ઉપાય અને યોગ્ય દશાથી તે સંતુલિત થાય છે. સરળ ઉપાય: દર સોમવારે સાથે શિવજીને જળ અર્પણ કરો.",
-    nadiCancelled: "નાડીમાં થોડો ફરક છે, પણ જુદી રાશિ હોવાથી દોષ ભંગ થઈ રહ્યો છે. ✅ શુભ સંકેત.",
-    bhakootPresent: "ભકૂટમાં થોડી અસામંજસ્ય છે — આર્થિક બાબતોમાં પારદર્શિતા અને પરસ્પર સમજ રાખો. નાની આદત: મહિનામાં એક વાર બજેટ ચર્ચા સંબંધ વધુ મજબૂત કરશે.",
-    bhakootCancelled: "ભકૂટમાં થોડી અસામંજસ્ય છે, પણ રાશિ સ્વામી એક / મિત્ર હોવાથી દોષ ભંગ થઈ રહ્યો છે. ✅ સ્થિતિ સુરક્ષિત.",
-    safe: "મેળાપ સારો છે. થોડી સૂક્ષ્મ બાબતો સમજી લેવાથી સંબંધ વધુ સરળ બનશે — કોઈ મોટો અવરોધ નથી.",
-    lowScore: "સ્કોર ઓછો છે, પણ ફક્ત 36 ગુણથી લગ્ન નક્કી થતા નથી. ચંદ્ર, સપ્તમ ભાવ અને દશા પણ જોવી જરૂરી છે — ઊંડાણપૂર્વક વિશ્લેષણ માટે વરિષ્ઠ જ્યોતિષી સાથે વાત કરો. પ્રથમ ચેટ FREE.",
+    soulSummary: "{boy} અને {girl} — મનની સમજ સારી છે, લાગણીઓ મળે છે. સંવાદ થોડો સુધારો તો આ સંબંધ લાંબો સમય ટકશે.",
+    strengths: [
+      "ચંદ્રની સ્થિતિથી મનની સમજ સારી છે — સુખ-દુઃખ વહેંચવું સરળ.",
+      "ગ્રહ મૈત્રી મજબૂત છે — વિચાર અને મૂલ્યોમાં સુમેળ.",
+      "ગણ મિલાન શુભ છે — સ્વભાવમાં તાલમેલ.",
+      "યોનિ મિલાન સહજ છે — શારીરિક અને માનસિક લય જળવાય છે.",
+      "વશ્ય અને તારા મિલાન સંતુલિત — એકબીજાને સહજતાથી સમજી શકો છો.",
+    ],
+    attentionAreas: [
+      "સ્વભાવ સ્વતંત્ર છે → થોડી સ્પેસ આપો, સંબંધ વધુ મજબૂત રહેશે.",
+      "દલીલ વખતે થોડો ધીરજ — પ્રેમ જળવાઈ રહેશે.",
+      "આર્થિક નિર્ણયો સાથે લો — વિશ્વાસ વધશે.",
+    ],
+    practicalAdvice: [
+      "દર સોમવારે સાથે શિવજીને જળ અર્પણ કરો.",
+      "મહિનામાં એક વાર સામસામે ખુલ્લા મને વાત કરો.",
+    ],
+    nextMuhurat: "શુભ લગ્ન તિથિ જુઓ",
+    nextDasha: "બંનેની વર્તમાન દશા જાણો",
+    nextChat: "જ્યોતિષી સાથે વાત કરો — પહેલી ચેટ FREE",
+    nextPdf: "PDF ડાઉનલોડ કરો",
+    disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ સિદ્ધાંતો પર આધારિત છે. આ વ્યક્તિગત માર્ગદર્શન છે, તબીબી/કાનૂની/વ્યાવસાયિક સલાહ નથી. અંતિમ નિર્ણય પોતાની સમજ અને પરિવાર સાથે લો.",
   },
   ml: {
-    manglikPresent: "മാംഗ്ലിക് സ്ഥിതി ഉണ്ട്, പക്ഷേ ഇത് ഒരേയൊരു തീരുമാനമല്ല. ചന്ദ്രനും സപ്തമ ഭാവവും ചേർന്ന് ബന്ധം സന്തുലിതമായി നിലനിർത്തുന്നു. ലളിത പരിഹാരം: ഒരുമിച്ച് ഹനുമാൻ ചാലീസ പാരായണം ചെയ്യുക, ചൊവ്വാഴ്ച ഉപവാസം ആചരിക്കുക.",
-    manglikCancelled: "മാംഗ്ലിക് സ്ഥിതി ഉണ്ട്, പക്ഷേ ഗുരു ദൃഷ്ടി / സ്വരാശി / വക്രീ കാരണം അതിന്റെ സ്വാധീനം ശാന്തമാകുന്നു. ✅ ജാതകം ഈ ദോഷത്തിൽ നിന്ന് സംരക്ഷിതമാണ്.",
-    nadiPresent: "നാഡിയിൽ ചെറിയ വ്യത്യാസമുണ്ട്, പക്ഷേ പലപ്പോഴും പരിഹാരങ്ങളും ശരിയായ ദശയും കൊണ്ട് ഇത് സന്തുലിതമാകും. ലളിത പരിഹാരം: എല്ലാ തിങ്കളാഴ്ചയും ഒരുമിച്ച് ശിവന് ജലം സമർപ്പിക്കുക.",
-    nadiCancelled: "നാഡിയിൽ ചെറിയ വ്യത്യാസമുണ്ട്, പക്ഷേ വ്യത്യസ്ത രാശി കാരണം ദോഷം മാറുന്നു. ✅ ശുഭ സൂചന.",
-    bhakootPresent: "ഭകൂട്ടിൽ കുറച്ച് അസംവാദമുണ്ട് — സാമ്പത്തിക കാര്യങ്ങളിൽ സുതാര്യതയും പരസ്പര ധാരണയും പാലിക്കുക. ചെറിയ ശീലം: മാസത്തിൽ ഒരിക്കൽ ബജറ്റ് ചർച്ച ബന്ധം ശക്തമാക്കും.",
-    bhakootCancelled: "ഭകൂട്ടിൽ കുറച്ച് അസംവാദമുണ്ട്, പക്ഷേ രാശി സ്വാമി ഒന്ന് / മിത്രങ്ങൾ ആയതിനാൽ ദോഷം മാറുന്നു. ✅ സ്ഥിതി സുരക്ഷിതം.",
-    safe: "മാച്ചിംഗ് നല്ലതാണ്. ചില സൂക്ഷ്മ കാര്യങ്ങൾ മനസ്സിലാക്കിയാൽ ബന്ധം കൂടുതൽ എളുപ്പമാകും — വലിയ തടസ്സമില്ല.",
-    lowScore: "സ്കോർ കുറവാണ്, പക്ഷേ 36 ഗുണങ്ങൾ മാത്രം വിവാഹം തീരുമാനിക്കുന്നില്ല. ചന്ദ്രൻ, സപ്തമ ഭാവം, ദശ എന്നിവയും നോക്കണം — ആഴത്തിലുള്ള വിശകലനത്തിന് മുതിർന്ന ജ്യോതിഷിയെ സമീപിക്കുക. ആദ്യ ചാറ്റ് FREE.",
+    soulSummary: "{boy} ഉം {girl} ഉം — മനസ്സിന്റെ ധാരണ നല്ലതാണ്, വികാരങ്ങൾ പൊരുത്തപ്പെടുന്നു. ആശയവിനിമയം അൽപ്പം മെച്ചപ്പെടുത്തിയാൽ ഈ ബന്ധം ദീർഘകാലം നിലനിൽക്കും.",
+    strengths: [
+      "ചന്ദ്രസ്ഥിതി കാരണം മനസ്സിന്റെ ധാരണ നല്ലതാണ് — സുഖദുഃഖങ്ങൾ പങ്കിടാൻ എളുപ്പം.",
+      "ഗ്രഹമൈത്രി ശക്തമാണ് — ചിന്തയിലും മൂല്യങ്ങളിലും ഐക്യം.",
+      "ഗണ പൊരുത്തം ശുഭമാണ് — സ്വഭാവത്തിൽ ഇണക്കം.",
+      "യോനി പൊരുത്തം സുഗമമാണ് — ശാരീരിക-മാനസിക താളം നിലനിൽക്കും.",
+      "വശ്യ, താര പൊരുത്തങ്ങൾ സന്തുലിതമാണ് — പരസ്പരം സ്വാഭാവികമായി മനസ്സിലാക്കും.",
+    ],
+    attentionAreas: [
+      "ഇരുവർക്കും സ്വതന്ത്ര സ്വഭാവം → അൽപ്പം ഇടം നൽകൂ, ബന്ധം ശക്തമാകും.",
+      "തർക്ക സമയത്ത് അൽപ്പം ക്ഷമ — സ്നേഹം നിലനിൽക്കും.",
+      "സാമ്പത്തിക തീരുമാനങ്ങൾ ഒരുമിച്ച് എടുക്കൂ — വിശ്വാസം വളരും.",
+    ],
+    practicalAdvice: [
+      "എല്ലാ തിങ്കളാഴ്ചയും ഒരുമിച്ച് ശിവന് ജലം സമർപ്പിക്കുക.",
+      "മാസത്തിൽ ഒരിക്കൽ മുഖാമുഖം മനസ്സ് തുറന്ന് സംസാരിക്കുക.",
+    ],
+    nextMuhurat: "ശുഭ വിവാഹ തീയതി നോക്കുക",
+    nextDasha: "ഇരുവരുടെയും ഇപ്പോഴത്തെ ദശ അറിയുക",
+    nextChat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE",
+    nextPdf: "PDF ഡൗൺലോഡ് ചെയ്യുക",
+    disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ഇത് വ്യക്തിപരമായ മാർഗനിർദേശം മാത്രമാണ്, വൈദ്യ/നിയമ/പ്രൊഫഷണൽ ഉപദേശമല്ല. അന്തിമ തീരുമാനം സ്വന്തം ധാരണയും കുടുംബവുമായി എടുക്കുക.",
   },
-};
 
-// ============================================================
-// 4. GENERAL MESSAGES
-// ============================================================
-const GENERAL_MSGS: Record<"hi" | "hinglish" | "en", GeneralMessages> = {
-  hi: {
-    soulSummary: "{boy} और {girl} — मन की समझ अच्छी है, भावनाएं मिलती हैं। थोड़ा संवाद सुधारें तो यह रिश्ता दीर्घकाल तक बना रहेगा।",
-    strengths: [
-      "चंद्रमा की स्थिति से मन की समझ अच्छी है — सुख-दुख बांटने में आसानी।",
-      "ग्रह मैत्री मजबूत है — सोच और मूल्यों में सामंजस्य।",
-      "गण मिलान शुभ है — स्वभाव में तालमेल।",
-      "योनि मिलान सहज है — शारीरिक और मानसिक लय बनी रहती है।",
-      "वश्य और तारा मिलान संतुलित — एक-दूसरे को सहजता से समझ पाते हैं।",
-    ],
-    attentionAreas: [
-      "स्वभाव स्वतंत्र है → थोड़ा स्पेस दें, रिश्ता और मजबूत रहेगा।",
-      "बहस के समय थोड़ा धैर्य — प्रेम बना रहेगा।",
-      "आर्थिक निर्णय साथ लें — विश्वास बढ़ेगा।",
-    ],
-    practicalAdvice: [
-      "हर सोमवार साथ शिव जी को जल अर्पित करें।",
-      "महीने में एक बार आमने-सामने खुलकर बात करें।",
-    ],
-    nextMuhurat: "शुभ विवाह तिथि देखें",
-    nextDasha: "दोनों की वर्तमान दशा जानें",
-    nextChat: "ज्योतिषी से बात करें — पहली चैट FREE",
-    nextPdf: "PDF डाउनलोड करें",
-    disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष सिद्धांतों पर आधारित है। यह व्यक्तिगत मार्गदर्शन है, चिकित्सीय/कानूनी/व्यावसायिक सलाह नहीं। अंतिम निर्णय अपनी समझ और परिवार के साथ लें।",
-  },
-  hinglish: {
-    soulSummary: "{boy} aur {girl} — man ki samajh achi hai, bhavnayein milti hain. Thoda samvad sudharein toh yeh rishta deerghkal tak bana rahega.",
-    strengths: [
-      "Chandra ki sthiti se man ki samajh achi hai — sukh-dukh baantne mein aasani.",
-      "Graha maitri mazboot hai — soch aur values mein samanjasya.",
-      "Gana milan shubh hai — swabhav mein taalmel.",
-      "Yoni milan sahaj hai — sharirik aur manasik lay bani rehti hai.",
-      "Vashya aur Tara milan santulit — ek-doosre ko sahajta se samajh paate hain.",
-    ],
-    attentionAreas: [
-      "Swabhav swatantra hai → thoda space dein, rishta aur mazboot rahega.",
-      "Behes ke samay thoda dhairya — prem bana rahega.",
-      "Aarthik nirnay saath lein — vishwas badhega.",
-    ],
-    practicalAdvice: [
-      "Har Somvar saath Shiv ji ko jal arpit karein.",
-      "Mahine mein ek baar aamne-saamne khulkar baat karein.",
-    ],
-    nextMuhurat: "Shubh Vivah Tithi dekhein",
-    nextDasha: "Dono ki vartaman dasha jaanein",
-    nextChat: "Jyotishi se baat karein — pehli chat FREE",
-    nextPdf: "PDF Download karein",
-    disclaimer: "Yeh report traditional Vedic astrology siddhanton par aadharit hai. Yeh personal guidance hai, medical/legal/professional advice nahi. Final decision apni samajh aur family ke saath lein.",
-  },
-  en: {
-    soulSummary: "{boy} and {girl} — emotional understanding is good, feelings align. With slightly better communication, this bond will last long-term.",
-    strengths: [
-      "Moon placement gives strong emotional understanding — easy to share joys and sorrows.",
-      "Graha Maitri is strong — alignment in thoughts and values.",
-      "Gana match is auspicious — natural temperament harmony.",
-      "Yoni match is smooth — physical and mental rhythm stays aligned.",
-      "Vashya and Tara matches are balanced — you understand each other naturally.",
-    ],
-    attentionAreas: [
-      "Both have independent natures → giving each other space will strengthen the bond.",
-      "A little patience during arguments — love will stay intact.",
-      "Take financial decisions together — trust will grow.",
-    ],
-    practicalAdvice: [
-      "Offer water to Shiv ji together every Monday.",
-      "Have an open face-to-face conversation once a month.",
-    ],
-    nextMuhurat: "Check auspicious wedding date",
-    nextDasha: "Check current dasha for both",
-    nextChat: "Talk to astrologer — first chat FREE",
-    nextPdf: "Download PDF",
-    disclaimer: "This report is based on traditional Vedic astrology principles. It is personal guidance, not medical/legal/professional advice. Take final decisions with your own understanding and family.",
-  },
-};
-
+// ------------------------------------------------------------
+// Step 3: getGeneral() replace:
+// ------------------------------------------------------------
 function getGeneral(lang: LangKey): GeneralMessages {
-  if (lang === "hi" || lang === "hinglish" || lang === "en") return GENERAL_MSGS[lang];
-  return GENERAL_MSGS.en;
-}
-
-// ============================================================
-// 5. POST HANDLER
-// ============================================================
-export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { boy, girl, language = "hinglish" } = body;
-
-    const lang: LangKey = (
-      ["hi", "hinglish", "en", "te", "ta", "kn", "bn", "mr", "gu", "ml"].includes(language)
-        ? language
-        : "hinglish"
-    ) as LangKey;
-
-    // ---------- 1. Strict Validation ----------
-    
-    // 🔥 FIXED: Strict Date Validation (2026-02-31 reject karega)
-    const isValidDate = (dateStr: string) => {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return false;
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(dateStr);
-      return date.getUTCFullYear() === y && 
-             date.getUTCMonth() + 1 === m && 
-             date.getUTCDate() === d;
-    };
-    
-    // 🔥 FIXED: Strict Time Validation (99:99 reject karega)
-    const isValidTime = (timeStr: string) => {
-      if (!/^\d{2}:\d{2}$/.test(timeStr)) return false;
-      const [h, m] = timeStr.split(':').map(Number);
-      return h >= 0 && h <= 23 && m >= 0 && m <= 59;
-    };
-
-    if (
-      !boy?.name || !boy?.dob || !boy?.time || 
-      boy?.lat == null || boy?.lon == null ||
-      !girl?.name || !girl?.dob || !girl?.time || 
-      girl?.lat == null || girl?.lon == null
-    ) {
-      return NextResponse.json(
-        { error: "Kripya dono ki saari janm vivaran (Name, DOB, Time, Place) bharein." },
-        { status: 400 }
-      );
-    }
-
-    if (!isValidDate(boy.dob) || !isValidDate(girl.dob)) {
-      return NextResponse.json({ error: "DOB valid YYYY-MM-DD format mein hona chahiye." }, { status: 400 });
-    }
-    if (!isValidTime(boy.time) || !isValidTime(girl.time)) {
-      return NextResponse.json({ error: "Time valid HH:MM format mein hona chahiye." }, { status: 400 });
-    }
-
-    const boyLat = Number(boy.lat);
-    const boyLon = Number(boy.lon);
-    const girlLat = Number(girl.lat);
-    const girlLon = Number(girl.lon);
-
-    if (
-      isNaN(boyLat) || boyLat < -90 || boyLat > 90 ||
-      isNaN(girlLat) || girlLat < -90 || girlLat > 90
-    ) {
-      return NextResponse.json({ error: "Latitude -90 se 90 ke beech hona chahiye." }, { status: 400 });
-    }
-    if (
-      isNaN(boyLon) || boyLon < -180 || boyLon > 180 ||
-      isNaN(girlLon) || girlLon < -180 || girlLon > 180
-    ) {
-      return NextResponse.json({ error: "Longitude -180 se 180 ke beech hona chahiye." }, { status: 400 });
-    }
-
-    // ---------- 2. Auth ----------
-    const user = await getUser();
-    if (!user || user.isGuest) {
-      return NextResponse.json(
-        { code: "LOGIN_REQUIRED", error: "Please login to check matching." },
-        { status: 401 }
-      );
-    }
-
-    // ---------- 3. Atomic Billing Check + Deduction ----------
-    let isFree = false;
-    let charged = false;
-
-    await db.transaction(async (tx) => {
-      const [row] = await tx
-        .select()
-        .from(users)
-        .where(eq(users.id, user.id))
-        .for("update");
-
-      if (!row) {
-        throw new Error("USER_NOT_FOUND");
-      }
-
-      const used = row.matchingCount ?? 0;
-
-const balance = row.walletBalancePaise ?? 0; // in paise
-      if (used < FREE_MATCHING_LIMIT) {
-        isFree = true;
-        await tx
-          .update(users)
-          .set({ matchingCount: used + 1 })
-          .where(eq(users.id, user.id));
-      } else {
-        if (balance < COST_PER_MATCHING_PAISE) {
-          throw new Error("INSUFFICIENT_BALANCE");
-        }
-        await tx
-          .update(users)
-          .set({
-            matchingCount: used + 1,
-            walletBalancePaise: balance - COST_PER_MATCHING_PAISE, // 🔥 FIXED: walletBalancePaise
-          })
-          .where(eq(users.id, user.id));
-        charged = true;
-      }
-    });
-
-    // ---------- 4. Real Vedic Calculation ----------
-    let result;
-    try {
-      // 🔥 FIXED: Proper Template Literal format
-      const boyDate = new Date(`${boy.dob}T${boy.time}:00`);
-      const girlDate = new Date(`${girl.dob}T${girl.time}:00`);
-
-      const boyPlace: BirthPlace = {
-        latitude: Number(boy.lat),
-        longitude: Number(boy.lon),
-      };
-      const girlPlace: BirthPlace = {
-        latitude: Number(girl.lat),
-        longitude: Number(girl.lon),
-      };
-
-      result = calculateVedicMatching(boyDate, girlDate, boyPlace, girlPlace);
-    } catch (calcErr) {
-      // Calculation failed → refund if charged
-      if (charged) {
-        await db
-          .update(users)
-          .set({
-            matchingCount: sql`${users.matchingCount} - 1`,
-            walletBalancePaise: sql`${users.walletBalancePaise} + ${COST_PER_MATCHING_PAISE}`, // 🔥 FIXED: walletBalancePaise
-          })
-          .where(eq(users.id, user.id));
-      } else if (isFree) {
-        await db
-          .update(users)
-          .set({ matchingCount: sql`${users.matchingCount} - 1` })
-          .where(eq(users.id, user.id));
-      }
-      console.error("Matching calculation failed:", calcErr);
-      return NextResponse.json(
-        { error: "Kundli calculation mein problem aayi. Kripya thodi der baad try karein." },
-        { status: 500 }
-      );
-    }
-
-    // ---------- 5. Build Response Messages from REAL doshas ----------
-    const msgs = DOSHA_MSGS[lang];
-    const general = getGeneral(lang);
-
-    const doshaNotes: string[] = [];
-
-    if (result.doshas.manglik.present) {
-      doshaNotes.push(
-        result.doshas.manglik.cancelled
-          ? msgs.manglikCancelled
-          : msgs.manglikPresent
-      );
-    }
-
-    if (result.doshas.nadi.present) {
-      doshaNotes.push(
-        result.doshas.nadi.cancelled
-          ? msgs.nadiCancelled
-          : msgs.nadiPresent
-      );
-    }
-
-    if (result.doshas.bhakoot.present) {
-      doshaNotes.push(
-        result.doshas.bhakoot.cancelled
-          ? msgs.bhakootCancelled
-          : msgs.bhakootPresent
-      );
-    }
-
-    if (doshaNotes.length === 0) {
-      doshaNotes.push(msgs.safe);
-    }
-
-    if (result.totalScore < 18) {
-      doshaNotes.push(msgs.lowScore);
-    }
-
-    const soulSummary = general.soulSummary
-      .replace("{boy}", boy.name)
-      .replace("{girl}", girl.name);
-
-    // ---------- 6. Final Response ----------
-    return NextResponse.json({
-      success: true,
-      isFree,
-      charged: charged ? COST_PER_MATCHING_PAISE : 0,
-      totalScore: result.totalScore,
-      maxScore: 36,
-      label: getScoreLabel(result.totalScore),
-      details: result.details,
-      doshas: result.doshas,
-      boy: result.boy,
-      girl: result.girl,
-      messages: {
-        soulSummary,
-        doshaNotes,
-        strengths: general.strengths,
-        attentionAreas: general.attentionAreas,
-        practicalAdvice: general.practicalAdvice,
-        nextMuhurat: general.nextMuhurat,
-        nextDasha: general.nextDasha,
-        nextChat: general.nextChat,
-        nextPdf: general.nextPdf,
-        disclaimer: general.disclaimer,
-      },
-    });
-  } catch (err: any) {
-    if (err.message === "INSUFFICIENT_BALANCE") {
-      return NextResponse.json(
-        {
-          code: "INSUFFICIENT_BALANCE",
-          error: "Wallet balance kam hai. Recharge karke phir try karein.",
-          requiredPaise: COST_PER_MATCHING_PAISE,
-        },
-        { status: 402 }
-      );
-    }
-    if (err.message === "USER_NOT_FOUND") {
-      return NextResponse.json(
-        { error: "User not found." },
-        { status: 404 }
-      );
-    }
-    console.error("Matching API error:", err);
-    return NextResponse.json(
-      { error: "Internal server error. Please try again." },
-      { status: 500 }
-    );
-  }
+  return GENERAL_MSGS[lang] || GENERAL_MSGS.en;
 }
