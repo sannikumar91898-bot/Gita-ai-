@@ -1,7 +1,12 @@
 
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import {
+  useState,
+  useEffect,
+  Suspense,
+  type FormEvent
+} from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
