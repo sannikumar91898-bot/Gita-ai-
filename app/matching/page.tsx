@@ -11,10 +11,10 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApp } from "../Providers";
-"use client";
-import { useState } from "react";
 
-// Bina API key ke, India ke major shehron ki list (Isko aap badha sakte hain)
+// ============================================================
+// 1. CITIES DATA FOR SEARCH
+// ============================================================
 const INDIAN_CITIES = [
   { name: "Patna, Bihar", lat: 25.5941, lng: 85.1376, timeZone: "Asia/Kolkata" },
   { name: "Delhi, NCR", lat: 28.6139, lng: 77.2090, timeZone: "Asia/Kolkata" },
@@ -26,58 +26,63 @@ const INDIAN_CITIES = [
   { name: "Chennai, Tamil Nadu", lat: 13.0827, lng: 80.2707, timeZone: "Asia/Kolkata" },
   { name: "Bengaluru, Karnataka", lat: 12.9716, lng: 77.5946, timeZone: "Asia/Kolkata" },
   { name: "Hyderabad, Telangana", lat: 17.3850, lng: 78.4867, timeZone: "Asia/Kolkata" },
+  { name: "Ahmedabad, Gujarat", lat: 23.0225, lng: 72.5714, timeZone: "Asia/Kolkata" },
+  { name: "Pune, Maharashtra", lat: 18.5204, lng: 73.8567, timeZone: "Asia/Kolkata" },
 ];
 
-// Component ke andar:
-const [searchTerm, setSearchTerm] = useState("");
-const [showDropdown, setShowDropdown] = useState(false);
-const [selectedCity, setSelectedCity] = useState<any>(null);
+// ============================================================
+// 2. CITY SEARCH COMPONENT (Dropdown)
+// ============================================================
+const CitySearchInput = ({ value, onChange, placeholder, className }: any) => {
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchTerm, setSearchTerm] = useState(value || "");
 
-// Filter logic
-const filteredCities = INDIAN_CITIES.filter(city => 
-  city.name.toLowerCase().includes(searchTerm.toLowerCase())
-);
+  const filteredCities = INDIAN_CITIES.filter(city => 
+    city.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-// Input Field (Aapke design ke hisaab se class lagayein)
-<div className="relative">
-  <input 
-    type="text"
-    className="your-existing-classes w-full" // Apni purani classes yahan daalein
-    value={searchTerm}
-    onChange={(e) => {
-      setSearchTerm(e.target.value);
-      setShowDropdown(true);
-      setSelectedCity(null); // Reset if they type again
-    }}
-    placeholder="Place of birth (e.g. Patna, Bihar)"
-  />
-  
-  {/* Dropdown Results */}
-  {showDropdown && searchTerm && (
-    <ul className="absolute z-50 w-full bg-gray-800 border border-gray-600 rounded mt-1 max-h-40 overflow-y-auto">
-      {filteredCities.length > 0 ? (
-        filteredCities.map((city, idx) => (
-          <li 
-            key={idx} 
-            className="p-2 hover:bg-gray-700 cursor-pointer text-white"
-            onClick={() => {
-              setSearchTerm(city.name);
-              setSelectedCity(city);
-              setShowDropdown(false);
-            }}
-          >
-            {city.name}
-          </li>
-        ))
-      ) : (
-        <li className="p-2 text-gray-400">City not found</li>
+  return (
+    <div className="relative w-full">
+      <input
+        type="text"
+        className={className}
+        value={searchTerm}
+        placeholder={placeholder}
+        onChange={(e) => {
+          setSearchTerm(e.target.value);
+          onChange(e.target.value);
+          setShowDropdown(true);
+        }}
+        onFocus={() => setShowDropdown(true)}
+        onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+      />
+      {showDropdown && searchTerm && (
+        <ul className="absolute z-50 w-full bg-[#1e1e2d] border border-gray-700 rounded-lg mt-1 max-h-40 overflow-y-auto shadow-xl">
+          {filteredCities.length > 0 ? (
+            filteredCities.map((city, idx) => (
+              <li
+                key={idx}
+                className="p-3 hover:bg-gray-700 cursor-pointer text-white text-sm border-b border-gray-800 last:border-0"
+                onClick={() => {
+                  setSearchTerm(city.name);
+                  onChange(city.name);
+                  setShowDropdown(false);
+                }}
+              >
+                {city.name}
+              </li>
+            ))
+          ) : (
+            <li className="p-3 text-gray-400 text-sm">City not found in list</li>
+          )}
+        </ul>
       )}
-    </ul>
-  )}
-</div>
+    </div>
+  );
+};
 
 // ============================================================
-// Loading Text — 10 Languages
+// 3. LOADING STEPS (10 Languages)
 // ============================================================
 const getLoadingSteps = (lang: string) => {
   const steps: Record<string, string[]> = {
@@ -96,7 +101,7 @@ const getLoadingSteps = (lang: string) => {
 };
 
 // ============================================================
-// UI Text — 10 Languages
+// 4. UI TEXT & DICTIONARY (10 Languages + New SEO/FAQ)
 // ============================================================
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
@@ -112,16 +117,19 @@ const getUIText = (lang: string, key: string) => {
       advice: "व्यवहारिक सलाह", nextSteps: "अगला कदम", soulLabel: "रिश्ते का निचोड़",
       doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "कोई दोष नहीं",
       manglik: "मंगल दोष", nadi: "नाड़ी दोष", bhakoot: "भकूट दोष",
-      disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष पर आधारित है। यह मार्गदर्शन है, चिकित्सीय/कानूनी सलाह नहीं।",
-      askQ: "और जानना चाहते हैं?",
-      q1: "क्या हमारी शादी में परिवार आसानी से मान जाएगा?",
-      q2: "हमारी कुंडली के अनुसार शादी का सबसे शुभ समय कब है?",
-      q3: "करियर और धन पर इस रिश्ते का क्या असर होगा?",
+      disclaimer: "यह रिपोर्ट पारंपरिक वैदिक ज्योतिष पर आधारित है।",
+      askQ: "और जानना चाहते हैं?", q1: "क्या हमारी शादी में परिवार आसानी से मान जाएगा?", q2: "हमारी कुंडली के अनुसार शादी का सबसे शुभ समय कब है?", q3: "करियर और धन पर इस रिश्ते का क्या असर होगा?",
       labelUtkrisht: "उत्कृष्ट मिलान", labelBahutAcha: "बहुत अच्छा मिलान", labelAcha: "अच्छा मिलान", labelAusat: "औसत मिलान", labelSudhar: "सुधार की गुंजाइश",
-      boyPrefix: "वर", girlPrefix: "वधू",
-      limitTitle: "आपकी फ्री लिमिट खत्म हो गई है!",
-      limitSub: "आगे कुंडली मिलान के लिए वॉलेट रिचार्ज करें या ज्योतिषी से बात करें।",
-      recharge: "वॉलेट रिचार्ज करें"
+      boyPrefix: "वर", girlPrefix: "वधू", limitTitle: "आपकी फ्री लिमिट खत्म हो गई है!",
+      limitSub: "आगे कुंडली मिलान के लिए वॉलेट रिचार्ज करें या ज्योतिषी से बात करें।", recharge: "वॉलेट रिचार्ज करें",
+      seoTitle: "कुंडली मिलान के बारे में", 
+      seoDesc: "हिंदू धर्म में विवाह से पहले कुंडली मिलान करना बहुत महत्वपूर्ण माना जाता है। यह वर और वधू के भविष्य, स्वभाव और ग्रहों की स्थिति को समझने में मदद करता है। सही मिलान से रिश्ता मजबूत होता है।",
+      faqTitle: "अक्सर पूछे जाने वाले प्रश्न (FAQs)", 
+      faq1Q: "कुंडली मिलान में 36 गुण क्या हैं?", 
+      faq1A: "वैदिक ज्योतिष में 8 अलग-अलग श्रेणियों (अष्टकूट) में कुल 36 गुण होते हैं। जितने अधिक गुण मिलते हैं, विवाह उतना ही शुभ माना जाता है (18+ गुण अच्छे माने जाते हैं)।", 
+      faq2Q: "क्या मांगलिक दोष विवाह में बाधा है?", 
+      faq2A: "जरूरी नहीं। अगर दोनों पक्षों में मांगलिक दोष हो या कुछ विशेष उपाय किए जाएं, तो यह दोष शांत हो जाता है। GitaTalk आपको सटीक विश्लेषण और उपाय देता है।", 
+      footerText: "यह रिपोर्ट सामान्य जानकारी के लिए है। सटीक परिणामों के लिए किसी अच्छे ज्योतिषी से परामर्श लें।"
     },
     hinglish: {
       title: "Kundli Milan", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
@@ -135,16 +143,19 @@ const getUIText = (lang: string, key: string) => {
       advice: "Vyavaharik Salah", nextSteps: "Agla Kadam", soulLabel: "Rishte ka Nichod",
       doshaPresent: "Upasthit", doshaCancelled: "Nivarit", doshaAbsent: "Koi Dosh Nahi",
       manglik: "Manglik Dosh", nadi: "Nadi Dosh", bhakoot: "Bhakoot Dosh",
-      disclaimer: "Yeh report traditional Vedic astrology par aadharit hai. Yeh guidance hai, medical/legal advice nahi.",
-      askQ: "Aur jaanna chahte hain?",
-      q1: "Kya hamari shaadi mein family aasani se maan jayegi?",
-      q2: "Hamari kundli ke anusaar shaadi ka sabse shubh samay kab hai?",
-      q3: "Career aur dhan par is rishte ka kya asar hoga?",
+      disclaimer: "Yeh report traditional Vedic astrology par aadharit hai.",
+      askQ: "Aur jaanna chahte hain?", q1: "Kya hamari shaadi mein family aasani se maan jayegi?", q2: "Hamari kundli ke anusaar shaadi ka sabse shubh samay kab hai?", q3: "Career aur dhan par is rishte ka kya asar hoga?",
       labelUtkrisht: "Utkrisht Milan", labelBahutAcha: "Bahut Acha Milan", labelAcha: "Acha Milan", labelAusat: "Ausat Milan", labelSudhar: "Sudhar ki Gunjayish",
-      boyPrefix: "Var", girlPrefix: "Vadhu",
-      limitTitle: "Aapki Free Limit Khatam Ho Gayi Hai!",
-      limitSub: "Aage matching ke liye wallet recharge karein ya jyotishi se baat karein.",
-      recharge: "Wallet Recharge"
+      boyPrefix: "Var", girlPrefix: "Vadhu", limitTitle: "Aapki Free Limit Khatam Ho Gayi Hai!",
+      limitSub: "Aage matching ke liye wallet recharge karein ya jyotishi se baat karein.", recharge: "Wallet Recharge",
+      seoTitle: "Kundli Matching ke baare mein",
+      seoDesc: "Hindu dharm mein vivah se pehle Kundli Milan karna bahut zaroori maana jata hai. Yeh var aur vadhu ke future, swabhav aur grahon ki sthiti samajhne mein madad karta hai. Sahi milan se rishta mazboot hota hai.",
+      faqTitle: "Frequently Asked Questions (FAQs)",
+      faq1Q: "Kundli Milan mein 36 Gun kya hain?",
+      faq1A: "Vedic astrology mein 8 alag categories (Ashtakoot) mein total 36 gun hote hain. Jitne zyada gun milte hain, vivah utna hi shubh mana jata hai (18+ gun ache maane jate hain).",
+      faq2Q: "Kya Manglik Dosh vivah mein badha hai?",
+      faq2A: "Zaroori nahi. Agar dono partners Manglik hon ya kuch upay kiye jaayein, toh yeh dosh shaant ho jata hai. GitaTalk aapko sahi analysis deta hai.",
+      footerText: "Yeh report general information ke liye hai. Accurate results ke liye astrologer se consult karein."
     },
     en: {
       title: "Kundli Matching", subtitle: "Accurate Marriage Matching", boy: "Boy's Details", girl: "Girl's Details",
@@ -158,259 +169,266 @@ const getUIText = (lang: string, key: string) => {
       advice: "Practical Advice", nextSteps: "Next Steps", soulLabel: "Soul Summary",
       doshaPresent: "Present", doshaCancelled: "Cancelled", doshaAbsent: "No Dosha",
       manglik: "Manglik Dosha", nadi: "Nadi Dosha", bhakoot: "Bhakoot Dosha",
-      disclaimer: "This report is based on traditional Vedic astrology. It is guidance, not medical/legal advice.",
-      askQ: "Want to know more?",
-      q1: "Will our families easily agree to this marriage?",
-      q2: "What is the most auspicious time for marriage as per our charts?",
-      q3: "How will this relationship affect career and wealth?",
+      disclaimer: "This report is based on traditional Vedic astrology.",
+      askQ: "Want to know more?", q1: "Will our families easily agree to this marriage?", q2: "What is the most auspicious time for marriage as per our charts?", q3: "How will this relationship affect career and wealth?",
       labelUtkrisht: "Excellent Match", labelBahutAcha: "Very Good Match", labelAcha: "Good Match", labelAusat: "Average Match", labelSudhar: "Needs Improvement",
-      boyPrefix: "Groom", girlPrefix: "Bride",
-      limitTitle: "Your Free Limit is Exhausted!",
-      limitSub: "Recharge your wallet or talk to an astrologer for further matchings.",
-      recharge: "Recharge Wallet"
-    },
-    // ... (Add remaining languages if needed, but keeping it concise for the fix)
-    te: { title: "కుండలి మిలన్", subtitle: "ఖచ్చితమైన వివాహ మ్యాచింగ్", boy: "అబ్బాయి వివరాలు", girl: "అమ్మాయి వివరాలు", name: "పూర్తి పేరు", city: "పుట్టిన నగరం", matchBtn: "మ్యాచ్ చేయండి", alertCity: "దయచేసి జాబితా నుండి నగరాన్ని ఎంచుకోండి!", result: "మ్యాచింగ్ ఫలితం", total: "/ 36 మొత్తం అష్టకూట్", breakdown: "అన్ని 8 కూటాలు చూడండి", chat: "జ్యోతిష్యుడితో మాట్లాడండి — మొదటి చాట్ FREE", pdf: "PDF", reset: "రీసెట్", share: "WhatsApp లో పంపండి", bannerTitle: "జ్యోతిష్యుడు • 24x7 అందుబాటులో", bannerSub: "మ్యాచ్‌ను లోతుగా అర్థం చేసుకోవడానికి చాట్ చేయండి — FREE", warning: "సరైన మ్యాచ్ అర్థం చేసుకోవడం సంబంధాన్ని బలపరుస్తుంది.", home: "హోమ్", chatNav: "చాట్", daily: "డైలీ", profile: "ప్రొఫైల్", doshaTitle: "దోషాలు & నివారణ", strengths: "మీ 3 గొప్ప బలాలు", attention: "శ్రద్ధ వహించవలసిన అంశాలు", advice: "ఆచరణాత్మక సలహా", nextSteps: "తదుపరి అడుగు", soulLabel: "సంబంధ సారాంశం", doshaPresent: "ఉంది", doshaCancelled: "నివారించబడింది", doshaAbsent: "దోషం లేదు", manglik: "మంగళ దోషం", nadi: "నాడి దోషం", bhakoot: "భకూట్ దోషం", disclaimer: "ఈ నివేదిక సాంప్రదాయ వేద జ్యోతిష్యంపై ఆధారపడి ఉంది.", askQ: "ఇంకా తెలుసుకోవాలనుకుంటున్నారా?", q1: "మా పెళ్లికి కుటుంబం సులభంగా అంగీకరిస్తుందా?", q2: "మా జాతకాల ప్రకారం పెళ్లికి శుభ సమయం ఎప్పుడు?", q3: "ఈ సంబంధం కెరీర్ మరియు ధనంపై ఎలా ప్రభావితం చేస్తుంది?", labelUtkrisht: "అద్భుతమైన మ్యాచ్", labelBahutAcha: "చాలా మంచి మ్యాచ్", labelAcha: "మంచి మ్యాచ్", labelAusat: "సగటు మ్యాచ్", labelSudhar: "మెరుగుపరచాల్సిన అవసరం", boyPrefix: "వరుడు", girlPrefix: "వధువు", limitTitle: "మీ ఉచిత పరిమితి ముగిసింది!", limitSub: "మరిన్ని మ్యాచ్‌ల కోసం వాలెట్ రీఛార్జ్ చేయండి.", recharge: "వాలెట్ రీఛార్జ్" },
-    ta: { title: "ஜாதக பொருத்தம்", subtitle: "துல்லியமான திருமண பொருத்தம்", boy: "ஆண் விவரங்கள்", girl: "பெண் விவரங்கள்", name: "முழு பெயர்", city: "பிறந்த நகரம்", matchBtn: "பொருத்தம் பார்க்க", alertCity: "பட்டியலில் இருந்து நகரத்தை தேர்ந்தெடுக்கவும்!", result: "பொருத்தம் முடிவு", total: "/ 36 மொத்த அஷ்டகூடம்", breakdown: "அனைத்து 8 கூடங்களையும் பார்க்க", chat: "ஜோதிடரிடம் பேசுங்கள் — முதல் அரட்டை FREE", pdf: "PDF", reset: "மீட்டமை", share: "WhatsApp இல் பகிரவும்", bannerTitle: "ஜோதிடர் • 24x7 கிடைக்கும்", bannerSub: "பொருத்தத்தை ஆழமாக புரிந்துகொள்ள அரட்டை செய்யுங்கள் — FREE", warning: "சரியான பொருத்தத்தை புரிந்துகொள்வது உறவை வலுப்படுத்தும்.", home: "முகப்பு", chatNav: "அரட்டை", daily: "தினசரி", profile: "சுயவிவரம்", doshaTitle: "தோஷங்கள் & நிவாரணம்", strengths: "உங்கள் 3 சிறந்த பலங்கள்", attention: "கவனிக்க வேண்டிய பகுதிகள்", advice: "நடைமுறை ஆலோசனை", nextSteps: "அடுத்த படி", soulLabel: "உறவு சாராம்சம்", doshaPresent: "உள்ளது", doshaCancelled: "நிவாரணம்", doshaAbsent: "தோஷம் இல்லை", manglik: "மாங்கலிக் தோஷம்", nadi: "நாடி தோஷம்", bhakoot: "பகூட் தோஷம்", disclaimer: "இந்த அறிக்கை பாரம்பரிய வேத ஜோதிடத்தை அடிப்படையாகக் கொண்டது.", askQ: "மேலும் அறிய விரும்புகிறீர்களா?", q1: "எங்கள் திருமணத்திற்கு குடும்பம் எளிதில் ஒப்புக்கொள்ளுமா?", q2: "எங்கள் ஜாதகங்களின்படி திருமணத்திற்கு மிக நல்ல நேரம் எப்போது?", q3: "இந்த உறவு தொழில் மற்றும் செல்வத்தை எவ்வாறு பாதிக்கும்?", labelUtkrisht: "சிறந்த பொருத்தம்", labelBahutAcha: "மிக நல்ல பொருத்தம்", labelAcha: "நல்ல பொருத்தம்", labelAusat: "சராசரி பொருத்தம்", labelSudhar: "மேம்பாடு தேவை", boyPrefix: "மணமகன்", girlPrefix: "மணமகள்", limitTitle: "உங்கள் இலவச வரம்பு முடிந்தது!", limitSub: "மேலும் பொருத்தங்களுக்கு வாலெட் ரீசார்ஜ் செய்யுங்கள்.", recharge: "வாலெட் ரீசார்ஜ்" },
-    kn: { title: "ಕುಂಡಲಿ ಹೊಂದಾಣಿಕೆ", subtitle: "ನಿಖರವಾದ ವಿವಾಹ ಹೊಂದಾಣಿಕೆ", boy: "ಹುಡುಗನ ವಿವರಗಳು", girl: "ಹುಡುಗಿಯ ವಿವರಗಳು", name: "ಪೂರ್ಣ ಹೆಸರು", city: "ಹುಟ್ಟಿದ ನಗರ", matchBtn: "ಹೊಂದಿಸಿ", alertCity: "ದಯವಿಟ್ಟು ಪಟ್ಟಿಯಿಂದ ನಗರವನ್ನು ಆಯ್ಕೆಮಾಡಿ!", result: "ಹೊಂದಾಣಿಕೆಯ ಫಲಿತಾಂಶ", total: "/ 36 ಒಟ್ಟು ಅಷ್ಟಕೂಟ", breakdown: "ಎಲ್ಲಾ 8 ಕೂಟಗಳನ್ನು ನೋಡಿ", chat: "ಜ್ಯೋತಿಷಿಯೊಂದಿಗೆ ಮಾತನಾಡಿ — ಮೊದಲ ಚಾಟ್ FREE", pdf: "PDF", reset: "ಮರುಹೊಂದಿಸಿ", share: "WhatsApp ನಲ್ಲಿ ಹಂಚಿಕೊಳ್ಳಿ", bannerTitle: "ಜ್ಯೋತಿಷಿ • 24x7 ಲಭ್ಯವಿದೆ", bannerSub: "ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಳವಾಗಿ ಅರ್ಥಮಾಡಿಕೊಳ್ಳಲು ಚಾಟ್ ಮಾಡಿ — FREE", warning: "ಸರಿಯಾದ ಹೊಂದಾಣಿಕೆ ಅರ್ಥಮಾಡಿಕೊಳ್ಳುವುದು ಸಂಬಂಧವನ್ನು ಬಲಪಡಿಸುತ್ತದೆ.", home: "ಮುಖಪುಟ", chatNav: "ಚಾಟ್", daily: "ದೈನಂದಿನ", profile: "ಪ್ರೊಫೈಲ್", doshaTitle: "ದೋಷಗಳು & ನಿವಾರಣೆ", strengths: "ನಿಮ್ಮ 3 ಶ್ರೇಷ್ಠ ಶಕ್ತಿಗಳು", attention: "ಗಮನಿಸಬೇಕಾದ ಅಂಶಗಳು", advice: "ಪ್ರಾಯೋಗಿಕ ಸಲಹೆ", nextSteps: "ಮುಂದಿನ ಹೆಜ್ಜೆ", soulLabel: "ಸಂಬಂಧದ ಸಾರಾಂಶ", doshaPresent: "ಇದೆ", doshaCancelled: "ನಿವಾರಣೆ", doshaAbsent: "ದೋಷ ಇಲ್ಲ", manglik: "ಮಾಂಗ್ಲಿಕ್ ದೋಷ", nadi: "ನಾಡಿ ದೋಷ", bhakoot: "ಭಕೂಟ್ ದೋಷ", disclaimer: "ಈ ವರದಿ ಸಾಂಪ್ರದಾಯಿಕ ವೈದಿಕ ಜ್ಯೋತಿಷ್ಯವನ್ನು ಆಧರಿಸಿದೆ.", askQ: "ಇನ್ನಷ್ಟು ತಿಳಿಯಲು ಬಯಸುವಿರಾ?", q1: "ನಮ್ಮ ಮದುವೆಗೆ ಕುಟುಂಬ ಸುಲಭವಾಗಿ ಒಪ್ಪುತ್ತದೆಯೇ?", q2: "ನಮ್ಮ ಜಾತಕದ ಪ್ರಕಾರ ಮದುವೆಗೆ ಶುಭ ಸಮಯ ಯಾವುದು?", q3: "ಈ ಸಂಬಂಧ ವೃತ್ತಿ ಮತ್ತು ಸಂಪತ್ತಿನ ಮೇಲೆ ಹೇಗೆ ಪರಿಣಾಮ ಬೀರುತ್ತದೆ?", labelUtkrisht: "ಅತ್ಯುತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelBahutAcha: "ಬಹಳ ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAcha: "ಉತ್ತಮ ಹೊಂದಾಣಿಕೆ", labelAusat: "ಸರಾಸರಿ ಹೊಂದಾಣಿಕೆ", labelSudhar: "ಸುಧಾರಣೆ ಅಗತ್ಯ", boyPrefix: "ವರ", girlPrefix: "ವಧು", limitTitle: "ನಿಮ್ಮ ಉಚಿತ ಮಿತಿ ಮುಗಿದಿದೆ!", limitSub: "ಹೆಚ್ಚಿನ ಹೊಂದಾಣಿಕೆಗಾಗಿ ವಾಲೆಟ್ ರೀಚಾರ್ಜ್ ಮಾಡಿ.", recharge: "ವಾಲೆಟ್ ರೀಚಾರ್ಜ್" },
-    bn: { title: "কুণ্ডলী মিলন", subtitle: "সঠিক বিবাহ ম্যাচিং", boy: "ছেলের বিবরণ", girl: "মেয়ের বিবরণ", name: "পুরো নাম", city: "জন্ম শহর", matchBtn: "মিলন করুন", alertCity: "অনুগ্রহ করে তালিকা থেকে শহর নির্বাচন করুন!", result: "মিলন ফলাফল", total: "/ 36 মোট অষ্টকূট", breakdown: "সব ৮টি কূট দেখুন", chat: "জ্যোতিষীর সাথে কথা বলুন — প্রথম চ্যাট FREE", pdf: "PDF", reset: "রিসেট", share: "WhatsApp এ শেয়ার করুন", bannerTitle: "জ্যোতিষী • 24x7 উপলব্ধ", bannerSub: "মিলন গভীরভাবে বুঝতে চ্যাট করুন — FREE", warning: "সঠিক মিলন বুঝলে সম্পর্ক আরও মজবুত হয়।", home: "হোম", chatNav: "চ্যাট", daily: "দৈনিক", profile: "প্রোফাইল", doshaTitle: "দোষ ও তাদের নিবারণ", strengths: "আপনার ৩টি সেরা শক্তি", attention: "মনোযোগ দেওয়ার বিষয়", advice: "ব্যবহারিক পরামর্শ", nextSteps: "পরবর্তী পদক্ষেপ", soulLabel: "সম্পর্কের সারাংশ", doshaPresent: "উপস্থিত", doshaCancelled: "নিবারিত", doshaAbsent: "কোনো দোষ নেই", manglik: "মাঙ্গলিক দোষ", nadi: "নাড়ি দোষ", bhakoot: "ভকূট দোষ", disclaimer: "এই রিপোর্ট ঐতিহ্যবাহী বৈদিক জ্যোতিষের উপর ভিত্তি করে।", askQ: "আরও জানতে চান?", q1: "আমাদের বিয়েতে পরিবার সহজে রাজি হবে?", q2: "আমাদের কুণ্ডলী অনুযায়ী বিয়ের শুভ সময় কখন?", q3: "এই সম্পর্ক ক্যারিয়ার ও ধনে কী প্রভাব ফেলবে?", labelUtkrisht: "চমৎকার মিলন", labelBahutAcha: "খুব ভালো মিলন", labelAcha: "ভালো মিলন", labelAusat: "গড় মিলন", labelSudhar: "উন্নতি প্রয়োজন", boyPrefix: "বর", girlPrefix: "কনে", limitTitle: "আপনার ফ্রি সীমা শেষ!", limitSub: "আরও মিলনের জন্য ওয়ালেট রিচার্জ করুন।", recharge: "ওয়ালেট রিচার্জ" },
-    mr: { title: "कुंडली मिलन", subtitle: "अचूक विवाह जुळणी", boy: "मुलाचे तपशील", girl: "मुलीचे तपशील", name: "पूर्ण नाव", city: "जन्म शहर", matchBtn: "जुळवा", alertCity: "कृपया यादीतून शहर निवडा!", result: "जुळणी निकाल", total: "/ 36 एकूण अष्टकूट", breakdown: "सर्व 8 कूट पहा", chat: "ज्योतिषाशी बोला — पहिली चॅट FREE", pdf: "PDF", reset: "रीसेट", share: "WhatsApp वर शेअर करा", bannerTitle: "ज्योतिषी • 24x7 उपलब्ध", bannerSub: "जुळणी सखोल समजून घेण्यासाठी चॅट करा — FREE", warning: "योग्य जुळणी समजल्यास नातं अधिक मजबूत होतं.", home: "होम", chatNav: "चॅट", daily: "दैनिक", profile: "प्रोफाइल", doshaTitle: "दोष आणि त्यांचे निवारण", strengths: "तुमच्या 3 सर्वात मोठ्या ताकदी", attention: "लक्ष देण्याच्या गोष्टी", advice: "व्यवहारिक सल्ला", nextSteps: "पुढील पाऊल", soulLabel: "नात्याचा निचरा", doshaPresent: "उपस्थित", doshaCancelled: "निवारित", doshaAbsent: "दोष नाही", manglik: "मांगलिक दोष", nadi: "नाडी दोष", bhakoot: "भकूट दोष", disclaimer: "हा अहवाल पारंपारिक वैदिक ज्योतिषावर आधारित आहे.", askQ: "अजून जाणून घ्यायचंय?", q1: "आमच्या लग्नाला कुटुंब सहज मान्य करेल का?", q2: "आमच्या कुंडलीनुसार लग्नाची सर्वात शुभ वेळ कधी?", q3: "या नात्याचा करिअर आणि पैशावर काय परिणाम होईल?", labelUtkrisht: "उत्कृष्ट जुळणी", labelBahutAcha: "खूप चांगली जुळणी", labelAcha: "चांगली जुळणी", labelAusat: "सरासरी जुळणी", labelSudhar: "सुधारणा आवश्यक", boyPrefix: "वर", girlPrefix: "वधू", limitTitle: "तुमची मोफत मर्यादा संपली आहे!", limitSub: "अधिक जुळणीसाठी वॉलेट रिचार्ज करा.", recharge: "वॉलेट रिचार्ज" },
-    gu: { title: "કુંડળી મેળાપ", subtitle: "સચોટ લગ્ન મેચિંગ", boy: "છોકરાની વિગતો", girl: "છોકરીની વિગતો", name: "પૂરું નામ", city: "જન્મ શહેર", matchBtn: "મેળવો", alertCity: "કૃપા કરીને સૂચિમાંથી શહેર પસંદ કરો!", result: "મેચિંગ પરિણામ", total: "/ 36 કુલ અષ્ટકૂટ", breakdown: "બધા 8 કૂટ જુઓ", chat: "જ્યોતિષી સાથે વાત કરો — પ્રથમ ચેટ FREE", pdf: "PDF", reset: "રીસેટ", share: "WhatsApp પર શેર કરો", bannerTitle: "જ્યોતિષી • 24x7 ઉપલબ્ધ", bannerSub: "મેચિંગ ઊંડાણપૂર્વક સમજવા ચેટ કરો — FREE", warning: "યોગ્ય મેચિંગ સમજવાથી સંબંધ વધુ મજબૂત બને છે.", home: "હોમ", chatNav: "ચેટ", daily: "દૈનિક", profile: "પ્રોફાઇલ", doshaTitle: "દોષ અને તેમનું નિવારણ", strengths: "તમારી 3 સૌથી મોટી તાકાત", attention: "ધ્યાન આપવાની બાબતો", advice: "વ્યવહારુ સલાહ", nextSteps: "આગળનું પગલું", soulLabel: "સંબંધનો નિચોડ", doshaPresent: "હાજર", doshaCancelled: "નિવારિત", doshaAbsent: "કોઈ દોષ નથી", manglik: "માંગલિક દોષ", nadi: "નાડી દોષ", bhakoot: "ભકૂટ દોષ", disclaimer: "આ રિપોર્ટ પરંપરાગત વૈદિક જ્યોતિષ પર આધારિત છે.", askQ: "વધુ જાણવા માંગો છો?", q1: "અમારા લગ્નમાં પરિવાર સહેલાઈથી માની જશે?", q2: "અમારી કુંડળી મુજબ લગ્નનો સૌથી શુભ સમય ક્યારે?", q3: "આ સંબંધ કરિયર અને ધન પર કેવી અસર કરશે?", labelUtkrisht: "ઉત્કૃષ્ટ મેચિંગ", labelBahutAcha: "ખૂબ સારું મેચિંગ", labelAcha: "સારું મેચિંગ", labelAusat: "સરેરાશ મેચિંગ", labelSudhar: "સુધારાની જરૂર", boyPrefix: "વર", girlPrefix: "વધૂ", limitTitle: "તમારી મફત મર્યાદા સમાપ્ત થઈ ગઈ છે!", limitSub: "વધુ મેચિંગ માટે વોલેટ રિચાર્જ કરો.", recharge: "વોલેટ રિચાર્જ" },
-    ml: { title: "കുണ്ഡലി മാച്ചിംഗ്", subtitle: "കൃത്യമായ വിവാഹ മാച്ചിംഗ്", boy: "ആൺകുട്ടിയുടെ വിവരങ്ങൾ", girl: "പെൺകുട്ടിയുടെ വിവരങ്ങൾ", name: "പൂർണ്ണ നാമം", city: "ജനന നഗരം", matchBtn: "മാച്ച് ചെയ്യുക", alertCity: "ലിസ്റ്റിൽ നിന്ന് ഒരു നഗരം തിരഞ്ഞെടുക്കുക!", result: "മാച്ചിംഗ് ഫലം", total: "/ 36 മൊത്തം അഷ്ടകൂട്ടം", breakdown: "എല്ലാ 8 കൂട്ടങ്ങളും കാണുക", chat: "ജ്യോതിഷിയോട് സംസാരിക്കുക — ആദ്യ ചാറ്റ് FREE", pdf: "PDF", reset: "പുനഃസജ്ജമാക്കുക", share: "WhatsApp ൽ പങ്കിടുക", bannerTitle: "ജ്യോതിഷി • 24x7 ലഭ്യമാണ്", bannerSub: "മാച്ചിംഗ് ആഴത്തിൽ മനസ്സിലാക്കാൻ ചാറ്റ് ചെയ്യുക — FREE", warning: "ശരിയായ മാച്ചിംഗ് മനസ്സിലാക്കുന്നത് ബന്ധം ശക്തമാക്കുന്നു.", home: "ഹോം", chatNav: "ചാറ്റ്", daily: "ദൈനംദിനം", profile: "പ്രൊഫൈൽ", doshaTitle: "ദോഷങ്ങളും പരിഹാരവും", strengths: "നിങ്ങളുടെ 3 മികച്ച ശക്തികൾ", attention: "ശ്രദ്ധിക്കേണ്ട കാര്യങ്ങൾ", advice: "പ്രായോഗിക ഉപദേശം", nextSteps: "അടുത്ത ഘട്ടം", soulLabel: "ബന്ധത്തിന്റെ സാരാംശം", doshaPresent: "ഉണ്ട്", doshaCancelled: "പരിഹരിച്ചു", doshaAbsent: "ദോഷമില്ല", manglik: "മാംഗ്ലിക് ദോഷം", nadi: "നാഡി ദോഷം", bhakoot: "ഭകൂട്ട് ദോഷം", disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷത്തെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്.", askQ: "കൂടുതൽ അറിയാൻ ആഗ്രഹിക്കുന്നുണ്ടോ?", q1: "ഞങ്ങളുടെ വിവാഹത്തിന് കുടുംബം എളുപ്പത്തിൽ സമ്മതിക്കുമോ?", q2: "ഞങ്ങളുടെ ജാതകം അനുസരിച്ച് വിവാഹത്തിന് ഏറ്റവും ശുഭമായ സമയം എപ്പോൾ?", q3: "ഈ ബന്ധം കരിയറിലും ധനത്തിലും എന്ത് സ്വാധീനം ചെലുത്തും?", labelUtkrisht: "മികച്ച മാച്ചിംഗ്", labelBahutAcha: "വളരെ നല്ല മാച്ചിംഗ്", labelAcha: "നല്ല മാച്ചിംഗ്", labelAusat: "ശരാശരി മാച്ചിംഗ്", labelSudhar: "മെച്ചപ്പെടുത്തൽ ആവശ്യം", boyPrefix: "വരൻ", girlPrefix: "വധു", limitTitle: "നിങ്ങളുടെ സൗജന്യ പരിധി തീർന്നു!", limitSub: "കൂടുതൽ മാച്ചിംഗിനായി വാലറ്റ് റീചാർജ് ചെയ്യുക.", recharge: "വാലറ്റ് റീചാർജ്" },
+      boyPrefix: "Groom", girlPrefix: "Bride", limitTitle: "Your Free Limit is Exhausted!",
+      limitSub: "Recharge your wallet or talk to an astrologer for further matchings.", recharge: "Recharge Wallet",
+      seoTitle: "About Kundli Matching",
+      seoDesc: "In Hinduism, Kundli matching before marriage is considered very important. It helps understand the future, nature, and planetary positions of the groom and bride. A good match strengthens the relationship.",
+      faqTitle: "Frequently Asked Questions (FAQs)",
+      faq1Q: "What are the 36 Gunas in Kundli Matching?",
+      faq1A: "In Vedic astrology, there are 36 Gunas across 8 different categories (Ashtakoot). The more Gunas match, the more auspicious the marriage is considered (18+ is generally good).",
+      faq2Q: "Is Manglik Dosha a barrier to marriage?",
+      faq2A: "Not necessarily. If both partners are Manglik or certain remedies are performed, the dosha is pacified. GitaTalk provides accurate analysis and remedies.",
+      footerText: "This report is for general information. Consult an astrologer for accurate calculations."
+    }
   };
-  return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key];
-};
 
-const getLabelText = (lang: string, label: string) => {
-  const keyMap: Record<string, string> = {
-    utkrisht: "labelUtkrisht",
-    "bahut-acha": "labelBahutAcha",
-    acha: "labelAcha",
-    ausat: "labelAusat",
-    sudhar: "labelSudhar",
-  };
-  return getUIText(lang, keyMap[label] || "labelAcha");
-};
+  // Fallback for other languages (Copy English content if not translated yet)
+  const defaultLang = ui["en"];
+  const currentLang = ui[lang] || defaultLang;
 
-const getLabelColor = (label: string) => {
-  switch (label) {
-    case "utkrisht": return "text-emerald-500 bg-emerald-500/10 border-emerald-500/20";
-    case "bahut-acha": return "text-teal-500 bg-teal-500/10 border-teal-500/20";
-    case "acha": return "text-blue-500 bg-blue-500/10 border-blue-500/20";
-    case "ausat": return "text-amber-500 bg-amber-500/10 border-amber-500/20";
-    default: return "text-rose-500 bg-rose-500/10 border-rose-500/20";
-  }
+  // Agar kisi nayi bhasha mein key missing hai, to English se utha lega
+  return currentLang[key] || defaultLang[key] || key; 
 };
-
+// ============================================================
+// MAIN COMPONENT
+// ============================================================
 export default function MatchingPage() {
-  const { lang, theme } = useApp();
   const router = useRouter();
-  const isDark = theme === "dark";
-  const t = (key: string) => getUIText(lang || "hi", key);
-
-  const pageClass = isDark ? "bg-[#0A0F19] text-slate-100" : "bg-[#FEF8EF] text-slate-900";
-  const cardClass = isDark ? "border-slate-800 bg-[#151d2c] shadow-lg" : "border-orange-100 bg-white shadow-xl";
-  const inputClass = isDark ? "bg-[#0A0F19] border-slate-700 text-white" : "bg-orange-50/50 border-orange-200 text-slate-900";
-
-  return (
-    <main className={`min-h-screen pb-24 w-full ${pageClass} font-sans`}>
-      <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-4 space-y-5">
-        
-        {/* HEADER */}
-        <header className={`flex items-center gap-3 rounded-2xl border p-4 sm:p-5 ${cardClass}`}>
-          <Link href="/" className={`rounded-xl p-2.5 transition-colors ${isDark ? "bg-[#0A0F19] text-slate-300" : "bg-orange-50 text-orange-600"}`}>
-            <ArrowLeft size={20} />
-          </Link>
-          <div className="flex-1">
-            <h1 className="text-[17px] sm:text-[20px] font-black uppercase tracking-tight text-[#ff6b00]">{t("title")}</h1>
-            <p className={`text-[11px] sm:text-[13px] font-bold ${isDark ? "text-slate-400" : "text-gray-500"}`}>{t("subtitle")}</p>
-          </div>
-          <Heart className="text-[#ff6b00] fill-[#ff6b00]" size={24} />
-        </header>
-
-        {/* WARNING BANNER */}
-        <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 ${isDark ? "border-orange-500/30 bg-orange-500/10" : "border-orange-200 bg-orange-50"}`}>
-          <Sparkles size={16} className="text-[#ff6b00] shrink-0" />
-          <p className={`text-[11.5px] leading-snug font-medium ${isDark ? "text-orange-200" : "text-orange-700"}`}>
-            {t("warning")}
-          </p>
-        </div>
-
-        {/* MAIN CARD */}
-        <div className={`rounded-[1.5rem] border p-5 sm:p-7 ${cardClass}`}>
-          
-          {/* BOY DETAILS */}
-          <div className={`rounded-2xl border p-4 sm:p-5 mb-5 ${isDark ? "border-slate-800 bg-[#0A0F19]" : "border-orange-100 bg-orange-50/30"}`}>
-            <h3 className="text-[15px] font-bold text-[#ff6b00] mb-4 flex items-center gap-2">
-              <span className="text-lg">😎</span> {t("boy")}
-            </h3>
-            <div className="space-y-3">
-              <input type="text" placeholder={t("name")} className={`w-full rounded-xl border px-4 py-3.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#ff6b00]/50 ${inputClass}`} />
-              <div className="flex gap-3">
-                <div className={`flex flex-1 items-center justify-between rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Calendar size={16} /> <span>DD / MM / YYYY</span>
-                  </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </div>
-                <div className={`flex flex-1 items-center justify-between rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Clock size={16} /> <span>HH : MM</span>
-                  </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </div>
-              </div>
-import { useState } from "react";
-
-// Bina API key ke, India ke major shehron ki list (Isko aap badha sakte hain)
-const INDIAN_CITIES = [
-  { name: "Patna, Bihar", lat: 25.5941, lng: 85.1376, timeZone: "Asia/Kolkata" },
-  { name: "Delhi, NCR", lat: 28.6139, lng: 77.2090, timeZone: "Asia/Kolkata" },
-  { name: "Mumbai, Maharashtra", lat: 19.0760, lng: 72.8777, timeZone: "Asia/Kolkata" },
-  { name: "Lucknow, Uttar Pradesh", lat: 26.8467, lng: 80.9462, timeZone: "Asia/Kolkata" },
-  { name: "Jaipur, Rajasthan", lat: 26.9124, lng: 75.7873, timeZone: "Asia/Kolkata" },
-  { name: "Bhopal, Madhya Pradesh", lat: 23.2599, lng: 77.4126, timeZone: "Asia/Kolkata" },
-  { name: "Kolkata, West Bengal", lat: 22.5726, lng: 88.3639, timeZone: "Asia/Kolkata" },
-  { name: "Chennai, Tamil Nadu", lat: 13.0827, lng: 80.2707, timeZone: "Asia/Kolkata" },
-  { name: "Bengaluru, Karnataka", lat: 12.9716, lng: 77.5946, timeZone: "Asia/Kolkata" },
-  { name: "Hyderabad, Telangana", lat: 17.3850, lng: 78.4867, timeZone: "Asia/Kolkata" },
-];
-
-// Component ke andar:
-const [searchTerm, setSearchTerm] = useState("");
-const [showDropdown, setShowDropdown] = useState(false);
-const [selectedCity, setSelectedCity] = useState<any>(null);
-
-// Filter logic
-const filteredCities = INDIAN_CITIES.filter(city => 
-  city.name.toLowerCase().includes(searchTerm.toLowerCase())
-);
-
-// Input Field (Aapke design ke hisaab se class lagayein)
-<div className="relative">
-  <input 
-    type="text"
-    className="your-existing-classes w-full" // Apni purani classes yahan daalein
-    value={searchTerm}
-    onChange={(e) => {
-      setSearchTerm(e.target.value);
-      setShowDropdown(true);
-      setSelectedCity(null); // Reset if they type again
-    }}
-    placeholder="Place of birth (e.g. Patna, Bihar)"
-  />
+  const { user, language = "hinglish", refreshUser } = useApp() as any;
   
-  {/* Dropdown Results */}
-  {showDropdown && searchTerm && (
-    <ul className="absolute z-50 w-full bg-gray-800 border border-gray-600 rounded mt-1 max-h-40 overflow-y-auto">
-      {filteredCities.length > 0 ? (
-        filteredCities.map((city, idx) => (
-          <li 
-            key={idx} 
-            className="p-2 hover:bg-gray-700 cursor-pointer text-white"
-            onClick={() => {
-              setSearchTerm(city.name);
-              setSelectedCity(city);
-              setShowDropdown(false);
-            }}
-          >
-            {city.name}
-          </li>
-        ))
-      ) : (
-        <li className="p-2 text-gray-400">City not found</li>
-      )}
-    </ul>
-  )}
-</div>
-          </div>
+  // Form States
+  const [boyName, setBoyName] = useState("");
+  const [boyDob, setBoyDob] = useState("");
+  const [boyTime, setBoyTime] = useState("");
+  const [boyPlace, setBoyPlace] = useState("");
 
-          {/* DIVIDER HEART */}
-          <div className="flex justify-center -my-2 relative z-10">
-            <div className={`h-10 w-10 rounded-full flex items-center justify-center border-4 ${isDark ? "bg-[#151d2c] border-[#0A0F19]" : "bg-white border-white shadow-sm"}`}>
-              <Heart className="text-[#ff6b00] fill-[#ff6b00]" size={18} />
-            </div>
-          </div>
+  const [girlName, setGirlName] = useState("");
+  const [girlDob, setGirlDob] = useState("");
+  const [girlTime, setGirlTime] = useState("");
+  const [girlPlace, setGirlPlace] = useState("");
 
-          {/* GIRL DETAILS */}
-          <div className={`rounded-2xl border p-4 sm:p-5 mt-5 ${isDark ? "border-slate-800 bg-[#0A0F19]" : "border-orange-100 bg-orange-50/30"}`}>
-            <h3 className="text-[15px] font-bold text-pink-500 mb-4 flex items-center gap-2">
-              <span className="text-lg">👧</span> {t("girl")}
-            </h3>
-            <div className="space-y-3">
-              <input type="text" placeholder={t("name")} className={`w-full rounded-xl border px-4 py-3.5 text-[14px] focus:outline-none focus:ring-2 focus:ring-pink-500/50 ${inputClass}`} />
-              <div className="flex gap-3">
-                <div className={`flex flex-1 items-center justify-between rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Calendar size={16} /> <span>DD / MM / YYYY</span>
-                  </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </div>
-                <div className={`flex flex-1 items-center justify-between rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                  <div className="flex items-center gap-2 text-slate-400">
-                    <Clock size={16} /> <span>HH : MM</span>
-                  </div>
-                  <ChevronDown size={16} className="text-slate-400" />
-                </div>
-              </div>
-              <div className={`flex items-center gap-2 rounded-xl border px-4 py-3.5 text-[14px] ${inputClass}`}>
-                <MapPin size={16} className="text-slate-400" />
-                <input type="text" placeholder={t("city")} className="w-full bg-transparent focus:outline-none" />
-              </div>
-            </div>
-          </div>
+  // UI States
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(0);
+  const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [limitExceeded, setLimitExceeded] = useState(false);
 
-          {/* MATCH BUTTON */}
-          <button className="mt-6 w-full rounded-xl bg-gradient-to-r from-[#FF6B00] to-[#FF8A00] py-4 text-[15px] font-bold text-white shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-            {t("matchBtn")} <Sparkles size={18} />
+  const t = (key: string) => getUIText(language, key);
+  const loadingSteps = getLoadingSteps(language);
+
+  // Loading animation effect
+  useEffect(() => {
+    let interval: any;
+    if (loading) {
+      interval = setInterval(() => {
+        setLoadingStep((prev) => (prev < loadingSteps.length - 1 ? prev + 1 : prev));
+      }, 1500);
+    } else {
+      setLoadingStep(0);
+    }
+    return () => clearInterval(interval);
+  }, [loading, loadingSteps.length]);
+
+  // Date Format Fix (Converts DD/MM/YYYY to YYYY-MM-DD)
+  const formatDateForBackend = (dateStr: string) => {
+    if (!dateStr) return "";
+    if (dateStr.includes('/')) {
+      const [d, m, y] = dateStr.split('/');
+      return `${y}-${m}-${d}`;
+    }
+    return dateStr; // Already YYYY-MM-DD (from standard date picker)
+  };
+
+  const handleMatch = async () => {
+    setError("");
+    if (!boyPlace || !girlPlace) {
+      setError(t('alertCity'));
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const payload = {
+        boy: {
+          name: boyName,
+          dateOfBirth: formatDateForBackend(boyDob),
+          timeOfBirth: boyTime,
+          placeOfBirth: boyPlace
+        },
+        girl: {
+          name: girlName,
+          dateOfBirth: formatDateForBackend(girlDob),
+          timeOfBirth: girlTime,
+          placeOfBirth: girlPlace
+        },
+        language: language
+      };
+
+      const res = await fetch("/api/matching", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 402) {
+          setLimitExceeded(true);
+        }
+        throw new Error(data.message || "Kundli calculation mein problem aayi.");
+      }
+
+      setResult(data);
+      if (refreshUser) refreshUser(); // Wallet balance update karne ke liye
+    } catch (err: any) {
+      setError(err.message || "Kuch galat ho gaya. Kripya thodi der baad try karein.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleReset = () => {
+    setResult(null);
+    setError("");
+    setLimitExceeded(false);
+  };
+    // ============================================================
+  // RENDER
+  // ============================================================
+  return (
+    <div className="min-h-screen bg-[#13111c] text-white pb-20">
+      {/* HEADER */}
+      <div className="sticky top-0 z-40 bg-[#13111c]/90 backdrop-blur-md border-b border-gray-800 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => router.push('/')} className="p-2 bg-[#1e1e2d] rounded-full">
+            <ArrowLeft size={20} />
           </button>
+          <div>
+            <h1 className="text-orange-500 font-bold text-lg">{t('title')}</h1>
+            <p className="text-xs text-gray-400">{t('subtitle')}</p>
+          </div>
         </div>
+      </div>
 
-        {/* SEO CONTENT & FAQ */}
-        <section className={`mt-4 px-5 sm:px-7 py-6 w-full rounded-[1.5rem] border ${isDark ? "border-slate-800/60 bg-[#0c111b]" : "border-orange-100 bg-white"} space-y-4`}>
-          <h2 className={`text-[18px] sm:text-[20px] font-bold ${isDark ? "text-white" : "text-gray-900"}`}>
-            Free Kundli Matching for Marriage
-          </h2>
-          <p className={`text-[13px] sm:text-[14px] leading-relaxed ${isDark ? "text-slate-300" : "text-gray-600"}`}>
-            विवाह जीवन का सबसे महत्वपूर्ण निर्णय है। कुंडली मिलान (Gun Milan) में 36 गुणों का मिलान किया जाता है जिसमें वर्ण, वश्य, तारा, योनि, ग्रह मैत्री, गण, भकूट और नाड़ी शामिल हैं। GitaTalk के AI ज्योतिषी से मुफ्त कुंडली मिलान करें और जानें कि आपका और आपके पार्टनर का मिलान कैसा है।
-          </p>
-          
-          <h3 className={`text-[15px] font-bold mt-6 ${isDark ? "text-white" : "text-gray-900"}`}>Frequently Asked Questions (FAQs)</h3>
-          
-          <div className="space-y-4 mt-2">
-            <div>
-              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
-                <span className="text-[#ff6b00]">Q:</span> कितने गुणों का मिलान शादी के लिए अच्छा माना जाता है?
-              </p>
-              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
-                <span className="text-[#ff6b00] font-bold">A:</span> 36 में से 18 या उससे अधिक गुणों का मिलान शादी के लिए अच्छा माना जाता है। लेकिन कम गुण होने पर भी कुंडली में दोष कटने (Cancellation) से रिश्ता मजबूत हो सकता है।
-              </p>
+      <div className="max-w-4xl mx-auto p-4">
+        {!result ? (
+          <>
+            {/* FORM SECTION */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {/* BOY DETAILS */}
+              <div className="bg-[#1e1e2d] p-4 rounded-xl border border-gray-800">
+                <h2 className="text-blue-400 font-semibold mb-4 text-sm">{t('boy')}</h2>
+                <div className="space-y-3">
+                  <input type="text" placeholder={t('name')} value={boyName} onChange={(e) => setBoyName(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm" />
+                  <input type="date" value={boyDob} onChange={(e) => setBoyDob(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm" />
+                  <input type="time" value={boyTime} onChange={(e) => setBoyTime(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm" />
+                  <CitySearchInput 
+                    value={boyPlace} 
+                    onChange={(val: string) => setBoyPlace(val)} 
+                    placeholder={t('city')} 
+                    className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-blue-500 text-sm" 
+                  />
+                </div>
+              </div>
+
+              {/* GIRL DETAILS */}
+              <div className="bg-[#1e1e2d] p-4 rounded-xl border border-gray-800">
+                <h2 className="text-pink-400 font-semibold mb-4 text-sm">{t('girl')}</h2>
+                <div className="space-y-3">
+                  <input type="text" placeholder={t('name')} value={girlName} onChange={(e) => setGirlName(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-pink-500 text-sm" />
+                  <input type="date" value={girlDob} onChange={(e) => setGirlDob(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-pink-500 text-sm" />
+                  <input type="time" value={girlTime} onChange={(e) => setGirlTime(e.target.value)} className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-pink-500 text-sm" />
+                  <CitySearchInput 
+                    value={girlPlace} 
+                    onChange={(val: string) => setGirlPlace(val)} 
+                    placeholder={t('city')} 
+                    className="w-full bg-[#13111c] text-white p-3 rounded-lg border border-gray-700 focus:outline-none focus:border-pink-500 text-sm" 
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* ERROR MESSAGE */}
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/50 text-red-400 p-3 rounded-lg mb-4 text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            {/* LIMIT EXCEEDED */}
+            {limitExceeded && (
+              <div className="bg-orange-500/10 border border-orange-500/50 text-orange-400 p-4 rounded-xl mb-4 text-center">
+                <p className="font-bold mb-2">{t('limitTitle')}</p>
+                <p className="text-sm mb-4">{t('limitSub')}</p>
+                <button onClick={() => router.push('/wallet')} className="bg-orange-500 text-white px-6 py-2 rounded-lg font-semibold">
+                  {t('recharge')}
+                </button>
+              </div>
+            )}
+
+            {/* MATCH BUTTON */}
+            {!loading && (
+              <button onClick={handleMatch} className="w-full bg-gradient-to-r from-orange-500 to-pink-500 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg">
+                <Heart size={20} /> {t('matchBtn')}
+              </button>
+            )}
+
+            {/* LOADING STATE */}
+            {loading && (
+              <div className="bg-[#1e1e2d] p-8 rounded-xl border border-gray-800 text-center mt-4">
+                <RefreshCw className="animate-spin mx-auto text-orange-500 mb-4" size={32} />
+                <p className="text-white text-sm animate-pulse">{loadingSteps[loadingStep]}</p>
+              </div>
+            )}
+          </>
+        ) : (
+          /* RESULT SECTION (Aapka purana result logic yahan aayega) */
+          <div className="bg-[#1e1e2d] p-6 rounded-xl border border-gray-800 text-center">
+            <h2 className="text-2xl font-bold text-orange-500 mb-2">{t('result')}</h2>
+            <div className="text-5xl font-bold text-white mb-2">{result.totalScore} <span className="text-lg text-gray-400">{t('total')}</span></div>
+            <button onClick={handleReset} className="mt-6 bg-[#13111c] border border-gray-700 text-white px-6 py-2 rounded-lg">
+              {t('reset')}
+            </button>
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* SEO & FAQ SECTION (Daily Panchang jaisa design) */}
+        {/* ============================================================ */}
+        <div className="mt-8 mb-10">
+          {/* SEO TEXT */}
+          <div className="bg-[#1e1e2d] rounded-xl p-5 mb-6 border border-gray-800">
+            <h2 className="text-white text-lg font-semibold mb-3">{t('seoTitle')}</h2>
+            <p className="text-gray-400 text-sm leading-relaxed">{t('seoDesc')}</p>
+          </div>
+
+          {/* FAQS */}
+          <div className="bg-[#1e1e2d] rounded-xl p-5 border border-gray-800">
+            <h3 className="text-white text-lg font-semibold mb-4">{t('faqTitle')}</h3>
+            <div className="mb-4">
+              <p className="text-white font-medium text-sm mb-1">Q: {t('faq1Q')}</p>
+              <p className="text-gray-400 text-sm">A: {t('faq1A')}</p>
             </div>
             <div>
-              <p className={`text-[13.5px] font-bold flex items-start gap-2 ${isDark ? "text-slate-200" : "text-gray-800"}`}>
-                <span className="text-[#ff6b00]">Q:</span> क्या मांगलिक दोष कट सकता है?
-              </p>
-              <p className={`text-[13px] leading-relaxed mt-1.5 pl-5 ${isDark ? "text-slate-400" : "text-gray-600"}`}>
-                <span className="text-[#ff6b00] font-bold">A:</span> हाँ, अगर दोनों पार्टनर मांगलिक है या कुंडली में गुरु/शनि की दृष्टि है, तो मांगलिक दोष का प्रभाव कट जाता है।
-              </p>
+              <p className="text-white font-medium text-sm mb-1">Q: {t('faq2Q')}</p>
+              <p className="text-gray-400 text-sm">A: {t('faq2A')}</p>
             </div>
           </div>
-        </section>
 
-        {/* FOOTER */}
-        <footer className="mt-4 pt-6 pb-2 border-t border-slate-800/80 w-full text-center">
-          <div className="flex flex-wrap justify-center gap-4 mb-4 text-[12px] font-semibold text-slate-400">
-            <Link href="/privacy-policy" className="hover:text-orange-500 transition-colors">Privacy Policy</Link>
-            <Link href="/terms" className="hover:text-orange-500 transition-colors">Terms & Refund Policy</Link>
-            <Link href="/contact" className="hover:text-orange-500 transition-colors">Contact Us</Link>
-          </div>
-          <p className="text-[11px] font-medium text-slate-500 leading-relaxed">
-            © {new Date().getFullYear()} GitaTalk (gitatalk.in). All rights reserved.<br />
-            Astrology is for guidance purposes only. Not a substitute for professional advice.
+          {/* FOOTER DISCLAIMER */}
+          <p className="text-center text-xs text-gray-500 mt-6 px-4">
+            {t('footerText')}
           </p>
-        </footer>
+        </div>
 
       </div>
-    </main>
+    </div>
   );
-}
+  
+                                                                    }
