@@ -1,5 +1,5 @@
 // lib/firebase.ts
-import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
@@ -24,9 +24,16 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// 👇 CHANGE 1: Firebase app ab SIRF browser mein initialize hoga.
+// Server / Vercel build ke time kuch bhi initialize nahi hoga (build crash fix).
+const app: FirebaseApp =
+  typeof window === "undefined"
+    ? (null as unknown as FirebaseApp)
+    : !getApps().length
+      ? initializeApp(firebaseConfig)
+      : getApp();
 
-// 👇 YAHAN CHANGE KIYA HAI: Server par null, browser par getAuth
+// 👇 CHANGE 2: Server par null, browser par getAuth
 const auth: Auth =
   typeof window === "undefined" ? (null as unknown as Auth) : getAuth(app);
 
