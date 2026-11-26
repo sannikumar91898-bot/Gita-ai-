@@ -1,5 +1,7 @@
 // ============================================================
-// 4. GENERAL MESSAGES (ALL 10 LANGUAGES)
+// app/api/matching/route.ts — SECTION 4: GENERAL MESSAGES (all 10 languages)
+// Purana poora "const GENERAL_MSGS ... };" aur "function getGeneral ... }" delete karke
+// ye poora block paste karein (LangKey type file me upar pehle se defined hai).
 // ============================================================
 const GENERAL_MSGS: Record<LangKey, GeneralMessages> = {
   hi: {
@@ -243,3 +245,7 @@ const GENERAL_MSGS: Record<LangKey, GeneralMessages> = {
     disclaimer: "ഈ റിപ്പോർട്ട് പരമ്പരാഗത വൈദിക ജ്യോതിഷ തത്വങ്ങളെ അടിസ്ഥാനമാക്കിയുള്ളതാണ്. ഇത് വ്യക്തിപരമായ മാർഗനിർദേശം മാത്രമാണ്, വൈദ്യ/നിയമ/പ്രൊഫഷണൽ ഉപദേശമല്ല. അന്തിമ തീരുമാനം സ്വന്തം ധാരണയും കുടുംബവുമായി എടുക്കുക.",
   },
 };
+
+function getGeneral(lang: LangKey): GeneralMessages {
+  return GENERAL_MSGS[lang] || GENERAL_MSGS.en;
+}
