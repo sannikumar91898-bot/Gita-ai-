@@ -9,6 +9,7 @@ import {
   signInWithPhoneNumber,
   signOut as firebaseSignOut,
   type ConfirmationResult,
+  type Auth, // 👈 NAYA IMPORT ADD KIYA (Server crash rokne ke liye)
   // 🔥 नए इम्पोर्ट्स (ईमेल लॉगिन के लिए)
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword
@@ -24,7 +25,10 @@ const firebaseConfig = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
+
+// 👇 YAHAN CHANGE KIYA HAI: Server par null, browser par getAuth
+const auth: Auth =
+  typeof window === "undefined" ? (null as unknown as Auth) : getAuth(app);
 
 // 🔥 TypeScript Window Interface (Global Verifier ke liye)
 declare global {
