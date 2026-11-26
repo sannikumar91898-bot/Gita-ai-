@@ -6,21 +6,25 @@ const locales = ['en', 'hi', 'hinglish', 'te', 'ta', 'kn', 'bn', 'mr', 'gu', 'ml
 const defaultLocale = 'en';
 
 // (main) group ke routes — inhe locale prefix kabhi nahi milega
-// 🔥 FIX: Yahan /palmistry, /face-reading aur /remedies add kar diye gaye hain
 const MAIN_ROUTES = [
-  '/login', 
-  '/chat', 
-  '/wallet', 
-  '/profile', 
-  '/career', 
+  '/login',
+  '/chat',
+  '/wallet',
+  '/profile',
+  '/career',
   '/daily',
   '/palmistry',
   '/face-reading',
-  '/remedies'
+  '/remedies',
 ];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // 0) Static file (jpg, png, svg, ico, webp, js, css, txt, xml...) → kabhi redirect mat karo
+  if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
+    return NextResponse.next();
+  }
 
   // 1) URL me pehle se locale hai? → kuch mat karo
   const hasLocale = locales.some(
@@ -45,5 +49,7 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)'],
+  matcher: [
+    '/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt|.*\\..*).*)',
+  ],
 };
