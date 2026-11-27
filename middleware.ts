@@ -20,7 +20,7 @@ const MAIN_ROUTES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Static files mat touch karo
+  // Static files (png, jpg, jpeg, webp, svg, ico...) mat touch karo
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
     return NextResponse.next();
   }
