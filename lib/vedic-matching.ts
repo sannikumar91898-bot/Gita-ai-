@@ -154,12 +154,12 @@ function getObliquityRad(date: Date): number {
 function getTropicalLongitude(planet: Body, date: Date): number {
   // Moon: use dedicated high-accuracy function
   if (planet === Body.Moon) {
-    const time = AstroTime.FromDate(date);
+    const time = new AstroTime(date); // 🔥 FIXED HERE
     const moon = EclipticGeoMoon(time);
     return (moon.lon + 360) % 360;
   }
 
-  const time = AstroTime.FromDate(date);
+  const time = new AstroTime(date); // 🔥 FIXED HERE
   const vec = GeoVector(planet, time, true);
   const rot = Rotation_EQD_ECT(time);
   const ecl = RotateVector(rot, vec);
@@ -175,7 +175,7 @@ function getSiderealLongitude(planet: Body, date: Date): number {
 
 // Sidereal Ascendant (Lagna)
 function getAscendant(date: Date, lat: number, lon: number): number {
-  const time = AstroTime.FromDate(date);
+  const time = new AstroTime(date); // 🔥 FIXED HERE
   const gastHours = SiderealTime(time);
   let lstHours = gastHours + lon / 15;
   lstHours = ((lstHours % 24) + 24) % 24;
