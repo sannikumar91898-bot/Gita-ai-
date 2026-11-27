@@ -20,12 +20,10 @@ const MAIN_ROUTES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Static files (png, jpg, jpeg, webp, svg, ico...) mat touch karo
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
     return NextResponse.next();
   }
 
-  // Locale already hai?
   const hasLocale = locales.some(
     (locale) => pathname === `/\( {locale}` || pathname.startsWith(`/ \){locale}/`)
   );
@@ -33,7 +31,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Main route hai?
   const isMainRoute = MAIN_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -41,7 +38,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Baaki ko /en pe bhejo
   const url = request.nextUrl.clone();
   url.pathname = `/\( {defaultLocale} \){pathname === '/' ? '' : pathname}`;
   return NextResponse.redirect(url);
