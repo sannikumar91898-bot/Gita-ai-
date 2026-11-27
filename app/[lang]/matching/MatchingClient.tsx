@@ -66,8 +66,8 @@ export default function MatchingClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 🔥 FIX 1: Guest user ko direct login par bhejo
-    if (!me || me.isGuest) {
+    // 🔥 FIX: Guest user ko direct login par bhejo (Updated logic)
+    if (!me || !me.user || me.user.isGuest) {
       router.push("/login");
       return;
     }
