@@ -1,11 +1,10 @@
-// middleware.ts  (project root — app/ ke bahar)
+// middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const locales = ['en', 'hi', 'hinglish', 'te', 'ta', 'kn', 'bn', 'mr', 'gu', 'ml'];
 const defaultLocale = 'en';
 
-// In routes par kabhi locale prefix nahi lagana
 const MAIN_ROUTES = [
   '/login',
   '/chat',
@@ -21,12 +20,12 @@ const MAIN_ROUTES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 0) Static files (images, css, js, fonts, etc.) → bilkul touch mat karo
+  // Static files mat touch karo
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
     return NextResponse.next();
   }
 
-  // 1) Pehle se locale hai? → aage badho
+  // Locale already hai?
   const hasLocale = locales.some(
     (locale) => pathname === `/\( {locale}` || pathname.startsWith(`/ \){locale}/`)
   );
@@ -34,7 +33,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 2) Main route hai? → locale mat lagao
+  // Main route hai?
   const isMainRoute = MAIN_ROUTES.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`)
   );
@@ -42,7 +41,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3) Baaki sab ko /en par redirect karo (query params preserve rahenge)
+  // Baaki ko /en pe bhejo
   const url = request.nextUrl.clone();
   url.pathname = `/\( {defaultLocale} \){pathname === '/' ? '' : pathname}`;
   return NextResponse.redirect(url);
