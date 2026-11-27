@@ -4,43 +4,19 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Sparkles, Heart, Loader2, Star, Lock } from "lucide-react";
+import { ArrowLeft, Sparkles, Heart, Loader2, Star } from "lucide-react";
 import { useApp } from "../../Providers";
 
 const getUIText = (lang: string, key: string) => {
   const ui: Record<string, Record<string, string>> = {
     hi: { 
-      title: "कुंडली मिलान", subtitle: "अपनी और साथी की कुंडली मिलाएं", boy: "वर का विवरण", girl: "वधू का विवरण", name: "पूरा नाम", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", matchBtn: "कुंडली मिलाएं", loading: "मिलान हो रहा है...", resultTitle: "मिलान परिणाम", score: "मिलान अंक", findingLoc: "स्थान खोजा जा रहा है...",
-      seoTitle: "Free AI Kundli Matching Online",
-      seoDesc: "कुंडली मिलान विवाह से पहले वर और वधू के गुण, स्वभाव और भविष्य को समझने का एक सटीक तरीका है। GitaTalk का AI 36 गुणों और मांगलिक दोष का विश्लेषण करके आपको आपके रिश्ते की सच्ची तस्वीर दिखाता है।",
-      privacyText: "आपकी सुरक्षा: आपके द्वारा भरी गई सभी जानकारी (नाम, जन्म तिथि, स्थान) पूरी तरह सुरक्षित और एन्क्रिप्टेड हैं। हम आपका डेटा किसी तीसरे पक्ष के साथ साझा नहीं करते।",
-      faqTitle: "अक्सर पूछे जाने वाले प्रश्न (FAQs)",
-      faq1Q: "क्या AI कुंडली मिलान सटीक है?",
-      faq1A: "हाँ, हमारा सिस्टम पारंपरिक वैदिक ज्योतिष (Ashtakoot) के नियमों का पालन करता है। यह आपकी सटीक जन्म तिथि और समय के आधार पर ग्रहों की स्थिति की गणना करता है।",
-      faq2Q: "क्या मेरी जानकारी सुरक्षित है?",
-      faq2A: "जी हाँ, आपकी सभी जानकारी पूरी तरह सुरक्षित है। हम इसे सिर्फ आपकी कुंडली बनाने के लिए उपयोग करते हैं और इसे किसी के साथ शेयर नहीं करते।"
+      title: "कुंडली मिलान", subtitle: "अपनी और साथी की कुंडली मिलाएं", boy: "वर का विवरण", girl: "वधू का विवरण", name: "पूरा नाम", dob: "जन्म तिथि", time: "जन्म समय", place: "जन्म स्थान", matchBtn: "कुंडली मिलाएं", loading: "मिलान हो रहा है...", resultTitle: "मिलान परिणाम", score: "मिलान अंक", findingLoc: "स्थान खोजा जा रहा है..." 
     },
     hinglish: { 
-      title: "Kundli Matching", subtitle: "Match your Kundli with your partner", boy: "Boy's Details", girl: "Girl's Details", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", matchBtn: "Match Kundli", loading: "Matching...", resultTitle: "Match Result", score: "Match Score", findingLoc: "Finding location...",
-      seoTitle: "Free AI Kundli Matching Online",
-      seoDesc: "Kundli Milan vivah se pehle var aur vadhu ke gun, swabhav aur future samajhne ka ek sahi tarika hai. GitaTalk ka AI 36 gunon aur Manglik dosh ka analysis karke aapko aapke rishte ki sachhi tasveer dikhata hai.",
-      privacyText: "Aapki Suraksha: Aapke dwara bhari gayi saari details (Name, DOB, Place) puri tarah safe aur encrypted hain. Hum aapka data kisi third-party ke sath share nahi karte.",
-      faqTitle: "Frequently Asked Questions (FAQs)",
-      faq1Q: "Kya AI Kundli Matching sahi hai?",
-      faq1A: "Haan, hamara system traditional Vedic astrology (Ashtakoot) ke rules follow karta hai. Yeh aapki sahi date of birth aur time ke aadhar par grahon ki sthiti calculate karta hai.",
-      faq2Q: "Kya meri details safe hain?",
-      faq2A: "Ji haan, aapki saari details 100% safe hain. Hum ise sirf aapki report banane ke liye use karte hain."
+      title: "Kundli Matching", subtitle: "Match your Kundli with your partner", boy: "Boy's Details", girl: "Girl's Details", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", matchBtn: "Match Kundli", loading: "Matching...", resultTitle: "Match Result", score: "Match Score", findingLoc: "Finding location..." 
     },
     en: { 
-      title: "Kundli Matching", subtitle: "Match your Kundli with your partner", boy: "Boy's Details", girl: "Girl's Details", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", matchBtn: "Match Kundli", loading: "Matching...", resultTitle: "Match Result", score: "Match Score", findingLoc: "Finding location...",
-      seoTitle: "Free AI Kundli Matching Online",
-      seoDesc: "Kundli matching is an accurate way to understand the compatibility, nature, and future of the bride and groom before marriage. GitaTalk's AI analyzes the 36 Gunas and Manglik Dosha to show you the true picture of your relationship.",
-      privacyText: "Your Safety: All the details you provide (Name, DOB, Place) are completely safe and encrypted. We do not share your data with any third party.",
-      faqTitle: "Frequently Asked Questions (FAQs)",
-      faq1Q: "Is AI Kundli Matching accurate?",
-      faq1A: "Yes, our system follows traditional Vedic astrology (Ashtakoot) principles. It calculates planetary positions based on your exact date and time of birth.",
-      faq2Q: "Is my data safe?",
-      faq2A: "Yes, all your information is 100% secure. We use it only to generate your report and never share it."
+      title: "Kundli Matching", subtitle: "Match your Kundli with your partner", boy: "Boy's Details", girl: "Girl's Details", name: "Full Name", dob: "Date of Birth", time: "Time of Birth", place: "Place of Birth", matchBtn: "Match Kundli", loading: "Matching...", resultTitle: "Match Result", score: "Match Score", findingLoc: "Finding location..." 
     },
   };
   return ui[lang]?.[key] || ui["en"][key] || ui["hi"][key] || "";
@@ -67,22 +43,25 @@ export default function MatchingClient() {
   const [girlTime, setGirlTime] = useState("");
   const [girlPlace, setGirlPlace] = useState("");
 
-  // 🔥 NEW FIX 1: Login ke baad form data wapas load karein
+  // 🔥 FIX 1: Login ke baad data wapas form mein bharna
   useEffect(() => {
-    const savedData = sessionStorage.getItem("matching_form_data");
-    if (savedData) {
-      try {
-        const data = JSON.parse(savedData);
-        if (data.boyName) setBoyName(data.boyName);
-        if (data.boyDob) setBoyDob(data.boyDob);
-        if (data.boyTime) setBoyTime(data.boyTime);
-        if (data.boyPlace) setBoyPlace(data.boyPlace);
-        if (data.girlName) setGirlName(data.girlName);
-        if (data.girlDob) setGirlDob(data.girlDob);
-        if (data.girlTime) setGirlTime(data.girlTime);
-        if (data.girlPlace) setGirlPlace(data.girlPlace);
-      } catch (e) {
-        console.error("Failed to load saved data", e);
+    if (typeof window !== "undefined") {
+      const savedData = sessionStorage.getItem("matching_form_data");
+      if (savedData) {
+        try {
+          const d = JSON.parse(savedData);
+          if (d.boyName) setBoyName(d.boyName);
+          if (d.boyDob) setBoyDob(d.boyDob);
+          if (d.boyTime) setBoyTime(d.boyTime);
+          if (d.boyPlace) setBoyPlace(d.boyPlace);
+          if (d.girlName) setGirlName(d.girlName);
+          if (d.girlDob) setGirlDob(d.girlDob);
+          if (d.girlTime) setGirlTime(d.girlTime);
+          if (d.girlPlace) setGirlPlace(d.girlPlace);
+          sessionStorage.removeItem("matching_form_data");
+        } catch (e) {
+          console.error("Error restoring data", e);
+        }
       }
     }
   }, []);
@@ -110,15 +89,13 @@ export default function MatchingClient() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // 🔥 NEW FIX 2: Data save karein aur redirect URL ke saath login par bhejein
+    // 🔥 FIX 2: Guest user ka data save karna aur sahi redirect URL dena
     if (!me || !me.user || me.user.isGuest) {
       const formData = {
         boyName, boyDob, boyTime, boyPlace,
         girlName, girlDob, girlTime, girlPlace
       };
       sessionStorage.setItem("matching_form_data", JSON.stringify(formData));
-      
-      // Redirect URL add kiya taaki login ke baad wapas yahin aaye
       router.push(`/login?redirect=/${lang}/matching`);
       return;
     }
@@ -148,7 +125,7 @@ export default function MatchingClient() {
 
       const data = await res.json().catch(() => null);
 
-      // 🔥 FIX 3: 401 Error par login par bhejo
+      // 🔥 FIX 3: 401 Error par login par bhejo (Data ke saath)
       if (res.status === 401) {
         const formData = {
           boyName, boyDob, boyTime, boyPlace,
@@ -170,9 +147,6 @@ export default function MatchingClient() {
       }
 
       setResult(data);
-      
-      // Data clear karein kyunki kaam ho gaya
-      sessionStorage.removeItem("matching_form_data");
 
     } catch (err: any) {
       setError(err.message);
@@ -268,36 +242,6 @@ export default function MatchingClient() {
             </div>
           </div>
         )}
-
-        {/* 🔥 NEW FIX 5: Palmistry Jaisa SEO, Trust & FAQ Section */}
-        <div className="mt-8 mb-10 space-y-4">
-          <div className="bg-[#1e1e2d] rounded-xl p-5 border border-gray-800">
-            <h2 className="text-white text-lg font-semibold mb-3">{t('seoTitle')}</h2>
-            <p className="text-gray-400 text-sm leading-relaxed">{t('seoDesc')}</p>
-          </div>
-
-          <div className="bg-[#1e1e2d] rounded-xl p-5 border border-gray-800">
-            <div className="flex items-start gap-3">
-              <div className="bg-green-500/20 p-2 rounded-full mt-1">
-                <Lock className="w-5 h-5 text-green-500" />
-              </div>
-              <p className="text-gray-300 text-sm leading-relaxed">{t('privacyText')}</p>
-            </div>
-          </div>
-
-          <div className="bg-[#1e1e2d] rounded-xl p-5 border border-gray-800">
-            <h3 className="text-white text-lg font-semibold mb-4">{t('faqTitle')}</h3>
-            <div className="mb-4">
-              <p className="text-white font-medium text-sm mb-1">Q: {t('faq1Q')}</p>
-              <p className="text-gray-400 text-sm">A: {t('faq1A')}</p>
-            </div>
-            <div>
-              <p className="text-white font-medium text-sm mb-1">Q: {t('faq2Q')}</p>
-              <p className="text-gray-400 text-sm">A: {t('faq2A')}</p>
-            </div>
-          </div>
-        </div>
-
       </div>
     </main>
   );
