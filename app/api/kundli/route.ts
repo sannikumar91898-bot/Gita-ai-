@@ -140,6 +140,11 @@ export async function POST(request: Request) {
     return jsonError(getKundliError(language, "calc_failed"), 500);
   }
 
+  // 🔥 YEH 3 LINES ADD KI GAYI HAIN (Null Guard Fix)
+  if (!userRow) {
+    return jsonError(getKundliError(language, "calc_failed"), 401);
+  }
+
   const place = await resolvePlace(placeOfBirth);
 
   if (!place) {
@@ -240,4 +245,3 @@ export async function POST(request: Request) {
     { headers: { "Cache-Control": "no-store" } }
   );
 }
-
