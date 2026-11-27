@@ -1,4 +1,3 @@
-  
 "use client";
 
 import Link from "next/link";
@@ -136,7 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="group flex min-w-0 shrink items-center gap-2"
           >
             <Image
-              src="/icons/icon-512.png"
+              src="/icon-512.png"
               alt="Gita AI logo"
               width={36}
               height={36}
