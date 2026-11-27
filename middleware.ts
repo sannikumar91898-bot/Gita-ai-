@@ -20,26 +20,30 @@ const MAIN_ROUTES = [
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Static files mat touch karo
   if (/\.[a-zA-Z0-9]+$/.test(pathname)) {
     return NextResponse.next();
   }
 
-  const hasLocale = locales.some(
-    (locale) => pathname === `/\( {locale}` || pathname.startsWith(`/ \){locale}/`)
-  );
+  // Locale already hai?
+  const hasLocale = locales.some(function (locale) {
+    return pathname === '/' + locale || pathname.startsWith('/' + locale + '/');
+  });
   if (hasLocale) {
     return NextResponse.next();
   }
 
-  const isMainRoute = MAIN_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`)
-  );
+  // Main route hai?
+  const isMainRoute = MAIN_ROUTES.some(function (route) {
+    return pathname === route || pathname.startsWith(route + '/');
+  });
   if (isMainRoute) {
     return NextResponse.next();
   }
 
+  // Baaki ko /en pe bhejo
   const url = request.nextUrl.clone();
-  url.pathname = `/\( {defaultLocale} \){pathname === '/' ? '' : pathname}`;
+  url.pathname = '/' + defaultLocale + (pathname === '/' ? '' : pathname);
   return NextResponse.redirect(url);
 }
 
