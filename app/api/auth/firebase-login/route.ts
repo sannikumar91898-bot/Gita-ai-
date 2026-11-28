@@ -9,9 +9,6 @@ import { createSession, setSessionCookie } from "@/auth";
 // FIX: Admin SDK import kiya gaya hai secure verification ke liye
 import { adminAuth } from "@/lib/firebase-admin";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
 // Marketing Hook (Aapke baaki code ki tarah 10 languages me)
 function getWelcomeMessage(lang: string): string {
   const dict: Record<string, string> = {
