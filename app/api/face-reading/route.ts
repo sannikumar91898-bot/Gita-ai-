@@ -19,7 +19,7 @@ const groqApiKey = process.env.GROQ_API_KEY;
 const groqVisionModel = process.env.GROQ_VISION_MODEL || "qwen/qwen3.8-27b"; 
 const groqClient = groqApiKey ? new OpenAI({ baseURL: "https://api.groq.com/openai/v1", apiKey: groqApiKey, timeout: 15_000, maxRetries: 0 }) : null;
 
-const FREE_FACE_SCAN_LIMIT = 5;
+const FREE_FACE_SCAN_LIMIT = 2;
 const COST_PER_FACE_SCAN_PAISE = 200; 
 
 function getLanguageInstruction(lang: string): string { /* आपका पुराना कोड */ return "Reply strictly in Hinglish."; }
