@@ -22,16 +22,23 @@ function getFirebaseApp(): App {
     );
   }
 
-  // Vercel में अक्सर key इस तरह आती है → clean करो
+  // Key saaf karo: quotes hatao, \n text ko asli newline banao
   privateKey = privateKey
     .replace(/\\n/g, "\n")
     .replace(/"/g, "")
     .trim();
 
-  // अगर BEGIN/END missing है तो जोड़ दो (कभी-कभी लोग सिर्फ key body डाल देते हैं)
-  if (!privateKey.includes("-----BEGIN PRIVATE KEY-----")) {
-    privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----\n`;
-  }
+  // Body nikalo: header/footer aur saari whitespace hatao,
+  // phir 64-character ki lines me dobara sahi PEM format banao
+  const keyBody = privateKey
+    .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+    .replace(/-----END PRIVATE KEY-----/g, "")
+    .replace(/\s+/g, "");
+  const keyLines = keyBody.match(/.{1,64}/g) || [];
+  privateKey =
+    "-----BEGIN PRIVATE KEY-----\n" +
+    keyLines.join("\n") +
+    "\n-----END PRIVATE KEY-----\n";
 
   app = initializeApp({
     credential: cert({
