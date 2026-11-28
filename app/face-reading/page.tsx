@@ -244,13 +244,14 @@ export default function FaceReadingPage() {
       router.push("/login?redirect=/face-reading");
       return;
     }
-
-    const maxLimit = 2;
-    if (scanCount >= maxLimit) {
-      setShowLimitModal(true);
+    if (!me?.user || me.user.isGuest) {
+      router.push("/login?redirect=/face-reading");
       return;
     }
 
+    setErrorMsg(null);
+    fileInputRef.current?.click();
+    
     setErrorMsg(null);
     fileInputRef.current?.click();
   };
